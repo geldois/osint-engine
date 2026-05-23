@@ -1,0 +1,11 @@
+{
+  "editor.formatOnSave": true,
+  "editor.detectIndentation": false,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
+  },
+  "python.terminal.activateEnvironment": false,
+  "python.terminal.useEnvFile": true
+}
