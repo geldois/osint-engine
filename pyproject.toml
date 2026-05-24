@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lynx"
+name = "corporate-risk-engine"
 version = "0.0.1"
 description = "An asynchronous Python API designed for public security intelligence, cross-referencing corporate data from multiple external APIs to detect corruption indicators."
 dependencies = [
