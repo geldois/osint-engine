@@ -1,4 +1,5 @@
 from corporate_risk_engine.domain.value_objects.risk_assesment import RiskAssesment
+
 from corporate_risk_engine.domain.value_objects.risk_factor import RiskFactor
 
 # VALID CASES
