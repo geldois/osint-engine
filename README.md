@@ -1,25 +1,12 @@
-# corporate-risk-engine
+# osint-engine
 
-An asynchronous Python API designed for public security intelligence, cross-referencing corporate data from multiple external APIs to detect corruption indicators.
+Entity relationship graph engine that expands a single identifier (CNPJ, CPF, address, phone, email) into a fully traceable network of connections sourced exclusively from official public records.
 
-# Run
-
-## On Linux
+# Setup
 
 ```bash
-git clone https://github.com/geldois/corporate-risk-engine.git && cd corporate-risk-engine
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pre-commit install
-```
-
-## On Windows
-
-```shell
-git clone https://github.com/geldois/corporate-risk-engine.git
-cd corporate-risk-engine
-python -m venv .venv
-.venv/Scripts/Activate
-pip install -e ".[dev]"
-pre-commit install
+git clone https://github.com/geldois/osint-engine.git
+cd osint-engine
+uv sync --group dev
+uv run pre-commit install
 ```

@@ -1,28 +1,32 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "corporate-risk-engine"
+name = "osint-engine"
 version = "0.0.1"
-description = "An asynchronous Python API designed for public security intelligence, cross-referencing corporate data from multiple external APIs to detect corruption indicators."
+description = "Entity relationship graph engine that expands a single identifier (CNPJ, CPF, address, phone, email) into a fully traceable network of connections sourced exclusively from official public records"
+requires-python = ">=3.12"
 dependencies = [
   "fastapi",
   "httpx",
   "psycopg[binary]",
   "sqlalchemy",
+  "structlog",
   "typer",
   "uvicorn"
 ]
 
-[project.optional-dependencies]
-dev = [
-  "commitizen",
-  "pre-commit",
-  "pyright",
-  "pytest",
-  "ruff"
-]
+[dependency-groups]
+dev = ["basedpyright", "commitizen", "pre-commit", "pytest", "ruff"]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.basedpyright]
+venvPath = "."
+venv = ".venv"
+include = ["src", "tests"]
+typeCheckingMode = "strict"
+pythonPlatform = "All"
+reportMissingTypeStubs = "none"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -31,24 +35,26 @@ version_scheme = "semver"
 version_provider = "pep621"
 update_map_pyproject = true
 
-[tool.pyright]
-typeCheckingMode = "strict"
-include = ["src", "tests"]
-
 [tool.pytest.ini_options]
 pythonpath = ["src", "tests"]
 
 [tool.ruff]
 line-length = 88
-indent-width = 4
-target-version = "py312"
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+line-ending = "lf"
+docstring-code-format = true
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP", "SIM"]
+select = ["ALL"]
+ignore = ["COM812", "D", "D100", "D101", "D203", "D212", "ISC001", "RUF012"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.uv]
