@@ -10,8 +10,9 @@ class DomainError(ABC, Exception):
         cls.error_code = error_code
 
     @abstractmethod
-    def __init__(self, *, subject: type) -> None:
-        self.subject = subject
+    def __init__(self, **kwargs: object) -> None:
+        for k, v in kwargs.items():
+            object.__setattr__(self, k, v)
 
         super().__init__(self._build_message())
 
@@ -26,7 +27,9 @@ class MissingErrorIdentityContractError(
     DomainError, error_code="ERROR_MISSING_IDENTITY_CONTRACT"
 ):
     def __init__(self) -> None:
-        super().__init__(subject=type(self))
+        self.subject = type(self)
+
+        super().__init__()
 
     def _build_message(self) -> str:
         base_name = (

@@ -79,10 +79,10 @@ class Entity[IDType: UUID](ABC):
         if not isinstance(other, type(self)):
             return NotImplemented
 
-        return other.id == self.id
+        return self.id == other.id
 
     def __hash__(self) -> int:
-        return hash(self.id)
+        return self.id.int
 
     def _calculate_id(self, **kwargs: object) -> IDType:
         return type(self).id_type(

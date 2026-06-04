@@ -22,9 +22,7 @@ class MissingEntityIdentityContractError(
 
 class InvalidEntityHierarchyError(EntityError, error_code="ENTITY_INVALID_HIERARCHY"):
     def __init__(self, *, subject: type, expected_base: type) -> None:
-        self.expected_base = expected_base
-
-        super().__init__(subject=subject)
+        super().__init__(subject=subject, expected_base=expected_base)
 
     def _build_message(self) -> str:
         return (
@@ -37,9 +35,7 @@ class InvalidEntityHierarchyError(EntityError, error_code="ENTITY_INVALID_HIERAR
 
 class InvalidEntityIDTypeError(EntityError, error_code="ENTITY_INVALID_ID_TYPE"):
     def __init__(self, *, subject: type, id_type: NewType) -> None:
-        self.id_type = id_type
-
-        super().__init__(subject=subject)
+        super().__init__(subject=subject, id_type=id_type)
 
     def _build_message(self) -> str:
         id_type_name = self.id_type.__name__

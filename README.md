@@ -1,6 +1,6 @@
 # osint-engine
 
-Entity relationship graph engine that expands a single identifier (CNPJ, CPF, address, phone, email) into a fully traceable network of connections sourced exclusively from official public records.
+Entity relationship graph engine that expands identifiers into a fully traceable network of connections sourced exclusively from official public records.
 
 # Setup
 
