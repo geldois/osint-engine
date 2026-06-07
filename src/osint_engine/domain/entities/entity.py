@@ -5,20 +5,21 @@ from abc import ABC, abstractmethod
 from dataclasses import FrozenInstanceError
 from inspect import isabstract
 from typing import TYPE_CHECKING, get_args, get_origin
-from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
+from uuid import UUID, uuid4, uuid5
 
 from osint_engine.domain.errors.entity_error import (
     InvalidEntityIDTypeError,
-    MissingEntityIdentityContractError,
+    MissingEntityIDTypeError,
 )
+from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-def _verify_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> None:
+def _verify_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> None:
     if not hasattr(subject, "id_type") and not isabstract(subject):
-        raise MissingEntityIdentityContractError(subject=subject)
+        raise MissingEntityIDTypeError(subject=subject)
 
 
 class Entity[IDType: UUID](ABC):
@@ -26,8 +27,12 @@ class Entity[IDType: UUID](ABC):
 
     id: IDType
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
+    def __init_subclass__(
+        cls, *, namespace: EntityNAMESPACE, **kwargs: object
+    ) -> None:
         super().__init_subclass__(**kwargs)
+
+        cls.namespace = namespace.namespace
 
         for base in getattr(cls, "__orig_bases__", ()):
             origin = get_origin(base)
@@ -56,20 +61,20 @@ class Entity[IDType: UUID](ABC):
             if not isinstance(probe, UUID):
                 raise InvalidEntityIDTypeError(subject=cls, id_type=candidate)
 
-            cls.id_type: Callable[[UUID], IDType] = candidate
+            cls.id_type: Callable[[UUID], IDType] = staticmethod(candidate)
 
             return
 
-        _verify_id_type(subject=cls)
+        _verify_entity_id_type(subject=cls)
 
     @abstractmethod
     def __init__(self, **kwargs: object) -> None:
-        object.__setattr__(self, "id", self._calculate_id(**kwargs))
+        object.__setattr__(self, "id", type(self).calculate_id(**kwargs))
 
         for k, v in kwargs.items():
             object.__setattr__(self, k, v)
 
-    def __setattr__(self, name: str, value: object) -> None:
+    def __setattr__(self, name: str, value: object, /) -> None:
         raise FrozenInstanceError
 
     def __delattr__(self, name: str, /) -> None:
@@ -84,13 +89,14 @@ class Entity[IDType: UUID](ABC):
     def __hash__(self) -> int:
         return self.id.int
 
-    def _calculate_id(self, **kwargs: object) -> IDType:
-        return type(self).id_type(
-            uuid5(namespace=NAMESPACE_DNS, name=json.dumps(kwargs, sort_keys=True))
+    @classmethod
+    def calculate_id(cls, **kwargs: object) -> IDType:
+        return cls.id_type(
+            uuid5(namespace=cls.namespace, name=json.dumps(kwargs, sort_keys=True))
         )
 
 
-class Edge[IDType: UUID](Entity[IDType]):
+class Edge[IDType: UUID](Entity[IDType], namespace=EntityNAMESPACE.EDGE):
     __slots__ = ("source_id", "target_id")
 
     @abstractmethod
@@ -98,4 +104,4 @@ class Edge[IDType: UUID](Entity[IDType]):
         super().__init__(source_id=source_id, target_id=target_id, **kwargs)
 
 
-class Node[IDType: UUID](Entity[IDType]): ...
+class Node[IDType: UUID](Entity[IDType], namespace=EntityNAMESPACE.NODE): ...

@@ -1,0 +1,33 @@
+from enum import Enum
+from uuid import NAMESPACE_DNS, uuid5
+
+
+class EntityNAMESPACE(Enum):
+    # PROD
+    ADDRESS = "ADDRESS"
+    CNAE = "CNAE"
+    COMPANY = "COMPANY"
+    COMPANY_ADDRESS = "COMPANY_ADDRESS"
+    COMPANY_CNAE = "COMPANY_CNAE"
+    COMPANY_EMAIL = "COMPANY_EMAIL"
+    COMPANY_PERSON = "COMPANY_PERSON"
+    COMPANY_PHONE = "COMPANY_PHONE"
+    COMPANY_SANCTION = "COMPANY_SANCTION"
+    EDGE = "EDGE"
+    EMAIL = "EMAIL"
+    NODE = "NODE"
+    PERSON = "PERSON"
+    PERSON_ADDRESS = "PERSON_ADDRESS"
+    PERSON_COMPANY = "PERSON_COMPANY"
+    PERSON_EMAIL = "PERSON_EMAIL"
+    PERSON_PHONE = "PERSON_PHONE"
+    PERSON_SANCTION = "PERSON_SANCTION"
+    PHONE = "PHONE"
+    SANCTION = "SANCTION"
+
+    # TEST
+    TEST = "TEST"
+    TEST_DIFF = "TEST_DIFF"
+
+    def __init__(self, value: str, /) -> None:
+        self.namespace = uuid5(namespace=NAMESPACE_DNS, name=value)

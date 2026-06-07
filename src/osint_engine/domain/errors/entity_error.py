@@ -6,34 +6,10 @@ from osint_engine.domain.errors.domain_error import DomainError
 class EntityError(DomainError, error_code=None): ...
 
 
-class MissingEntityIdentityContractError(
-    EntityError, error_code="ENTITY_MISSING_IDENTITY_CONTRACT"
-):
-    def __init__(self, *, subject: type) -> None:
-        super().__init__(subject=subject)
-
-    def _build_message(self) -> str:
-        return (
-            f"'{self.subject.__name__}' identity contract violation - "
-            f"pass 'IDType' in: "
-            f"class {self.subject.__name__}(Entity[IDType])"
-        )
-
-
-class InvalidEntityHierarchyError(EntityError, error_code="ENTITY_INVALID_HIERARCHY"):
-    def __init__(self, *, subject: type, expected_base: type) -> None:
-        super().__init__(subject=subject, expected_base=expected_base)
-
-    def _build_message(self) -> str:
-        return (
-            f"'{self.subject.__name__}' must inherit from "
-            f"'{self.expected_base.__name__}' to use this decorator. "
-            f"Fix: class {self.subject.__name__}"
-            f"({self.expected_base.__name__}[IDType])"
-        )
-
-
 class InvalidEntityIDTypeError(EntityError, error_code="ENTITY_INVALID_ID_TYPE"):
+    subject: type
+    id_type: NewType
+
     def __init__(self, *, subject: type, id_type: NewType) -> None:
         super().__init__(subject=subject, id_type=id_type)
 
@@ -45,4 +21,32 @@ class InvalidEntityIDTypeError(EntityError, error_code="ENTITY_INVALID_ID_TYPE")
             f"'{id_type_name}' type must be "
             f"'Callable[[UUID], {id_type_name}]' in: "
             f"{self.subject.__name__}({base_name}[{id_type_name}])"
+        )
+
+
+class MissingEntityIDTypeError(EntityError, error_code="ENTITY_MISSING_ID_TYPE"):
+    subject: type
+
+    def __init__(self, *, subject: type) -> None:
+        super().__init__(subject=subject)
+
+    def _build_message(self) -> str:
+        return (
+            f"'{self.subject.__name__}' identity contract violation - "
+            f"pass 'IDType' in: "
+            f"class {self.subject.__name__}(Entity[IDType], ...)"
+        )
+
+
+class MissingEntityNAMESPACEError(EntityError, error_code="ENTITY_MISSING_NAMESPACE"):
+    subject: type
+
+    def __init__(self, *, subject: type) -> None:
+        super().__init__(subject=subject)
+
+    def _build_message(self) -> str:
+        return (
+            f"'{self.subject.__name__}' identity contract violation - "
+            f"pass 'EntityNAMESPACE' in: "
+            f"class {self.subject.__name__}(..., namespace=EntityNAMESPACE)"
         )

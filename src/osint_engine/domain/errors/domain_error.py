@@ -1,6 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from dataclasses import FrozenInstanceError
+from inspect import isabstract
+
+
+def _verify_error_code(*, subject: type[DomainError]) -> None:
+    if subject.error_code is None and not isabstract(subject):
+        raise MissingErrorIdentityContractError
 
 
 class DomainError(ABC, Exception):
@@ -9,6 +16,8 @@ class DomainError(ABC, Exception):
 
         cls.error_code = error_code
 
+        _verify_error_code(subject=cls)
+
     @abstractmethod
     def __init__(self, **kwargs: object) -> None:
         for k, v in kwargs.items():
@@ -16,8 +25,11 @@ class DomainError(ABC, Exception):
 
         super().__init__(self._build_message())
 
-        if type(self).error_code is None:
-            raise MissingErrorIdentityContractError
+    def __setattr__(self, name: str, value: object, /) -> None:
+        raise FrozenInstanceError
+
+    def __delattr__(self, name: str, /) -> None:
+        raise FrozenInstanceError
 
     @abstractmethod
     def _build_message(self) -> str: ...
@@ -26,10 +38,10 @@ class DomainError(ABC, Exception):
 class MissingErrorIdentityContractError(
     DomainError, error_code="ERROR_MISSING_IDENTITY_CONTRACT"
 ):
-    def __init__(self) -> None:
-        self.subject = type(self)
+    subject: type[DomainError]
 
-        super().__init__()
+    def __init__(self) -> None:
+        super().__init__(subject=type(self))
 
     def _build_message(self) -> str:
         base_name = (

@@ -2,14 +2,20 @@ from typing import NewType
 from uuid import UUID
 
 from osint_engine.domain.entities.entity import Edge
-from osint_engine.domain.entities.nodes.address import AddressID
 from osint_engine.domain.entities.nodes.company import CompanyID
+from osint_engine.domain.entities.nodes.sanction import SanctionID
+from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 
 CompanyReceivedSanctionID = NewType("CompanyReceivedSanctionID", UUID)
 
 
-class CompanyReceivedSanction(Edge[CompanyReceivedSanctionID]):
+class CompanyReceivedSanction(
+    Edge[CompanyReceivedSanctionID], namespace=EntityNAMESPACE.COMPANY_SANCTION
+):
     __slots__ = ()
 
-    def __init__(self, *, source_id: CompanyID, target_id: AddressID) -> None:
+    source_id: CompanyID
+    target_id: SanctionID
+
+    def __init__(self, *, source_id: CompanyID, target_id: SanctionID) -> None:
         super().__init__(source_id=source_id, target_id=target_id)
