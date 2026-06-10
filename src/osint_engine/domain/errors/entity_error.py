@@ -1,4 +1,4 @@
-from typing import NewType
+from typing import NewType, override
 
 from osint_engine.domain.errors.domain_error import DomainError
 
@@ -10,9 +10,11 @@ class InvalidEntityIDTypeError(EntityError, error_code="ENTITY_INVALID_ID_TYPE")
     subject: type
     id_type: NewType
 
+    @override
     def __init__(self, *, subject: type, id_type: NewType) -> None:
         super().__init__(subject=subject, id_type=id_type)
 
+    @override
     def _build_message(self) -> str:
         id_type_name = self.id_type.__name__
         base_name = self.subject.__base__.__name__ if self.subject.__base__ else "..."
@@ -27,9 +29,11 @@ class InvalidEntityIDTypeError(EntityError, error_code="ENTITY_INVALID_ID_TYPE")
 class MissingEntityIDTypeError(EntityError, error_code="ENTITY_MISSING_ID_TYPE"):
     subject: type
 
+    @override
     def __init__(self, *, subject: type) -> None:
         super().__init__(subject=subject)
 
+    @override
     def _build_message(self) -> str:
         return (
             f"'{self.subject.__name__}' identity contract violation - "
@@ -41,9 +45,11 @@ class MissingEntityIDTypeError(EntityError, error_code="ENTITY_MISSING_ID_TYPE")
 class MissingEntityNAMESPACEError(EntityError, error_code="ENTITY_MISSING_NAMESPACE"):
     subject: type
 
+    @override
     def __init__(self, *, subject: type) -> None:
         super().__init__(subject=subject)
 
+    @override
     def _build_message(self) -> str:
         return (
             f"'{self.subject.__name__}' identity contract violation - "

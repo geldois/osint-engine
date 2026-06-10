@@ -1,4 +1,4 @@
-from typing import NewType
+from typing import NewType, override
 from uuid import UUID
 
 from osint_engine.domain.entities.entity import Node
@@ -8,9 +8,8 @@ AddressID = NewType("AddressID", UUID)
 
 
 class Address(Node[AddressID], namespace=EntityNAMESPACE.ADDRESS):
-    __slots__ = ("cep",)
-
     cep: str
 
+    @override
     def __init__(self, *, cep: "str") -> None:
         super().__init__(cep=cep)

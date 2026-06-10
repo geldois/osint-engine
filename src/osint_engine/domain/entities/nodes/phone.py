@@ -1,4 +1,4 @@
-from typing import NewType
+from typing import NewType, override
 from uuid import UUID
 
 from osint_engine.domain.entities.entity import Node
@@ -8,9 +8,8 @@ PhoneID = NewType("PhoneID", UUID)
 
 
 class Phone(Node[PhoneID], namespace=EntityNAMESPACE.PHONE):
-    __slots__ = ("value",)
-
     value: str
 
+    @override
     def __init__(self, *, value: str) -> None:
         super().__init__(value=value)

@@ -1,4 +1,4 @@
-from typing import NewType
+from typing import NewType, override
 from uuid import UUID
 
 from osint_engine.domain.entities.entity import Edge
@@ -10,10 +10,9 @@ PersonHasPhoneID = NewType("PersonHasPhoneID", UUID)
 
 
 class PersonHasPhone(Edge[PersonHasPhoneID], namespace=EntityNAMESPACE.PERSON_PHONE):
-    __slots__ = ()
-
     source_id: PersonID
     target_id: PhoneID
 
+    @override
     def __init__(self, *, source_id: PersonID, target_id: PhoneID) -> None:
         super().__init__(source_id=source_id, target_id=target_id)

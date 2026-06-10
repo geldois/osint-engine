@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import FrozenInstanceError
 from inspect import isabstract
+from typing import override
 
 
 def _verify_error_code(*, subject: type[DomainError]) -> None:
@@ -40,9 +41,11 @@ class MissingErrorIdentityContractError(
 ):
     subject: type[DomainError]
 
+    @override
     def __init__(self) -> None:
         super().__init__(subject=type(self))
 
+    @override
     def _build_message(self) -> str:
         base_name = (
             self.subject.__base__.__name__ + ", " if self.subject.__base__ else ""

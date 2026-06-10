@@ -28,6 +28,8 @@ class EntityNAMESPACE(Enum):
     # TEST
     TEST = "TEST"
     TEST_DIFF = "TEST_DIFF"
+    TEST_EDGE = "TEST_EDGE"
+    TEST_NODE = "TEST_NODE"
 
     def __init__(self, value: str, /) -> None:
         self.namespace = uuid5(namespace=NAMESPACE_DNS, name=value)

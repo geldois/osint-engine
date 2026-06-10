@@ -1,4 +1,4 @@
-from typing import NewType
+from typing import NewType, override
 from uuid import UUID
 
 from osint_engine.domain.entities.entity import Edge
@@ -12,10 +12,9 @@ CompanyReceivedSanctionID = NewType("CompanyReceivedSanctionID", UUID)
 class CompanyReceivedSanction(
     Edge[CompanyReceivedSanctionID], namespace=EntityNAMESPACE.COMPANY_SANCTION
 ):
-    __slots__ = ()
-
     source_id: CompanyID
     target_id: SanctionID
 
+    @override
     def __init__(self, *, source_id: CompanyID, target_id: SanctionID) -> None:
         super().__init__(source_id=source_id, target_id=target_id)

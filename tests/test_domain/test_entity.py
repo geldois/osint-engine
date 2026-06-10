@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from osint_engine.domain.entities.entity import Edge, Entity
+from osint_engine.domain.entities.entity import Entity
 from osint_engine.domain.errors.entity_error import (
     InvalidEntityIDTypeError,
     MissingEntityIDTypeError,
@@ -15,6 +15,8 @@ FakeEntityID = NewType("FakeEntityID", UUID)
 
 
 class FakeEntity(Entity[FakeEntityID], namespace=EntityNAMESPACE.TEST):
+    content: str
+
     def __init__(self, *, content: str, **kwargs: object) -> None:
         super().__init__(content=content, **kwargs)
 
@@ -22,6 +24,8 @@ class FakeEntity(Entity[FakeEntityID], namespace=EntityNAMESPACE.TEST):
 class FakeEntityWithDiffNAMESPACE(
     Entity[FakeEntityID], namespace=EntityNAMESPACE.TEST_DIFF
 ):
+    content: str
+
     def __init__(self, *, content: str, **kwargs: object) -> None:
         super().__init__(content=content, **kwargs)
 
@@ -80,11 +84,6 @@ def test_entity_is_hashable_inside_of_data_structures() -> None:
     assert entity_b in entities
 
     assert len(entities) == 2
-
-
-def test_edge_declares_primordial_slots() -> None:
-    for slot in Edge.__slots__:
-        assert slot in ("source_id", "target_id")
 
 
 def test_entity_returns_false_on_comparison_with_diferent_type_object() -> None:

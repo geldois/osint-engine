@@ -4,7 +4,7 @@ import json
 from abc import ABC, abstractmethod
 from dataclasses import FrozenInstanceError
 from inspect import isabstract
-from typing import TYPE_CHECKING, get_args, get_origin
+from typing import TYPE_CHECKING, get_args, get_origin, override
 from uuid import UUID, uuid4, uuid5
 
 from osint_engine.domain.errors.entity_error import (
@@ -23,13 +23,9 @@ def _verify_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> No
 
 
 class Entity[IDType: UUID](ABC):
-    __slots__ = ("id",)
-
     id: IDType
 
-    def __init_subclass__(
-        cls, *, namespace: EntityNAMESPACE, **kwargs: object
-    ) -> None:
+    def __init_subclass__(cls, *, namespace: EntityNAMESPACE, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
 
         cls.namespace = namespace.namespace
@@ -92,16 +88,22 @@ class Entity[IDType: UUID](ABC):
     @classmethod
     def calculate_id(cls, **kwargs: object) -> IDType:
         return cls.id_type(
-            uuid5(namespace=cls.namespace, name=json.dumps(kwargs, sort_keys=True))
+            uuid5(
+                namespace=cls.namespace,
+                name=json.dumps(kwargs, sort_keys=True, default=str),
+            )
         )
 
 
 class Edge[IDType: UUID](Entity[IDType], namespace=EntityNAMESPACE.EDGE):
-    __slots__ = ("source_id", "target_id")
-
+    @override
     @abstractmethod
     def __init__(self, *, source_id: UUID, target_id: UUID, **kwargs: object) -> None:
         super().__init__(source_id=source_id, target_id=target_id, **kwargs)
 
 
-class Node[IDType: UUID](Entity[IDType], namespace=EntityNAMESPACE.NODE): ...
+class Node[IDType: UUID](Entity[IDType], namespace=EntityNAMESPACE.NODE):
+    @override
+    @abstractmethod
+    def __init__(self, **kwargs: object) -> None:
+        super().__init__(**kwargs)
