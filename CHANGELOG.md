@@ -1,3 +1,11 @@
+## v1.1.0 (2026-06-13)
+
+### Feat
+
+- **persistence**: implement in-memory layer with full test coverage
+- **application,domain**: drop slots, add application contracts and Graph value object
+- **domain**: assign deterministic namespaces to all nodes and edges
+
 ## v1.0.1 (2026-06-04)
 
 ### Refactor
