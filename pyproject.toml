@@ -3,18 +3,18 @@ name = "osint-engine"
 version = "1.0.1"
 description = "Entity relationship graph engine that expands identifiers into a fully traceable network of connections sourced exclusively from official public records"
 requires-python = ">=3.12"
-dependencies = [
-  "fastapi",
-  "httpx",
-  "psycopg[binary]",
-  "sqlalchemy",
-  "structlog",
-  "typer",
-  "uvicorn"
-]
+dependencies = ["fastapi", "httpx", "structlog", "typer", "uvicorn"]
 
 [dependency-groups]
-dev = ["basedpyright", "commitizen", "pre-commit", "pytest", "ruff"]
+dev = [
+  "basedpyright",
+  "commitizen",
+  "pre-commit",
+  "pytest",
+  "pytest-asyncio",
+  "pytest-language-server",
+  "ruff"
+]
 
 [build-system]
 requires = ["setuptools"]
@@ -37,6 +37,10 @@ update_map_pyproject = true
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "tests"]
+asyncio_mode = "strict"
+
+[tool.pytest-language-server]
+exclude = ["build/**", "dist/**", ".tox/**"]
 
 [tool.ruff]
 line-length = 88

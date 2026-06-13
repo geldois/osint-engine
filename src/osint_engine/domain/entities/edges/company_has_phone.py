@@ -1,10 +1,14 @@
-from typing import NewType, override
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, NewType, override
 from uuid import UUID
 
-from osint_engine.domain.entities.entity import Edge
-from osint_engine.domain.entities.nodes.company import CompanyID
-from osint_engine.domain.entities.nodes.phone import PhoneID
+from osint_engine.domain.entities.bases.edge import Edge
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
+
+if TYPE_CHECKING:
+    from osint_engine.domain.entities.nodes.company import CompanyID
+    from osint_engine.domain.entities.nodes.phone import PhoneID
 
 CompanyHasPhoneID = NewType("CompanyHasPhoneID", UUID)
 

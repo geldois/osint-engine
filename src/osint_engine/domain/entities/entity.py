@@ -4,17 +4,27 @@ import json
 from abc import ABC, abstractmethod
 from dataclasses import FrozenInstanceError
 from inspect import isabstract
-from typing import TYPE_CHECKING, get_args, get_origin, override
+from typing import (
+    TYPE_CHECKING,
+    Generic,
+    TypeVar,
+    final,
+    get_args,
+    get_origin,
+)
 from uuid import UUID, uuid4, uuid5
 
 from osint_engine.domain.errors.entity_error import (
     InvalidEntityIDTypeError,
     MissingEntityIDTypeError,
 )
-from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
+
+IDType_co = TypeVar("IDType_co", bound=UUID, covariant=True)
 
 
 def _verify_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> None:
@@ -22,9 +32,10 @@ def _verify_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> No
         raise MissingEntityIDTypeError(subject=subject)
 
 
-class Entity[IDType: UUID](ABC):
-    id: IDType
+class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
+    id: IDType_co
 
+    @final
     def __init_subclass__(cls, *, namespace: EntityNAMESPACE, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
 
@@ -57,7 +68,7 @@ class Entity[IDType: UUID](ABC):
             if not isinstance(probe, UUID):
                 raise InvalidEntityIDTypeError(subject=cls, id_type=candidate)
 
-            cls.id_type: Callable[[UUID], IDType] = staticmethod(candidate)
+            cls.id_type: Callable[[UUID], IDType_co] = staticmethod(candidate)
 
             return
 
@@ -70,40 +81,30 @@ class Entity[IDType: UUID](ABC):
         for k, v in kwargs.items():
             object.__setattr__(self, k, v)
 
+    @final
     def __setattr__(self, name: str, value: object, /) -> None:
         raise FrozenInstanceError
 
+    @final
     def __delattr__(self, name: str, /) -> None:
         raise FrozenInstanceError
 
+    @final
     def __eq__(self, other: object, /) -> bool:
         if not isinstance(other, type(self)):
             return NotImplemented
 
         return self.id == other.id
 
+    @final
     def __hash__(self) -> int:
         return self.id.int
 
     @classmethod
-    def calculate_id(cls, **kwargs: object) -> IDType:
+    def calculate_id(cls, **kwargs: object) -> IDType_co:
         return cls.id_type(
             uuid5(
                 namespace=cls.namespace,
                 name=json.dumps(kwargs, sort_keys=True, default=str),
             )
         )
-
-
-class Edge[IDType: UUID](Entity[IDType], namespace=EntityNAMESPACE.EDGE):
-    @override
-    @abstractmethod
-    def __init__(self, *, source_id: UUID, target_id: UUID, **kwargs: object) -> None:
-        super().__init__(source_id=source_id, target_id=target_id, **kwargs)
-
-
-class Node[IDType: UUID](Entity[IDType], namespace=EntityNAMESPACE.NODE):
-    @override
-    @abstractmethod
-    def __init__(self, **kwargs: object) -> None:
-        super().__init__(**kwargs)

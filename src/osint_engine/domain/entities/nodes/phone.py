@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from typing import NewType, override
 from uuid import UUID
 
-from osint_engine.domain.entities.entity import Node
+from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 
 PhoneID = NewType("PhoneID", UUID)

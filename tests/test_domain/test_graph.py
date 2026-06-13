@@ -1,61 +1,66 @@
-from dataclasses import FrozenInstanceError
-from typing import NewType, override
-from uuid import UUID, uuid4
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pytest
 
-from osint_engine.domain.entities.entity import Edge, Node
-from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
-from osint_engine.domain.value_objects.graph import Graph
+from osint_engine.domain.entities.bases.edge import Edge
+from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.bases.node import Node
+from osint_engine.domain.entities.entity import Entity
+from osint_engine.domain.errors.graph_error import (
+    HasNoNodesGraphError,
+    RootNotInNodesGraphError,
+)
 
-FakeEdgeID = NewType("FakeEdgeID", UUID)
-FakeNodeID = NewType("FakeNodeID", UUID)
+if TYPE_CHECKING:
+    from tests.conftest import MakeNode
 
-
-class FakeEdge(Edge[FakeEdgeID], namespace=EntityNAMESPACE.TEST_EDGE):
-    content: str
-
-    @override
-    def __init__(
-        self, *, source_id: UUID, target_id: UUID, content: str, **kwargs: object
-    ) -> None:
-        super().__init__(
-            source_id=source_id, target_id=target_id, content=content, **kwargs
-        )
+# VALID CASES
 
 
-class FakeNode(Node[FakeNodeID], namespace=EntityNAMESPACE.TEST_NODE):
-    content: str
+def test_graph_inherits_directly_from_entity() -> None:
+    bases = Graph.__bases__
 
-    @override
-    def __init__(self, *, content: str, **kwargs: object) -> None:
-        super().__init__(content=content, **kwargs)
+    assert Entity in bases
+
+    assert Edge not in bases
+
+    assert Node not in bases
+
+
+def test_graph_inner_storages_are_frozenset() -> None:
+    annotations = Graph.__annotations__
+    contract = "frozenset"
+
+    assert annotations["edges"].startswith(contract)
+
+    assert annotations["nodes"].startswith(contract)
+
+
+def test_graph_inner_storages_runtime_types_are_frozenset(make_node: MakeNode) -> None:
+    node = make_node()
+
+    graph = Graph(edges=frozenset(), nodes=frozenset({node}), root_id=node.id)
+
+    assert isinstance(graph.edges, frozenset)
+
+    assert isinstance(graph.nodes, frozenset)
 
 
 # INVALID CASES
 
 
-def test_graph_instances_are_immutable() -> None:
-    edges = frozenset({FakeEdge(source_id=uuid4(), target_id=uuid4(), content="test")})
-    nodes = frozenset({FakeNode(content="test")})
-    graph = Graph(edges=edges, nodes=nodes, root_id=uuid4())
+def test_graph_raises_when_does_not_have_nodes(make_node: MakeNode) -> None:
+    node = make_node()
 
-    with pytest.raises(FrozenInstanceError):
-        graph.edges = frozenset(  # pyright: ignore[reportAttributeAccessIssue]
-            {FakeEdge(source_id=uuid4(), target_id=uuid4(), content="testing...")}
-        )
+    with pytest.raises(HasNoNodesGraphError):
+        Graph(edges=frozenset(), nodes=frozenset(), root_id=node.id)
 
-    with pytest.raises(FrozenInstanceError):
-        graph.nodes = frozenset({FakeNode(content="testing...")})  # pyright: ignore[reportAttributeAccessIssue]
 
-    with pytest.raises(FrozenInstanceError):
-        graph.root_id = uuid4()
+def test_graph_raises_when_root_is_not_in_nodes(make_node: MakeNode) -> None:
+    node = make_node()
 
-    with pytest.raises(FrozenInstanceError):
-        del graph.edges
-
-    with pytest.raises(FrozenInstanceError):
-        del graph.nodes
-
-    with pytest.raises(FrozenInstanceError):
-        del graph.root_id
+    with pytest.raises(RootNotInNodesGraphError):
+        Graph(edges=frozenset(), nodes=frozenset({node}), root_id=uuid4())

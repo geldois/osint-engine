@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from uuid import NAMESPACE_DNS, uuid5
 
@@ -15,6 +17,7 @@ class EntityNAMESPACE(Enum):
     COMPANY_SANCTION = "COMPANY_SANCTION"
     EDGE = "EDGE"
     EMAIL = "EMAIL"
+    GRAPH = "GRAPH"
     NODE = "NODE"
     PERSON = "PERSON"
     PERSON_ADDRESS = "PERSON_ADDRESS"
@@ -29,6 +32,7 @@ class EntityNAMESPACE(Enum):
     TEST = "TEST"
     TEST_DIFF = "TEST_DIFF"
     TEST_EDGE = "TEST_EDGE"
+    TEST_GRAPH = "TEST_GRAPH"
     TEST_NODE = "TEST_NODE"
 
     def __init__(self, value: str, /) -> None:

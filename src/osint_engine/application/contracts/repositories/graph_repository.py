@@ -1,18 +1,30 @@
-from abc import ABC, abstractmethod
-from uuid import UUID
+from __future__ import annotations
 
-from osint_engine.domain.value_objects.graph import Graph
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from osint_engine.domain.entities.bases.graph import Graph
 
 
 class GraphRepository(ABC):
     @abstractmethod
-    async def find(self, *, root_id: UUID) -> Graph | None:
+    def __init__(self) -> None: ...
+
+    @abstractmethod
+    async def find(self, *, graph_id: UUID) -> Graph | None:
         raise NotImplementedError
 
     @abstractmethod
-    async def get(self, *, root_id: UUID) -> Graph:
+    async def get(self, *, graph_id: UUID) -> Graph:
         raise NotImplementedError
 
     @abstractmethod
-    async def merge(self, *, graph: Graph) -> None:
+    async def save(self, *, graph: Graph) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def save_many(self, *, graphs: frozenset[Graph]) -> None:
         raise NotImplementedError

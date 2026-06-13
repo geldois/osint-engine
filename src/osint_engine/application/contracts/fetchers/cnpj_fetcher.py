@@ -1,6 +1,10 @@
-from abc import ABC, abstractmethod
+from __future__ import annotations
 
-from osint_engine.domain.value_objects.graph import Graph
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from osint_engine.domain.entities.bases.graph import Graph
 
 
 class CNPJFetcher(ABC):

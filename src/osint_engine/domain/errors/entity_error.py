@@ -1,18 +1,26 @@
-from typing import NewType, override
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, override
 
 from osint_engine.domain.errors.domain_error import DomainError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from uuid import UUID
+
+    from osint_engine.domain.entities.entity import Entity
 
 
 class EntityError(DomainError, error_code=None): ...
 
 
 class InvalidEntityIDTypeError(EntityError, error_code="ENTITY_INVALID_ID_TYPE"):
+    id_type: Callable[[UUID], UUID]
     subject: type
-    id_type: NewType
 
     @override
-    def __init__(self, *, subject: type, id_type: NewType) -> None:
-        super().__init__(subject=subject, id_type=id_type)
+    def __init__(self, *, id_type: Callable[[UUID], UUID], subject: type) -> None:
+        super().__init__(id_type=id_type, subject=subject)
 
     @override
     def _build_message(self) -> str:
@@ -43,10 +51,10 @@ class MissingEntityIDTypeError(EntityError, error_code="ENTITY_MISSING_ID_TYPE")
 
 
 class MissingEntityNAMESPACEError(EntityError, error_code="ENTITY_MISSING_NAMESPACE"):
-    subject: type
+    subject: type[Entity[UUID]]
 
     @override
-    def __init__(self, *, subject: type) -> None:
+    def __init__(self, *, subject: type[Entity[UUID]]) -> None:
         super().__init__(subject=subject)
 
     @override
@@ -56,3 +64,21 @@ class MissingEntityNAMESPACEError(EntityError, error_code="ENTITY_MISSING_NAMESP
             f"pass 'EntityNAMESPACE' in: "
             f"class {self.subject.__name__}(..., namespace=EntityNAMESPACE)"
         )
+
+
+class NotFoundEntityError(EntityError, error_code="ENTITY_NOT_FOUND"):
+    entity_id: UUID
+    subject: type[Entity[UUID]]
+
+    @override
+    def __init__(
+        self,
+        *,
+        entity_id: UUID,
+        subject: type[Entity[UUID]],
+    ) -> None:
+        super().__init__(entity_id=entity_id, subject=subject)
+
+    @override
+    def _build_message(self) -> str:
+        return f"'{self.subject.__name__}' with id '{self.entity_id}'"

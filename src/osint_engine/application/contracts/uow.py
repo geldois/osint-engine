@@ -2,40 +2,23 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from contextlib import AbstractAsyncContextManager
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, final
 
 if TYPE_CHECKING:
     from types import TracebackType
 
-    from osint_engine.application.contracts.repositories.edge_repository import (
-        EdgeRepository,
-    )
-    from osint_engine.application.contracts.repositories.graph_repository import (
-        GraphRepository,
-    )
-    from osint_engine.application.contracts.repositories.node_repository import (
-        NodeRepository,
-    )
-
 
 class UoW(AbstractAsyncContextManager["UoW"]):
     @abstractmethod
-    def __init__(
-        self,
-        *,
-        edge_repo: EdgeRepository,
-        graph_repo: GraphRepository,
-        node_repo: NodeRepository,
-    ) -> None:
-        self.edge_repo = edge_repo
-        self.graph_repo = graph_repo
-        self.node_repo = node_repo
+    def __init__(self) -> None: ...
 
+    @final
     async def __aenter__(self) -> Self:
         await self._prepare()
 
         return self
 
+    @final
     async def __aexit__(
         self,
         exc_type: type[BaseException] | None,

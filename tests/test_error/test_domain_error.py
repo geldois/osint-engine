@@ -22,7 +22,7 @@ class FakeDomainError(DomainError, error_code="TEST"):
 def test_domain_error_raises_when_it_becomes_concrete_without_error_code() -> None:
     with pytest.raises(MissingErrorIdentityContractError):
 
-        class FakeConcreteDomainErrorWithoutErrorCodeError(
+        class FakeConcreteDomainErrorWithoutErrorCodeError(  # pyright: ignore[reportUnusedClass]
             DomainError, error_code=None
         ):
             def __init__(self, **kwargs: object) -> None:

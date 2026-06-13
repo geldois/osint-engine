@@ -1,18 +1,30 @@
-from abc import ABC, abstractmethod
-from uuid import UUID
+from __future__ import annotations
 
-from osint_engine.domain.entities.entity import Node
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from uuid import UUID
+
+    from osint_engine.domain.entities.bases.node import Node
 
 
 class NodeRepository(ABC):
     @abstractmethod
-    async def find[IDType: UUID](self, *, node_id: UUID) -> Node[IDType] | None:
+    def __init__(self) -> None: ...
+
+    @abstractmethod
+    async def find(self, *, node_id: UUID) -> Node[UUID] | None:
         raise NotImplementedError
 
     @abstractmethod
-    async def get[IDType: UUID](self, *, node_id: UUID) -> Node[IDType]:
+    async def get(self, *, node_id: UUID) -> Node[UUID]:
         raise NotImplementedError
 
     @abstractmethod
-    async def merge[IDType: UUID](self, *, node: Node[IDType]) -> None:
+    async def save(self, *, node: Node[UUID]) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def save_many(self, *, nodes: frozenset[Node[UUID]]) -> None:
         raise NotImplementedError
