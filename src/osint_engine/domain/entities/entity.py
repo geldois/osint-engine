@@ -17,6 +17,7 @@ from uuid import UUID, uuid4, uuid5
 from osint_engine.domain.errors.entity_error import (
     InvalidEntityIDTypeError,
     MissingEntityIDTypeError,
+    NonDeterministicValueEntityError,
 )
 
 if TYPE_CHECKING:
@@ -27,7 +28,15 @@ if TYPE_CHECKING:
 IDType_co = TypeVar("IDType_co", bound=UUID, covariant=True)
 
 
-def _verify_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> None:
+def _validate_deterministic_str(*, value: object) -> None:
+    if (
+        type(value).__str__ is object.__str__
+        and type(value).__repr__ is object.__repr__
+    ):
+        raise NonDeterministicValueEntityError(value=value)
+
+
+def _validate_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> None:
     if not hasattr(subject, "id_type") and not isabstract(subject):
         raise MissingEntityIDTypeError(subject=subject)
 
@@ -70,9 +79,7 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
 
             cls.id_type: Callable[[UUID], IDType_co] = staticmethod(candidate)
 
-            return
-
-        _verify_entity_id_type(subject=cls)
+        _validate_entity_id_type(subject=cls)
 
     @abstractmethod
     def __init__(self, **kwargs: object) -> None:
@@ -102,9 +109,15 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
 
     @classmethod
     def calculate_id(cls, **kwargs: object) -> IDType_co:
+        values: list[object] = []
+
+        for value in kwargs.values():
+            _validate_deterministic_str(value=value)
+
+            values.append(value)
+
+        values.sort(key=lambda v: (type(v).__name__, str(v)))
+
         return cls.id_type(
-            uuid5(
-                namespace=cls.namespace,
-                name=json.dumps(kwargs, sort_keys=True, default=str),
-            )
+            uuid5(namespace=cls.namespace, name=json.dumps(values, default=str))
         )

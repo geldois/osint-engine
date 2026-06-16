@@ -66,6 +66,26 @@ class MissingEntityNAMESPACEError(EntityError, error_code="ENTITY_MISSING_NAMESP
         )
 
 
+class NonDeterministicValueEntityError(
+    EntityError, error_code="ENTITY_NON_DETERMINISTIC_VALUE"
+):
+    value: object
+
+    @override
+    def __init__(self, *, value: object) -> None:
+        super().__init__(value=value)
+
+    @override
+    def _build_message(self) -> str:
+        type_name = type(self.value).__name__
+
+        return (
+            f"'{type_name}' identity contract violation - "
+            f"override '__str__' to ensure deterministic UUID generation: "
+            f"class {type_name}: def __str__(self) -> str: ..."
+        )
+
+
 class NotFoundEntityError(EntityError, error_code="ENTITY_NOT_FOUND"):
     entity_id: UUID
     subject: type[Entity[UUID]]
