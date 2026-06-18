@@ -3,12 +3,13 @@ name = "osint-engine"
 version = "1.1.0"
 description = "Entity relationship graph engine that expands identifiers into a fully traceable network of connections sourced exclusively from official public records"
 requires-python = ">=3.12"
-dependencies = ["fastapi", "httpx", "structlog", "typer", "uvicorn"]
+dependencies = ["fastapi", "structlog", "typer", "uvicorn"]
 
 [dependency-groups]
 dev = [
   "basedpyright",
   "commitizen",
+  "httpx2",
   "pre-commit",
   "pytest",
   "pytest-asyncio",
