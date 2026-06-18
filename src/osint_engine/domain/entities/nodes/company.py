@@ -10,10 +10,38 @@ CompanyID = NewType("CompanyID", UUID)
 
 
 class Company(Node[CompanyID], namespace=EntityNAMESPACE.COMPANY):
+    activity_start_date: str
     cnpj: str
-    company_status: str
-    name: str
+    is_headquarters: bool
+    legal_name: str
+    legal_nature: str
+    registration_status: str
+    share_capital: int
+    size_category: str
+    trade_name: str
 
     @override
-    def __init__(self, *, cnpj: str, company_status: str, name: str) -> None:
-        super().__init__(cnpj=cnpj, company_status=company_status, name=name)
+    def __init__(
+        self,
+        *,
+        activity_start_date: str,
+        cnpj: str,
+        is_headquarters: bool,
+        legal_name: str,
+        legal_nature: str,
+        registration_status: str,
+        share_capital: int,
+        size_category: str,
+        trade_name: str,
+    ) -> None:
+        super().__init__(
+            activity_start_date=activity_start_date,
+            cnpj=cnpj,
+            is_headquarters=is_headquarters,
+            legal_name=legal_name,
+            legal_nature=legal_nature,
+            registration_status=registration_status,
+            share_capital=share_capital,
+            size_category=size_category,
+            trade_name=trade_name,
+        )

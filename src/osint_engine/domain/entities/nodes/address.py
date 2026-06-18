@@ -11,7 +11,8 @@ AddressID = NewType("AddressID", UUID)
 
 class Address(Node[AddressID], namespace=EntityNAMESPACE.ADDRESS):
     cep: str
+    number: str
 
     @override
-    def __init__(self, *, cep: str) -> None:
-        super().__init__(cep=cep)
+    def __init__(self, *, cep: str, number: str) -> None:
+        super().__init__(cep=cep, number=number)

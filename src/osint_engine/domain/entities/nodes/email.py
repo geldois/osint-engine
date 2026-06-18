@@ -10,8 +10,8 @@ EmailID = NewType("EmailID", UUID)
 
 
 class Email(Node[EmailID], namespace=EntityNAMESPACE.EMAIL):
-    value: str
+    address: str
 
     @override
-    def __init__(self, *, value: str) -> None:
-        super().__init__(value=value)
+    def __init__(self, *, address: str) -> None:
+        super().__init__(address=address)

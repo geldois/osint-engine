@@ -10,8 +10,8 @@ PhoneID = NewType("PhoneID", UUID)
 
 
 class Phone(Node[PhoneID], namespace=EntityNAMESPACE.PHONE):
-    value: str
+    number: str
 
     @override
-    def __init__(self, *, value: str) -> None:
-        super().__init__(value=value)
+    def __init__(self, *, number: str) -> None:
+        super().__init__(number=number)

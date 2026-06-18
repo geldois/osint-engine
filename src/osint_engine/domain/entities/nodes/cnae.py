@@ -10,8 +10,8 @@ CnaeID = NewType("CnaeID", UUID)
 
 
 class Cnae(Node[CnaeID], namespace=EntityNAMESPACE.CNAE):
-    value: str
+    code: str
 
     @override
-    def __init__(self, *, value: str) -> None:
-        super().__init__(value=value)
+    def __init__(self, *, code: str) -> None:
+        super().__init__(code=code)
