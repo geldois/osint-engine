@@ -1,0 +1,49 @@
+{
+  "default": true,
+  "MD003": {
+    "style": "atx"
+  },
+  "MD004": {
+    "style": "dash"
+  },
+  "MD007": {
+    "indent": 2
+  },
+  "MD009": {
+    "br_spaces": 0
+  },
+  "MD010": {
+    "code_blocks": false
+  },
+  "MD013": {
+    "line_length": 120,
+    "code_block_line_length": 120,
+    "tables": false
+  },
+  "MD024": {
+    "siblings_only": true
+  },
+  "MD029": {
+    "style": "ordered"
+  },
+  "MD033": false,
+  "MD035": {
+    "style": "---"
+  },
+  "MD040": true,
+  "MD041": true,
+  "MD045": true,
+  "MD046": {
+    "style": "fenced"
+  },
+  "MD047": true,
+  "MD048": {
+    "style": "backtick"
+  },
+  "MD049": {
+    "style": "asterisk"
+  },
+  "MD050": {
+    "style": "asterisk"
+  }
+}
