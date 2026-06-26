@@ -9,4 +9,5 @@ if TYPE_CHECKING:
 
 class CNPJFetcher(ABC):
     @abstractmethod
-    async def fetch(self, cnpj: str, /) -> Graph: ...
+    async def fetch(self, cnpj: str, /) -> Graph:
+        raise NotImplementedError

@@ -7,8 +7,22 @@ from typing import TYPE_CHECKING, Self, final
 if TYPE_CHECKING:
     from types import TracebackType
 
+    from osint_engine.application.contracts.repositories.edge_repository import (
+        EdgeRepository,
+    )
+    from osint_engine.application.contracts.repositories.graph_repository import (
+        GraphRepository,
+    )
+    from osint_engine.application.contracts.repositories.node_repository import (
+        NodeRepository,
+    )
+
 
 class UoW(AbstractAsyncContextManager["UoW"]):
+    edges: EdgeRepository
+    graphs: GraphRepository
+    nodes: NodeRepository
+
     @abstractmethod
     def __init__(self) -> None: ...
 
