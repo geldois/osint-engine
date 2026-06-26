@@ -39,8 +39,8 @@ class Graph(Entity[GraphID], namespace=EntityNAMESPACE.GRAPH):
 
         super().__init__(edges=edges, nodes=nodes, root_id=root_id)
 
-    @override
     @classmethod
+    @override
     def calculate_id(cls, **kwargs: object) -> GraphID:
         edges = cast("frozenset[Edge[UUID]]", kwargs["edges"])
         nodes = cast("frozenset[Node[UUID]]", kwargs["nodes"])

@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import FrozenInstanceError
 from inspect import isabstract
-from typing import final, override
+from typing import ClassVar, final, override
 
 
 def _verify_error_code(*, subject: type[DomainError]) -> None:
@@ -12,6 +12,8 @@ def _verify_error_code(*, subject: type[DomainError]) -> None:
 
 
 class DomainError(ABC, Exception):
+    error_code: ClassVar[str | None]
+
     @final
     def __init_subclass__(cls, *, error_code: str | None, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
