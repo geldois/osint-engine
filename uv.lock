@@ -441,29 +441,27 @@ dev = [
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
-    { name = "pytest-language-server" },
     { name = "ruff" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "fastapi" },
-    { name = "httpx2" },
-    { name = "pydantic" },
-    { name = "structlog" },
-    { name = "typer" },
-    { name = "uvicorn" },
+    { name = "fastapi", specifier = ">=0.136,<1" },
+    { name = "httpx2", specifier = ">=2.4,<3" },
+    { name = "pydantic", specifier = ">=2.13,<3" },
+    { name = "structlog", specifier = ">=25.5,<27" },
+    { name = "typer", specifier = ">=0.26,<1" },
+    { name = "uvicorn", specifier = ">=0.48,<1" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "basedpyright" },
-    { name = "commitizen" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-language-server" },
-    { name = "ruff" },
+    { name = "basedpyright", specifier = ">=1.39,<2" },
+    { name = "commitizen", specifier = ">=4.16,<5" },
+    { name = "pre-commit", specifier = ">=4.6,<5" },
+    { name = "pytest", specifier = ">=9.0,<10" },
+    { name = "pytest-asyncio", specifier = ">=1.4,<2" },
+    { name = "ruff", specifier = ">=0.15,<1" },
 ]
 
 [[package]]
@@ -647,28 +645,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/43/7c/d36d04db312ecf4298932ef77e6e4a9e8ad017906e24e34f0b0c361a2473/pytest_asyncio-1.4.0.tar.gz", hash = "sha256:c6c0d2259945122819f171a32ecea2c349ead889ee28176caaf492143424be42", size = 58514, upload-time = "2026-05-26T09:56:04.083Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/03/e2/08a497ef684b88559c9cc5f4ad53a37e7b99e727094a86d6ea32536d5d3c/pytest_asyncio-1.4.0-py3-none-any.whl", hash = "sha256:933ca923a23075a87fb7070c0ec272a6848489824d887c85c812670932835aa1", size = 16930, upload-time = "2026-05-26T09:56:02.576Z" },
-]
-
-[[package]]
-name = "pytest-language-server"
-version = "0.23.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/50/79/98983fd606c792a7c7404f98ef934ef75cbb5c44e319084cea4e5c4d27dc/pytest_language_server-0.23.0.tar.gz", hash = "sha256:80fe5b4772a74c7a7f1feb6cd650f6fdccb410b3b678689ee3fcf60fc589691a", size = 2968400, upload-time = "2026-06-04T21:44:35.112Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a0/dc/c0dc48a9891770326f55080ced8eebc53431f73f15583db92767758aad7e/pytest_language_server-0.23.0-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:67f83cadd408c01dcfbeffdca96d204c1454b81dac59bcf2fea576a152822122", size = 3746919, upload-time = "2026-06-04T21:44:12.359Z" },
-    { url = "https://files.pythonhosted.org/packages/fb/4c/164a847e410a261329dcd39f730b71e844a80bdf2f37774dbcc90762ea33/pytest_language_server-0.23.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:883a0aa4d817044c7f3045295b80b484ddb8c978c726e9226537eded68860d51", size = 3631667, upload-time = "2026-06-04T21:44:14.39Z" },
-    { url = "https://files.pythonhosted.org/packages/5f/f6/13240895ae4dbd4314fd9d73941eef266639dcb8d8487d05a094ed46515b/pytest_language_server-0.23.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9932668619d78c46264f0d652a0a89161f18420413e51879fcb9c3d0ae005728", size = 3801098, upload-time = "2026-06-04T21:44:16.004Z" },
-    { url = "https://files.pythonhosted.org/packages/0b/73/182949cfd52c7b9000b10b91cf593cd477781c0fe778d2eab2e45a860b52/pytest_language_server-0.23.0-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:a591bb1c27d8056d1af8ba3b3f034ec8f846b49d9f16b8608759c55491a1dc93", size = 3770666, upload-time = "2026-06-04T21:44:17.554Z" },
-    { url = "https://files.pythonhosted.org/packages/71/2d/5daacbb5279f1d91a5424b55fba0e33b6b9325d7489bde6cbe46d407c7bc/pytest_language_server-0.23.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e1d07ae0315b64416eb39676d8d72ee1a8111d92610fbdef793c45e2363bf81f", size = 4126685, upload-time = "2026-06-04T21:44:19.197Z" },
-    { url = "https://files.pythonhosted.org/packages/b9/50/911a0b45cbad255b6dbad9d8a0f1de40ab6f2563f6a21fd2d5e77d862d95/pytest_language_server-0.23.0-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:6116da612eff305bc2613df3b8ceb90326925783998e6e7b76365bc3e2d7eeab", size = 4263675, upload-time = "2026-06-04T21:44:21.192Z" },
-    { url = "https://files.pythonhosted.org/packages/97/c8/8a13328370e37b0e8e27e74be8ecd0bffc44d3a3ab4940618111db1484c3/pytest_language_server-0.23.0-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:0df8b7b89ca6fa7a9166f4a4de26fbd4518896521bf4784c73f6961e31a09cb4", size = 3935000, upload-time = "2026-06-04T21:44:22.733Z" },
-    { url = "https://files.pythonhosted.org/packages/1d/28/d9b2f79d8ff8928139c33ec769e6e35dd3b543376a8a156b65aa18fb17db/pytest_language_server-0.23.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f34696b7e6e0ffbd83c60d2ed92d0ab2d70d636779984ae25f9bd8692a9671e5", size = 3878430, upload-time = "2026-06-04T21:44:24.188Z" },
-    { url = "https://files.pythonhosted.org/packages/0e/e6/82f9c393d77d3fa7475cc17e8ee7c8e29f79e2b3941445e461460e80fe47/pytest_language_server-0.23.0-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:3072a1c718f0c0ed4129d91212b4c03274d2cd8d4a177e93463cd7285e19bd2e", size = 3848694, upload-time = "2026-06-04T21:44:25.751Z" },
-    { url = "https://files.pythonhosted.org/packages/7d/25/dd274134707b19acb79a9c72aa2430b2fbaddd1e252a49d361ce5481f5d9/pytest_language_server-0.23.0-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:3cac8dcadfc3e71b8bd96f560f6104a3abff4e622413489c60f20785f246fe36", size = 3828264, upload-time = "2026-06-04T21:44:27.431Z" },
-    { url = "https://files.pythonhosted.org/packages/68/62/588bee273cbc8967e90b1260803604326a955c5326e0ebda8c8377fde40d/pytest_language_server-0.23.0-py3-none-musllinux_1_2_i686.whl", hash = "sha256:a18c846b88bebf60a14834a11b8fb6aff433c72ae0b6ef1bedb3dded6212739a", size = 3974917, upload-time = "2026-06-04T21:44:29.016Z" },
-    { url = "https://files.pythonhosted.org/packages/c6/ea/d264360b2f978eb027a167ce1ec365558efe889e42fb19da38acb2bdc550/pytest_language_server-0.23.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:47ad143e774b9a2a98eccde064ae80cee92ad7415f1b8332082a8f3eee60a1cd", size = 3971260, upload-time = "2026-06-04T21:44:30.807Z" },
-    { url = "https://files.pythonhosted.org/packages/9b/57/5987fb51267c20e744acc6bb68ad4acfa20a66968e340d2e7ddaf3b661a8/pytest_language_server-0.23.0-py3-none-win32.whl", hash = "sha256:4a7d3a07c6a419263873b17cce92385370180a4de164d1c4de14604cbabbf319", size = 3151705, upload-time = "2026-06-04T21:44:32.27Z" },
-    { url = "https://files.pythonhosted.org/packages/ce/05/43e8ba31955a9a05fab3cc55ada77467e3e9beda248a86bdc060feae1a1b/pytest_language_server-0.23.0-py3-none-win_amd64.whl", hash = "sha256:b296c74fba934fe4176d1c81f61edf6ca38d5a3dc1816b2eba1aaeeda1f9459f", size = 3513610, upload-time = "2026-06-04T21:44:33.751Z" },
 ]
 
 [[package]]

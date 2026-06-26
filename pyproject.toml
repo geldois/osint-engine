@@ -2,30 +2,45 @@
 name = "osint-engine"
 version = "1.1.0"
 description = "Entity relationship graph engine that expands identifiers into a fully traceable network of connections sourced exclusively from official public records"
+authors = [{ name = "Angelito Chagas", email = "chagasangelito@gmail.com" }]
+license = "MIT"
+license-files = ["LICENSE"]
+readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-  "fastapi",
-  "httpx2",
-  "pydantic",
-  "structlog",
-  "typer",
-  "uvicorn",
+keywords = ["osint", "graph", "cnpj", "brazil", "entity-resolution"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Security",
 ]
+dependencies = [
+  "fastapi>=0.136,<1",
+  "httpx2>=2.4,<3",
+  "pydantic>=2.13,<3",
+  "structlog>=25.5,<27",
+  "typer>=0.26,<1",
+  "uvicorn>=0.48,<1",
+]
+
+[project.urls]
+Repository = "https://github.com/geldois/osint-engine"
 
 [dependency-groups]
 dev = [
-  "basedpyright",
-  "commitizen",
-  "pre-commit",
-  "pytest",
-  "pytest-asyncio",
-  "pytest-language-server",
-  "ruff"
+  "basedpyright>=1.39,<2",
+  "commitizen>=4.16,<5",
+  "pre-commit>=4.6,<5",
+  "pytest>=9.0,<10",
+  "pytest-asyncio>=1.4,<2",
+  "ruff>=0.15,<1",
 ]
 
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.basedpyright]
 venvPath = "."
@@ -42,12 +57,11 @@ version_scheme = "semver"
 version_provider = "pep621"
 update_map_pyproject = true
 
-[tool.pytest.ini_options]
-pythonpath = ["src", "tests"]
-asyncio_mode = "strict"
+[tool.hatch.build.targets.wheel]
+packages = ["src/osint_engine"]
 
-[tool.pytest-language-server]
-exclude = ["build/**", "dist/**", ".tox/**"]
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
 
 [tool.ruff]
 line-length = 88
@@ -67,8 +81,3 @@ ignore = ["COM812", "D", "D100", "D101", "D203", "D212", "ISC001", "RUF012"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.uv]

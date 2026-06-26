@@ -7,20 +7,33 @@ exclusively from official public records.
 
 ## Overview
 
-A **CNPJ** enters the engine as a root identifier. The engine queries official public records, constructs a typed,
-immutable graph, and returns it — ready to traverse. Each **Node** represents a real-world entity: a company, a
-person, an address, a sanction, a CNAE classification, a phone, or an email. Each **Edge** names the relationship
-between two nodes: `company_has_member`, `person_owns_company`, `company_received_sanction`, and so on.
+A **CNPJ** enters the engine as a root identifier. The engine queries official public records, constructs a typed
+immutable graph, and returns it — ready to traverse. Each **Node** represents a real-world entity: a company, a person,
+an address, a CNAE classification, a phone, or an email. Each **Edge** names the relationship between two nodes:
+`company_has_member`, `person_owns_company`, `company_located_at`, and so on.
 
-Every node and every edge carries a stable, deterministic identity derived exclusively from its content. The same
-CNPJ expanded on different machines at different times always produces the same graph with the same IDs — making
-the structure idempotent by construction, not by convention.
+Every node and edge carries a stable, deterministic identity derived exclusively from its content. The same CNPJ
+expanded on different machines at different times always produces the same graph with the same IDs — making the
+structure idempotent by construction, not by convention.
+
+## API
+
+```http
+GET /cnpj/{cnpj}
+```
+
+Returns a `GraphSchema` containing the root company, all connected entities, and all typed relationships. The current
+data source is [BrasilAPI](https://brasilapi.com.br) (see [ADR-0005](docs/adr/0005-brasilapi-as-mvp-cnpj-data-source.md)).
+
+Every response includes an `X-Correlation-ID` header for end-to-end request tracing. Error responses carry the same
+correlation ID in the body alongside a machine-readable `type` field derived from the domain error hierarchy.
 
 ## Stack
 
 - **Runtime:** Python 3.12, FastAPI, Uvicorn
-- **HTTP client:** httpx (async)
-- **Observability:** structlog
+- **HTTP client:** httpx2 (async)
+- **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
+- **Observability:** structlog (JSON in production, console in debug)
 - **Tooling:** uv, Ruff, basedpyright (strict), Commitizen
 - **Testing:** pytest, pytest-asyncio
 
@@ -28,8 +41,8 @@ the structure idempotent by construction, not by convention.
 
 ### Content-addressable entity identity
 
-Every entity — node, edge, and graph — derives its ID from its content via UUID5. The same input always produces
-the same identifier, on any machine, at any time. Deduplication, idempotent upserts, and safe concurrent writes are
+Every entity — node, edge, and graph — derives its ID from its content via UUID5. The same input always produces the
+same identifier, on any machine, at any time. Deduplication, idempotent upserts, and safe concurrent writes are
 structural consequences, not implementation choices. Each entity type occupies its own UUID namespace so that a
 `CompanyID` and a `PersonID` derived from identical payloads can never collide.
 
@@ -41,26 +54,20 @@ The entity base class uses `__init_subclass__` to validate every subclass at imp
 A concrete entity missing a namespace or declaring an incompatible ID type raises immediately when the module is
 loaded — before any test runs, before any instance is created. The domain is self-defending.
 
-`__setattr__` and `__delattr__` raise `FrozenInstanceError` on every entity. Immutability is structural, not
-enforced by convention.
+`__setattr__` and `__delattr__` raise `FrozenInstanceError` on every entity. Immutability is structural, not enforced
+by convention.
 
 See [ADR-0002](docs/adr/0002-manual-entity-base-class.md).
 
 ### Zero-cost type hierarchy
 
-Each concrete entity declares its own `NewType` ID (`CompanyID`, `PersonID`, `GraphID`, …) as the generic
-parameter of `Entity[IDType_co]`, where `IDType_co` is a covariant `TypeVar` bound to `UUID`. The type-checker
-enforces that a `Node[CompanyID]` cannot be substituted for a `Node[PersonID]` — and that edge source and target
-ID types match their declared constraints — with no runtime representation whatsoever. `NewType` is the identity
-function at runtime; the distinction exists only in the type-checker's world.
+Each concrete entity declares its own `NewType` ID (`CompanyID`, `PersonID`, `GraphID`, …) as the generic parameter of
+`Entity[IDType_co]`, where `IDType_co` is a covariant `TypeVar` bound to `UUID`. The type-checker enforces that a
+`Node[CompanyID]` cannot be substituted for a `Node[PersonID]` — and that edge source and target ID types match their
+declared constraints — with no runtime representation whatsoever. `NewType` is the identity function at runtime; the
+distinction exists only in the type-checker's world.
 
 See [ADR-0004](docs/adr/0004-idtype-co-typevar-for-covariant-id-typing.md).
-
-## Testing
-
-```bash
-uv run pytest
-```
 
 ## Setup
 
@@ -69,7 +76,23 @@ Requires [uv](https://docs.astral.sh/uv/).
 ```bash
 git clone https://github.com/geldois/osint-engine.git
 cd osint-engine
-uv sync --group dev
+uv sync
 uv run pre-commit install
+```
+
+```bash
+cp .env.example .env
+# edit .env and set SECRET_KEY
+```
+
+## Running
+
+```bash
+uv run python -m osint_engine
+```
+
+## Testing
+
+```bash
 uv run pytest
 ```
