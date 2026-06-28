@@ -31,10 +31,11 @@ Repository = "https://github.com/geldois/osint-engine"
 [dependency-groups]
 dev = [
   "basedpyright>=1.39,<2",
-  "commitizen>=4.16,<5",
   "pre-commit>=4.6,<5",
   "pytest>=9.0,<10",
   "pytest-asyncio>=1.4,<2",
+  "pytest-language-server>=0.23,<1",
+  "python-semantic-release>=10.5,<11",
   "ruff>=0.15,<1",
 ]
 
@@ -50,18 +51,15 @@ typeCheckingMode = "strict"
 pythonPlatform = "All"
 reportMissingTypeStubs = "none"
 
-[tool.commitizen]
-name = "cz_conventional_commits"
-tag_format = "v$version"
-version_scheme = "semver"
-version_provider = "pep621"
-update_map_pyproject = true
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/osint_engine"]
 
 [tool.pytest.ini_options]
+pythonpath = ["src", "tests"]
 asyncio_mode = "strict"
+
+[tool.pytest-language-server]
+exclude = ["build/**", "dist/**", ".tox/**"]
 
 [tool.ruff]
 line-length = 88
@@ -81,3 +79,17 @@ ignore = ["COM812", "D", "D100", "D101", "D203", "D212", "ISC001", "RUF012"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+commit_parser = "conventional"
+tag_format = "v{version}"
+
+[tool.semantic_release.branches.main]
+match = "main"
+
+[tool.semantic_release.commit_parser_options]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf", "refactor"]
+parse_squash_commits = true
+ignore_merge_commits = true

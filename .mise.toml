@@ -1,0 +1,4 @@
+[tools]
+act = "0.2.89"
+"npm:markdownlint-cli2" = "0.22.1"
+uv = "0.11.25"

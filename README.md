@@ -1,6 +1,6 @@
 # OSINT Engine
 
-[![CI](https://github.com/geldois/osint-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/geldois/osint-engine/actions)
+[![CI](https://github.com/geldois/osint-engine/actions/workflows/test.yml/badge.svg)](https://github.com/geldois/osint-engine/actions)
 
 Entity relationship graph engine that expands identifiers into a fully traceable network of connections sourced
 exclusively from official public records.
@@ -71,28 +71,52 @@ See [ADR-0004](docs/adr/0004-idtype-co-typevar-for-covariant-id-typing.md).
 
 ## Setup
 
-Requires [uv](https://docs.astral.sh/uv/).
-
 ```bash
 git clone https://github.com/geldois/osint-engine.git
 cd osint-engine
-uv sync
-uv run pre-commit install
 ```
+
+### Linux
+
+1. Install [Docker Engine](https://docs.docker.com/engine/install/) and start the daemon.
+2. Install [mise](https://mise.jdx.dev) and activate it in your shell (see [getting started](https://mise.jdx.dev/getting-started.html)).
+3. Install the project toolchain and git hooks:
 
 ```bash
-cp .env.example .env
-# edit .env and set SECRET_KEY
+mise install
+uv run pre-commit install
+cp .env.example .env  # then set SECRET_KEY
 ```
 
-## Running
+### Windows
+
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend enabled.
+2. Install [mise](https://mise.jdx.dev) via PowerShell and activate it in your shell (see [getting started](https://mise.jdx.dev/getting-started.html)).
+3. Install the project toolchain and git hooks:
+
+```powershell
+mise install
+uv run pre-commit install
+copy .env.example .env  # then set SECRET_KEY
+```
+
+> `--network host` in `.actrc` is Linux-only and has no effect on Docker Desktop. Internet access works via
+Docker Desktop's default networking — the first run downloads dependencies from PyPI, subsequent runs use the uv cache.
+
+### Run
 
 ```bash
 uv run python -m osint_engine
 ```
 
-## Testing
+### Test
 
 ```bash
 uv run pytest
+```
+
+### Local CI
+
+```bash
+act push
 ```
