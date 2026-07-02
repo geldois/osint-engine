@@ -1,8 +1,14 @@
-from collections.abc import Awaitable, Callable
+from __future__ import annotations
 
-from osint_engine.config.container import Container
+from typing import TYPE_CHECKING
+
 from osint_engine.interface.http.presenters.graph_presenter import graph_to_schema
-from osint_engine.interface.http.schemas.graph_schema import GraphSchema
+from osint_engine.interface.http.schemas.graph_schema import GraphSchema  # noqa: TC001
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from osint_engine.config.container import Container
 
 
 def build_get_cnpj_handler(

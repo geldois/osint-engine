@@ -20,6 +20,9 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_graph_reposito
 from osint_engine.infrastructure.persistence.mem.repositories.mem_node_repository import (  # noqa: E501
     MemNodeRepository,
 )
+from osint_engine.infrastructure.persistence.mem.repositories.mem_user_repository import (  # noqa: E501
+    MemUserRepository,
+)
 
 
 class MemUoW(UoW):
@@ -30,7 +33,7 @@ class MemUoW(UoW):
     def _is_prepared(self) -> bool:
         return all(
             hasattr(self, attribute)
-            for attribute in ("_snapshot", "edges", "graphs", "nodes")
+            for attribute in ("_snapshot", "edges", "graphs", "nodes", "users")
         )
 
     @override
@@ -43,6 +46,7 @@ class MemUoW(UoW):
         self.edges = MemEdgeRepository(mem_storage=self._snapshot)
         self.graphs = MemGraphRepository(mem_storage=self._snapshot)
         self.nodes = MemNodeRepository(mem_storage=self._snapshot)
+        self.users = MemUserRepository(mem_storage=self._snapshot)
 
     @override
     async def _finish(self) -> None:
@@ -59,6 +63,8 @@ class MemUoW(UoW):
 
         del self.nodes
 
+        del self.users
+
     @override
     async def commit(self) -> None:
         if not self._is_prepared():
@@ -68,4 +74,6 @@ class MemUoW(UoW):
 
     @override
     async def rollback(self) -> None:
-        pass
+        """
+        All operations against an isolated snapshot; rollback is implicit.
+        """

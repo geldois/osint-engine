@@ -13,10 +13,8 @@ class ExternalAPIFetcherError(FetcherError):
     status_code: int | None
 
     @override
-    def __init__(
-        self, *, source: str, status_code: int | None, **kwargs: object
-    ) -> None:
-        super().__init__(source=source, status_code=status_code, **kwargs)
+    def __init__(self, *, source: str, status_code: int | None) -> None:
+        super().__init__(source=source, status_code=status_code)
 
     @override
     def _build_message(self) -> str:
@@ -37,20 +35,10 @@ class UnexpectedFieldTypeFetcherError(FetcherError):
 
     @override
     def __init__(
-        self,
-        *,
-        source: str,
-        key: str,
-        expected_type: type,
-        field_type: type,
-        **kwargs: object,
+        self, *, source: str, key: str, expected_type: type, field_type: type
     ) -> None:
         super().__init__(
-            source=source,
-            key=key,
-            expected_type=expected_type,
-            field_type=field_type,
-            **kwargs,
+            source=source, key=key, expected_type=expected_type, field_type=field_type
         )
 
     @override
@@ -67,8 +55,8 @@ class UnexpectedSchemaFetcherError(FetcherError):
     missing_field: str
 
     @override
-    def __init__(self, *, source: str, missing_field: str, **kwargs: object) -> None:
-        super().__init__(source=source, missing_field=missing_field, **kwargs)
+    def __init__(self, *, source: str, missing_field: str) -> None:
+        super().__init__(source=source, missing_field=missing_field)
 
     @override
     def _build_message(self) -> str:

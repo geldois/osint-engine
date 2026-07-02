@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 
 class EdgeRepository(ABC):
     @abstractmethod
-    def __init__(self) -> None: ...
+    def __init__(self) -> None:
+        raise NotImplementedError
 
     @abstractmethod
     async def find(self, *, edge_id: UUID) -> Edge[UUID] | None:

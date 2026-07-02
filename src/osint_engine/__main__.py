@@ -21,7 +21,7 @@ def _build_http_client(*, settings: Settings) -> AsyncClient:
 
 
 async def main() -> None:
-    settings = Settings()
+    settings = Settings.from_env()
 
     configure_logging(debug=settings.debug)
 

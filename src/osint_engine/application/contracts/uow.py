@@ -16,15 +16,20 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.repositories.node_repository import (
         NodeRepository,
     )
+    from osint_engine.application.contracts.repositories.user_repository import (
+        UserRepository,
+    )
 
 
 class UoW(AbstractAsyncContextManager["UoW"]):
     edges: EdgeRepository
     graphs: GraphRepository
     nodes: NodeRepository
+    users: UserRepository
 
     @abstractmethod
-    def __init__(self) -> None: ...
+    def __init__(self) -> None:
+        raise NotImplementedError
 
     @final
     async def __aenter__(self) -> Self:

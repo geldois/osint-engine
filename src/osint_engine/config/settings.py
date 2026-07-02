@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError
+from dataclasses import dataclass
 from os import environ, getenv
 from pathlib import Path
 
@@ -29,9 +29,11 @@ def _load_dotenv() -> None:
             environ.setdefault(key=k, value=v)
 
 
+@dataclass(frozen=True)
 class Settings:
     access_token_expire_minutes: int
-    algorithm: str
+    admin_password: str
+    cors_origins: list[str]
     debug: bool
     fetcher_connect_timeout: float
     fetcher_read_timeout: float
@@ -40,35 +42,59 @@ class Settings:
     port: int
     secret_key: str
 
-    def __init__(self) -> None:
+    @staticmethod
+    def _load_access_token_expire_minutes() -> int:
+        return int(getenv(key="ACCESS_TOKEN_EXPIRE_MINUTES", default="60"))
+
+    @staticmethod
+    def _load_admin_password() -> str:
+        return environ["ADMIN_PASSWORD"]
+
+    @staticmethod
+    def _load_cors_origins() -> list[str]:
+        return [origins.strip() for origins in getenv(key="CORS_ORIGINS", default="http://localhost:3000").split(",")]
+
+    @staticmethod
+    def _load_debug() -> bool:
+        return getenv(key="DEBUG", default="false").lower() == "true"
+
+    @staticmethod
+    def _load_fetcher_connect_timeout() -> float:
+        return float(getenv(key="FETCHER_CONNECT_TIMEOUT", default="15.0"))
+
+    @staticmethod
+    def _load_fetcher_read_timeout() -> float:
+        return float(getenv(key="FETCHER_READ_TIMEOUT", default="30.0"))
+
+    @staticmethod
+    def _load_host() -> str:
+        return getenv(key="HOST", default="127.0.0.1")
+
+    @staticmethod
+    def _load_log_level() -> str:
+        return getenv(key="LOG_LEVEL", default="info")
+
+    @staticmethod
+    def _load_port() -> int:
+        return int(getenv(key="PORT", default="8000"))
+
+    @staticmethod
+    def _load_secret_key() -> str:
+        return environ["SECRET_KEY"]
+
+    @classmethod
+    def from_env(cls) -> Settings:
         _load_dotenv()
 
-        object.__setattr__(
-            self,
-            "access_token_expire_minutes",
-            int(getenv(key="ACCESS_TOKEN_EXPIRE_MINUTES", default="60")),
+        return cls(
+            access_token_expire_minutes=cls._load_access_token_expire_minutes(),
+            admin_password=cls._load_admin_password(),
+            cors_origins=cls._load_cors_origins(),
+            debug=cls._load_debug(),
+            fetcher_connect_timeout=cls._load_fetcher_connect_timeout(),
+            fetcher_read_timeout=cls._load_fetcher_read_timeout(),
+            host=cls._load_host(),
+            log_level=cls._load_log_level(),
+            port=cls._load_port(),
+            secret_key=cls._load_secret_key(),
         )
-        object.__setattr__(self, "algorithm", getenv(key="ALGORITHM", default="HS256"))
-        object.__setattr__(
-            self, "debug", getenv(key="DEBUG", default="false").lower() == "true"
-        )
-        object.__setattr__(
-            self,
-            "fetcher_connect_timeout",
-            float(getenv(key="FETCHER_CONNECT_TIMEOUT", default="15.0")),
-        )
-        object.__setattr__(
-            self,
-            "fetcher_read_timeout",
-            float(getenv(key="FETCHER_READ_TIMEOUT", default="30.0")),
-        )
-        object.__setattr__(self, "host", getenv(key="HOST", default="127.0.0.1"))
-        object.__setattr__(self, "log_level", getenv(key="LOG_LEVEL", default="info"))
-        object.__setattr__(self, "port", int(getenv(key="PORT", default="8000")))
-        object.__setattr__(self, "secret_key", environ["SECRET_KEY"])
-
-    def __setattr__(self, name: str, value: object, /) -> None:
-        raise FrozenInstanceError
-
-    def __delattr__(self, name: str, /) -> None:
-        raise FrozenInstanceError

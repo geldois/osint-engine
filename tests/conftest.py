@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from osint_engine.application.auth.user import Role, User
 from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from tests.fakes import FakeEdge, FakeEntity, FakeNode
@@ -19,6 +20,7 @@ type MakeEntity = Callable[..., FakeEntity]
 type MakeGraph = Callable[..., Graph]
 type MakeMemStorage = Callable[..., MemStorage]
 type MakeNode = Callable[..., FakeNode]
+type MakeUser = Callable[..., User]
 
 
 @pytest.fixture
@@ -91,7 +93,8 @@ def make_mem_storage() -> MakeMemStorage:
     *,
     edges: list[Edge[UUID]] | None = None,
     graphs: list[Graph] | None = None,
-    nodes: list[Node[UUID]] | None = None
+    nodes: list[Node[UUID]] | None = None,
+    users: list[User] | None = None
     """
 
     def mem_storage(
@@ -99,11 +102,13 @@ def make_mem_storage() -> MakeMemStorage:
         edges: list[Edge[UUID]] | None = None,
         graphs: list[Graph] | None = None,
         nodes: list[Node[UUID]] | None = None,
+        users: list[User] | None = None,
     ) -> MemStorage:
         return MemStorage(
             edges={e.id: e for e in edges} if edges is not None else {},
             graphs={g.id: g for g in graphs} if graphs is not None else {},
             nodes={n.id: n for n in nodes} if nodes is not None else {},
+            users={u.username: u for u in users} if users is not None else {},
         )
 
     return mem_storage
@@ -120,3 +125,29 @@ def make_node() -> MakeNode:
         return FakeNode(content=content if content is not None else str(uuid4()))
 
     return node
+
+
+@pytest.fixture
+def make_user() -> MakeUser:
+    """
+    *,
+    username: str | None = None,
+    hashed_password: str | None = None,
+    role: Role = Role.VIEWER
+    """
+
+    def user(
+        *,
+        username: str | None = None,
+        hashed_password: str | None = None,
+        role: Role = Role.VIEWER,
+    ) -> User:
+        return User(
+            username=username if username is not None else str(uuid4()),
+            hashed_password=hashed_password
+            if hashed_password is not None
+            else str(uuid4()),
+            role=role,
+        )
+
+    return user

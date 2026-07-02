@@ -20,15 +20,15 @@ async def http_middleware(
     cid = uuid4()
     correlation_id.set(cid)
 
-    logger = get_logger()
-    logger.info(event="request.start", method=request.method, path=request.url.path)
+    _logger = get_logger()
+    _logger.info("request.start", method=request.method, path=request.url.path)
 
     start = perf_counter()
 
     response = await call_next(request)
 
-    logger.info(
-        event="request.end",
+    _logger.info(
+        "request.end",
         status=response.status_code,
         latency_ms=round((perf_counter() - start) * 1000, 2),
     )

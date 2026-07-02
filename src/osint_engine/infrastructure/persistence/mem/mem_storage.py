@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, final, override
 if TYPE_CHECKING:
     from uuid import UUID
 
+    from osint_engine.application.auth.user import User
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.graph import Graph
     from osint_engine.domain.entities.bases.node import Node
@@ -16,6 +17,7 @@ class MemStorage:
     edges: dict[UUID, Edge[UUID]]
     graphs: dict[UUID, Graph]
     nodes: dict[UUID, Node[UUID]]
+    users: dict[str, User]
 
     def __init__(
         self,
@@ -23,10 +25,12 @@ class MemStorage:
         edges: dict[UUID, Edge[UUID]] | None = None,
         graphs: dict[UUID, Graph] | None = None,
         nodes: dict[UUID, Node[UUID]] | None = None,
+        users: dict[str, User] | None = None
     ) -> None:
         object.__setattr__(self, "edges", edges if edges is not None else {})
         object.__setattr__(self, "graphs", graphs if graphs is not None else {})
         object.__setattr__(self, "nodes", nodes if nodes is not None else {})
+        object.__setattr__(self, "users", users if users is not None else {})
 
     @final
     def __setattr__(self, name: str, value: object, /) -> None:
@@ -55,12 +59,14 @@ class MemStorageSnapshot(MemStorage):
             edges=copy(mem_storage.edges),
             graphs=copy(mem_storage.graphs),
             nodes=copy(mem_storage.nodes),
+            users=copy(mem_storage.users),
         )
 
     def clear_snapshot(self) -> None:
         self.edges.clear()
         self.graphs.clear()
         self.nodes.clear()
+        self.users.clear()
 
     def commit_to_storage(self) -> None:
         self._mem_storage.edges.clear()
@@ -71,3 +77,6 @@ class MemStorageSnapshot(MemStorage):
 
         self._mem_storage.nodes.clear()
         self._mem_storage.nodes.update(self.nodes)
+
+        self._mem_storage.users.clear()
+        self._mem_storage.users.update(self.users)

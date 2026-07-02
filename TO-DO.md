@@ -10,13 +10,6 @@ for actions, uv, and pre-commit hooks
 - ADR-0006: manual composition root over FastAPI DI
 - ADR-0007: in-memory persistence as deliberate MVP boundary
 
-## feat(infrastructure/auth)
-
-- implement `PasswordHasher` (`password_hasher.py` is empty)
-- populate `__init__.py` exports
-- add `UserRepository` interface and in-memory implementation
-- wire auth into FastAPI router, dependency injection, and middleware
-
 ## fix(domain)
 
 - replace `_validate_deterministic_str` heuristic with whitelist of known-deterministic types

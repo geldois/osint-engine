@@ -2,12 +2,12 @@
 name = "osint-engine"
 version = "1.1.0"
 description = "Entity relationship graph engine that expands identifiers into a fully traceable network of connections sourced exclusively from official public records"
-authors = [{ name = "Angelito Chagas", email = "chagasangelito@gmail.com" }]
-license = "MIT"
-license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.12"
-keywords = ["osint", "graph", "cnpj", "brazil", "entity-resolution"]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Angelito Chagas", email = "chagasangelito@gmail.com" }]
+keywords = ["brazil", "cnpj", "entity-resolution", "graph", "osint"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -17,12 +17,16 @@ classifiers = [
   "Topic :: Security",
 ]
 dependencies = [
-  "fastapi>=0.136,<1",
-  "httpx2>=2.4,<3",
-  "pydantic>=2.13,<3",
-  "structlog>=25.5,<27",
-  "typer>=0.26,<1",
-  "uvicorn>=0.48,<1",
+  "argon2-cffi>=25.1.0",
+  "fastapi>=0.136",
+  "httpx2>=2.4",
+  "passlib[bcrypt]>=1.7.4",
+  "pydantic>=2.13",
+  "pyjwt>=2.13.0",
+  "python-multipart>=0.0.32",
+  "structlog>=25.5",
+  "typer>=0.26",
+  "uvicorn>=0.48",
 ]
 
 [project.urls]
@@ -30,13 +34,13 @@ Repository = "https://github.com/geldois/osint-engine"
 
 [dependency-groups]
 dev = [
-  "basedpyright>=1.39,<2",
-  "pre-commit>=4.6,<5",
-  "pytest>=9.0,<10",
-  "pytest-asyncio>=1.4,<2",
-  "pytest-language-server>=0.23,<1",
-  "python-semantic-release>=10.5,<11",
-  "ruff>=0.15,<1",
+  "basedpyright>=1.39",
+  "pre-commit>=4.6",
+  "pytest>=9.0",
+  "pytest-asyncio>=1.4",
+  "pytest-language-server>=0.23",
+  "python-semantic-release>=10.5",
+  "ruff>=0.15",
 ]
 
 [build-system]

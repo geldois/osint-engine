@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from structlog import get_logger
+from structlog.stdlib import get_logger
 
 from osint_engine.application.contracts.use_case import Query
 from osint_engine.domain.entities.bases.graph import Graph
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
     from osint_engine.application.contracts.uow import UoW
 
-logger = get_logger()
+_logger = get_logger()
 
 
 class ExpandByCNPJ(Query[Graph]):
@@ -29,13 +29,13 @@ class ExpandByCNPJ(Query[Graph]):
 
     @override
     async def execute(self) -> Graph:
-        logger.info(event="cnpj.expansion.start", cnpj=self.cnpj)
+        _logger.info("cnpj.expansion.start", cnpj=self.cnpj)
 
         async with self.uow_factory() as uow:
             graph = await self.cnpj_fetcher.fetch(self.cnpj)
 
             await uow.graphs.save(graph=graph)
 
-        logger.info(event="cnpj.expansion.success", cnpj=self.cnpj)
+        _logger.info("cnpj.expansion.success", cnpj=self.cnpj)
 
         return graph

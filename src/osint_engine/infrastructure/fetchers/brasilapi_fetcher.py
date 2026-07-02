@@ -19,7 +19,7 @@ from osint_engine.infrastructure.fetchers.schemas.fetcher_schema import Schema
 if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.graph import Graph
 
-logger = get_logger()
+_logger = get_logger()
 
 
 class _BrasilAPIFetcher:
@@ -35,7 +35,7 @@ class _BrasilAPIFetcher:
     @abstractmethod
     def __init__(self, *, http_client: AsyncClient) -> None:
         self._http_client = http_client
-        self._logger = logger.bind(source=self._SOURCE)
+        self._logger = _logger.bind(source=self._SOURCE)
 
 
 class BrasilAPICNPJFetcher(_BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/"):
@@ -47,7 +47,7 @@ class BrasilAPICNPJFetcher(_BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/"
 
     @override
     async def fetch(self, cnpj: str, /) -> Graph:
-        self._logger.info(event="cnpj.fetch.start", cnpj=cnpj)
+        self._logger.info("cnpj.fetch.start", cnpj=cnpj)
 
         try:
             response = await self._http_client.get(url=self._BASE_URL.join(url=cnpj))
@@ -55,10 +55,10 @@ class BrasilAPICNPJFetcher(_BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/"
 
             data: dict[str, object] = response.json()
 
-            self._logger.info(event="cnpj.fetch.success", cnpj=cnpj)
+            self._logger.info("cnpj.fetch.success", cnpj=cnpj)
         except HTTPStatusError as exception:
             self._logger.warning(
-                event="cnpj.fetch.error",
+                "cnpj.fetch.error",
                 cnpj=cnpj,
                 status_code=exception.response.status_code,
             )
@@ -68,7 +68,7 @@ class BrasilAPICNPJFetcher(_BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/"
             ) from exception
         except (RequestError, JSONDecodeError) as exception:
             self._logger.exception(
-                event="cnpj.fetch.error",
+                "cnpj.fetch.error",
                 cnpj=cnpj,
                 exc_type=type(exception).__name__,
             )

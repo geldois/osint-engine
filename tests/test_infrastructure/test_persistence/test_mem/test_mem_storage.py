@@ -10,6 +10,7 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 if TYPE_CHECKING:
     from uuid import UUID
 
+    from osint_engine.application.auth.user import User
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.graph import Graph
     from osint_engine.domain.entities.bases.node import Node
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def test_mem_storage_creates_empty_dicts_when_no_storages_are_injected() -> None:
-    mem_storage = MemStorage(edges=None, graphs=None, nodes=None)
+    mem_storage = MemStorage(edges=None, graphs=None, nodes=None, users=None)
 
     assert not (mem_storage.edges and mem_storage.edges is None)
 
@@ -26,19 +27,24 @@ def test_mem_storage_creates_empty_dicts_when_no_storages_are_injected() -> None
 
     assert not (mem_storage.nodes and mem_storage.nodes is None)
 
+    assert not (mem_storage.users and mem_storage.users is None)
+
 
 def test_mem_storage_references_storages_injected_during_instantiaton() -> None:
     edges: dict[UUID, Edge[UUID]] = {}
     graphs: dict[UUID, Graph] = {}
     nodes: dict[UUID, Node[UUID]] = {}
+    users: dict[str, User] = {}
 
-    mem_storage = MemStorage(edges=edges, graphs=graphs, nodes=nodes)
+    mem_storage = MemStorage(edges=edges, graphs=graphs, nodes=nodes, users=users)
 
     assert mem_storage.edges is edges
 
     assert mem_storage.graphs is graphs
 
     assert mem_storage.nodes is nodes
+
+    assert mem_storage.users is users
 
 
 # INVALID CASES
@@ -55,3 +61,6 @@ def test_mem_storage_instances_are_immutable() -> None:
 
     with pytest.raises(FrozenInstanceError):
         del mem_storage.nodes
+
+    with pytest.raises(FrozenInstanceError):
+        del mem_storage.users
