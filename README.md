@@ -1,6 +1,8 @@
 # OSINT Engine
 
 [![CI](https://github.com/geldois/osint-engine/actions/workflows/test.yml/badge.svg)](https://github.com/geldois/osint-engine/actions)
+[![Python](https://img.shields.io/badge/python-%E2%89%A53.12-blue)](https://www.python.org)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Entity relationship graph engine that expands identifiers into a fully traceable network of connections sourced
 exclusively from official public records.
@@ -18,19 +20,41 @@ structure idempotent by construction, not by convention.
 
 ## API
 
+All endpoints except `/auth/token` require a Bearer token. Obtain one first, then use it on every subsequent request.
+
+### Authentication
+
+```http
+POST /auth/token
+Content-Type: application/x-www-form-urlencoded
+
+username=admin&password=<ADMIN_PASSWORD>
+```
+
+Returns:
+
+```json
+{ "access_token": "<token>", "token_type": "bearer" }
+```
+
+### Graph expansion
+
 ```http
 GET /cnpj/{cnpj}
+Authorization: Bearer <token>
 ```
 
 Returns a `GraphSchema` containing the root company, all connected entities, and all typed relationships. The current
 data source is [BrasilAPI](https://brasilapi.com.br) (see [ADR-0005](docs/adr/0005-brasilapi-as-mvp-cnpj-data-source.md)).
 
 Every response includes an `X-Correlation-ID` header for end-to-end request tracing. Error responses carry the same
-correlation ID in the body alongside a machine-readable `type` field derived from the domain error hierarchy.
+correlation ID in the body alongside a machine-readable `type` field derived from the domain error hierarchy. A `401`
+response always includes `WWW-Authenticate: Bearer` per RFC 6750.
 
 ## Stack
 
 - **Runtime:** Python 3.12, FastAPI, Uvicorn
+- **Auth:** PyJWT (HS256 access tokens), passlib + argon2-cffi (Argon2id password hashing)
 - **HTTP client:** httpx2 (async)
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
@@ -85,7 +109,7 @@ cd osint-engine
 ```bash
 mise install
 uv run pre-commit install
-cp .env.example .env  # then set SECRET_KEY
+cp .env.example .env  # then set SECRET_KEY and ADMIN_PASSWORD
 ```
 
 ### Windows
@@ -97,7 +121,7 @@ cp .env.example .env  # then set SECRET_KEY
 ```powershell
 mise install
 uv run pre-commit install
-copy .env.example .env  # then set SECRET_KEY
+copy .env.example .env  # then set SECRET_KEY and ADMIN_PASSWORD
 ```
 
 > `--network host` in `.actrc` is Linux-only and has no effect on Docker Desktop. Internet access works via

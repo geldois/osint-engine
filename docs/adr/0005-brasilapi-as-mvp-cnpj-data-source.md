@@ -13,7 +13,7 @@ CNAEs, QSA members, phones, and email.
 Candidate data sources were evaluated:
 
 | Source | Auth required | Cost | Response richness | Reliability |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **BrasilAPI** | No | Free | High (QSA, CNAEs, contacts, sanctions) | Unofficial SLA, community-maintained |
 | ReceitaWS | No | Freemium, rate-limited | Medium | Unofficial |
 | CNPJ.ws | API key | Paid tiers | High | Commercial |
