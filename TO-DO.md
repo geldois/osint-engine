@@ -5,6 +5,11 @@
 - install Renovate GitHub App on geldois/osint-engine and push `renovate.json` to enable automated dependency updates
 for actions, uv, and pre-commit hooks
 
+## fix(interface)
+
+- harden `sanitize_cnpj`: after stripping non-decimal chars, assert the result is exactly 14 digits and raise an
+appropriate interface error — currently silently forwards a malformed string to the use case
+
 ## test(application)
 
 - test `AuthenticateUser`: valid credentials return user, wrong password raises `InvalidCredentialsAuthError`,
@@ -40,3 +45,8 @@ is set on 401, `ErrorDebug` appears in body only when `debug=True`, unknown exce
 - test node and edge presenter dispatch and `UnmappedTypeSchemaError` path
 - test graph presenter full mapping
 - test schema registries completeness and `MissingDiscriminatorFieldError` guard
+
+## test(interface/sanitizers)
+
+- test `sanitize_cnpj`: formatted input strips to 14 digits, digit-only input passes through unchanged, invalid length
+after strip raises the interface error
