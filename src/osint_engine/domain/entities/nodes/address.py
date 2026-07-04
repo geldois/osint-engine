@@ -11,8 +11,32 @@ AddressID = NewType("AddressID", UUID)
 
 class Address(Node[AddressID], namespace=EntityNAMESPACE.ADDRESS):
     cep: str
+    city: str
+    complement: str
+    neighborhood: str
     number: str
+    state: str
+    street: str
 
     @override
-    def __init__(self, *, cep: str, number: str) -> None:
-        super().__init__(cep=cep, number=number)
+    def __init__(
+        self,
+        *,
+        cep: str,
+        city: str,
+        complement: str,
+        neighborhood: str,
+        number: str,
+        state: str,
+        street: str,
+    ) -> None:
+        super().__init__(
+            identity_fields=frozenset({"cep", "number"}),
+            cep=cep,
+            city=city,
+            complement=complement,
+            neighborhood=neighborhood,
+            number=number,
+            state=state,
+            street=street,
+        )

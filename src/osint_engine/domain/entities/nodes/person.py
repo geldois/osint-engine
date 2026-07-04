@@ -10,9 +10,15 @@ PersonID = NewType("PersonID", UUID)
 
 
 class Person(Node[PersonID], namespace=EntityNAMESPACE.PERSON):
+    age_range: str
     cpf: str
     name: str
 
     @override
-    def __init__(self, *, cpf: str, name: str) -> None:
-        super().__init__(cpf=cpf, name=name)
+    def __init__(self, *, age_range: str, cpf: str, name: str) -> None:
+        super().__init__(
+            identity_fields=frozenset({"cpf"}),
+            age_range=age_range,
+            cpf=cpf,
+            name=name,
+        )

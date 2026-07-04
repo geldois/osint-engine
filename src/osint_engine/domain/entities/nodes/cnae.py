@@ -11,7 +11,12 @@ CnaeID = NewType("CnaeID", UUID)
 
 class Cnae(Node[CnaeID], namespace=EntityNAMESPACE.CNAE):
     code: str
+    description: str
 
     @override
-    def __init__(self, *, code: str) -> None:
-        super().__init__(code=code)
+    def __init__(self, *, code: str, description: str) -> None:
+        super().__init__(
+            identity_fields=frozenset({"code"}),
+            code=code,
+            description=description,
+        )
