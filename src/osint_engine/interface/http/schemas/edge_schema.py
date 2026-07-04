@@ -147,6 +147,9 @@ class PersonHasPhoneSchema(EdgeSchema[PersonHasPhone]):
 class PersonOwnsCompanySchema(EdgeSchema[PersonOwnsCompany]):
     type: Literal["person_owns_company"] = "person_owns_company"
 
+    entry_date: str
+    role: str
+
     @classmethod
     @override
     def domain(cls) -> type[PersonOwnsCompany]:

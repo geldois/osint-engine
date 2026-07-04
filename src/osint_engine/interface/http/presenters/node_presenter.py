@@ -52,11 +52,20 @@ def node_to_schema(node: Node[UUID], /) -> NodeSchemaUnion:
 
 
 def address_to_schema(*, node: Address) -> AddressSchema:
-    return AddressSchema(id=node.id, cep=node.cep, number=node.number)
+    return AddressSchema(
+        id=node.id,
+        cep=node.cep,
+        city=node.city,
+        complement=node.complement,
+        neighborhood=node.neighborhood,
+        number=node.number,
+        state=node.state,
+        street=node.street,
+    )
 
 
 def cnae_to_schema(*, node: Cnae) -> CnaeSchema:
-    return CnaeSchema(id=node.id, code=node.code)
+    return CnaeSchema(id=node.id, code=node.code, description=node.description)
 
 
 def company_to_schema(*, node: Company) -> CompanySchema:
@@ -68,6 +77,8 @@ def company_to_schema(*, node: Company) -> CompanySchema:
         legal_name=node.legal_name,
         legal_nature=node.legal_nature,
         registration_status=node.registration_status,
+        registration_status_date=node.registration_status_date,
+        registration_status_reason=node.registration_status_reason,
         share_capital=node.share_capital,
         size_category=node.size_category,
         trade_name=node.trade_name,
@@ -79,7 +90,9 @@ def email_to_schema(*, node: Email) -> EmailSchema:
 
 
 def person_to_schema(*, node: Person) -> PersonSchema:
-    return PersonSchema(id=node.id, cpf=node.cpf, name=node.name)
+    return PersonSchema(
+        id=node.id, age_range=node.age_range, cpf=node.cpf, name=node.name
+    )
 
 
 def phone_to_schema(*, node: Phone) -> PhoneSchema:

@@ -125,7 +125,11 @@ def person_owns_company_to_schema(
     *, edge: PersonOwnsCompany
 ) -> PersonOwnsCompanySchema:
     return PersonOwnsCompanySchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
+        id=edge.id,
+        entry_date=edge.entry_date,
+        role=edge.role,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
     )
 
 

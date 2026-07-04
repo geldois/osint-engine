@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from decimal import Decimal  # noqa: TC003
 from inspect import isabstract
 from typing import Annotated, ClassVar, Literal, get_origin, override
 from uuid import UUID
@@ -64,8 +65,13 @@ class AddressSchema(NodeSchema[Address]):
     type: Literal["address"] = "address"
 
     cep: str
+    city: str
+    complement: str
     id: UUID
+    neighborhood: str
     number: str
+    state: str
+    street: str
 
     @classmethod
     @override
@@ -77,6 +83,7 @@ class CnaeSchema(NodeSchema[Cnae]):
     type: Literal["cnae"] = "cnae"
 
     code: str
+    description: str
     id: UUID
 
     @classmethod
@@ -95,7 +102,9 @@ class CompanySchema(NodeSchema[Company]):
     legal_name: str
     legal_nature: str
     registration_status: str
-    share_capital: int
+    registration_status_date: str
+    registration_status_reason: str
+    share_capital: Decimal
     size_category: str
     trade_name: str
 
@@ -120,6 +129,7 @@ class EmailSchema(NodeSchema[Email]):
 class PersonSchema(NodeSchema[Person]):
     type: Literal["person"] = "person"
 
+    age_range: str
     cpf: str
     id: UUID
     name: str
