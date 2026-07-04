@@ -52,7 +52,12 @@ class Settings:
 
     @staticmethod
     def _load_cors_origins() -> list[str]:
-        return [origins.strip() for origins in getenv(key="CORS_ORIGINS", default="http://localhost:3000").split(",")]
+        return [
+            origins.strip()
+            for origins in getenv(
+                key="CORS_ORIGINS", default="http://localhost:3000"
+            ).split(",")
+        ]
 
     @staticmethod
     def _load_debug() -> bool:
