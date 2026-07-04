@@ -11,10 +11,25 @@ if TYPE_CHECKING:
 
 
 class Edge(Entity[IDType_co], namespace=EntityNAMESPACE.EDGE):
-    source_id: UUID
-    target_id: UUID
-
     @abstractmethod
     @override
-    def __init__(self, *, source_id: UUID, target_id: UUID, **kwargs: object) -> None:
-        super().__init__(source_id=source_id, target_id=target_id, **kwargs)
+    def __init__(
+        self,
+        *,
+        identity_fields: frozenset[str] | None = None,
+        source_id: UUID,
+        target_id: UUID,
+        **kwargs: object,
+    ) -> None:
+        identity_fields = (
+            identity_fields
+            if identity_fields is None
+            else frozenset({"source_id", "target_id"})
+        )
+
+        super().__init__(
+            identity_fields=identity_fields,
+            source_id=source_id,
+            target_id=target_id,
+            **kwargs,
+        )

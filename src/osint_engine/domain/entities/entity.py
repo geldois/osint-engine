@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from abc import ABC, abstractmethod
 from dataclasses import FrozenInstanceError
+from datetime import datetime
+from decimal import Decimal
 from inspect import isabstract
 from typing import (
     TYPE_CHECKING,
@@ -16,6 +18,7 @@ from uuid import UUID, uuid4, uuid5
 
 from osint_engine.domain.errors.entity_error import (
     InvalidEntityIDTypeError,
+    InvalidIdentityFieldEntityError,
     MissingEntityIDTypeError,
     NonDeterministicValueEntityError,
 )
@@ -25,20 +28,39 @@ if TYPE_CHECKING:
 
     from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 
+
 IDType_co = TypeVar("IDType_co", bound=UUID, covariant=True)
 
 
-def _validate_deterministic_str(*, value: object) -> None:
-    if (
-        type(value).__str__ is object.__str__
-        and type(value).__repr__ is object.__repr__
-    ):
+_DETERMINISTIC_TYPES: tuple[type, ...] = (
+    bool,
+    datetime,
+    Decimal,
+    int,
+    str,
+    type(None),
+    UUID,
+)
+
+
+def _validate_deterministic_type(*, value: object) -> None:
+    if type(value) not in _DETERMINISTIC_TYPES:
         raise NonDeterministicValueEntityError(value=value)
 
 
 def _validate_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> None:
     if not hasattr(subject, "id_type") and not isabstract(subject):
         raise MissingEntityIDTypeError(subject=subject)
+
+
+def _validate_identity_fields(
+    *, identity_fields: frozenset[str], subject: type, valid_fields: dict[str, object]
+) -> None:
+    for field in identity_fields:
+        if field not in valid_fields:
+            raise InvalidIdentityFieldEntityError(
+                field=field, subject=subject, valid_fields=valid_fields
+            )
 
 
 class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
@@ -82,8 +104,25 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
         _validate_entity_id_type(subject=cls)
 
     @abstractmethod
-    def __init__(self, **kwargs: object) -> None:
-        object.__setattr__(self, "id", type(self).calculate_id(**kwargs))
+    def __init__(
+        self, *, identity_fields: frozenset[str] | None = None, **kwargs: object
+    ) -> None:
+        identified_by: dict[str, object] | None = None
+
+        if identity_fields is not None:
+            _validate_identity_fields(
+                identity_fields=identity_fields, subject=type(self), valid_fields=kwargs
+            )
+
+            identified_by = {field: kwargs[field] for field in identity_fields}
+
+        object.__setattr__(
+            self,
+            "id",
+            self._calculate_id(
+                **(identified_by if identified_by is not None else kwargs)
+            ),
+        )
 
         for k, v in kwargs.items():
             object.__setattr__(self, k, v)
@@ -108,11 +147,11 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
         return self.id.int
 
     @classmethod
-    def calculate_id(cls, **kwargs: object) -> IDType_co:
+    def _calculate_id(cls, **kwargs: object) -> IDType_co:
         values: list[object] = []
 
         for value in kwargs.values():
-            _validate_deterministic_str(value=value)
+            _validate_deterministic_type(value=value)
 
             values.append(value)
 

@@ -86,6 +86,32 @@ class NonDeterministicValueEntityError(
         )
 
 
+class InvalidIdentityFieldEntityError(
+    EntityError, error_code="ENTITY_INVALID_IDENTIFIED_BY_FIELD"
+):
+    field: str
+    subject: type[Entity[UUID]]
+    valid_fields: dict[str, object]
+
+    @override
+    def __init__(
+        self,
+        *,
+        field: str,
+        subject: type[Entity[UUID]],
+        valid_fields: dict[str, object],
+    ) -> None:
+        super().__init__(field=field, subject=subject, valid_fields=valid_fields)
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"'{self.field}' identity contract violation - "
+            f"'{self.field}' is not a declared attribute of '{self.subject.__name__}': "
+            f"identity_fields must be a subset of {set(self.valid_fields.keys())}"
+        )
+
+
 class NotFoundEntityError(EntityError, error_code="ENTITY_NOT_FOUND"):
     entity_id: UUID
     subject: type[Entity[UUID]]
