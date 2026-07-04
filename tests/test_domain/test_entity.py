@@ -21,7 +21,7 @@ class FakeEntityWithDiffNAMESPACE(
     content: str
 
     def __init__(self, *, content: str, **kwargs: object) -> None:
-        super().__init__(content=content, **kwargs)
+        super().__init__(identity_fields=None, content=content, **kwargs)
 
 
 class FakeFakeEntity:
@@ -97,7 +97,7 @@ def test_entity_raises_when_inherits_from_class_without_id_type() -> None:
 
         class FakeEntityWithoutIDType(Entity, namespace=EntityNAMESPACE.TEST):  # pyright: ignore[reportUnusedClass, reportMissingTypeArgument]
             def __init__(self, **kwargs: object) -> None:
-                super().__init__(**kwargs)
+                super().__init__(identity_fields=None, **kwargs)
 
 
 def test_entity_raises_when_inherits_from_class_with_flat_id_type() -> None:
@@ -105,7 +105,7 @@ def test_entity_raises_when_inherits_from_class_with_flat_id_type() -> None:
 
         class FakeEntityWithFlatIDType(Entity[UUID], namespace=EntityNAMESPACE.TEST):  # pyright: ignore[reportUnusedClass]
             def __init__(self, **kwargs: object) -> None:
-                super().__init__(**kwargs)
+                super().__init__(identity_fields=None, **kwargs)
 
 
 def test_entity_raises_when_inherits_from_class_with_non_uuid_id_type() -> None:
@@ -114,10 +114,11 @@ def test_entity_raises_when_inherits_from_class_with_non_uuid_id_type() -> None:
     with pytest.raises(InvalidEntityIDTypeError):
 
         class FakeEntityWithWrongIDType(  # pyright: ignore[reportUnusedClass]
-            Entity[WrongIDType], namespace=EntityNAMESPACE.TEST  # pyright: ignore[reportInvalidTypeArguments]
+            Entity[WrongIDType],  # pyright: ignore[reportInvalidTypeArguments]
+            namespace=EntityNAMESPACE.TEST,  # pyright: ignore[reportInvalidTypeArguments]
         ):
             def __init__(self, **kwargs: object) -> None:
-                super().__init__(**kwargs)
+                super().__init__(identity_fields=None, **kwargs)
 
 
 def test_entity_instances_are_immutable() -> None:

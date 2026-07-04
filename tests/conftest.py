@@ -7,7 +7,9 @@ from uuid import UUID, uuid4
 import pytest
 
 from osint_engine.application.auth.user import Role, User
+from osint_engine.config.settings import Settings
 from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.infrastructure.hashers.password_hasher import PasswordHasher
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from tests.fakes import FakeEdge, FakeEntity, FakeNode
 
@@ -151,3 +153,24 @@ def make_user() -> MakeUser:
         )
 
     return user
+
+
+@pytest.fixture
+def password_hasher() -> PasswordHasher:
+    return PasswordHasher()
+
+
+@pytest.fixture(scope="session")
+def settings() -> Settings:
+    return Settings(
+        access_token_expire_minutes=60,
+        admin_password="admin_password",  # noqa: S106
+        cors_origins=["http://localhost:3000"],
+        debug=True,
+        fetcher_connect_timeout=15,
+        fetcher_read_timeout=30,
+        host="127.0.0.1",
+        log_level="info",
+        port=8000,
+        secret_key="secret_key",  # noqa: S106
+    )
