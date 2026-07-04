@@ -5,10 +5,6 @@
 - install Renovate GitHub App on geldois/osint-engine and push `renovate.json` to enable automated dependency updates
 for actions, uv, and pre-commit hooks
 
-## fix(domain)
-
-- replace `_validate_deterministic_str` heuristic with whitelist of known-deterministic types
-
 ## test(application)
 
 - test `AuthenticateUser`: valid credentials return user, wrong password raises `InvalidCredentialsAuthError`,
@@ -17,8 +13,9 @@ non-existent user raises same error (no enumeration), dummy hash path always run
 
 ## test(domain)
 
-- test `_validate_deterministic_str` error path for objects without `__str__` or `__repr__` overridden
-- test `calculate_id` determinism under kwarg reorder and key rename
+- test `_validate_deterministic_type` error path for objects not in `_DETERMINISTIC_TYPES`
+- test `_calculate_id` determinism under kwarg reorder and key rename
+- test `_validate_identity_fields` raises `InvalidIdentityFieldEntityError` when a field name is not in kwargs
 
 ## test(infrastructure/fetchers)
 
