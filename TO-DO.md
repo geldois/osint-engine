@@ -19,8 +19,8 @@ non-existent user raises same error (no enumeration), dummy hash path always run
 ## test(domain)
 
 - test `_validate_deterministic_type` error path for objects not in `_DETERMINISTIC_TYPES`
-- test `_calculate_id` determinism under kwarg reorder and key rename
-- test `_validate_identity_fields` raises `InvalidIdentityFieldEntityError` when a field name is not in kwargs
+- test `_calculate_id` determinism under kwarg reorder and key rename for the Entity base (Graph covered by hypothesis
+in ADR-0013)
 
 ## test(infrastructure/fetchers)
 
