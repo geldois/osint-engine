@@ -11,15 +11,14 @@ from osint_engine.domain.errors.entity_error import (
     InvalidEntityIDTypeError,
     InvalidIdentityFieldEntityError,
     MissingEntityIDTypeError,
+    NonDeterministicValueEntityError,
 )
 from tests.fakes import TEST, TEST_DIFF, FakeEntity, FakeEntityID
 
 # TEST DOUBLES
 
 
-class FakeEntityWithDiffNAMESPACE(
-    Entity[FakeEntityID], namespace=TEST_DIFF
-):
+class FakeEntityWithDiffNAMESPACE(Entity[FakeEntityID], namespace=TEST_DIFF):
     content: str
 
     def __init__(
@@ -32,9 +31,7 @@ class FakeEntityWithDiffNAMESPACE(
         super().__init__(identity_fields=identity_fields, content=content, **kwargs)
 
 
-class FakeEntityWithNonexistentIdentityField(
-    Entity[FakeEntityID], namespace=TEST
-):
+class FakeEntityWithNonexistentIdentityField(Entity[FakeEntityID], namespace=TEST):
     def __init__(
         self, *, identity_fields: frozenset[str] | None, **kwargs: object
     ) -> None:
@@ -44,9 +41,7 @@ class FakeEntityWithNonexistentIdentityField(
         )
 
 
-class FakeEntityWithContentIdentity(
-    Entity[FakeEntityID], namespace=TEST
-):
+class FakeEntityWithContentIdentity(Entity[FakeEntityID], namespace=TEST):
     content: str
     extra_field: str
 
@@ -184,6 +179,38 @@ class TestEntityValueSemantics:
 
         with pytest.raises(FrozenInstanceError):
             del entity.content
+
+
+class TestEntityIDCalculation:
+    def test_entity_id_is_stable_under_kwarg_order(self) -> None:
+        id_forward = FakeEntity._calculate_id(content="test", role="admin")  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        id_reversed = FakeEntity._calculate_id(role="admin", content="test")  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+
+        assert id_forward == id_reversed
+
+    def test_entity_id_depends_on_values_not_key_names(self) -> None:
+        id_content_key = FakeEntity._calculate_id(content="test")  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        id_name_key = FakeEntity._calculate_id(name="test")  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+
+        assert id_content_key == id_name_key
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            pytest.param(["a", "b"], id="list"),
+            pytest.param(("a", "b"), id="tuple"),
+            pytest.param({"key": "value"}, id="dict"),
+            pytest.param({"a", "b"}, id="set"),
+            pytest.param(1.0, id="float"),
+            pytest.param(b"bytes", id="bytes"),
+            pytest.param(object(), id="arbitrary_object"),
+        ],
+    )
+    def test_entity_raises_when_identity_value_is_not_a_deterministic_type(
+        self, value: object
+    ) -> None:
+        with pytest.raises(NonDeterministicValueEntityError):
+            FakeEntity._calculate_id(content=value)  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
 
 
 class TestEntityIdentityFieldsValidation:
