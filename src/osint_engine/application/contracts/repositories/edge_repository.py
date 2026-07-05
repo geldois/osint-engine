@@ -15,17 +15,17 @@ class EdgeRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def find(self, *, edge_id: UUID) -> Edge[UUID] | None:
+    async def find(self, *, edge_id: UUID) -> Edge[UUID, UUID, UUID] | None:
         raise NotImplementedError
 
     @abstractmethod
-    async def get(self, *, edge_id: UUID) -> Edge[UUID]:
+    async def get(self, *, edge_id: UUID) -> Edge[UUID, UUID, UUID]:
         raise NotImplementedError
 
     @abstractmethod
-    async def save(self, *, edge: Edge[UUID]) -> None:
+    async def save(self, *, edge: Edge[UUID, UUID, UUID]) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    async def save_many(self, *, edges: frozenset[Edge[UUID]]) -> None:
+    async def save_many(self, *, edges: frozenset[Edge[UUID, UUID, UUID]]) -> None:
         raise NotImplementedError

@@ -20,11 +20,11 @@ class MemEdgeRepository(EdgeRepository):
         self.edges = mem_storage.edges
 
     @override
-    async def find(self, *, edge_id: UUID) -> Edge[UUID] | None:
+    async def find(self, *, edge_id: UUID) -> Edge[UUID, UUID, UUID] | None:
         return self.edges.get(edge_id, None)
 
     @override
-    async def get(self, *, edge_id: UUID) -> Edge[UUID]:
+    async def get(self, *, edge_id: UUID) -> Edge[UUID, UUID, UUID]:
         found = await self.find(edge_id=edge_id)
 
         if found is None:
@@ -33,11 +33,11 @@ class MemEdgeRepository(EdgeRepository):
         return found
 
     @override
-    async def save(self, *, edge: Edge[UUID]) -> None:
+    async def save(self, *, edge: Edge[UUID, UUID, UUID]) -> None:
         if edge.id not in self.edges:
             self.edges[edge.id] = edge
 
     @override
-    async def save_many(self, *, edges: frozenset[Edge[UUID]]) -> None:
+    async def save_many(self, *, edges: frozenset[Edge[UUID, UUID, UUID]]) -> None:
         for edge in edges:
             await self.save(edge=edge)

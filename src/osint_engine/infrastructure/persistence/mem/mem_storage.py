@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class MemStorage:
-    edges: dict[UUID, Edge[UUID]]
+    edges: dict[UUID, Edge[UUID, UUID, UUID]]
     graphs: dict[UUID, Graph]
     nodes: dict[UUID, Node[UUID]]
     users: dict[str, User]
@@ -22,7 +22,7 @@ class MemStorage:
     def __init__(
         self,
         *,
-        edges: dict[UUID, Edge[UUID]] | None = None,
+        edges: dict[UUID, Edge[UUID, UUID, UUID]] | None = None,
         graphs: dict[UUID, Graph] | None = None,
         nodes: dict[UUID, Node[UUID]] | None = None,
         users: dict[str, User] | None = None

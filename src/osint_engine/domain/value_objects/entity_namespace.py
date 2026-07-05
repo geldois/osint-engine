@@ -5,7 +5,6 @@ from uuid import NAMESPACE_DNS, uuid5
 
 
 class EntityNAMESPACE(Enum):
-    # PROD
     ADDRESS = "ADDRESS"
     CNAE = "CNAE"
     COMPANY = "COMPANY"
@@ -27,13 +26,6 @@ class EntityNAMESPACE(Enum):
     PERSON_SANCTION = "PERSON_SANCTION"
     PHONE = "PHONE"
     SANCTION = "SANCTION"
-
-    # TEST
-    TEST = "TEST"
-    TEST_DIFF = "TEST_DIFF"
-    TEST_EDGE = "TEST_EDGE"
-    TEST_GRAPH = "TEST_GRAPH"
-    TEST_NODE = "TEST_NODE"
 
     def __init__(self, value: str, /) -> None:
         self.namespace = uuid5(namespace=NAMESPACE_DNS, name=value)

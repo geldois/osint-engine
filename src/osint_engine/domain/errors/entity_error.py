@@ -117,12 +117,7 @@ class NotFoundEntityError(EntityError, error_code="ENTITY_NOT_FOUND"):
     subject: type[Entity[UUID]]
 
     @override
-    def __init__(
-        self,
-        *,
-        entity_id: UUID,
-        subject: type[Entity[UUID]],
-    ) -> None:
+    def __init__(self, *, entity_id: UUID, subject: type[Entity[UUID]]) -> None:
         super().__init__(entity_id=entity_id, subject=subject)
 
     @override

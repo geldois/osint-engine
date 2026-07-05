@@ -29,7 +29,7 @@ from osint_engine.interface.http.errors.schema_error import (
 )
 
 
-class EdgeSchema[EdgeType_co: Edge[UUID]](ABC, BaseModel):
+class EdgeSchema[EdgeType_co: Edge[UUID, UUID, UUID]](ABC, BaseModel):
     id: UUID
     source_id: UUID
     target_id: UUID
@@ -53,19 +53,21 @@ class EdgeSchema[EdgeType_co: Edge[UUID]](ABC, BaseModel):
 
 
 class EdgeSchemaRegistry:
-    _REGISTRY: ClassVar[dict[type[Edge[UUID]], type[EdgeSchema[Edge[UUID]]]]] = {}
+    _REGISTRY: ClassVar[
+        dict[type[Edge[UUID, UUID, UUID]], type[EdgeSchema[Edge[UUID, UUID, UUID]]]]
+    ] = {}
 
     @classmethod
     def get_from_domain(
-        cls, domain: type[Edge[UUID]], /
-    ) -> type[EdgeSchema[Edge[UUID]]]:
+        cls, domain: type[Edge[UUID, UUID, UUID]], /
+    ) -> type[EdgeSchema[Edge[UUID, UUID, UUID]]]:
         if domain not in cls._REGISTRY:
             raise UnmappedTypeSchemaError(subject=domain)
 
         return cls._REGISTRY[domain]
 
     @classmethod
-    def register(cls, schema: type[EdgeSchema[Edge[UUID]]], /) -> None:
+    def register(cls, schema: type[EdgeSchema[Edge[UUID, UUID, UUID]]], /) -> None:
         cls._REGISTRY[schema.domain()] = schema
 
 

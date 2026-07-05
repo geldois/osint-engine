@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
 
 
-def edge_to_schema(edge: Edge[UUID], /) -> EdgeSchemaUnion:  # noqa: C901
+def edge_to_schema(edge: Edge[UUID, UUID, UUID], /) -> EdgeSchemaUnion:  # noqa: C901
     schema = EdgeSchemaUnion
 
     match edge:
