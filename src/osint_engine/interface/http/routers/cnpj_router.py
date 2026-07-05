@@ -18,6 +18,6 @@ def build_cnpj_router(*, container: Container) -> APIRouter:
 
     router = APIRouter(prefix="/cnpj", dependencies=[Depends(jwt_guard)])
 
-    router.get(path="/{cnpj}")(build_get_cnpj_handler(container=container))
+    router.get(path="/{cnpj:path}")(build_get_cnpj_handler(container=container))
 
     return router

@@ -16,7 +16,6 @@ appropriate interface error — currently silently forwards a malformed string t
 non-existent user raises same error (no enumeration), dummy hash path always runs when user is absent
 - test `ExpandByCNPJ` orchestration: fetch, persist, and return graph
 
-
 ## test(infrastructure/fetchers)
 
 - test `BrasilAPICNPJFetcher` HTTP error and network failure handling
