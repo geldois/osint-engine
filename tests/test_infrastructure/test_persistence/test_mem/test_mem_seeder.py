@@ -10,28 +10,28 @@ if TYPE_CHECKING:
     from osint_engine.infrastructure.hashers.password_hasher import PasswordHasher
     from tests.conftest import MakeMemStorage
 
-# VALID CASES
 
+class TestMemSeederSeedingBehavior:
+    def test_seeds_mem_storage_with_admin_user(
+        self,
+        make_mem_storage: MakeMemStorage,
+        settings: Settings,
+        password_hasher: PasswordHasher,
+    ) -> None:
+        mem_storage = make_mem_storage()
 
-def test_mem_seeder_seeds_mem_storage_with_admin_user(
-    make_mem_storage: MakeMemStorage,
-    settings: Settings,
-    password_hasher: PasswordHasher,
-) -> None:
-    mem_storage = make_mem_storage()
+        admin = mem_storage.users.get("admin")
 
-    admin = mem_storage.users.get("admin")
+        assert admin is None
 
-    assert admin is None
+        seed_mem_storage(
+            settings=settings, mem_storage=mem_storage, auth_hasher=password_hasher
+        )
 
-    seed_mem_storage(
-        settings=settings, mem_storage=mem_storage, auth_hasher=password_hasher
-    )
+        admin = mem_storage.users.get("admin")
 
-    admin = mem_storage.users.get("admin")
+        assert admin is not None
 
-    assert admin is not None
+        assert admin.role is Role.ADMIN
 
-    assert admin.role is Role.ADMIN
-
-    assert admin.username == "admin"
+        assert admin.username == "admin"

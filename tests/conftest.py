@@ -66,24 +66,27 @@ def make_entity() -> MakeEntity:
 def make_graph(make_edge: MakeEdge, make_node: MakeNode) -> MakeGraph:
     """
     *,
-    edges: list[Edge[UUID]] | None = None,
+    edges: list[Edge[UUID, UUID, UUID]] | None = None,
     nodes: list[Node[UUID]] | None = None,
     root_id: UUID | None = None
     """
 
     def graph(
         *,
-        edges: list[Edge[UUID]] | None = None,
+        edges: list[Edge[UUID, UUID, UUID]] | None = None,
         nodes: list[Node[UUID]] | None = None,
         root_id: UUID | None = None,
     ) -> Graph:
-        edge = make_edge()
-        node = make_node()
+        node_a = make_node()
+        node_b = make_node()
+        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
 
         return Graph(
             edges=frozenset(edges) if edges is not None else frozenset({edge}),
-            nodes=frozenset(nodes) if nodes is not None else frozenset({node}),
-            root_id=root_id if root_id is not None else node.id,
+            nodes=frozenset(nodes)
+            if nodes is not None
+            else frozenset({node_a, node_b}),
+            root_id=root_id if root_id is not None else node_a.id,
         )
 
     return graph
@@ -93,7 +96,7 @@ def make_graph(make_edge: MakeEdge, make_node: MakeNode) -> MakeGraph:
 def make_mem_storage() -> MakeMemStorage:
     """
     *,
-    edges: list[Edge[UUID]] | None = None,
+    edges: list[Edge[UUID, UUID, UUID]] | None = None,
     graphs: list[Graph] | None = None,
     nodes: list[Node[UUID]] | None = None,
     users: list[User] | None = None
@@ -101,7 +104,7 @@ def make_mem_storage() -> MakeMemStorage:
 
     def mem_storage(
         *,
-        edges: list[Edge[UUID]] | None = None,
+        edges: list[Edge[UUID, UUID, UUID]] | None = None,
         graphs: list[Graph] | None = None,
         nodes: list[Node[UUID]] | None = None,
         users: list[User] | None = None,

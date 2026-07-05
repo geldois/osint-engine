@@ -1,0 +1,52 @@
+from __future__ import annotations
+
+from uuid import uuid4
+
+import pytest
+
+from osint_engine.domain.errors.edge_error import SelfLoopEdgeError
+from tests.fakes import FakeEdge
+
+
+class TestEdgeIdentity:
+    def test_edge_id_determined_by_source_and_target_when_no_identity_fields(
+        self,
+    ) -> None:
+        source = uuid4()
+        target = uuid4()
+
+        edge_a = FakeEdge(
+            identity_fields=None, source_id=source, target_id=target, content="edge_a"
+        )
+        edge_b = FakeEdge(
+            identity_fields=None, source_id=source, target_id=target, content="edge_b"
+        )
+
+        assert edge_a.id == edge_b.id
+
+    def test_edge_id_includes_additional_identity_fields_when_specified(self) -> None:
+        source = uuid4()
+        target = uuid4()
+
+        edge_a = FakeEdge(
+            identity_fields=frozenset({"content"}),
+            source_id=source,
+            target_id=target,
+            content="edge_a",
+        )
+        edge_b = FakeEdge(
+            identity_fields=frozenset({"content"}),
+            source_id=source,
+            target_id=target,
+            content="edge_b",
+        )
+
+        assert edge_a.id != edge_b.id
+
+
+class TestEdgeValidation:
+    def test_edge_raises_when_source_and_target_are_the_same(self) -> None:
+        node_id = uuid4()
+
+        with pytest.raises(SelfLoopEdgeError):
+            FakeEdge(source_id=node_id, target_id=node_id, content="test")

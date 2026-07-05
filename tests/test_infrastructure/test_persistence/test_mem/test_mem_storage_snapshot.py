@@ -10,105 +10,124 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import (
 if TYPE_CHECKING:
     from tests.conftest import MakeEdge, MakeGraph, MakeNode, MakeUser
 
-# VALID CASES
+
+class TestMemStorageSnapshotSubclassContract:
+    def test_inherits_directly_from_mem_storage(self) -> None:
+        bases = MemStorageSnapshot.__bases__
+
+        assert MemStorage in bases
 
 
-def test_mem_storage_snapshot_inherits_directly_from_mem_storage() -> None:
-    bases = MemStorageSnapshot.__bases__
+class TestMemStorageSnapshotSnapshot:
+    def test_copies_object_references_from_mem_storage(
+        self,
+        make_edge: MakeEdge,
+        make_graph: MakeGraph,
+        make_node: MakeNode,
+        make_user: MakeUser,
+    ) -> None:
+        node_a = make_node()
+        node_b = make_node()
+        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
+        graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
+        user = make_user()
+        mem_storage = MemStorage(
+            edges={edge.id: edge},
+            graphs={graph.id: graph},
+            nodes={node_a.id: node_a, node_b.id: node_b},
+            users={user.username: user},
+        )
 
-    assert MemStorage in bases
+        snapshot = MemStorageSnapshot(mem_storage=mem_storage)
+
+        assert mem_storage.edges is not snapshot.edges
+
+        assert mem_storage.graphs is not snapshot.graphs
+
+        assert mem_storage.nodes is not snapshot.nodes
+
+        assert mem_storage.users is not snapshot.users
+
+        assert mem_storage.edges[edge.id] is snapshot.edges[edge.id]
+
+        assert mem_storage.graphs[graph.id] is snapshot.graphs[graph.id]
+
+        assert mem_storage.nodes[node_a.id] is snapshot.nodes[node_a.id]
+
+        assert mem_storage.nodes[node_b.id] is snapshot.nodes[node_b.id]
+
+        assert mem_storage.users[user.username] is snapshot.users[user.username]
+
+    def test_cleans_all_object_references_in_its_inner_storages(
+        self,
+        make_edge: MakeEdge,
+        make_graph: MakeGraph,
+        make_node: MakeNode,
+        make_user: MakeUser,
+    ) -> None:
+        node_a = make_node()
+        node_b = make_node()
+        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
+        graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
+        user = make_user()
+        mem_storage = MemStorage(
+            edges={edge.id: edge},
+            graphs={graph.id: graph},
+            nodes={node_a.id: node_a, node_b.id: node_b},
+            users={user.username: user},
+        )
+        snapshot = MemStorageSnapshot(mem_storage=mem_storage)
+
+        snapshot.clear_snapshot()
+
+        assert not (snapshot.edges and snapshot.edges is None)
+
+        assert not (snapshot.graphs and snapshot.graphs is None)
+
+        assert not (snapshot.nodes and snapshot.nodes is None)
+
+        assert not (snapshot.users and snapshot.users is None)
 
 
-def test_mem_storage_snapshot_copies_object_references_from_mem_storage(
-    make_edge: MakeEdge, make_graph: MakeGraph, make_node: MakeNode, make_user: MakeUser
-) -> None:
-    edge = make_edge()
-    node = make_node()
-    graph = make_graph(edges=[edge], nodes=[node], root_id=node.id)
-    user = make_user()
-    mem_storage = MemStorage(
-        edges={edge.id: edge},
-        graphs={graph.id: graph},
-        nodes={node.id: node},
-        users={user.username: user},
-    )
+class TestMemStorageSnapshotCommit:
+    def test_only_commits_diff_to_mem_storage_explicitly(
+        self,
+        make_edge: MakeEdge,
+        make_graph: MakeGraph,
+        make_node: MakeNode,
+        make_user: MakeUser,
+    ) -> None:
+        node_a = make_node()
+        node_b = make_node()
+        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
+        graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
+        user = make_user()
+        mem_storage = MemStorage(
+            edges={edge.id: edge},
+            graphs={graph.id: graph},
+            nodes={node_a.id: node_a, node_b.id: node_b},
+            users={user.username: user},
+        )
+        snapshot = MemStorageSnapshot(mem_storage=mem_storage)
 
-    snapshot = MemStorageSnapshot(mem_storage=mem_storage)
+        snapshot.clear_snapshot()
 
-    assert mem_storage.edges is not snapshot.edges
+        assert (edge.id, edge) in mem_storage.edges.items()
 
-    assert mem_storage.graphs is not snapshot.graphs
+        assert (graph.id, graph) in mem_storage.graphs.items()
 
-    assert mem_storage.nodes is not snapshot.nodes
+        assert (node_a.id, node_a) in mem_storage.nodes.items()
 
-    assert mem_storage.users is not snapshot.users
+        assert (node_b.id, node_b) in mem_storage.nodes.items()
 
-    assert mem_storage.edges[edge.id] is snapshot.edges[edge.id]
+        assert (user.username, user) in mem_storage.users.items()
 
-    assert mem_storage.graphs[graph.id] is snapshot.graphs[graph.id]
+        snapshot.commit_to_storage()
 
-    assert mem_storage.nodes[node.id] is snapshot.nodes[node.id]
+        assert mem_storage.edges == snapshot.edges
 
-    assert mem_storage.users[user.username] is snapshot.users[user.username]
+        assert mem_storage.graphs == snapshot.graphs
 
+        assert mem_storage.nodes == snapshot.nodes
 
-def test_mem_storage_snapshot_cleans_all_object_references_in_its_inner_storages(
-    make_edge: MakeEdge, make_graph: MakeGraph, make_node: MakeNode, make_user: MakeUser
-) -> None:
-    edge = make_edge()
-    node = make_node()
-    graph = make_graph(edges=[edge], nodes=[node], root_id=node.id)
-    user = make_user()
-    mem_storage = MemStorage(
-        edges={edge.id: edge},
-        graphs={graph.id: graph},
-        nodes={node.id: node},
-        users={user.username: user},
-    )
-    snapshot = MemStorageSnapshot(mem_storage=mem_storage)
-
-    snapshot.clear_snapshot()
-
-    assert not (snapshot.edges and snapshot.edges is None)
-
-    assert not (snapshot.graphs and snapshot.graphs is None)
-
-    assert not (snapshot.nodes and snapshot.nodes is None)
-
-    assert not (snapshot.users and snapshot.users is None)
-
-
-def test_mem_storage_snapshot_only_commits_diff_to_mem_storage_explicitly(
-    make_edge: MakeEdge, make_graph: MakeGraph, make_node: MakeNode, make_user: MakeUser
-) -> None:
-    edge = make_edge()
-    node = make_node()
-    graph = make_graph(edges=[edge], nodes=[node], root_id=node.id)
-    user = make_user()
-    mem_storage = MemStorage(
-        edges={edge.id: edge},
-        graphs={graph.id: graph},
-        nodes={node.id: node},
-        users={user.username: user},
-    )
-    snapshot = MemStorageSnapshot(mem_storage=mem_storage)
-
-    snapshot.clear_snapshot()
-
-    assert (edge.id, edge) in mem_storage.edges.items()
-
-    assert (graph.id, graph) in mem_storage.graphs.items()
-
-    assert (node.id, node) in mem_storage.nodes.items()
-
-    assert (user.username, user) in mem_storage.users.items()
-
-    snapshot.commit_to_storage()
-
-    assert mem_storage.edges == snapshot.edges
-
-    assert mem_storage.graphs == snapshot.graphs
-
-    assert mem_storage.nodes == snapshot.nodes
-
-    assert mem_storage.users == snapshot.users
+        assert mem_storage.users == snapshot.users
