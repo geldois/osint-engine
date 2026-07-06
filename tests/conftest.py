@@ -9,7 +9,9 @@ import pytest
 from osint_engine.application.auth.user import Role, User
 from osint_engine.config.settings import Settings
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.infrastructure.hashers.password_hasher import PasswordHasher
+from osint_engine.infrastructure.hashers.argon2_password_hasher import (
+    Argon2PasswordHasher,
+)
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
 from tests.fakes import FakeCNPJFetcher, FakeEdge, FakeEntity, FakeNode
@@ -206,8 +208,8 @@ def make_user() -> MakeUser:
 
 
 @pytest.fixture
-def password_hasher() -> PasswordHasher:
-    return PasswordHasher()
+def password_hasher() -> Argon2PasswordHasher:
+    return Argon2PasswordHasher()
 
 
 @pytest.fixture(scope="session")

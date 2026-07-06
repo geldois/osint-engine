@@ -55,7 +55,7 @@ response always includes `WWW-Authenticate: Bearer` per RFC 6750.
 ## Stack
 
 - **Runtime:** Python 3.12, FastAPI, Uvicorn
-- **Auth:** PyJWT (HS256 access tokens), passlib + argon2-cffi (Argon2id password hashing)
+- **Auth:** PyJWT (HS256 access tokens), argon2-cffi (Argon2id password hashing)
 - **HTTP client:** httpx2 (async)
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)

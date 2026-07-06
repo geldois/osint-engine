@@ -14,7 +14,7 @@ def seed_mem_storage(
     *, settings: Settings, mem_storage: MemStorage, auth_hasher: AuthHasher
 ) -> None:
     user = User(
-        hashed_password=auth_hasher.hash_(secret=settings.admin_password),
+        hashed_password=auth_hasher.hash_(password=settings.admin_password),
         role=Role.ADMIN,
         username="admin",
     )

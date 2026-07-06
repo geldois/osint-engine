@@ -7,7 +7,9 @@ from osint_engine.infrastructure.persistence.mem.mem_seeder import seed_mem_stor
 
 if TYPE_CHECKING:
     from osint_engine.config.settings import Settings
-    from osint_engine.infrastructure.hashers.password_hasher import PasswordHasher
+    from osint_engine.infrastructure.hashers.argon2_password_hasher import (
+        Argon2PasswordHasher,
+    )
     from tests.conftest import MakeMemStorage
 
 
@@ -16,7 +18,7 @@ class TestMemSeederSeedingBehavior:
         self,
         make_mem_storage: MakeMemStorage,
         settings: Settings,
-        password_hasher: PasswordHasher,
+        password_hasher: Argon2PasswordHasher,
     ) -> None:
         mem_storage = make_mem_storage()
 

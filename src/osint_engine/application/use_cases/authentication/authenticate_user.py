@@ -51,8 +51,8 @@ class AuthenticateUser(Query[User]):
                 "kjtijtNxdreAJ8keTETLWc7vSJFasmgM"
             )
             result: bool = self.auth_hasher.verify(
-                secret=self.password,
                 hash_=user.hashed_password if user is not None else dummy,
+                password=self.password,
             )
 
             if user is None or not result:

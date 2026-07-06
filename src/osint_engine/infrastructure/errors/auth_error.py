@@ -1,38 +1,11 @@
 from __future__ import annotations
 
-from typing import Literal, override
+from typing import override
 
 from osint_engine.infrastructure.errors.infrastructure_error import InfrastructureError
 
-type CryptContextOperation = Literal["hash", "verify"]
-
 
 class AuthError(InfrastructureError): ...
-
-
-class UnexpectedHasherOutputAuthError(AuthError):
-    operation: CryptContextOperation
-    expected_type: type
-    actual_type: type
-
-    @override
-    def __init__(
-        self,
-        *,
-        operation: CryptContextOperation,
-        expected_type: type,
-        actual_type: type,
-    ) -> None:
-        super().__init__(
-            operation=operation, expected_type=expected_type, actual_type=actual_type
-        )
-
-    @override
-    def _build_message(self) -> str:
-        return (
-            f"Hasher '{self.operation}' returned '{self.actual_type.__name__}', "
-            f"expected '{self.expected_type.__name__}'."
-        )
 
 
 class InvalidTokenAuthError(AuthError):

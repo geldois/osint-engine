@@ -15,11 +15,6 @@ non-existent user raises same error (no enumeration), dummy hash path always run
 - test `BrasilAPICNPJFetcher` HTTP error and network failure handling
 - test `BrasilAPICNPJMapper` field mapping, optional fields, and partner type filtering
 
-## test(infrastructure/hashers)
-
-- test `PasswordHasher`: `hash_` returns a string, `verify` returns `True`/`False`, both raise
-`UnexpectedHasherOutputAuthError` when passlib returns unexpected type
-
 ## test(infrastructure/services)
 
 - test `PyJWTService`: valid token round-trip, expired token raises `InvalidTokenAuthError`, tampered signature raises `InvalidTokenAuthError`

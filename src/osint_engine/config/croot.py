@@ -9,7 +9,9 @@ from osint_engine.application.use_cases.authentication.authenticate_user import 
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
 from osint_engine.config.container import Container, Fetchers, Services, UseCases
 from osint_engine.infrastructure.fetchers.brasilapi_fetcher import BrasilAPICNPJFetcher
-from osint_engine.infrastructure.hashers.password_hasher import PasswordHasher
+from osint_engine.infrastructure.hashers.argon2_password_hasher import (
+    Argon2PasswordHasher,
+)
 from osint_engine.infrastructure.persistence.mem.mem_seeder import seed_mem_storage
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
@@ -28,7 +30,7 @@ def build_container(*, settings: Settings, http_client: AsyncClient) -> Containe
     services = Services(jwt_service=pyjwt_service)
 
     mem_storage = MemStorage()
-    password_hasher = PasswordHasher()
+    password_hasher = Argon2PasswordHasher()
 
     seed_mem_storage(
         settings=settings, mem_storage=mem_storage, auth_hasher=password_hasher
