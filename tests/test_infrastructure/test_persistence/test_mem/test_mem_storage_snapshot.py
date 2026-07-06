@@ -8,7 +8,7 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import (
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEdge, MakeGraph, MakeNode, MakeUser
+    from tests.conftest import MakeFakeEdge, MakeFakeNode, MakeGraph, MakeUser
 
 
 class TestMemStorageSnapshotSubclassContract:
@@ -21,14 +21,14 @@ class TestMemStorageSnapshotSubclassContract:
 class TestMemStorageSnapshotSnapshot:
     def test_copies_object_references_from_mem_storage(
         self,
-        make_edge: MakeEdge,
+        make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
-        make_node: MakeNode,
+        make_fake_node: MakeFakeNode,
         make_user: MakeUser,
     ) -> None:
-        node_a = make_node()
-        node_b = make_node()
-        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
+        node_a = make_fake_node()
+        node_b = make_fake_node()
+        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
         graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
         user = make_user()
         mem_storage = MemStorage(
@@ -60,14 +60,14 @@ class TestMemStorageSnapshotSnapshot:
 
     def test_cleans_all_object_references_in_its_inner_storages(
         self,
-        make_edge: MakeEdge,
+        make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
-        make_node: MakeNode,
+        make_fake_node: MakeFakeNode,
         make_user: MakeUser,
     ) -> None:
-        node_a = make_node()
-        node_b = make_node()
-        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
+        node_a = make_fake_node()
+        node_b = make_fake_node()
+        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
         graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
         user = make_user()
         mem_storage = MemStorage(
@@ -92,14 +92,14 @@ class TestMemStorageSnapshotSnapshot:
 class TestMemStorageSnapshotCommit:
     def test_only_commits_diff_to_mem_storage_explicitly(
         self,
-        make_edge: MakeEdge,
+        make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
-        make_node: MakeNode,
+        make_fake_node: MakeFakeNode,
         make_user: MakeUser,
     ) -> None:
-        node_a = make_node()
-        node_b = make_node()
-        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
+        node_a = make_fake_node()
+        node_b = make_fake_node()
+        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
         graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
         user = make_user()
         mem_storage = MemStorage(

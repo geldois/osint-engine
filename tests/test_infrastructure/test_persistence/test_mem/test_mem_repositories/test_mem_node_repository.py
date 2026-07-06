@@ -11,15 +11,15 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_node_repositor
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeMemStorage, MakeNode
+    from tests.conftest import MakeFakeNode, MakeMemStorage
 
 
 class TestMemNodeRepositoryFind:
     @pytest.mark.asyncio
     async def test_find_returns_node_when_node_exists(
-        self, make_node: MakeNode, make_mem_storage: MakeMemStorage
+        self, make_fake_node: MakeFakeNode, make_mem_storage: MakeMemStorage
     ) -> None:
-        node = make_node()
+        node = make_fake_node()
         mem_storage = make_mem_storage(nodes=[node])
         repo = MemNodeRepository(mem_storage=mem_storage)
 
@@ -29,9 +29,9 @@ class TestMemNodeRepositoryFind:
 
     @pytest.mark.asyncio
     async def test_find_returns_none_when_node_does_not_exist(
-        self, make_node: MakeNode, make_mem_storage: MakeMemStorage
+        self, make_fake_node: MakeFakeNode, make_mem_storage: MakeMemStorage
     ) -> None:
-        node = make_node()
+        node = make_fake_node()
         mem_storage = make_mem_storage()
         repo = MemNodeRepository(mem_storage=mem_storage)
 
@@ -43,9 +43,9 @@ class TestMemNodeRepositoryFind:
 class TestMemNodeRepositoryGet:
     @pytest.mark.asyncio
     async def test_get_returns_node_when_node_exists(
-        self, make_node: MakeNode, make_mem_storage: MakeMemStorage
+        self, make_fake_node: MakeFakeNode, make_mem_storage: MakeMemStorage
     ) -> None:
-        node = make_node()
+        node = make_fake_node()
         mem_storage = make_mem_storage(nodes=[node])
         repo = MemNodeRepository(mem_storage=mem_storage)
 
@@ -55,9 +55,9 @@ class TestMemNodeRepositoryGet:
 
     @pytest.mark.asyncio
     async def test_get_raises_when_node_does_not_exist(
-        self, make_node: MakeNode, make_mem_storage: MakeMemStorage
+        self, make_fake_node: MakeFakeNode, make_mem_storage: MakeMemStorage
     ) -> None:
-        node = make_node()
+        node = make_fake_node()
         mem_storage = make_mem_storage()
         repo = MemNodeRepository(mem_storage=mem_storage)
 
@@ -68,9 +68,9 @@ class TestMemNodeRepositoryGet:
 class TestMemNodeRepositorySave:
     @pytest.mark.asyncio
     async def test_save_persists_node_correctly(
-        self, make_node: MakeNode, make_mem_storage: MakeMemStorage
+        self, make_fake_node: MakeFakeNode, make_mem_storage: MakeMemStorage
     ) -> None:
-        node = make_node()
+        node = make_fake_node()
         mem_storage = make_mem_storage()
         repo = MemNodeRepository(mem_storage=mem_storage)
 
@@ -80,12 +80,12 @@ class TestMemNodeRepositorySave:
 
     @pytest.mark.asyncio
     async def test_save_is_idempotent_and_does_not_overwrite(
-        self, make_node: MakeNode
+        self, make_fake_node: MakeFakeNode
     ) -> None:
         content = "test"
 
-        node_a = make_node(content=content)
-        node_b = make_node(content=content)
+        node_a = make_fake_node(content=content)
+        node_b = make_fake_node(content=content)
 
         assert node_a.id == node_b.id
 
@@ -106,10 +106,10 @@ class TestMemNodeRepositorySave:
 
     @pytest.mark.asyncio
     async def test_save_many_persists_all_nodes(
-        self, make_node: MakeNode, make_mem_storage: MakeMemStorage
+        self, make_fake_node: MakeFakeNode, make_mem_storage: MakeMemStorage
     ) -> None:
-        node_a = make_node()
-        node_b = make_node()
+        node_a = make_fake_node()
+        node_b = make_fake_node()
         mem_storage = make_mem_storage()
         repo = MemNodeRepository(mem_storage=mem_storage)
 

@@ -19,7 +19,7 @@ from osint_engine.domain.errors.graph_error import (
 if TYPE_CHECKING:
     from hypothesis.strategies import DataObject
 
-    from tests.conftest import MakeEdge, MakeNode
+    from tests.conftest import MakeFakeEdge, MakeFakeNode
 
 
 class TestGraphSubclassContract:
@@ -41,9 +41,9 @@ class TestGraphSubclassContract:
         assert annotations["nodes"].startswith(contract)
 
     def test_graph_inner_storages_runtime_types_are_frozenset(
-        self, make_node: MakeNode
+        self, make_fake_node: MakeFakeNode
     ) -> None:
-        node = make_node()
+        node = make_fake_node()
 
         graph = Graph(edges=frozenset(), nodes=frozenset({node}), root_id=node.id)
 
@@ -58,13 +58,13 @@ class TestGraphIdentity:
     def test_graph_id_stable_under_node_and_edge_permutations(
         self,
         data: DataObject,
-        make_edge: MakeEdge,
-        make_node: MakeNode,
+        make_fake_edge: MakeFakeEdge,
+        make_fake_node: MakeFakeNode,
     ) -> None:
-        nodes = [make_node(content=f"node_{char}") for char in ("a", "b", "c")]
+        nodes = [make_fake_node(content=f"node_{char}") for char in ("a", "b", "c")]
         edges = [
-            make_edge(source_id=nodes[0].id, target_id=nodes[1].id),
-            make_edge(source_id=nodes[1].id, target_id=nodes[2].id),
+            make_fake_edge(source_id=nodes[0].id, target_id=nodes[1].id),
+            make_fake_edge(source_id=nodes[1].id, target_id=nodes[2].id),
         ]
         root = nodes[0]
 
@@ -82,24 +82,28 @@ class TestGraphIdentity:
 
 
 class TestGraphValidation:
-    def test_graph_raises_when_does_not_have_nodes(self, make_node: MakeNode) -> None:
-        node = make_node()
+    def test_graph_raises_when_does_not_have_nodes(
+        self, make_fake_node: MakeFakeNode
+    ) -> None:
+        node = make_fake_node()
 
         with pytest.raises(HasNoNodesGraphError):
             Graph(edges=frozenset(), nodes=frozenset(), root_id=node.id)
 
-    def test_graph_raises_when_root_is_not_in_nodes(self, make_node: MakeNode) -> None:
-        node = make_node()
+    def test_graph_raises_when_root_is_not_in_nodes(
+        self, make_fake_node: MakeFakeNode
+    ) -> None:
+        node = make_fake_node()
 
         with pytest.raises(RootNotInNodesGraphError):
             Graph(edges=frozenset(), nodes=frozenset({node}), root_id=uuid4())
 
     def test_graph_raises_when_edge_references_nonexistent_node(
-        self, make_edge: MakeEdge, make_node: MakeNode
+        self, make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode
     ) -> None:
-        node = make_node()
+        node = make_fake_node()
         nonexistent_id = uuid4()
-        edge = make_edge(source_id=nonexistent_id, target_id=node.id)
+        edge = make_fake_edge(source_id=nonexistent_id, target_id=node.id)
 
         with pytest.raises(InconsistentGraphError):
             Graph(edges=frozenset({edge}), nodes=frozenset({node}), root_id=node.id)

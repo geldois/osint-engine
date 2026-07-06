@@ -11,7 +11,7 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_graph_reposito
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEdge, MakeGraph, MakeMemStorage, MakeNode
+    from tests.conftest import MakeFakeEdge, MakeFakeNode, MakeGraph, MakeMemStorage
 
 
 class TestMemGraphRepositoryFind:
@@ -80,11 +80,14 @@ class TestMemGraphRepositorySave:
 
     @pytest.mark.asyncio
     async def test_save_is_idempotent_and_does_not_overwrite(
-        self, make_edge: MakeEdge, make_graph: MakeGraph, make_node: MakeNode
+        self,
+        make_fake_edge: MakeFakeEdge,
+        make_fake_node: MakeFakeNode,
+        make_graph: MakeGraph,
     ) -> None:
-        node_a = make_node()
-        node_b = make_node()
-        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
+        node_a = make_fake_node()
+        node_b = make_fake_node()
+        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
 
         graph_a = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
         graph_b = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)

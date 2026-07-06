@@ -12,7 +12,7 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEdge, MakeGraph, MakeNode, MakeUser
+    from tests.conftest import MakeFakeEdge, MakeFakeNode, MakeGraph, MakeUser
 
 
 class TestMemUoWContextLifecycle:
@@ -39,14 +39,14 @@ class TestMemUoWCommit:
     @pytest.mark.asyncio
     async def test_commits_diffs_to_mem_storage_when_transaction_is_over(
         self,
-        make_edge: MakeEdge,
+        make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
-        make_node: MakeNode,
+        make_fake_node: MakeFakeNode,
         make_user: MakeUser,
     ) -> None:
-        node_a = make_node()
-        node_b = make_node()
-        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
+        node_a = make_fake_node()
+        node_b = make_fake_node()
+        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
         graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
         user = make_user()
         mem_storage = MemStorage()
@@ -78,14 +78,14 @@ class TestMemUoWRollback:
     @pytest.mark.asyncio
     async def test_rolls_back_transaction_when_error_occurs(
         self,
-        make_edge: MakeEdge,
+        make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
-        make_node: MakeNode,
+        make_fake_node: MakeFakeNode,
         make_user: MakeUser,
     ) -> None:
-        node_a = make_node()
-        node_b = make_node()
-        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
+        node_a = make_fake_node()
+        node_b = make_fake_node()
+        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
         graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
         user = make_user()
         mem_storage = MemStorage()

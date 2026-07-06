@@ -11,22 +11,39 @@ from osint_engine.config.settings import Settings
 from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.infrastructure.hashers.password_hasher import PasswordHasher
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
-from tests.fakes import FakeEdge, FakeEntity, FakeNode
+from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
+from tests.fakes import FakeCNPJFetcher, FakeEdge, FakeEntity, FakeNode
 
 if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.node import Node
 
-type MakeEdge = Callable[..., FakeEdge]
-type MakeEntity = Callable[..., FakeEntity]
+type MakeFakeCNPJFetcher = Callable[..., FakeCNPJFetcher]
+type MakeFakeEdge = Callable[..., FakeEdge]
+type MakeFakeEntity = Callable[..., FakeEntity]
+type MakeFakeNode = Callable[..., FakeNode]
 type MakeGraph = Callable[..., Graph]
 type MakeMemStorage = Callable[..., MemStorage]
-type MakeNode = Callable[..., FakeNode]
+type MakeMemUoW = Callable[..., MemUoW]
+type MakeMemUoWFactory = Callable[..., MakeMemUoW]
 type MakeUser = Callable[..., User]
 
 
 @pytest.fixture
-def make_edge() -> MakeEdge:
+def make_fake_cnpj_fetcher(make_graph: MakeGraph) -> MakeFakeCNPJFetcher:
+    """
+    *,
+    graph: Graph | None = None
+    """
+
+    def fake_cnpj_fetcher(*, graph: Graph | None = None) -> FakeCNPJFetcher:
+        return FakeCNPJFetcher(graph=graph if graph is not None else make_graph())
+
+    return fake_cnpj_fetcher
+
+
+@pytest.fixture
+def make_fake_edge() -> MakeFakeEdge:
     """
     *,
     source_id: UUID | None = None,
@@ -50,7 +67,7 @@ def make_edge() -> MakeEdge:
 
 
 @pytest.fixture
-def make_entity() -> MakeEntity:
+def make_fake_entity() -> MakeFakeEntity:
     """
     *,
     content: str | None = None
@@ -63,7 +80,20 @@ def make_entity() -> MakeEntity:
 
 
 @pytest.fixture
-def make_graph(make_edge: MakeEdge, make_node: MakeNode) -> MakeGraph:
+def make_fake_node() -> MakeFakeNode:
+    """
+    *,
+    content: str | None = None
+    """
+
+    def node(*, content: str | None = None) -> FakeNode:
+        return FakeNode(content=content if content is not None else str(uuid4()))
+
+    return node
+
+
+@pytest.fixture
+def make_graph(make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode) -> MakeGraph:
     """
     *,
     edges: list[Edge[UUID, UUID, UUID]] | None = None,
@@ -77,9 +107,9 @@ def make_graph(make_edge: MakeEdge, make_node: MakeNode) -> MakeGraph:
         nodes: list[Node[UUID]] | None = None,
         root_id: UUID | None = None,
     ) -> Graph:
-        node_a = make_node()
-        node_b = make_node()
-        edge = make_edge(source_id=node_a.id, target_id=node_b.id)
+        node_a = make_fake_node()
+        node_b = make_fake_node()
+        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
 
         return Graph(
             edges=frozenset(edges) if edges is not None else frozenset({edge}),
@@ -120,16 +150,33 @@ def make_mem_storage() -> MakeMemStorage:
 
 
 @pytest.fixture
-def make_node() -> MakeNode:
+def make_mem_uow(make_mem_storage: MakeMemStorage) -> MakeMemUoW:
     """
     *,
-    content: str | None = None
+    mem_storage: MemStorage | None = None
     """
 
-    def node(*, content: str | None = None) -> FakeNode:
-        return FakeNode(content=content if content is not None else str(uuid4()))
+    def mem_uow(*, mem_storage: MemStorage | None = None) -> MemUoW:
+        storage = mem_storage if mem_storage is not None else make_mem_storage()
 
-    return node
+        return MemUoW(mem_storage=storage)
+
+    return mem_uow
+
+
+@pytest.fixture
+def make_mem_uow_factory(make_mem_uow: MakeMemUoW) -> MakeMemUoWFactory:
+    """
+    *,
+    mem_uow: MemUoW | None = None
+    """
+
+    def mem_uow_factory(mem_uow: MemUoW | None = None) -> MakeMemUoW:
+        mem_uow = mem_uow if mem_uow is not None else make_mem_uow()
+
+        return lambda: mem_uow
+
+    return mem_uow_factory
 
 
 @pytest.fixture

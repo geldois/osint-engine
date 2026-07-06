@@ -14,7 +14,6 @@ appropriate interface error — currently silently forwards a malformed string t
 
 - test `AuthenticateUser`: valid credentials return user, wrong password raises `InvalidCredentialsAuthError`,
 non-existent user raises same error (no enumeration), dummy hash path always runs when user is absent
-- test `ExpandByCNPJ` orchestration: fetch, persist, and return graph
 
 ## test(infrastructure/fetchers)
 

@@ -12,15 +12,15 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_edge_repositor
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEdge, MakeMemStorage
+    from tests.conftest import MakeFakeEdge, MakeMemStorage
 
 
 class TestMemEdgeRepositoryFind:
     @pytest.mark.asyncio
     async def test_find_returns_edge_when_edge_exists(
-        self, make_edge: MakeEdge, make_mem_storage: MakeMemStorage
+        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
     ) -> None:
-        edge = make_edge()
+        edge = make_fake_edge()
         mem_storage = make_mem_storage(edges=[edge])
         repo = MemEdgeRepository(mem_storage=mem_storage)
 
@@ -30,9 +30,9 @@ class TestMemEdgeRepositoryFind:
 
     @pytest.mark.asyncio
     async def test_find_returns_none_when_edge_does_not_exist(
-        self, make_edge: MakeEdge, make_mem_storage: MakeMemStorage
+        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
     ) -> None:
-        edge = make_edge()
+        edge = make_fake_edge()
         mem_storage = make_mem_storage()
         repo = MemEdgeRepository(mem_storage=mem_storage)
 
@@ -44,9 +44,9 @@ class TestMemEdgeRepositoryFind:
 class TestMemEdgeRepositoryGet:
     @pytest.mark.asyncio
     async def test_get_returns_edge_when_edge_exists(
-        self, make_edge: MakeEdge, make_mem_storage: MakeMemStorage
+        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
     ) -> None:
-        edge = make_edge()
+        edge = make_fake_edge()
         mem_storage = make_mem_storage(edges=[edge])
         repo = MemEdgeRepository(mem_storage=mem_storage)
 
@@ -56,9 +56,9 @@ class TestMemEdgeRepositoryGet:
 
     @pytest.mark.asyncio
     async def test_get_raises_when_edge_does_not_exist(
-        self, make_edge: MakeEdge, make_mem_storage: MakeMemStorage
+        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
     ) -> None:
-        edge = make_edge()
+        edge = make_fake_edge()
         mem_storage = make_mem_storage()
         repo = MemEdgeRepository(mem_storage=mem_storage)
 
@@ -69,9 +69,9 @@ class TestMemEdgeRepositoryGet:
 class TestMemEdgeRepositorySave:
     @pytest.mark.asyncio
     async def test_save_persists_edge_correctly(
-        self, make_edge: MakeEdge, make_mem_storage: MakeMemStorage
+        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
     ) -> None:
-        edge = make_edge()
+        edge = make_fake_edge()
         mem_storage = make_mem_storage()
         repo = MemEdgeRepository(mem_storage=mem_storage)
 
@@ -81,14 +81,18 @@ class TestMemEdgeRepositorySave:
 
     @pytest.mark.asyncio
     async def test_save_is_idempotent_and_does_not_overwrite(
-        self, make_edge: MakeEdge
+        self, make_fake_edge: MakeFakeEdge
     ) -> None:
         source_id = uuid4()
         target_id = uuid4()
         content = "test"
 
-        edge_a = make_edge(source_id=source_id, target_id=target_id, content=content)
-        edge_b = make_edge(source_id=source_id, target_id=target_id, content=content)
+        edge_a = make_fake_edge(
+            source_id=source_id, target_id=target_id, content=content
+        )
+        edge_b = make_fake_edge(
+            source_id=source_id, target_id=target_id, content=content
+        )
 
         assert edge_a.id == edge_b.id
 
@@ -109,10 +113,10 @@ class TestMemEdgeRepositorySave:
 
     @pytest.mark.asyncio
     async def test_save_many_persists_all_edges(
-        self, make_edge: MakeEdge, make_mem_storage: MakeMemStorage
+        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
     ) -> None:
-        edge_a = make_edge()
-        edge_b = make_edge()
+        edge_a = make_fake_edge()
+        edge_b = make_fake_edge()
         mem_storage = make_mem_storage()
         repo = MemEdgeRepository(mem_storage=mem_storage)
 
