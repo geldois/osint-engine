@@ -6,7 +6,7 @@ from osint_engine.application.contracts.repositories.edge_repository import (
     EdgeRepository,
 )
 from osint_engine.domain.entities.bases.edge import Edge
-from osint_engine.domain.errors.entity_error import NotFoundEntityError
+from osint_engine.domain.errors.entity_error import EntityNotFoundError
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -28,7 +28,7 @@ class MemEdgeRepository(EdgeRepository):
         found = await self.find(edge_id=edge_id)
 
         if found is None:
-            raise NotFoundEntityError(entity_id=edge_id, subject=Edge)
+            raise EntityNotFoundError(entity_id=edge_id, subject=Edge)
 
         return found
 

@@ -6,7 +6,7 @@ from osint_engine.application.contracts.repositories.node_repository import (
     NodeRepository,
 )
 from osint_engine.domain.entities.bases.node import Node
-from osint_engine.domain.errors.entity_error import NotFoundEntityError
+from osint_engine.domain.errors.entity_error import EntityNotFoundError
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -28,7 +28,7 @@ class MemNodeRepository(NodeRepository):
         found = await self.find(node_id=node_id)
 
         if found is None:
-            raise NotFoundEntityError(entity_id=node_id, subject=Node)
+            raise EntityNotFoundError(entity_id=node_id, subject=Node)
 
         return found
 

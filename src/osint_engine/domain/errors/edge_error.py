@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class EdgeError(EntityError, error_code=None): ...
 
 
-class SelfLoopEdgeError(EdgeError, error_code="EDGE_SELF_LOOP"):
+class EdgeSelfLoopError(EdgeError, error_code="EDGE_SELF_LOOP"):
     node_id: UUID
 
     @override

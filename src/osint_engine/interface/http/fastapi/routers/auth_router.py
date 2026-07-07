@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter
 
-from osint_engine.interface.http.routers.handlers.post.post_token import (
+from osint_engine.interface.http.fastapi.routers.handlers.post.post_token import (
     build_post_token_handler,
 )
 

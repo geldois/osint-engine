@@ -5,10 +5,10 @@ from typing import override
 from osint_engine.interface.errors.interface_error import InterfaceError
 
 
-class SanitizationError(InterfaceError): ...
+class SanitizationError(InterfaceError, error_code=None): ...
 
 
-class InvalidCNPJError(SanitizationError):
+class InvalidCNPJError(SanitizationError, error_code="SANITIZATION_INVALID_CNPJ"):
     input_value: str
     digit_count: int
 

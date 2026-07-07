@@ -5,10 +5,10 @@ from typing import override
 from osint_engine.infrastructure.errors.infrastructure_error import InfrastructureError
 
 
-class FetcherError(InfrastructureError): ...
+class DataSourceError(InfrastructureError): ...
 
 
-class ExternalAPIFetcherError(FetcherError):
+class DataSourceRequestError(DataSourceError):
     source: str
     status_code: int | None
 
@@ -21,13 +21,13 @@ class ExternalAPIFetcherError(FetcherError):
         status_code_report = (
             f"with status code {self.status_code}"
             if self.status_code is not None
-            else " without a status code"
+            else "without a status code"
         )
 
         return f"'{self.source}' request failed {status_code_report}."
 
 
-class UnexpectedFieldTypeFetcherError(FetcherError):
+class UnexpectedFieldTypeError(DataSourceError):
     source: str
     key: str
     expected_type: type
@@ -50,7 +50,7 @@ class UnexpectedFieldTypeFetcherError(FetcherError):
         )
 
 
-class UnexpectedSchemaFetcherError(FetcherError):
+class UnexpectedPayloadError(DataSourceError):
     source: str
     missing_field: str
 
@@ -61,6 +61,6 @@ class UnexpectedSchemaFetcherError(FetcherError):
     @override
     def _build_message(self) -> str:
         return (
-            f"'{self.source}' returned an unexpected schema: "
+            f"'{self.source}' returned an unexpected payload: "
             f"required field '{self.missing_field}' is missing."
         )

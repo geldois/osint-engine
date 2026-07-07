@@ -9,8 +9,10 @@ from osint_engine.domain.entities.nodes.email import Email
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.domain.entities.nodes.phone import Phone
 from osint_engine.domain.entities.nodes.sanction import Sanction
-from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
-from osint_engine.interface.http.schemas.node_schema import (
+from osint_engine.interface.http.fastapi.errors.schema_error import (
+    UnmappedTypeSchemaError,
+)
+from osint_engine.interface.http.fastapi.schemas.node_schema import (
     AddressSchema,
     CnaeSchema,
     CompanySchema,

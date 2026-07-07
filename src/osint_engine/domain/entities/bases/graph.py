@@ -6,9 +6,9 @@ from uuid import UUID, uuid5
 
 from osint_engine.domain.entities.entity import Entity
 from osint_engine.domain.errors.graph_error import (
-    HasNoNodesGraphError,
-    InconsistentGraphError,
-    RootNotInNodesGraphError,
+    GraphHasNoNodesError,
+    GraphInconsistentError,
+    GraphRootNotInNodesError,
 )
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 
@@ -33,17 +33,17 @@ class Graph(Entity[GraphID], namespace=EntityNAMESPACE.GRAPH):
         root_id: UUID,
     ) -> None:
         if not nodes:
-            raise HasNoNodesGraphError
+            raise GraphHasNoNodesError
 
         if not any(node.id == root_id for node in nodes):
-            raise RootNotInNodesGraphError(root_id=root_id)
+            raise GraphRootNotInNodesError(root_id=root_id)
 
         node_ids = frozenset({node.id for node in nodes})
 
         if not all(
             edge.source_id in node_ids and edge.target_id in node_ids for edge in edges
         ):
-            raise InconsistentGraphError
+            raise GraphInconsistentError
 
         super().__init__(edges=edges, nodes=nodes, root_id=root_id)
 

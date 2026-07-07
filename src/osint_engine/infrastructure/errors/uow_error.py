@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class UoWError(InfrastructureError): ...
 
 
-class AlreadyPreparedUoWError(UoWError):
+class UoWAlreadyPreparedError(UoWError):
     subject: type[UoW]
 
     @override
@@ -26,7 +26,7 @@ class AlreadyPreparedUoWError(UoWError):
         )
 
 
-class NotPreparedUoWError(UoWError):
+class UoWNotPreparedError(UoWError):
     subject: type[UoW]
 
     @override

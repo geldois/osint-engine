@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import override
 
-from argon2 import PasswordHasher
+from argon2 import PasswordHasher as _Argon2Hasher
 from argon2.exceptions import InvalidHashError, VerifyMismatchError
 
-from osint_engine.application.contracts.hashers.auth_hasher import AuthHasher
+from osint_engine.application.contracts.hashers.password_hasher import PasswordHasher
 
-_hasher = PasswordHasher()
+_hasher = _Argon2Hasher()
 
 
-class Argon2PasswordHasher(AuthHasher):
+class Argon2PasswordHasher(PasswordHasher):
     @override
     def hash_(self, *, password: str) -> str:
         return _hasher.hash(password)

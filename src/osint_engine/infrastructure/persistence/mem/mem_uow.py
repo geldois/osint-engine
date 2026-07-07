@@ -4,8 +4,8 @@ from typing import override
 
 from osint_engine.application.contracts.uow import UoW
 from osint_engine.infrastructure.errors.uow_error import (
-    AlreadyPreparedUoWError,
-    NotPreparedUoWError,
+    UoWAlreadyPreparedError,
+    UoWNotPreparedError,
 )
 from osint_engine.infrastructure.persistence.mem.mem_storage import (
     MemStorage,
@@ -39,7 +39,7 @@ class MemUoW(UoW):
     @override
     async def _prepare(self) -> None:
         if self._is_prepared():
-            raise AlreadyPreparedUoWError(subject=type(self))
+            raise UoWAlreadyPreparedError(subject=type(self))
 
         self._snapshot = MemStorageSnapshot(mem_storage=self._mem_storage)
 
@@ -51,7 +51,7 @@ class MemUoW(UoW):
     @override
     async def _finish(self) -> None:
         if not self._is_prepared():
-            raise NotPreparedUoWError(subject=type(self))
+            raise UoWNotPreparedError(subject=type(self))
 
         self._snapshot.clear_snapshot()
 
@@ -68,7 +68,7 @@ class MemUoW(UoW):
     @override
     async def commit(self) -> None:
         if not self._is_prepared():
-            raise NotPreparedUoWError(subject=type(self))
+            raise UoWNotPreparedError(subject=type(self))
 
         self._snapshot.commit_to_storage()
 

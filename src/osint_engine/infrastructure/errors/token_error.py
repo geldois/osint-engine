@@ -5,10 +5,10 @@ from typing import override
 from osint_engine.infrastructure.errors.infrastructure_error import InfrastructureError
 
 
-class AuthError(InfrastructureError): ...
+class TokenError(InfrastructureError): ...
 
 
-class InvalidTokenAuthError(AuthError):
+class InvalidTokenError(TokenError):
     detail: str
 
     @override
@@ -18,15 +18,3 @@ class InvalidTokenAuthError(AuthError):
     @override
     def _build_message(self) -> str:
         return self.detail
-
-
-class NotFoundUserAuthError(AuthError):
-    username: str
-
-    @override
-    def __init__(self, *, username: str) -> None:
-        super().__init__(username=username)
-
-    @override
-    def _build_message(self) -> str:
-        return f"User '{self.username}' not found."

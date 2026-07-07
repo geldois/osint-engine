@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 
-class AuthHasher(ABC):
+class PasswordHasher(ABC):
     @abstractmethod
     def hash_(self, *, password: str) -> str:
         raise NotImplementedError

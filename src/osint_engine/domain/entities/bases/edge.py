@@ -5,7 +5,7 @@ from typing import Generic, TypeVar, override
 from uuid import UUID
 
 from osint_engine.domain.entities.entity import Entity, IDType_co
-from osint_engine.domain.errors.edge_error import SelfLoopEdgeError
+from osint_engine.domain.errors.edge_error import EdgeSelfLoopError
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 
 SourceID_co = TypeVar("SourceID_co", bound=UUID, covariant=True)
@@ -40,7 +40,7 @@ class Edge(
         ) | frozenset({"source_id", "target_id"})
 
         if source_id == target_id:
-            raise SelfLoopEdgeError(node_id=source_id)
+            raise EdgeSelfLoopError(node_id=source_id)
 
         super().__init__(
             identity_fields=identity_fields,

@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends
 
-from osint_engine.interface.http.dependencies.jwt_guard import build_jwt_guard
-from osint_engine.interface.http.routers.handlers.get.get_cnpj import (
+from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_jwt_guard
+from osint_engine.interface.http.fastapi.routers.handlers.get.get_cnpj import (
     build_get_cnpj_handler,
 )
 

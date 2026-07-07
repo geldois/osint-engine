@@ -8,7 +8,7 @@ from osint_engine.application.errors.application_error import ApplicationError
 class AuthError(ApplicationError): ...
 
 
-class InvalidCredentialsAuthError(AuthError):
+class InvalidCredentialsError(AuthError):
     username: str
 
     @override

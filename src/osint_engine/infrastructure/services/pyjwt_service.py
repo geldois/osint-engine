@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from jwt import PyJWTError, decode, encode  # pyright: ignore[reportUnknownVariableType]
 
 from osint_engine.application.contracts.services.jwt_service import JWTService
-from osint_engine.infrastructure.errors.auth_error import InvalidTokenAuthError
+from osint_engine.infrastructure.errors.token_error import InvalidTokenError
 
 if TYPE_CHECKING:
     from osint_engine.config.settings import Settings
@@ -36,4 +36,4 @@ class PyJWTService(JWTService):
                 jwt=token, key=self.secret_key, algorithms=[self._JWT_ALGORITHM]
             )
         except PyJWTError as exception:
-            raise InvalidTokenAuthError(detail=str(exception)) from exception
+            raise InvalidTokenError(detail=str(exception)) from exception

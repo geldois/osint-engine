@@ -6,12 +6,14 @@ from structlog.stdlib import get_logger
 
 from osint_engine.application.auth.user import User
 from osint_engine.application.contracts.use_case import Query
-from osint_engine.application.errors.auth_error import InvalidCredentialsAuthError
+from osint_engine.application.errors.auth_error import InvalidCredentialsError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from osint_engine.application.contracts.hashers.auth_hasher import AuthHasher
+    from osint_engine.application.contracts.hashers.password_hasher import (
+        PasswordHasher,
+    )
     from osint_engine.application.contracts.uow import UoW
 
 _logger = get_logger()
@@ -19,7 +21,7 @@ _logger = get_logger()
 
 class AuthenticateUser(Query[User]):
     uow_factory: Callable[[], UoW]
-    auth_hasher: AuthHasher
+    auth_hasher: PasswordHasher
     username: str
     password: str
 
@@ -28,7 +30,7 @@ class AuthenticateUser(Query[User]):
         self,
         *,
         uow_factory: Callable[[], UoW],
-        auth_hasher: AuthHasher,
+        auth_hasher: PasswordHasher,
         username: str,
         password: str,
     ) -> None:
@@ -58,7 +60,7 @@ class AuthenticateUser(Query[User]):
             if user is None or not result:
                 _logger.warning("authentication_failure", username=self.username)
 
-                raise InvalidCredentialsAuthError(username=self.username)
+                raise InvalidCredentialsError(username=self.username)
 
         _logger.info("user.authentication.end", username=self.username)
 

@@ -6,7 +6,7 @@ from httpx2 import AsyncClient, Timeout
 
 from osint_engine.config.croot import build_container
 from osint_engine.config.settings import Settings
-from osint_engine.interface.http.app import create_app, serve
+from osint_engine.interface.http.fastapi.fastapi import create_app, serve
 from osint_engine.observability.logging import configure_logging
 
 

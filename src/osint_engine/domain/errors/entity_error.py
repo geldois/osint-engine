@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class EntityError(DomainError, error_code=None): ...
 
 
-class InvalidEntityIDTypeError(EntityError, error_code="ENTITY_INVALID_ID_TYPE"):
+class EntityInvalidIDTypeError(EntityError, error_code="ENTITY_INVALID_ID_TYPE"):
     id_type: Callable[[UUID], UUID]
     subject: type
 
@@ -34,7 +34,7 @@ class InvalidEntityIDTypeError(EntityError, error_code="ENTITY_INVALID_ID_TYPE")
         )
 
 
-class MissingEntityIDTypeError(EntityError, error_code="ENTITY_MISSING_ID_TYPE"):
+class EntityMissingIDTypeError(EntityError, error_code="ENTITY_MISSING_ID_TYPE"):
     subject: type
 
     @override
@@ -50,7 +50,7 @@ class MissingEntityIDTypeError(EntityError, error_code="ENTITY_MISSING_ID_TYPE")
         )
 
 
-class MissingEntityNAMESPACEError(EntityError, error_code="ENTITY_MISSING_NAMESPACE"):
+class EntityMissingNamespaceError(EntityError, error_code="ENTITY_MISSING_NAMESPACE"):
     subject: type[Entity[UUID]]
 
     @override
@@ -66,7 +66,7 @@ class MissingEntityNAMESPACEError(EntityError, error_code="ENTITY_MISSING_NAMESP
         )
 
 
-class NonDeterministicValueEntityError(
+class EntityNonDeterministicValueError(
     EntityError, error_code="ENTITY_NON_DETERMINISTIC_VALUE"
 ):
     value: object
@@ -86,7 +86,7 @@ class NonDeterministicValueEntityError(
         )
 
 
-class InvalidIdentityFieldEntityError(
+class EntityInvalidIdentityFieldError(
     EntityError, error_code="ENTITY_INVALID_IDENTIFIED_BY_FIELD"
 ):
     field: str
@@ -112,7 +112,7 @@ class InvalidIdentityFieldEntityError(
         )
 
 
-class NotFoundEntityError(EntityError, error_code="ENTITY_NOT_FOUND"):
+class EntityNotFoundError(EntityError, error_code="ENTITY_NOT_FOUND"):
     entity_id: UUID
     subject: type[Entity[UUID]]
 

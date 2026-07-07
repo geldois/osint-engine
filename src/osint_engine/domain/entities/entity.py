@@ -17,10 +17,10 @@ from typing import (
 from uuid import UUID, uuid4, uuid5
 
 from osint_engine.domain.errors.entity_error import (
-    InvalidEntityIDTypeError,
-    InvalidIdentityFieldEntityError,
-    MissingEntityIDTypeError,
-    NonDeterministicValueEntityError,
+    EntityInvalidIdentityFieldError,
+    EntityInvalidIDTypeError,
+    EntityMissingIDTypeError,
+    EntityNonDeterministicValueError,
 )
 
 if TYPE_CHECKING:
@@ -45,12 +45,12 @@ _DETERMINISTIC_TYPES: tuple[type, ...] = (
 
 def _validate_deterministic_type(*, value: object) -> None:
     if type(value) not in _DETERMINISTIC_TYPES:
-        raise NonDeterministicValueEntityError(value=value)
+        raise EntityNonDeterministicValueError(value=value)
 
 
 def _validate_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> None:
     if not hasattr(subject, "id_type") and not isabstract(subject):
-        raise MissingEntityIDTypeError(subject=subject)
+        raise EntityMissingIDTypeError(subject=subject)
 
 
 def _validate_identity_fields(
@@ -58,7 +58,7 @@ def _validate_identity_fields(
 ) -> None:
     for field in identity_fields:
         if field not in valid_fields:
-            raise InvalidIdentityFieldEntityError(
+            raise EntityInvalidIdentityFieldError(
                 field=field, subject=subject, valid_fields=valid_fields
             )
 
@@ -92,12 +92,12 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
                 continue
 
             if not issubclass(candidate.__supertype__, UUID):
-                raise InvalidEntityIDTypeError(subject=cls, id_type=candidate)
+                raise EntityInvalidIDTypeError(subject=cls, id_type=candidate)
 
             probe = candidate(uuid4())
 
             if not isinstance(probe, UUID):
-                raise InvalidEntityIDTypeError(subject=cls, id_type=candidate)
+                raise EntityInvalidIDTypeError(subject=cls, id_type=candidate)
 
             cls.id_type: Callable[[UUID], IDType_co] = staticmethod(candidate)
 

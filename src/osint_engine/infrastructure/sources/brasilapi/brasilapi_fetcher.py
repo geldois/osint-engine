@@ -8,13 +8,11 @@ from httpx2 import URL, AsyncClient, HTTPStatusError, RequestError
 from structlog.stdlib import get_logger
 
 from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
-from osint_engine.infrastructure.errors.fetcher_error import (
-    ExternalAPIFetcherError,
+from osint_engine.infrastructure.errors.data_source_error import (
+    DataSourceRequestError,
 )
-from osint_engine.infrastructure.fetchers.mappers.brasilapi_mapper import (
-    BrasilAPICNPJMapper,
-)
-from osint_engine.infrastructure.fetchers.schemas.fetcher_schema import Schema
+from osint_engine.infrastructure.sources.brasilapi.brasilapi_mapper import map_graph
+from osint_engine.infrastructure.sources.payload import Payload
 
 if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.graph import Graph
@@ -43,8 +41,6 @@ class BrasilAPICNPJFetcher(_BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/"
     def __init__(self, *, http_client: AsyncClient) -> None:
         super().__init__(http_client=http_client)
 
-        self._mapper = BrasilAPICNPJMapper
-
     @override
     async def fetch(self, cnpj: str, /) -> Graph:
         self._logger.info("cnpj.fetch.start", cnpj=cnpj)
@@ -63,7 +59,7 @@ class BrasilAPICNPJFetcher(_BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/"
                 status_code=exception.response.status_code,
             )
 
-            raise ExternalAPIFetcherError(
+            raise DataSourceRequestError(
                 source=self._SOURCE, status_code=exception.response.status_code
             ) from exception
         except (RequestError, JSONDecodeError) as exception:
@@ -73,10 +69,10 @@ class BrasilAPICNPJFetcher(_BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/"
                 exc_type=type(exception).__name__,
             )
 
-            raise ExternalAPIFetcherError(
+            raise DataSourceRequestError(
                 source=self._SOURCE, status_code=None
             ) from exception
 
-        schema = Schema(source=self._SOURCE, data=data)
+        payload = Payload(source=self._SOURCE, data=data)
 
-        return self._mapper.map(schema=schema)
+        return map_graph(payload=payload)

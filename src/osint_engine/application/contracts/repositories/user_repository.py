@@ -17,9 +17,5 @@ class UserRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get(self, *, username: str) -> User:
-        raise NotImplementedError
-
-    @abstractmethod
     async def save(self, *, user: User) -> None:
         raise NotImplementedError

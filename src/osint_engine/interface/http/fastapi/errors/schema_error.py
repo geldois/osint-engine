@@ -3,10 +3,10 @@ from typing import override
 from osint_engine.interface.errors.interface_error import InterfaceError
 
 
-class SchemaError(InterfaceError): ...
+class SchemaError(InterfaceError, error_code=None): ...
 
 
-class UnmappedTypeSchemaError(SchemaError):
+class UnmappedTypeSchemaError(SchemaError, error_code="SCHEMA_UNMAPPED_TYPE"):
     subject: type
 
     @override
@@ -18,7 +18,9 @@ class UnmappedTypeSchemaError(SchemaError):
         return f"'{self.subject.__name__}' has no schema mapping"
 
 
-class MissingDiscriminatorFieldError(SchemaError):
+class MissingDiscriminatorFieldError(
+    SchemaError, error_code="SCHEMA_MISSING_DISCRIMINATOR"
+):
     subject: type
 
     @override
