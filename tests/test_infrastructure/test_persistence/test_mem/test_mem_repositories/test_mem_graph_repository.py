@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from osint_engine.domain.errors.entity_error import NotFoundEntityError
+from osint_engine.domain.errors.entity_error import EntityNotFoundError
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.repositories.mem_graph_repository import (  # noqa: E501
     MemGraphRepository,
@@ -61,13 +61,13 @@ class TestMemGraphRepositoryGet:
         mem_storage = make_mem_storage()
         repo = MemGraphRepository(mem_storage=mem_storage)
 
-        with pytest.raises(NotFoundEntityError):
+        with pytest.raises(EntityNotFoundError):
             await repo.get(graph_id=graph.id)
 
 
 class TestMemGraphRepositorySave:
     @pytest.mark.asyncio
-    async def test_save_persists_graph_correctly(
+    async def test_save_stores_graph_in_storage(
         self, make_graph: MakeGraph, make_mem_storage: MakeMemStorage
     ) -> None:
         graph = make_graph()

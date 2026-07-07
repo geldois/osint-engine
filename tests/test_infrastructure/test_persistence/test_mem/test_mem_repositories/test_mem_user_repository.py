@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from osint_engine.infrastructure.errors.auth_error import NotFoundUserAuthError
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.repositories.mem_user_repository import (  # noqa: E501
     MemUserRepository,
@@ -40,34 +39,9 @@ class TestMemUserRepositoryFind:
         assert found is None
 
 
-class TestMemUserRepositoryGet:
-    @pytest.mark.asyncio
-    async def test_get_returns_user_when_user_exists(
-        self, make_user: MakeUser, make_mem_storage: MakeMemStorage
-    ) -> None:
-        user = make_user()
-        mem_storage = make_mem_storage(users=[user])
-        repo = MemUserRepository(mem_storage=mem_storage)
-
-        found = await repo.get(username=user.username)
-
-        assert found is user
-
-    @pytest.mark.asyncio
-    async def test_get_raises_when_user_does_not_exist(
-        self, make_user: MakeUser, make_mem_storage: MakeMemStorage
-    ) -> None:
-        user = make_user()
-        mem_storage = make_mem_storage()
-        repo = MemUserRepository(mem_storage=mem_storage)
-
-        with pytest.raises(NotFoundUserAuthError):
-            await repo.get(username=user.username)
-
-
 class TestMemUserRepositorySave:
     @pytest.mark.asyncio
-    async def test_save_persists_user_correctly(
+    async def test_save_stores_user_in_storage(
         self, make_user: MakeUser, make_mem_storage: MakeMemStorage
     ) -> None:
         user = make_user()

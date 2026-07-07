@@ -11,9 +11,9 @@ from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.entities.entity import Entity
 from osint_engine.domain.errors.graph_error import (
-    HasNoNodesGraphError,
-    InconsistentGraphError,
-    RootNotInNodesGraphError,
+    GraphHasNoNodesError,
+    GraphInconsistentError,
+    GraphRootNotInNodesError,
 )
 
 if TYPE_CHECKING:
@@ -32,7 +32,7 @@ class TestGraphSubclassContract:
 
         assert Node not in bases
 
-    def test_graph_inner_storages_are_frozenset(self) -> None:
+    def test_edges_and_nodes_are_annotated_as_frozenset(self) -> None:
         annotations = Graph.__annotations__
         contract = "frozenset"
 
@@ -40,7 +40,7 @@ class TestGraphSubclassContract:
 
         assert annotations["nodes"].startswith(contract)
 
-    def test_graph_inner_storages_runtime_types_are_frozenset(
+    def test_edges_and_nodes_are_frozenset_at_runtime(
         self, make_fake_node: MakeFakeNode
     ) -> None:
         node = make_fake_node()
@@ -55,7 +55,7 @@ class TestGraphSubclassContract:
 class TestGraphIdentity:
     @given(data=strategies.data())
     @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_graph_id_stable_under_node_and_edge_permutations(
+    def test_id_is_stable_under_element_permutations(
         self,
         data: DataObject,
         make_fake_edge: MakeFakeEdge,
@@ -73,8 +73,8 @@ class TestGraphIdentity:
             strategies.permutations(edges)
         )
 
-        id_canonical = Graph._calculate_id(edges=edges, nodes=nodes, root_id=root.id)  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-        id_permuted = Graph._calculate_id(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        id_canonical = Graph._calculate_id(edges=edges, nodes=nodes, root_id=root.id)  # pyright: ignore[reportPrivateUsage]
+        id_permuted = Graph._calculate_id(  # pyright: ignore[reportPrivateUsage]
             edges=edge_perm, nodes=node_perm, root_id=root.id
         )
 
@@ -82,28 +82,28 @@ class TestGraphIdentity:
 
 
 class TestGraphValidation:
-    def test_graph_raises_when_does_not_have_nodes(
+    def test_raises_with_empty_node_set(
         self, make_fake_node: MakeFakeNode
     ) -> None:
         node = make_fake_node()
 
-        with pytest.raises(HasNoNodesGraphError):
+        with pytest.raises(GraphHasNoNodesError):
             Graph(edges=frozenset(), nodes=frozenset(), root_id=node.id)
 
-    def test_graph_raises_when_root_is_not_in_nodes(
+    def test_raises_when_root_is_absent_from_nodes(
         self, make_fake_node: MakeFakeNode
     ) -> None:
         node = make_fake_node()
 
-        with pytest.raises(RootNotInNodesGraphError):
+        with pytest.raises(GraphRootNotInNodesError):
             Graph(edges=frozenset(), nodes=frozenset({node}), root_id=uuid4())
 
-    def test_graph_raises_when_edge_references_nonexistent_node(
+    def test_raises_when_edge_references_unknown_node(
         self, make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode
     ) -> None:
         node = make_fake_node()
         nonexistent_id = uuid4()
         edge = make_fake_edge(source_id=nonexistent_id, target_id=node.id)
 
-        with pytest.raises(InconsistentGraphError):
+        with pytest.raises(GraphInconsistentError):
             Graph(edges=frozenset({edge}), nodes=frozenset({node}), root_id=node.id)

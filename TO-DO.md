@@ -5,19 +5,23 @@
 - install Renovate GitHub App on geldois/osint-engine and push `renovate.json` to enable automated dependency updates
 for actions, uv, and pre-commit hooks
 
+## refactor(tests/test_infrastructure)
+
+- rename `test_fetchers/` to `test_sources/` to match the renamed `infrastructure/sources/` package
+
 ## test(application)
 
-- test `AuthenticateUser`: valid credentials return user, wrong password raises `InvalidCredentialsAuthError`,
+- test `AuthenticateUser`: valid credentials return user, wrong password raises `InvalidCredentialsError`,
 non-existent user raises same error (no enumeration), dummy hash path always runs when user is absent
 
-## test(infrastructure/fetchers)
+## test(infrastructure/sources)
 
 - test `BrasilAPICNPJFetcher` HTTP error and network failure handling
 - test `BrasilAPICNPJMapper` field mapping, optional fields, and partner type filtering
 
 ## test(infrastructure/services)
 
-- test `PyJWTService`: valid token round-trip, expired token raises `InvalidTokenAuthError`, tampered signature raises `InvalidTokenAuthError`
+- test `PyJWTService`: valid token round-trip, expired token raises `InvalidTokenError`, tampered signature raises `InvalidTokenError`
 
 ## test(interface/http)
 

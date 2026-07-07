@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from osint_engine.domain.errors.entity_error import NotFoundEntityError
+from osint_engine.domain.errors.entity_error import EntityNotFoundError
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.repositories.mem_edge_repository import (  # noqa: E501
     MemEdgeRepository,
@@ -62,13 +62,13 @@ class TestMemEdgeRepositoryGet:
         mem_storage = make_mem_storage()
         repo = MemEdgeRepository(mem_storage=mem_storage)
 
-        with pytest.raises(NotFoundEntityError):
+        with pytest.raises(EntityNotFoundError):
             await repo.get(edge_id=edge.id)
 
 
 class TestMemEdgeRepositorySave:
     @pytest.mark.asyncio
-    async def test_save_persists_edge_correctly(
+    async def test_save_stores_edge_in_storage(
         self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
     ) -> None:
         edge = make_fake_edge()

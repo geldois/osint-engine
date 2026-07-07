@@ -8,10 +8,10 @@ import pytest
 
 from osint_engine.domain.entities.entity import Entity
 from osint_engine.domain.errors.entity_error import (
-    InvalidEntityIDTypeError,
-    InvalidIdentityFieldEntityError,
-    MissingEntityIDTypeError,
-    NonDeterministicValueEntityError,
+    EntityInvalidIdentityFieldError,
+    EntityInvalidIDTypeError,
+    EntityMissingIDTypeError,
+    EntityNonDeterministicValueError,
 )
 from tests.fakes import TEST, TEST_DIFF, FakeEntity, FakeEntityID
 
@@ -71,7 +71,7 @@ class FakeFakeEntity:  # Not an Entity — sentinel for type-mismatch tests
 
 
 class TestEntityIdentity:
-    def test_entity_assures_deterministic_content_adressable_id(self) -> None:
+    def test_equal_content_produces_equal_entities(self) -> None:
         entity_a = FakeEntity(content="test")
         entity_b = FakeEntity(content="test")
 
@@ -83,7 +83,7 @@ class TestEntityIdentity:
 
         assert entity_a is not entity_b
 
-    def test_entity_returns_false_on_comparison_when_namespaces_are_different(
+    def test_different_namespace_produces_different_id(
         self,
     ) -> None:
         entity_a = FakeEntity(content="test")
@@ -95,7 +95,7 @@ class TestEntityIdentity:
 
         assert len({entity_a, entity_b}) == 2
 
-    def test_entity_uuid5_uses_only_identity_fields_for_calculation(self) -> None:
+    def test_id_depends_only_on_identity_fields(self) -> None:
         entity_a = FakeEntityWithContentIdentity(content="Alice", extra_field="value_a")
         entity_b = FakeEntityWithContentIdentity(content="Alice", extra_field="value_b")
         entity_c = FakeEntityWithContentIdentity(content="Bob", extra_field="value_a")
@@ -108,22 +108,22 @@ class TestEntityIdentity:
 
 
 class TestEntitySubclassContract:
-    def test_entity_preserves_typed_alias_from_injected_id_type(self) -> None:
+    def test_id_type_is_bound_to_subclass(self) -> None:
         assert FakeEntity.id_type.__name__ == FakeEntityID.__name__
 
         assert callable(FakeEntity.id_type)
 
         assert isinstance(FakeEntity.id_type(uuid4()), UUID)
 
-    def test_entity_raises_when_inherits_from_class_without_id_type(self) -> None:
-        with pytest.raises(MissingEntityIDTypeError):
+    def test_raises_without_id_type_parameter(self) -> None:
+        with pytest.raises(EntityMissingIDTypeError):
 
             class FakeEntityWithoutIDType(Entity, namespace=TEST):  # pyright: ignore[reportUnusedClass, reportMissingTypeArgument]
                 def __init__(self, **kwargs: object) -> None:
                     super().__init__(identity_fields=None, **kwargs)
 
-    def test_entity_raises_when_inherits_from_class_with_flat_id_type(self) -> None:
-        with pytest.raises(MissingEntityIDTypeError):
+    def test_raises_with_plain_uuid_as_id_type(self) -> None:
+        with pytest.raises(EntityMissingIDTypeError):
 
             class FakeEntityWithFlatIDType(  # pyright: ignore[reportUnusedClass]
                 Entity[UUID], namespace=TEST
@@ -131,12 +131,12 @@ class TestEntitySubclassContract:
                 def __init__(self, **kwargs: object) -> None:
                     super().__init__(identity_fields=None, **kwargs)
 
-    def test_entity_raises_when_inherits_from_class_with_non_uuid_id_type(
+    def test_raises_with_non_uuid_id_type(
         self,
     ) -> None:
         WrongIDType = NewType("WrongIDType", int)
 
-        with pytest.raises(InvalidEntityIDTypeError):
+        with pytest.raises(EntityInvalidIDTypeError):
 
             class FakeEntityWithWrongIDType(  # pyright: ignore[reportUnusedClass]
                 Entity[WrongIDType],  # pyright: ignore[reportInvalidTypeArguments]
@@ -147,7 +147,7 @@ class TestEntitySubclassContract:
 
 
 class TestEntityValueSemantics:
-    def test_entity_is_hashable_inside_of_data_structures(self) -> None:
+    def test_entity_is_hashable(self) -> None:
         entity_a = FakeEntity(content="test_a")
         entity_a_copy = FakeEntity(content="test_a")
         entity_b = FakeEntity(content="test_b")
@@ -163,7 +163,7 @@ class TestEntityValueSemantics:
 
         assert len(entities) == 2
 
-    def test_entity_returns_false_on_comparison_with_diferent_type_object(
+    def test_entity_is_not_equal_to_foreign_type(
         self,
     ) -> None:
         entity_a = FakeEntity(content="test")
@@ -183,14 +183,14 @@ class TestEntityValueSemantics:
 
 class TestEntityIDCalculation:
     def test_entity_id_is_stable_under_kwarg_order(self) -> None:
-        id_forward = FakeEntity._calculate_id(content="test", role="admin")  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-        id_reversed = FakeEntity._calculate_id(role="admin", content="test")  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        id_forward = FakeEntity._calculate_id(content="test", role="admin") # pyright: ignore[reportPrivateUsage]
+        id_reversed = FakeEntity._calculate_id(role="admin", content="test")  # pyright: ignore[reportPrivateUsage]
 
         assert id_forward == id_reversed
 
     def test_entity_id_depends_on_values_not_key_names(self) -> None:
-        id_content_key = FakeEntity._calculate_id(content="test")  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-        id_name_key = FakeEntity._calculate_id(name="test")  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        id_content_key = FakeEntity._calculate_id(content="test")  # pyright: ignore[reportPrivateUsage]
+        id_name_key = FakeEntity._calculate_id(name="test")  # pyright: ignore[reportPrivateUsage]
 
         assert id_content_key == id_name_key
 
@@ -206,26 +206,26 @@ class TestEntityIDCalculation:
             pytest.param(object(), id="arbitrary_object"),
         ],
     )
-    def test_entity_raises_when_identity_value_is_not_a_deterministic_type(
+    def test_raises_when_identity_value_is_not_deterministic(
         self, value: object
     ) -> None:
-        with pytest.raises(NonDeterministicValueEntityError):
-            FakeEntity._calculate_id(content=value)  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        with pytest.raises(EntityNonDeterministicValueError):
+            FakeEntity._calculate_id(content=value)  # pyright: ignore[reportPrivateUsage]
 
 
 class TestEntityIdentityFieldsValidation:
-    def test_entity_raises_when_identity_field_does_not_exist_in_kwargs(
+    def test_raises_when_identity_field_is_absent_from_kwargs(
         self,
     ) -> None:
-        with pytest.raises(InvalidIdentityFieldEntityError):
+        with pytest.raises(EntityInvalidIdentityFieldError):
             FakeEntityWithNonexistentIdentityField(
                 identity_fields=frozenset({"nonexistent_field"})
             )
 
-    def test_entity_raises_when_identity_fields_contain_nonexistent_attribute_names(
+    def test_raises_when_any_identity_field_is_unknown(
         self,
     ) -> None:
-        with pytest.raises(InvalidIdentityFieldEntityError):
+        with pytest.raises(EntityInvalidIdentityFieldError):
             FakeEntityWithNonexistentIdentityField(
                 identity_fields=frozenset({"content", "nonexistent_field"}),
                 content="test",

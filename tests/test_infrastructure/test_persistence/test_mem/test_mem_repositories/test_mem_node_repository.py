@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from osint_engine.domain.errors.entity_error import NotFoundEntityError
+from osint_engine.domain.errors.entity_error import EntityNotFoundError
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.repositories.mem_node_repository import (  # noqa: E501
     MemNodeRepository,
@@ -61,13 +61,13 @@ class TestMemNodeRepositoryGet:
         mem_storage = make_mem_storage()
         repo = MemNodeRepository(mem_storage=mem_storage)
 
-        with pytest.raises(NotFoundEntityError):
+        with pytest.raises(EntityNotFoundError):
             await repo.get(node_id=node.id)
 
 
 class TestMemNodeRepositorySave:
     @pytest.mark.asyncio
-    async def test_save_persists_node_correctly(
+    async def test_save_stores_node_in_storage(
         self, make_fake_node: MakeFakeNode, make_mem_storage: MakeMemStorage
     ) -> None:
         node = make_fake_node()

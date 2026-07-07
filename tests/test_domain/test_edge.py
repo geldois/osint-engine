@@ -4,12 +4,12 @@ from uuid import uuid4
 
 import pytest
 
-from osint_engine.domain.errors.edge_error import SelfLoopEdgeError
+from osint_engine.domain.errors.edge_error import EdgeSelfLoopError
 from tests.fakes import FakeEdge
 
 
 class TestEdgeIdentity:
-    def test_edge_id_determined_by_source_and_target_when_no_identity_fields(
+    def test_id_uses_source_and_target_by_default(
         self,
     ) -> None:
         source = uuid4()
@@ -45,8 +45,8 @@ class TestEdgeIdentity:
 
 
 class TestEdgeValidation:
-    def test_edge_raises_when_source_and_target_are_the_same(self) -> None:
+    def test_raises_when_source_and_target_are_identical(self) -> None:
         node_id = uuid4()
 
-        with pytest.raises(SelfLoopEdgeError):
+        with pytest.raises(EdgeSelfLoopError):
             FakeEdge(source_id=node_id, target_id=node_id, content="test")

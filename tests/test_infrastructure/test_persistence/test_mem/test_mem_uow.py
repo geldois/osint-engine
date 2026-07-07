@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 from osint_engine.infrastructure.errors.uow_error import (
-    AlreadyPreparedUoWError,
-    NotPreparedUoWError,
+    UoWAlreadyPreparedError,
+    UoWNotPreparedError,
 )
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 class TestMemUoWContextLifecycle:
     @pytest.mark.asyncio
-    async def test_creates_and_deletes_infra_attributes_in_context_lifecycle(
+    async def test_attributes_exist_inside_context_and_are_removed_on_exit(
         self,
     ) -> None:
         attributes = ("_snapshot", "edges", "graphs", "nodes", "users")
@@ -37,7 +37,7 @@ class TestMemUoWContextLifecycle:
 
 class TestMemUoWCommit:
     @pytest.mark.asyncio
-    async def test_commits_diffs_to_mem_storage_when_transaction_is_over(
+    async def test_changes_are_flushed_to_storage_on_exit(
         self,
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
@@ -76,7 +76,7 @@ class TestMemUoWCommit:
 
 class TestMemUoWRollback:
     @pytest.mark.asyncio
-    async def test_rolls_back_transaction_when_error_occurs(
+    async def test_changes_are_not_flushed_when_exception_propagates(
         self,
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
@@ -121,14 +121,14 @@ class TestMemUoWRollback:
 
 class TestMemUoWValidation:
     @pytest.mark.asyncio
-    async def test_raises_when_is_double_prepared_or_finished(self) -> None:
+    async def test_raises_when_prepared_twice_or_finished_unmatched(self) -> None:
         mem_storage = MemStorage()
         uow = MemUoW(mem_storage=mem_storage)
 
-        with pytest.raises(AlreadyPreparedUoWError):
+        with pytest.raises(UoWAlreadyPreparedError):
             async with uow:
-                await uow._prepare()  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                await uow._prepare()  # pyright: ignore[reportPrivateUsage]
 
-        with pytest.raises(NotPreparedUoWError):
+        with pytest.raises(UoWNotPreparedError):
             async with uow:
-                await uow._finish()  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+                await uow._finish()  # pyright: ignore[reportPrivateUsage]
