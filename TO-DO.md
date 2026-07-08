@@ -17,7 +17,6 @@ non-existent user raises same error (no enumeration), dummy hash path always run
 ## test(infrastructure/sources)
 
 - test `BrasilAPICNPJFetcher` HTTP error and network failure handling
-- test `BrasilAPICNPJMapper` field mapping, optional fields, and partner type filtering
 
 ## test(infrastructure/services)
 

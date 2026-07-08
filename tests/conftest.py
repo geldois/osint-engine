@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
+from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
@@ -14,6 +16,7 @@ from osint_engine.infrastructure.hashers.argon2_password_hasher import (
 )
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
+from osint_engine.infrastructure.sources.payload import Payload
 from tests.fakes import FakeCNPJFetcher, FakeEdge, FakeEntity, FakeNode
 
 if TYPE_CHECKING:
@@ -28,6 +31,7 @@ type MakeGraph = Callable[..., Graph]
 type MakeMemStorage = Callable[..., MemStorage]
 type MakeMemUoW = Callable[..., MemUoW]
 type MakeMemUoWFactory = Callable[..., MakeMemUoW]
+type MakePayload = Callable[..., Payload]
 type MakeUser = Callable[..., User]
 
 
@@ -179,6 +183,26 @@ def make_mem_uow_factory(make_mem_uow: MakeMemUoW) -> MakeMemUoWFactory:
         return lambda: mem_uow
 
     return mem_uow_factory
+
+
+@pytest.fixture
+def make_payload() -> MakePayload:
+    """
+    *,
+    source: str,
+    data: dict[str, object] | Path
+    """
+
+    def payload(*, source: str, data: dict[str, object] | Path) -> Payload:
+        if isinstance(data, Path):
+            with Path.open(data) as file:
+                data_: dict[str, object] = json.load(file)
+
+                return Payload(source=source, data=data_)
+
+        return Payload(source=source, data=data)
+
+    return payload
 
 
 @pytest.fixture
