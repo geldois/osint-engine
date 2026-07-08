@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable
+from collections.abc import AsyncGenerator, Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 import pytest
+import pytest_asyncio
+from httpx2 import ASGITransport, AsyncClient, Timeout
 
 from osint_engine.application.auth.user import Role, User
+from osint_engine.config.croot import build_container
 from osint_engine.config.settings import Settings
 from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.infrastructure.hashers.argon2_password_hasher import (
@@ -17,9 +20,13 @@ from osint_engine.infrastructure.hashers.argon2_password_hasher import (
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
 from osint_engine.infrastructure.sources.payload import Payload
+from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
 from tests.fakes import FakeCNPJFetcher, FakeEdge, FakeEntity, FakeNode
 
 if TYPE_CHECKING:
+    from fastapi import FastAPI
+
+    from osint_engine.config.container import Container
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.node import Node
 
@@ -33,6 +40,53 @@ type MakeMemUoW = Callable[..., MemUoW]
 type MakeMemUoWFactory = Callable[..., MakeMemUoW]
 type MakePayload = Callable[..., Payload]
 type MakeUser = Callable[..., User]
+
+
+@pytest.fixture
+def container(settings: Settings, http_client: AsyncClient) -> Container:
+    """ """
+
+    return build_container(settings=settings, http_client=http_client)
+
+
+@pytest.fixture
+def fastapi_app(container: Container) -> FastAPI:
+    """ """
+
+    return build_fastapi_app(container=container)
+
+
+@pytest_asyncio.fixture(loop_scope="session")
+async def fastapi_test_client(
+    fastapi_app: FastAPI,
+) -> AsyncGenerator[AsyncClient, None]:
+    """ """
+
+    async with AsyncClient(
+        transport=ASGITransport(app=fastapi_app), base_url="http://test"
+    ) as fastapi_test_client:
+        yield fastapi_test_client
+
+
+@pytest_asyncio.fixture(scope="session", loop_scope="session")
+async def http_client(
+    http_client_timeout: Timeout,
+) -> AsyncGenerator[AsyncClient, None]:
+    """ """
+
+    async with AsyncClient(timeout=http_client_timeout) as http_client:
+        yield http_client
+
+
+@pytest.fixture(scope="session")
+def http_client_timeout(settings: Settings) -> Timeout:
+    """ """
+
+    return Timeout(
+        timeout=None,
+        connect=settings.fetcher_connect_timeout,
+        read=settings.fetcher_read_timeout,
+    )
 
 
 @pytest.fixture
@@ -233,11 +287,15 @@ def make_user() -> MakeUser:
 
 @pytest.fixture
 def password_hasher() -> Argon2PasswordHasher:
+    """ """
+
     return Argon2PasswordHasher()
 
 
 @pytest.fixture(scope="session")
 def settings() -> Settings:
+    """ """
+
     return Settings(
         access_token_expire_minutes=60,
         admin_password="admin_password",  # noqa: S106

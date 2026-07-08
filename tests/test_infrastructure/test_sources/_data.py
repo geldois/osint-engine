@@ -32,6 +32,8 @@ CNAE_DATA: dict[str, object] = {
     ],
 }
 
+CNPJ = "00000000000191"
+
 PARTNER_PERSON: dict[str, object] = {
     "identificador_de_socio": 2,
     "nome_socio": "TARCIANA PAULA GOMES MEDEIROS",

@@ -6,7 +6,8 @@ from httpx2 import AsyncClient, Timeout
 
 from osint_engine.config.croot import build_container
 from osint_engine.config.settings import Settings
-from osint_engine.interface.http.fastapi.fastapi import create_app, serve
+from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
+from osint_engine.interface.http.http_server import serve
 from osint_engine.observability.logging import configure_logging
 
 
@@ -28,9 +29,9 @@ async def main() -> None:
     async with _build_http_client(settings=settings) as http_client:
         container = build_container(settings=settings, http_client=http_client)
 
-        app = create_app(container=container)
+        fastapi_app = build_fastapi_app(container=container)
 
-        await serve(app=app, settings=settings)
+        await serve(app=fastapi_app, settings=settings)
 
 
 if __name__ == "__main__":

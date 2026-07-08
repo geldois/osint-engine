@@ -10,10 +10,6 @@ for actions, uv, and pre-commit hooks
 - test `AuthenticateUser`: valid credentials return user, wrong password raises `InvalidCredentialsError`,
 non-existent user raises same error (no enumeration), dummy hash path always runs when user is absent
 
-## test(infrastructure/sources)
-
-- test `BrasilAPICNPJFetcher` HTTP error and network failure handling
-
 ## test(infrastructure/services)
 
 - test `PyJWTService`: valid token round-trip, expired token raises `InvalidTokenError`, tampered signature raises `InvalidTokenError`

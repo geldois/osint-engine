@@ -8,9 +8,7 @@ from httpx2 import URL, AsyncClient, HTTPStatusError, RequestError
 from structlog.stdlib import get_logger
 
 from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
-from osint_engine.infrastructure.errors.data_source_error import (
-    DataSourceRequestError,
-)
+from osint_engine.infrastructure.errors.data_source_error import DataSourceRequestError
 from osint_engine.infrastructure.sources.brasilapi.brasilapi_mapper import map_graph
 from osint_engine.infrastructure.sources.payload import Payload
 

@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from uvicorn import Config, Server
 
 from osint_engine.interface.http.fastapi.errors.error_handler import (
     build_error_handler,
@@ -15,23 +14,22 @@ from osint_engine.observability.middlewares.http_middleware import http_middlewa
 
 if TYPE_CHECKING:
     from osint_engine.config.container import Container
-    from osint_engine.config.settings import Settings
 
 
-def create_app(*, container: Container) -> FastAPI:
-    app = FastAPI()
+def build_fastapi_app(*, container: Container) -> FastAPI:
+    fastapi_app = FastAPI()
 
-    app.include_router(router=build_auth_router(container=container))
-    app.include_router(router=build_cnpj_router(container=container))
+    fastapi_app.include_router(router=build_auth_router(container=container))
+    fastapi_app.include_router(router=build_cnpj_router(container=container))
 
-    app.add_exception_handler(
+    fastapi_app.add_exception_handler(
         exc_class_or_status_code=Exception,
         handler=build_error_handler(container=container),
     )
 
-    app.middleware(middleware_type="http")(http_middleware)
+    fastapi_app.middleware(middleware_type="http")(http_middleware)
 
-    app.add_middleware(
+    fastapi_app.add_middleware(
         middleware_class=CORSMiddleware,
         allow_origins=container.settings.cors_origins,
         allow_credentials=True,
@@ -39,13 +37,6 @@ def create_app(*, container: Container) -> FastAPI:
         allow_headers=["*"],
     )
 
-    return app
+    return fastapi_app
 
 
-async def serve(app: FastAPI, settings: Settings) -> None:
-    config = Config(
-        app=app, host=settings.host, port=settings.port, log_level=settings.log_level
-    )
-    server = Server(config=config)
-
-    await server.serve()
