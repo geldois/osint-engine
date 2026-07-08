@@ -5,10 +5,6 @@
 - install Renovate GitHub App on geldois/osint-engine and push `renovate.json` to enable automated dependency updates
 for actions, uv, and pre-commit hooks
 
-## refactor(tests/test_infrastructure)
-
-- rename `test_fetchers/` to `test_sources/` to match the renamed `infrastructure/sources/` package
-
 ## test(application)
 
 - test `AuthenticateUser`: valid credentials return user, wrong password raises `InvalidCredentialsError`,

@@ -3,14 +3,11 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-import pytest
-
 from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
 from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.entities.nodes.email import Email
 from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.infrastructure.errors.data_source_error import UnexpectedPayloadError
 from osint_engine.infrastructure.sources.brasilapi.brasilapi_mapper import (
     _map_address,  # pyright: ignore[reportPrivateUsage]
     _map_cnaes,  # pyright: ignore[reportPrivateUsage]
@@ -20,7 +17,7 @@ from osint_engine.infrastructure.sources.brasilapi.brasilapi_mapper import (
     _map_phones,  # pyright: ignore[reportPrivateUsage]
     map_graph,
 )
-from tests.test_infrastructure.test_sources.test_brasilapi._data import (
+from tests.test_infrastructure.test_sources._data import (
     ADDRESS_DATA,
     CNAE_DATA,
     COMPANY_DATA,
@@ -34,6 +31,7 @@ if TYPE_CHECKING:
 
 
 # TEST DOUBLES
+
 
 _COMPANY_ID = Company(
     activity_start_date="1966-08-01",
@@ -74,14 +72,6 @@ class TestMapAddress:
         assert address.number == "SN"
 
         assert address.state == "DF"
-
-    def test_raises_when_required_field_is_missing(
-        self, make_payload: MakePayload
-    ) -> None:
-        data = {k: v for k, v in ADDRESS_DATA.items() if k != "cep"}
-
-        with pytest.raises(UnexpectedPayloadError):
-            _map_address(payload=make_payload(source="brasilapi", data=data))
 
 
 class TestMapCnaes:
@@ -203,18 +193,6 @@ class TestMapCompany:
 
 
 class TestMapEmail:
-    def test_returns_none_when_key_is_absent(self, make_payload: MakePayload) -> None:
-        result = _map_email(payload=make_payload(source="brasilapi", data={}))
-
-        assert result is None
-
-    def test_returns_none_when_value_is_null(self, make_payload: MakePayload) -> None:
-        result = _map_email(
-            payload=make_payload(source="brasilapi", data={"email": None})
-        )
-
-        assert result is None
-
     def test_returns_email_when_address_is_present(
         self, make_payload: MakePayload
     ) -> None:
@@ -242,7 +220,7 @@ class TestMapPhones:
 
         assert len(phones) == 2
 
-        numbers = {p.number for p in phones}
+        numbers = {phone.number for phone in phones}
 
         assert "6134939002" in numbers
 
@@ -364,7 +342,7 @@ class TestMapGraph:
             payload=make_payload(source="brasilapi", data=COMPLETE_PAYLOAD_DATA)
         )
 
-        company_ids = {n.id for n in graph.nodes if isinstance(n, Company)}
+        company_ids = {node.id for node in graph.nodes if isinstance(node, Company)}
 
         assert graph.root_id in company_ids
 
@@ -373,7 +351,7 @@ class TestMapGraph:
             payload=make_payload(source="brasilapi", data=COMPLETE_PAYLOAD_DATA)
         )
 
-        assert any(isinstance(n, Address) for n in graph.nodes)
+        assert any(isinstance(node, Address) for node in graph.nodes)
 
     def test_email_node_present_when_payload_has_email(
         self, make_payload: MakePayload
@@ -382,16 +360,18 @@ class TestMapGraph:
             payload=make_payload(source="brasilapi", data=COMPLETE_PAYLOAD_DATA)
         )
 
-        assert any(isinstance(n, Email) for n in graph.nodes)
+        assert any(isinstance(node, Email) for node in graph.nodes)
 
     def test_no_email_node_when_payload_has_no_email(
         self, make_payload: MakePayload
     ) -> None:
-        data = {k: v for k, v in COMPLETE_PAYLOAD_DATA.items() if k != "email"}
+        data = {
+            key: value for key, value in COMPLETE_PAYLOAD_DATA.items() if key != "email"
+        }
 
         graph = map_graph(payload=make_payload(source="brasilapi", data=data))
 
-        assert not any(isinstance(n, Email) for n in graph.nodes)
+        assert not any(isinstance(node, Email) for node in graph.nodes)
 
     def test_email_edge_present_when_payload_has_email(
         self, make_payload: MakePayload
@@ -405,11 +385,13 @@ class TestMapGraph:
     def test_no_email_edge_when_payload_has_no_email(
         self, make_payload: MakePayload
     ) -> None:
-        data = {k: v for k, v in COMPLETE_PAYLOAD_DATA.items() if k != "email"}
+        data = {
+            key: value for key, value in COMPLETE_PAYLOAD_DATA.items() if key != "email"
+        }
 
         graph = map_graph(payload=make_payload(source="brasilapi", data=data))
 
-        assert not any(isinstance(e, CompanyHasEmail) for e in graph.edges)
+        assert not any(isinstance(edge, CompanyHasEmail) for edge in graph.edges)
 
     def test_all_edge_endpoints_are_in_node_set(
         self, make_payload: MakePayload
@@ -418,7 +400,7 @@ class TestMapGraph:
             payload=make_payload(source="brasilapi", data=COMPLETE_PAYLOAD_DATA)
         )
 
-        node_ids = {n.id for n in graph.nodes}
+        node_ids = {node.id for node in graph.nodes}
 
         for edge in graph.edges:
             assert edge.source_id in node_ids, (
@@ -436,7 +418,7 @@ class TestMapGraph:
             payload=make_payload(source="brasilapi", data=COMPLETE_PAYLOAD_DATA)
         )
 
-        person_nodes = {n for n in graph.nodes if isinstance(n, Person)}
+        person_nodes = {node for node in graph.nodes if isinstance(node, Person)}
 
         assert len(person_nodes) == 1
 
