@@ -21,7 +21,7 @@ _logger = get_logger()
 
 class AuthenticateUser(Query[User]):
     uow_factory: Callable[[], UoW]
-    auth_hasher: PasswordHasher
+    password_hasher: PasswordHasher
     username: str
     password: str
 
@@ -30,13 +30,13 @@ class AuthenticateUser(Query[User]):
         self,
         *,
         uow_factory: Callable[[], UoW],
-        auth_hasher: PasswordHasher,
+        password_hasher: PasswordHasher,
         username: str,
         password: str,
     ) -> None:
         super().__init__(
             uow_factory=uow_factory,
-            auth_hasher=auth_hasher,
+            password_hasher=password_hasher,
             username=username,
             password=password,
         )
@@ -48,12 +48,8 @@ class AuthenticateUser(Query[User]):
         async with self.uow_factory() as uow:
             user = await uow.users.find(username=self.username)
 
-            dummy = (
-                "$argon2id$v=19$m=65536,t=3,p=4$eE8pZQwhJCRk7D2H8P6fsw$W2rzf0bW7e7"
-                "kjtijtNxdreAJ8keTETLWc7vSJFasmgM"
-            )
-            result: bool = self.auth_hasher.verify(
-                hash_=user.hashed_password if user is not None else dummy,
+            result: bool = self.password_hasher.verify(
+                hash_=user.hashed_password if user is not None else None,
                 password=self.password,
             )
 

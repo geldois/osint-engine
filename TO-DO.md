@@ -5,11 +5,6 @@
 - install Renovate GitHub App on geldois/osint-engine and push `renovate.json` to enable automated dependency updates
 for actions, uv, and pre-commit hooks
 
-## test(application)
-
-- test `AuthenticateUser`: valid credentials return user, wrong password raises `InvalidCredentialsError`,
-non-existent user raises same error (no enumeration), dummy hash path always runs when user is absent
-
 ## test(infrastructure/services)
 
 - test `PyJWTService`: valid token round-trip, expired token raises `InvalidTokenError`, tampered signature raises `InvalidTokenError`

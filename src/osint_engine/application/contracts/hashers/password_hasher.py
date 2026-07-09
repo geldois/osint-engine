@@ -9,5 +9,5 @@ class PasswordHasher(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def verify(self, *, hash_: str, password: str) -> bool:
+    def verify(self, *, hash_: str | None, password: str) -> bool:
         raise NotImplementedError

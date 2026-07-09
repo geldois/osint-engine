@@ -35,7 +35,7 @@ def build_container(*, settings: Settings, http_client: AsyncClient) -> Containe
     password_hasher = Argon2PasswordHasher()
 
     seed_mem_storage(
-        settings=settings, mem_storage=mem_storage, auth_hasher=password_hasher
+        settings=settings, mem_storage=mem_storage, password_hasher=password_hasher
     )
 
     def uow_factory() -> MemUoW:
@@ -43,7 +43,7 @@ def build_container(*, settings: Settings, http_client: AsyncClient) -> Containe
 
     use_cases = UseCases(
         authenticate_user=partial(
-            AuthenticateUser, uow_factory=uow_factory, auth_hasher=password_hasher
+            AuthenticateUser, uow_factory=uow_factory, password_hasher=password_hasher
         ),
         expand_by_cnpj=partial(
             ExpandByCNPJ, uow_factory=uow_factory, cnpj_fetcher=fetchers.cnpj_fetcher

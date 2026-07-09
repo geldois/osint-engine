@@ -18,7 +18,7 @@ class TestMemSeederSeedingBehavior:
         self,
         make_mem_storage: MakeMemStorage,
         settings: Settings,
-        password_hasher: Argon2PasswordHasher,
+        argon2_password_hasher: Argon2PasswordHasher,
     ) -> None:
         mem_storage = make_mem_storage()
 
@@ -27,7 +27,9 @@ class TestMemSeederSeedingBehavior:
         assert admin is None
 
         seed_mem_storage(
-            settings=settings, mem_storage=mem_storage, auth_hasher=password_hasher
+            settings=settings,
+            mem_storage=mem_storage,
+            password_hasher=argon2_password_hasher,
         )
 
         admin = mem_storage.users.get("admin")

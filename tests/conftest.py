@@ -17,8 +17,10 @@ from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.infrastructure.hashers.argon2_password_hasher import (
     Argon2PasswordHasher,
 )
+from osint_engine.infrastructure.persistence.mem.mem_seeder import seed_mem_storage
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
+from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 from osint_engine.infrastructure.sources.payload import Payload
 from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
 from tests.fakes import FakeCNPJFetcher, FakeEdge, FakeEntity, FakeNode
@@ -26,6 +28,9 @@ from tests.fakes import FakeCNPJFetcher, FakeEdge, FakeEntity, FakeNode
 if TYPE_CHECKING:
     from fastapi import FastAPI
 
+    from osint_engine.application.contracts.hashers.password_hasher import (
+        PasswordHasher,
+    )
     from osint_engine.config.container import Container
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.node import Node
@@ -36,10 +41,18 @@ type MakeFakeEntity = Callable[..., FakeEntity]
 type MakeFakeNode = Callable[..., FakeNode]
 type MakeGraph = Callable[..., Graph]
 type MakeMemStorage = Callable[..., MemStorage]
+type MakeMemStorageSeeded = Callable[..., MemStorage]
 type MakeMemUoW = Callable[..., MemUoW]
 type MakeMemUoWFactory = Callable[..., MakeMemUoW]
 type MakePayload = Callable[..., Payload]
 type MakeUser = Callable[..., User]
+
+
+@pytest.fixture(scope="session")
+def argon2_password_hasher() -> Argon2PasswordHasher:
+    """ """
+
+    return Argon2PasswordHasher()
 
 
 @pytest.fixture
@@ -69,24 +82,17 @@ async def fastapi_test_client(
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
-async def http_client(
-    http_client_timeout: Timeout,
-) -> AsyncGenerator[AsyncClient, None]:
+async def http_client(settings: Settings) -> AsyncGenerator[AsyncClient, None]:
     """ """
 
-    async with AsyncClient(timeout=http_client_timeout) as http_client:
-        yield http_client
-
-
-@pytest.fixture(scope="session")
-def http_client_timeout(settings: Settings) -> Timeout:
-    """ """
-
-    return Timeout(
+    timeout = Timeout(
         timeout=None,
         connect=settings.fetcher_connect_timeout,
         read=settings.fetcher_read_timeout,
     )
+
+    async with AsyncClient(timeout=timeout) as http_client:
+        yield http_client
 
 
 @pytest.fixture
@@ -210,6 +216,37 @@ def make_mem_storage() -> MakeMemStorage:
 
 
 @pytest.fixture
+def make_mem_storage_seeded(
+    settings: Settings,
+    make_mem_storage: MakeMemStorage,
+    argon2_password_hasher: Argon2PasswordHasher,
+) -> MakeMemStorageSeeded:
+    """
+    *,
+    mem_storage: MemStorage | None = None,
+    password_hasher: PasswordHasher | None = None
+    """
+
+    def mem_storage_seeded(
+        *,
+        mem_storage: MemStorage | None = None,
+        password_hasher: PasswordHasher | None = None,
+    ) -> MemStorage:
+        mem_storage = mem_storage if mem_storage is not None else make_mem_storage()
+        password_hasher = (
+            password_hasher if password_hasher is not None else argon2_password_hasher
+        )
+
+        seed_mem_storage(
+            settings=settings, mem_storage=mem_storage, password_hasher=password_hasher
+        )
+
+        return mem_storage
+
+    return mem_storage_seeded
+
+
+@pytest.fixture
 def make_mem_uow(make_mem_storage: MakeMemStorage) -> MakeMemUoW:
     """
     *,
@@ -286,10 +323,10 @@ def make_user() -> MakeUser:
 
 
 @pytest.fixture
-def password_hasher() -> Argon2PasswordHasher:
+def pyjwt_service(settings: Settings) -> PyJWTService:
     """ """
 
-    return Argon2PasswordHasher()
+    return PyJWTService(settings=settings)
 
 
 @pytest.fixture(scope="session")
@@ -298,7 +335,7 @@ def settings() -> Settings:
 
     return Settings(
         access_token_expire_minutes=60,
-        admin_password="admin_password",  # noqa: S106
+        admin_password="admin_password",
         cors_origins=["http://localhost:3000"],
         debug=True,
         fetcher_connect_timeout=15,
@@ -306,5 +343,5 @@ def settings() -> Settings:
         host="127.0.0.1",
         log_level="info",
         port=8000,
-        secret_key="secret_key",  # noqa: S106
+        secret_key="secret_key",
     )

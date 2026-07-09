@@ -13,10 +13,10 @@ if TYPE_CHECKING:
 
 
 def seed_mem_storage(
-    *, settings: Settings, mem_storage: MemStorage, auth_hasher: PasswordHasher
+    *, settings: Settings, mem_storage: MemStorage, password_hasher: PasswordHasher
 ) -> None:
     user = User(
-        hashed_password=auth_hasher.hash_(password=settings.admin_password),
+        hashed_password=password_hasher.hash_(password=settings.admin_password),
         role=Role.ADMIN,
         username="admin",
     )
