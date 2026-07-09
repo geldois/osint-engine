@@ -61,7 +61,7 @@ def build_error_handler(
 
         return JSONResponse(
             status_code=status,
-            content=error_schema.model_dump(exclude_none=True),
+            content=error_schema.model_dump(mode="json", exclude_none=True),
             headers=headers,
         )
 
