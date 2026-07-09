@@ -80,7 +80,7 @@ def sanction_to_schema(*, node: Sanction) -> SanctionSchema:
     return SanctionSchema(id=node.id, organ=node.organ)
 
 
-_NODE_MAP: dict[type, Callable[..., NodeSchemaUnion]] = {
+_NODE_MAP: dict[type[Node[UUID]], Callable[..., NodeSchemaUnion]] = {
     Address: address_to_schema,
     Cnae: cnae_to_schema,
     Company: company_to_schema,

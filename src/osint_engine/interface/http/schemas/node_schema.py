@@ -17,9 +17,12 @@ from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.domain.entities.nodes.phone import Phone
 from osint_engine.domain.entities.nodes.sanction import Sanction
 from osint_engine.interface.http.errors.schema_error import (
+    DuplicateSchemaRegistrationError,
     MissingDiscriminatorFieldError,
     UnmappedTypeSchemaError,
 )
+
+# SCHEMAS
 
 
 class NodeSchema[NodeType_co: Node[UUID]](ABC, BaseModel):
@@ -39,26 +42,6 @@ class NodeSchema[NodeType_co: Node[UUID]](ABC, BaseModel):
     @classmethod
     @abstractmethod
     def domain(cls) -> type[NodeType_co]: ...
-
-
-class NodeSchemaRegistry:
-    _REGISTRY: ClassVar[dict[type[Node[UUID]], type[NodeSchema[Node[UUID]]]]] = {}
-
-    @classmethod
-    def get_from_domain(
-        cls, domain: type[Node[UUID]], /
-    ) -> type[NodeSchema[Node[UUID]]]:
-        if domain not in cls._REGISTRY:
-            raise UnmappedTypeSchemaError(subject=domain)
-
-        return cls._REGISTRY[domain]
-
-    @classmethod
-    def register(cls, schema: type[NodeSchema[Node[UUID]]], /) -> None:
-        cls._REGISTRY[schema.domain()] = schema
-
-
-# SCHEMAS
 
 
 class AddressSchema(NodeSchema[Address]):
@@ -181,6 +164,30 @@ NodeUnion = Annotated[NodeSchemaUnion, Field(discriminator="type")]
 
 
 # REGISTRIES
+
+
+class NodeSchemaRegistry:
+    _REGISTRY: ClassVar[dict[type[Node[UUID]], type[NodeSchema[Node[UUID]]]]] = {}
+
+    @classmethod
+    def get_from_domain(
+        cls, domain: type[Node[UUID]], /
+    ) -> type[NodeSchema[Node[UUID]]]:
+        if domain not in cls._REGISTRY:
+            raise UnmappedTypeSchemaError(subject=domain)
+
+        return cls._REGISTRY[domain]
+
+    @classmethod
+    def register(cls, schema: type[NodeSchema[Node[UUID]]], /) -> None:
+        key = schema.domain()
+
+        if key in cls._REGISTRY:
+            raise DuplicateSchemaRegistrationError(
+                subject=key, existing_schema=cls._REGISTRY[key]
+            )
+
+        cls._REGISTRY[key] = schema
 
 
 NodeSchemaRegistry.register(AddressSchema)

@@ -116,7 +116,7 @@ def person_reside_at_to_schema(*, edge: PersonResideAt) -> PersonResideAtSchema:
     )
 
 
-_EDGE_MAP: dict[type, Callable[..., EdgeSchemaUnion]] = {
+_EDGE_MAP: dict[type[Edge[UUID, UUID, UUID]], Callable[..., EdgeSchemaUnion]] = {
     CompanyHasCnae: company_has_cnae_to_schema,
     CompanyHasEmail: company_has_email_to_schema,
     CompanyHasMember: company_has_member_to_schema,

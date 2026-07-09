@@ -32,3 +32,21 @@ class MissingDiscriminatorFieldError(
         return (
             f"'{self.subject.__name__}' must define a 'type' field with a Literal value"
         )
+
+
+class DuplicateSchemaRegistrationError(
+    SchemaError, error_code="SCHEMA_DUPLICATE_REGISTRATION"
+):
+    subject: type
+    existing_schema: type
+
+    @override
+    def __init__(self, *, subject: type, existing_schema: type) -> None:
+        super().__init__(subject=subject, existing_schema=existing_schema)
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"'{self.subject.__name__}' is already registered"
+            f" with '{self.existing_schema.__name__}'"
+        )
