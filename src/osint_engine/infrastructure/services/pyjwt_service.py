@@ -19,6 +19,10 @@ class PyJWTService(JWTService):
         self.access_token_expire_minutes = settings.access_token_expire_minutes
         self.secret_key = settings.secret_key
 
+    @property
+    def algorithm(self) -> str:
+        return self._JWT_ALGORITHM
+
     def create_access_token(self, *, username: str, role: str) -> str:
         expiration_time = datetime.now(tz=UTC) + timedelta(
             minutes=self.access_token_expire_minutes

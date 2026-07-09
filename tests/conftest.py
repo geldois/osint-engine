@@ -322,7 +322,7 @@ def make_user() -> MakeUser:
     return user
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def pyjwt_service(settings: Settings) -> PyJWTService:
     """ """
 
@@ -343,5 +343,5 @@ def settings() -> Settings:
         host="127.0.0.1",
         log_level="info",
         port=8000,
-        secret_key="secret_key",
+        secret_key="a-secret-key-with-at-least-32-bytes-for-hs256",
     )
