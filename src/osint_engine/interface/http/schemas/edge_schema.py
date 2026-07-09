@@ -23,7 +23,7 @@ from osint_engine.domain.entities.edges.person_received_sanction import (
     PersonReceivedSanction,
 )
 from osint_engine.domain.entities.edges.person_reside_at import PersonResideAt
-from osint_engine.interface.http.fastapi.errors.schema_error import (
+from osint_engine.interface.http.errors.schema_error import (
     MissingDiscriminatorFieldError,
     UnmappedTypeSchemaError,
 )

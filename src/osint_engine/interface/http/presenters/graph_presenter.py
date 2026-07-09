@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from osint_engine.interface.http.fastapi.presenters.edge_presenter import edge_to_schema
-from osint_engine.interface.http.fastapi.presenters.node_presenter import node_to_schema
-from osint_engine.interface.http.fastapi.schemas.graph_schema import GraphSchema
+from osint_engine.interface.http.presenters.edge_presenter import edge_to_schema
+from osint_engine.interface.http.presenters.node_presenter import node_to_schema
+from osint_engine.interface.http.schemas.graph_schema import GraphSchema
 
 if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.graph import Graph

@@ -17,10 +17,8 @@ from osint_engine.domain.entities.edges.person_received_sanction import (
     PersonReceivedSanction,
 )
 from osint_engine.domain.entities.edges.person_reside_at import PersonResideAt
-from osint_engine.interface.http.fastapi.errors.schema_error import (
-    UnmappedTypeSchemaError,
-)
-from osint_engine.interface.http.fastapi.schemas.edge_schema import (
+from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
+from osint_engine.interface.http.schemas.edge_schema import (
     CompanyHasCnaeSchema,
     CompanyHasEmailSchema,
     CompanyHasMemberSchema,
@@ -36,41 +34,10 @@ from osint_engine.interface.http.fastapi.schemas.edge_schema import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from uuid import UUID
 
     from osint_engine.domain.entities.bases.edge import Edge
-
-
-def edge_to_schema(edge: Edge[UUID, UUID, UUID], /) -> EdgeSchemaUnion:  # noqa: C901
-    schema = EdgeSchemaUnion
-
-    match edge:
-        case CompanyHasCnae():
-            schema = company_has_cnae_to_schema(edge=edge)
-        case CompanyHasEmail():
-            schema = company_has_email_to_schema(edge=edge)
-        case CompanyHasMember():
-            schema = company_has_member_to_schema(edge=edge)
-        case CompanyHasPhone():
-            schema = company_has_phone_to_schema(edge=edge)
-        case CompanyLocatedAt():
-            schema = company_located_at_to_schema(edge=edge)
-        case CompanyReceivedSanction():
-            schema = company_received_sanction_to_schema(edge=edge)
-        case PersonHasEmail():
-            schema = person_has_email_to_schema(edge=edge)
-        case PersonHasPhone():
-            schema = person_has_phone_to_schema(edge=edge)
-        case PersonOwnsCompany():
-            schema = person_owns_company_to_schema(edge=edge)
-        case PersonReceivedSanction():
-            schema = person_received_sanction_to_schema(edge=edge)
-        case PersonResideAt():
-            schema = person_reside_at_to_schema(edge=edge)
-        case _:
-            raise UnmappedTypeSchemaError(subject=type(edge))
-
-    return schema
 
 
 def company_has_cnae_to_schema(*, edge: CompanyHasCnae) -> CompanyHasCnaeSchema:
@@ -147,3 +114,25 @@ def person_reside_at_to_schema(*, edge: PersonResideAt) -> PersonResideAtSchema:
     return PersonResideAtSchema(
         id=edge.id, source_id=edge.source_id, target_id=edge.target_id
     )
+
+
+_EDGE_MAP: dict[type, Callable[..., EdgeSchemaUnion]] = {
+    CompanyHasCnae: company_has_cnae_to_schema,
+    CompanyHasEmail: company_has_email_to_schema,
+    CompanyHasMember: company_has_member_to_schema,
+    CompanyHasPhone: company_has_phone_to_schema,
+    CompanyLocatedAt: company_located_at_to_schema,
+    CompanyReceivedSanction: company_received_sanction_to_schema,
+    PersonHasEmail: person_has_email_to_schema,
+    PersonHasPhone: person_has_phone_to_schema,
+    PersonOwnsCompany: person_owns_company_to_schema,
+    PersonReceivedSanction: person_received_sanction_to_schema,
+    PersonResideAt: person_reside_at_to_schema,
+}
+
+
+def edge_to_schema(edge: Edge[UUID, UUID, UUID], /) -> EdgeSchemaUnion:
+    try:
+        return _EDGE_MAP[type(edge)](edge=edge)
+    except KeyError:
+        raise UnmappedTypeSchemaError(subject=type(edge)) from None

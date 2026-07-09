@@ -9,10 +9,8 @@ from osint_engine.domain.entities.nodes.email import Email
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.domain.entities.nodes.phone import Phone
 from osint_engine.domain.entities.nodes.sanction import Sanction
-from osint_engine.interface.http.fastapi.errors.schema_error import (
-    UnmappedTypeSchemaError,
-)
-from osint_engine.interface.http.fastapi.schemas.node_schema import (
+from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
+from osint_engine.interface.http.schemas.node_schema import (
     AddressSchema,
     CnaeSchema,
     CompanySchema,
@@ -24,33 +22,10 @@ from osint_engine.interface.http.fastapi.schemas.node_schema import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from uuid import UUID
 
     from osint_engine.domain.entities.bases.node import Node
-
-
-def node_to_schema(node: Node[UUID], /) -> NodeSchemaUnion:
-    schema: NodeSchemaUnion
-
-    match node:
-        case Address():
-            schema = address_to_schema(node=node)
-        case Cnae():
-            schema = cnae_to_schema(node=node)
-        case Company():
-            schema = company_to_schema(node=node)
-        case Email():
-            schema = email_to_schema(node=node)
-        case Person():
-            schema = person_to_schema(node=node)
-        case Phone():
-            schema = phone_to_schema(node=node)
-        case Sanction():
-            schema = sanction_to_schema(node=node)
-        case _:
-            raise UnmappedTypeSchemaError(subject=type(node))
-
-    return schema
 
 
 def address_to_schema(*, node: Address) -> AddressSchema:
@@ -103,3 +78,21 @@ def phone_to_schema(*, node: Phone) -> PhoneSchema:
 
 def sanction_to_schema(*, node: Sanction) -> SanctionSchema:
     return SanctionSchema(id=node.id, organ=node.organ)
+
+
+_NODE_MAP: dict[type, Callable[..., NodeSchemaUnion]] = {
+    Address: address_to_schema,
+    Cnae: cnae_to_schema,
+    Company: company_to_schema,
+    Email: email_to_schema,
+    Person: person_to_schema,
+    Phone: phone_to_schema,
+    Sanction: sanction_to_schema,
+}
+
+
+def node_to_schema(node: Node[UUID], /) -> NodeSchemaUnion:
+    try:
+        return _NODE_MAP[type(node)](node=node)
+    except KeyError:
+        raise UnmappedTypeSchemaError(subject=type(node)) from None

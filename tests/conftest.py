@@ -45,6 +45,7 @@ type MakeMemStorageSeeded = Callable[..., MemStorage]
 type MakeMemUoW = Callable[..., MemUoW]
 type MakeMemUoWFactory = Callable[..., MakeMemUoW]
 type MakePayload = Callable[..., Payload]
+type MakeSettings = Callable[..., Settings]
 type MakeUser = Callable[..., User]
 
 
@@ -206,10 +207,10 @@ def make_mem_storage() -> MakeMemStorage:
         users: list[User] | None = None,
     ) -> MemStorage:
         return MemStorage(
-            edges={e.id: e for e in edges} if edges is not None else {},
-            graphs={g.id: g for g in graphs} if graphs is not None else {},
-            nodes={n.id: n for n in nodes} if nodes is not None else {},
-            users={u.username: u for u in users} if users is not None else {},
+            edges={edge.id: edge for edge in edges} if edges is not None else {},
+            graphs={graph.id: graph for graph in graphs} if graphs is not None else {},
+            nodes={node.id: node for node in nodes} if nodes is not None else {},
+            users={user.username: user for user in users} if users is not None else {},
         )
 
     return mem_storage
@@ -294,6 +295,78 @@ def make_payload() -> MakePayload:
         return Payload(source=source, data=data)
 
     return payload
+
+
+@pytest.fixture
+def make_settings(settings: Settings) -> MakeSettings:
+    """
+    *,
+    access_token_expire_minutes: int | None = None,
+    admin_password: str | None = None,
+    cors_origins: list[str] | None = None,
+    debug: bool | None = None,
+    fetcher_connect_timeout: float | None = None,
+    fetcher_read_timeout: float | None = None,
+    host: str | None = None,
+    log_level: str | None = None,
+    port: int | None = None,
+    secret_key: str | None = None
+    """
+
+    def settings_(  # noqa: PLR0913
+        *,
+        access_token_expire_minutes: int | None = None,
+        admin_password: str | None = None,
+        cors_origins: list[str] | None = None,
+        debug: bool | None = None,
+        fetcher_connect_timeout: float | None = None,
+        fetcher_read_timeout: float | None = None,
+        host: str | None = None,
+        log_level: str | None = None,
+        port: int | None = None,
+        secret_key: str | None = None,
+    ) -> Settings:
+        access_token_expire_minutes = (
+            access_token_expire_minutes
+            if access_token_expire_minutes is not None
+            else settings.access_token_expire_minutes
+        )
+        admin_password = (
+            admin_password if admin_password is not None else settings.admin_password
+        )
+        cors_origins = (
+            cors_origins if cors_origins is not None else settings.cors_origins
+        )
+        debug = debug if debug is not None else settings.debug
+        fetcher_connect_timeout = (
+            fetcher_connect_timeout
+            if fetcher_connect_timeout is not None
+            else settings.fetcher_connect_timeout
+        )
+        fetcher_read_timeout = (
+            fetcher_read_timeout
+            if fetcher_read_timeout is not None
+            else settings.fetcher_read_timeout
+        )
+        host = host if host is not None else settings.host
+        log_level = log_level if log_level is not None else settings.log_level
+        port = port if port is not None else settings.port
+        secret_key = secret_key if secret_key is not None else settings.secret_key
+
+        return Settings(
+            access_token_expire_minutes=access_token_expire_minutes,
+            admin_password=admin_password,
+            cors_origins=cors_origins,
+            debug=debug,
+            fetcher_connect_timeout=fetcher_connect_timeout,
+            fetcher_read_timeout=fetcher_read_timeout,
+            host=host,
+            log_level=log_level,
+            port=port,
+            secret_key=secret_key,
+        )
+
+    return settings_
 
 
 @pytest.fixture

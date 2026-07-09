@@ -2,12 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from osint_engine.interface.http.fastapi.presenters.graph_presenter import (
-    graph_to_schema,
-)
-from osint_engine.interface.http.fastapi.schemas.graph_schema import (
-    GraphSchema,  # noqa: TC001
-)
+from osint_engine.interface.http.presenters.graph_presenter import graph_to_schema
+from osint_engine.interface.http.schemas.graph_schema import GraphSchema  # noqa: TC001
 from osint_engine.interface.sanitizers import sanitize_cnpj
 
 if TYPE_CHECKING:

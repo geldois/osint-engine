@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Annotated
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordRequestForm  # noqa: TC002
 
-from osint_engine.interface.http.fastapi.schemas.token_schema import TokenSchema
+from osint_engine.interface.http.schemas.token_schema import TokenSchema
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable

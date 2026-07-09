@@ -5,9 +5,7 @@ from typing import TYPE_CHECKING
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from osint_engine.interface.http.fastapi.errors.error_handler import (
-    build_error_handler,
-)
+from osint_engine.interface.http.fastapi.error_handler import build_error_handler
 from osint_engine.interface.http.fastapi.routers.auth_router import build_auth_router
 from osint_engine.interface.http.fastapi.routers.cnpj_router import build_cnpj_router
 from osint_engine.observability.middlewares.http_middleware import http_middleware
@@ -38,5 +36,3 @@ def build_fastapi_app(*, container: Container) -> FastAPI:
     )
 
     return fastapi_app
-
-
