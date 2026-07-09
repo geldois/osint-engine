@@ -23,7 +23,8 @@ from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
 from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 from osint_engine.infrastructure.sources.payload import Payload
 from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
-from tests.fakes import FakeCNPJFetcher, FakeEdge, FakeEntity, FakeNode
+from tests.fakes.domain import FakeEdge, FakeEntity, FakeNode
+from tests.fakes.fetchers import FakeCNPJFetcher
 
 if TYPE_CHECKING:
     from fastapi import FastAPI
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.node import Node
 
+type MakeContainer = Callable[..., Container]
 type MakeFakeCNPJFetcher = Callable[..., FakeCNPJFetcher]
 type MakeFakeEdge = Callable[..., FakeEdge]
 type MakeFakeEntity = Callable[..., FakeEntity]
@@ -94,6 +96,30 @@ async def http_client(settings: Settings) -> AsyncGenerator[AsyncClient, None]:
 
     async with AsyncClient(timeout=timeout) as http_client:
         yield http_client
+
+
+@pytest.fixture
+def make_container(settings: Settings, http_client: AsyncClient) -> MakeContainer:
+    """
+    *,
+    settings: Settings | None = None,
+    http_client: AsyncClient | None = None
+    """
+
+    settings_ = settings
+    http_client_ = http_client
+
+    def container_(
+        *,
+        settings: Settings | None = None,
+        http_client: AsyncClient | None = None,
+    ) -> Container:
+        return build_container(
+            settings=settings if settings is not None else settings_,
+            http_client=http_client if http_client is not None else http_client_,
+        )
+
+    return container_
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from osint_engine.domain.errors.edge_error import EdgeSelfLoopError
-from tests.fakes import FakeEdge
+from tests.fakes.domain import FakeEdge
 
 
 class TestEdgeIdentity:

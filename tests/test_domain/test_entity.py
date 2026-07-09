@@ -13,7 +13,7 @@ from osint_engine.domain.errors.entity_error import (
     EntityMissingIDTypeError,
     EntityNonDeterministicValueError,
 )
-from tests.fakes import TEST, TEST_DIFF, FakeEntity, FakeEntityID
+from tests.fakes.domain import TEST, TEST_DIFF, FakeEntity, FakeEntityID
 
 # TEST DOUBLES
 
@@ -140,7 +140,7 @@ class TestEntitySubclassContract:
 
             class FakeEntityWithWrongIDType(  # pyright: ignore[reportUnusedClass]
                 Entity[WrongIDType],  # pyright: ignore[reportInvalidTypeArguments]
-                namespace=TEST,  # pyright: ignore[reportInvalidTypeArguments]
+                namespace=TEST,
             ):
                 def __init__(self, **kwargs: object) -> None:
                     super().__init__(identity_fields=None, **kwargs)
@@ -183,7 +183,7 @@ class TestEntityValueSemantics:
 
 class TestEntityIDCalculation:
     def test_entity_id_is_stable_under_kwarg_order(self) -> None:
-        id_forward = FakeEntity._calculate_id(content="test", role="admin") # pyright: ignore[reportPrivateUsage]
+        id_forward = FakeEntity._calculate_id(content="test", role="admin")  # pyright: ignore[reportPrivateUsage]
         id_reversed = FakeEntity._calculate_id(role="admin", content="test")  # pyright: ignore[reportPrivateUsage]
 
         assert id_forward == id_reversed

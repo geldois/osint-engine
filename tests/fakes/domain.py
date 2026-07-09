@@ -1,16 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NewType, override
+from typing import NewType, override
 from uuid import UUID
 
-from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
 from osint_engine.domain.entities.bases.edge import Edge
 from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.entities.entity import Entity
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
-
-if TYPE_CHECKING:
-    from osint_engine.domain.entities.bases.graph import Graph
 
 FakeEntityID = NewType("FakeEntityID", UUID)
 FakeEdgeID = NewType("FakeEdgeID", UUID)
@@ -32,15 +28,6 @@ TEST_DIFF = _make_test_namespace(name="TEST_DIFF")
 TEST_EDGE = _make_test_namespace(name="TEST_EDGE")
 TEST_GRAPH = _make_test_namespace(name="TEST_GRAPH")
 TEST_NODE = _make_test_namespace(name="TEST_NODE")
-
-
-class FakeCNPJFetcher(CNPJFetcher):
-    def __init__(self, *, graph: Graph) -> None:
-        self._graph = graph
-
-    @override
-    async def fetch(self, cnpj: str, /) -> Graph:
-        return self._graph
 
 
 class FakeEntity(Entity[FakeEntityID], namespace=TEST):
