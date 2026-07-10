@@ -13,10 +13,14 @@ if TYPE_CHECKING:
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
-def build_jwt_guard(*, container: Container) -> Callable[[str], Awaitable[None]]:
-    async def fastapi_jwt_guard(token: Annotated[str, Depends(_oauth2_scheme)]) -> None:
+def build_jwt_guard(
+    *, container: Container
+) -> Callable[[str], Awaitable[dict[str, object]]]:
+    async def jwt_guard(
+        token: Annotated[str, Depends(_oauth2_scheme)],
+    ) -> dict[str, object]:
         jwt_service = container.services.jwt_service
 
-        jwt_service.decode_access_token(token=token)
+        return jwt_service.decode_access_token(token=token)
 
-    return fastapi_jwt_guard
+    return jwt_guard

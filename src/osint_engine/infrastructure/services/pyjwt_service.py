@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 from jwt import PyJWTError, decode, encode  # pyright: ignore[reportUnknownVariableType]
 
@@ -23,6 +23,7 @@ class PyJWTService(JWTService):
     def algorithm(self) -> str:
         return self._JWT_ALGORITHM
 
+    @override
     def create_access_token(self, *, username: str, role: str) -> str:
         expiration_time = datetime.now(tz=UTC) + timedelta(
             minutes=self.access_token_expire_minutes
@@ -34,6 +35,7 @@ class PyJWTService(JWTService):
             algorithm=self._JWT_ALGORITHM,
         )
 
+    @override
     def decode_access_token(self, *, token: str) -> dict[str, object]:
         try:
             return decode(
