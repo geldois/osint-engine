@@ -17,7 +17,7 @@ from osint_engine.infrastructure.sources.brasilapi.brasilapi_mapper import (
     _map_phones,  # pyright: ignore[reportPrivateUsage]
     map_graph,
 )
-from tests.test_infrastructure.test_sources._data import (
+from tests.data.brasilapi import (
     ADDRESS_DATA,
     CNAE_DATA,
     COMPANY_DATA,
@@ -27,7 +27,9 @@ from tests.test_infrastructure.test_sources._data import (
 
 if TYPE_CHECKING:
     from osint_engine.infrastructure.sources.payload import Payload
-    from tests.conftest import MakePayload
+    from tests.test_infrastructure.test_sources.test_brasilapi.conftest import (
+        MakePayload,
+    )
 
 
 # TEST DOUBLES

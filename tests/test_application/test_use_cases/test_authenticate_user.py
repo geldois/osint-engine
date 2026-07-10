@@ -13,7 +13,8 @@ if TYPE_CHECKING:
     from osint_engine.infrastructure.hashers.argon2_password_hasher import (
         Argon2PasswordHasher,
     )
-    from tests.conftest import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory, MakeUser
+    from tests.conftest import MakeMemStorage, MakeUser
+    from tests.test_application.conftest import MakeMemUoW, MakeMemUoWFactory
 
 
 class TestAuthenticateUserExecution:

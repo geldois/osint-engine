@@ -7,7 +7,7 @@ from httpx2 import Request, RequestError, Response
 
 from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.infrastructure.errors.data_source_error import DataSourceRequestError
-from tests.test_infrastructure.test_sources._data import CNPJ, COMPLETE_PAYLOAD_DATA
+from tests.data.brasilapi import CNPJ, COMPLETE_PAYLOAD_DATA
 
 if TYPE_CHECKING:
     from tests.test_infrastructure.test_sources.test_brasilapi.conftest import (

@@ -17,7 +17,10 @@ from osint_engine.interface.http.fastapi.error_handler import build_error_handle
 from osint_engine.observability.context import correlation_id
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeContainer, MakeSettings
+    from tests.test_interface.test_http.test_fastapi.conftest import (
+        MakeContainer,
+        MakeSettings,
+    )
 
 # TEST DOUBLES
 

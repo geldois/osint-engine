@@ -82,9 +82,7 @@ class TestGraphIdentity:
 
 
 class TestGraphValidation:
-    def test_raises_with_empty_node_set(
-        self, make_fake_node: MakeFakeNode
-    ) -> None:
+    def test_raises_with_empty_node_set(self, make_fake_node: MakeFakeNode) -> None:
         node = make_fake_node()
 
         with pytest.raises(GraphHasNoNodesError):

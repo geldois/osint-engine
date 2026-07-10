@@ -7,10 +7,9 @@ import pytest
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
 
 if TYPE_CHECKING:
-    from tests.conftest import (
+    from tests.conftest import MakeGraph, MakeMemStorage
+    from tests.test_application.conftest import (
         MakeFakeCNPJFetcher,
-        MakeGraph,
-        MakeMemStorage,
         MakeMemUoW,
         MakeMemUoWFactory,
     )
