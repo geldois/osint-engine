@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from fastapi import Request, Response
 
 
-async def http_middleware(
+async def handle_logging(
     request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> Response:
     cid = uuid4()
