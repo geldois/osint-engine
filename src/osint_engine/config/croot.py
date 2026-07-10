@@ -25,13 +25,18 @@ if TYPE_CHECKING:
     from osint_engine.config.settings import Settings
 
 
-def build_container(*, settings: Settings, http_client: AsyncClient) -> Container:
+def build_container(
+    *,
+    settings: Settings,
+    http_client: AsyncClient,
+    mem_storage: MemStorage | None = None,
+) -> Container:
     fetchers = Fetchers(cnpj_fetcher=BrasilAPICNPJFetcher(http_client=http_client))
 
     pyjwt_service = PyJWTService(settings=settings)
     services = Services(jwt_service=pyjwt_service)
 
-    mem_storage = MemStorage()
+    mem_storage = mem_storage if mem_storage is not None else MemStorage()
     password_hasher = Argon2PasswordHasher()
 
     seed_mem_storage(

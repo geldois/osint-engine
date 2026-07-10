@@ -25,7 +25,7 @@ class MemStorage:
         edges: dict[UUID, Edge[UUID, UUID, UUID]] | None = None,
         graphs: dict[UUID, Graph] | None = None,
         nodes: dict[UUID, Node[UUID]] | None = None,
-        users: dict[str, User] | None = None
+        users: dict[str, User] | None = None,
     ) -> None:
         object.__setattr__(self, "edges", edges if edges is not None else {})
         object.__setattr__(self, "graphs", graphs if graphs is not None else {})
