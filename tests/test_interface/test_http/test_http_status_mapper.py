@@ -55,39 +55,59 @@ class TestStatusMapping:
     @pytest.mark.parametrize(
         ("exception", "expected_status"),
         [
-            (EntityNotFoundError(entity_id=uuid4(), subject=Company), 404),
-            (InvalidCredentialsError(username="user"), 401),
-            (InvalidTokenError(detail="expired"), 401),
-            (InvalidCNPJError(input_value="000", digit_count=3), 422),
-            (GraphHasNoNodesError(), 422),
-            (GraphRootNotInNodesError(root_id=uuid4()), 422),
-            (
+            pytest.param(
+                EntityNotFoundError(entity_id=uuid4(), subject=Company),
+                404,
+                id="EntityNotFoundError→404",
+            ),
+            pytest.param(
+                InvalidCredentialsError(username="user"),
+                401,
+                id="InvalidCredentialsError→401",
+            ),
+            pytest.param(
+                InvalidTokenError(detail="expired"), 401, id="InvalidTokenError→401"
+            ),
+            pytest.param(
+                InvalidCNPJError(input_value="000", digit_count=3),
+                422,
+                id="SanitizationError(InvalidCNPJError)→422",
+            ),
+            pytest.param(GraphHasNoNodesError(), 422, id="GraphHasNoNodesError→422"),
+            pytest.param(
+                GraphRootNotInNodesError(root_id=uuid4()),
+                422,
+                id="GraphRootNotInNodesError→422",
+            ),
+            pytest.param(
                 UnexpectedFieldTypeError(
                     source="api", key="cnpj", expected_type=str, field_type=int
                 ),
                 500,
+                id="UnexpectedFieldTypeError→500",
             ),
-            (UnexpectedPayloadError(source="api", missing_field="cnpj"), 500),
-            (_ConcreteDataSourceError(), 502),
-            (GraphInconsistentError(), 500),
-            (UnmappedTypeSchemaError(subject=str), 500),
-            (_ConcreteUoWError(), 500),
-            (MissingErrorIdentityContractError(), 422),
-        ],
-        ids=[
-            "EntityNotFoundError→404",
-            "InvalidCredentialsError→401",
-            "InvalidTokenError→401",
-            "SanitizationError(InvalidCNPJError)→422",
-            "GraphHasNoNodesError→422",
-            "GraphRootNotInNodesError→422",
-            "UnexpectedFieldTypeError→500",
-            "UnexpectedPayloadError→500",
-            "DataSourceError(catch-all)→502",
-            "EntityError(catch-all)→500",
-            "SchemaError(catch-all)→500",
-            "UoWError(catch-all)→500",
-            "DomainError(catch-all)→422",
+            pytest.param(
+                UnexpectedPayloadError(source="api", missing_field="cnpj"),
+                500,
+                id="UnexpectedPayloadError→500",
+            ),
+            pytest.param(
+                _ConcreteDataSourceError(), 502, id="DataSourceError(catch-all)→502"
+            ),
+            pytest.param(
+                GraphInconsistentError(), 500, id="EntityError(catch-all)→500"
+            ),
+            pytest.param(
+                UnmappedTypeSchemaError(subject=str),
+                500,
+                id="SchemaError(catch-all)→500",
+            ),
+            pytest.param(_ConcreteUoWError(), 500, id="UoWError(catch-all)→500"),
+            pytest.param(
+                MissingErrorIdentityContractError(subject=GraphHasNoNodesError),
+                422,
+                id="DomainError(catch-all)→422",
+            ),
         ],
     )
     def test_maps_exception_to_correct_http_status(

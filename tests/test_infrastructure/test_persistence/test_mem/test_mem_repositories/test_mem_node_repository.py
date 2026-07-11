@@ -61,8 +61,12 @@ class TestMemNodeRepositoryGet:
         mem_storage = make_mem_storage()
         repo = MemNodeRepository(mem_storage=mem_storage)
 
-        with pytest.raises(EntityNotFoundError):
+        with pytest.raises(EntityNotFoundError) as exception:
             await repo.get(node_id=node.id)
+
+        assert str(node.id) in str(exception.value)
+
+        assert "Node" in str(exception.value)
 
 
 class TestMemNodeRepositorySave:

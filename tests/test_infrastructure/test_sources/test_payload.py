@@ -37,14 +37,20 @@ class TestPayloadRequire:
     def test_raises_when_key_is_missing(self) -> None:
         payload = Payload(source="test", data={})
 
-        with pytest.raises(UnexpectedPayloadError):
+        with pytest.raises(UnexpectedPayloadError) as exception:
             payload.require(key="field", expected_type=str)
+
+        assert "field" in str(exception.value)
 
     def test_raises_when_field_type_does_not_match_expected_type(self) -> None:
         payload = Payload(source="test", data={"field": 1})
 
-        with pytest.raises(UnexpectedFieldTypeError):
+        with pytest.raises(UnexpectedFieldTypeError) as exception:
             payload.require(key="field", expected_type=str)
+
+        assert "int" in str(exception.value)
+
+        assert "str" in str(exception.value)
 
     def test_accepts_union_expected_type(self) -> None:
         payload = Payload(source="test", data={"field": 1.5})
@@ -58,10 +64,12 @@ class TestPayloadRequire:
     def test_rejects_value_outside_union_expected_type(self) -> None:
         payload = Payload(source="test", data={"field": "not a number"})
 
-        with pytest.raises(UnexpectedFieldTypeError):
+        with pytest.raises(UnexpectedFieldTypeError) as exception:
             payload.require(
                 key="field", expected_type=int | float, cast_to=lambda value: value
             )
+
+        assert "int | float" in str(exception.value)
 
     def test_cast_to_transforms_the_returned_value(self) -> None:
         payload = Payload(source="test", data={"field": 1.5})
@@ -99,8 +107,12 @@ class TestPayloadOptional:
     def test_raises_when_present_value_does_not_match_expected_type(self) -> None:
         payload = Payload(source="test", data={"field": 1})
 
-        with pytest.raises(UnexpectedFieldTypeError):
+        with pytest.raises(UnexpectedFieldTypeError) as exception:
             payload.optional(key="field", expected_type=str)
+
+        assert "int" in str(exception.value)
+
+        assert "str" in str(exception.value)
 
     def test_accepts_union_expected_type(self) -> None:
         payload = Payload(source="test", data={"field": 1})

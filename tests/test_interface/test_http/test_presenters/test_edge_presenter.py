@@ -172,5 +172,7 @@ class TestEdgePresenterErrors:
     def test_raises_for_unmapped_edge_type(self, make_fake_edge: MakeFakeEdge) -> None:
         edge = make_fake_edge()
 
-        with pytest.raises(UnmappedTypeSchemaError):
+        with pytest.raises(UnmappedTypeSchemaError) as exception:
             edge_to_schema(edge)
+
+        assert type(edge).__name__ in str(exception.value)

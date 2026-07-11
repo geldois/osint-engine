@@ -48,5 +48,7 @@ class TestEdgeValidation:
     def test_raises_when_source_and_target_are_identical(self) -> None:
         node_id = uuid4()
 
-        with pytest.raises(EdgeSelfLoopError):
+        with pytest.raises(EdgeSelfLoopError) as exception:
             FakeEdge(source_id=node_id, target_id=node_id, content="test")
+
+        assert str(node_id) in str(exception.value)

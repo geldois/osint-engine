@@ -23,7 +23,7 @@ class TestDomainErrorSubclassContract:
     def test_domain_error_raises_when_it_becomes_concrete_without_error_code(
         self,
     ) -> None:
-        with pytest.raises(MissingErrorIdentityContractError):
+        with pytest.raises(MissingErrorIdentityContractError) as exception:
 
             class FakeConcreteDomainErrorWithoutErrorCodeError(  # pyright: ignore[reportUnusedClass]
                 DomainError, error_code=None
@@ -33,5 +33,7 @@ class TestDomainErrorSubclassContract:
 
                 def _build_message(self) -> str:
                     return "test"
+
+        assert "FakeConcreteDomainErrorWithoutErrorCodeError" in str(exception.value)
 
 

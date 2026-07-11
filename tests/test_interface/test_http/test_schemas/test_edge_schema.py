@@ -54,7 +54,7 @@ class ValidFakeEdgeSchema(EdgeSchema[FakeEdge]):
 
 class TestEdgeSchemaContractEnforcement:
     def test_raises_when_type_field_is_absent(self) -> None:
-        with pytest.raises(MissingDiscriminatorFieldError):
+        with pytest.raises(MissingDiscriminatorFieldError) as exception:
 
             class MissingTypeSchema(EdgeSchema[FakeEdge]):  # pyright: ignore[reportUnusedClass]
                 @classmethod
@@ -62,8 +62,10 @@ class TestEdgeSchemaContractEnforcement:
                 def domain(cls) -> type[FakeEdge]:
                     return FakeEdge
 
+        assert "MissingTypeSchema" in str(exception.value)
+
     def test_raises_when_type_is_plain_string(self) -> None:
-        with pytest.raises(MissingDiscriminatorFieldError):
+        with pytest.raises(MissingDiscriminatorFieldError) as exception:
 
             class FlatStringTypeSchema(EdgeSchema[FakeEdge]):  # pyright: ignore[reportUnusedClass]
                 type: str = "fake_edge"
@@ -72,6 +74,8 @@ class TestEdgeSchemaContractEnforcement:
                 @override
                 def domain(cls) -> type[FakeEdge]:
                     return FakeEdge
+
+        assert "FlatStringTypeSchema" in str(exception.value)
 
 
 class TestEdgeSchemaDomainClassmethod:
@@ -93,8 +97,10 @@ class TestEdgeSchemaRegistryErrors:
     def test_raises_for_unmapped_domain_type(self) -> None:
         class UnknownEdge: ...  # pyright: ignore[reportUnusedClass]
 
-        with pytest.raises(UnmappedTypeSchemaError):
+        with pytest.raises(UnmappedTypeSchemaError) as exception:
             EdgeSchemaRegistry.get_from_domain(UnknownEdge)  # pyright: ignore[reportArgumentType]
+
+        assert "UnknownEdge" in str(exception.value)
 
 
 class TestEdgeSchemaRegistryRegister:
@@ -104,5 +110,7 @@ class TestEdgeSchemaRegistryRegister:
         assert EdgeSchemaRegistry.get_from_domain(FakeEdge) is ValidFakeEdgeSchema
 
     def test_raises_for_duplicate_registration(self) -> None:
-        with pytest.raises(DuplicateSchemaRegistrationError):
+        with pytest.raises(DuplicateSchemaRegistrationError) as exception:
             EdgeSchemaRegistry.register(ValidFakeEdgeSchema)
+
+        assert "ValidFakeEdgeSchema" in str(exception.value)

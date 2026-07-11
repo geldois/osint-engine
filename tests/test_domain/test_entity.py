@@ -144,7 +144,7 @@ class TestEntitySubclassContract:
         assert isinstance(FakeEntity.id_type(uuid4()), UUID)
 
     def test_raises_without_id_type_parameter(self) -> None:
-        with pytest.raises(EntityMissingIDTypeError):
+        with pytest.raises(EntityMissingIDTypeError) as exception:
 
             class FakeEntityWithoutIDType(Entity, namespace=TEST):  # pyright: ignore[reportUnusedClass, reportMissingTypeArgument]
                 def __init__(
@@ -152,8 +152,10 @@ class TestEntitySubclassContract:
                 ) -> None:
                     super().__init__(identity_fields=identity_fields, **kwargs)
 
+        assert "FakeEntityWithoutIDType" in str(exception.value)
+
     def test_raises_with_plain_uuid_as_id_type(self) -> None:
-        with pytest.raises(EntityMissingIDTypeError):
+        with pytest.raises(EntityMissingIDTypeError) as exception:
 
             class FakeEntityWithFlatIDType(  # pyright: ignore[reportUnusedClass]
                 Entity[UUID], namespace=TEST
@@ -163,12 +165,14 @@ class TestEntitySubclassContract:
                 ) -> None:
                     super().__init__(identity_fields=identity_fields, **kwargs)
 
+        assert "FakeEntityWithFlatIDType" in str(exception.value)
+
     def test_raises_with_non_uuid_id_type(
         self,
     ) -> None:
         WrongIDType = NewType("WrongIDType", int)
 
-        with pytest.raises(EntityInvalidIDTypeError):
+        with pytest.raises(EntityInvalidIDTypeError) as exception:
 
             class FakeEntityWithWrongIDType(  # pyright: ignore[reportUnusedClass]
                 Entity[WrongIDType],  # pyright: ignore[reportInvalidTypeArguments]
@@ -178,6 +182,10 @@ class TestEntitySubclassContract:
                     self, identity_fields: frozenset[str], **kwargs: object
                 ) -> None:
                     super().__init__(identity_fields=identity_fields, **kwargs)
+
+        assert "WrongIDType" in str(exception.value)
+
+        assert "FakeEntityWithWrongIDType" in str(exception.value)
 
 
 class TestEntityValueSemantics:
@@ -248,32 +256,40 @@ class TestEntityIDCalculation:
     def test_raises_when_identity_value_is_not_deterministic(
         self, value: object
     ) -> None:
-        with pytest.raises(EntityNonDeterministicValueError):
+        with pytest.raises(EntityNonDeterministicValueError) as exception:
             FakeEntity._calculate_id(content=value)  # pyright: ignore[reportPrivateUsage]
+
+        assert type(value).__name__ in str(exception.value)
 
 
 class TestEntityIdentityFieldsValidation:
     def test_raises_when_identity_field_is_absent_from_kwargs(
         self,
     ) -> None:
-        with pytest.raises(EntityInvalidIdentityFieldError):
+        with pytest.raises(EntityInvalidIdentityFieldError) as exception:
             FakeEntityWithNonexistentIdentityField(
                 identity_fields=frozenset({"nonexistent_field"})
             )
 
+        assert "nonexistent_field" in str(exception.value)
+
     def test_raises_when_any_identity_field_is_unknown(
         self,
     ) -> None:
-        with pytest.raises(EntityInvalidIdentityFieldError):
+        with pytest.raises(EntityInvalidIdentityFieldError) as exception:
             FakeEntityWithNonexistentIdentityField(
                 identity_fields=frozenset({"content", "nonexistent_field"}),
                 content="test",
             )
 
+        assert "nonexistent_field" in str(exception.value)
+
     def test_raises_when_identity_field_name_is_empty_string(
         self,
     ) -> None:
-        with pytest.raises(EntityEmptyIdentityFieldNameError):
+        with pytest.raises(EntityEmptyIdentityFieldNameError) as exception:
             FakeEntityWithNonexistentIdentityField(
                 identity_fields=frozenset({""}),
             )
+
+        assert "FakeEntityWithNonexistentIdentityField" in str(exception.value)

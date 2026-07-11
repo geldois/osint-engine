@@ -201,8 +201,12 @@ class TestMapCompany:
     ) -> None:
         data = {**COMPANY_DATA, "capital_social": "not a number"}
 
-        with pytest.raises(UnexpectedFieldTypeError):
+        with pytest.raises(UnexpectedFieldTypeError) as exception:
             _map_company(payload=make_payload(source="brasilapi", data=data))
+
+        assert "int | float" in str(exception.value)
+
+        assert "str" in str(exception.value)
 
 
 class TestMapEmail:

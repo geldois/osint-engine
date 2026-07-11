@@ -61,8 +61,12 @@ class TestMemGraphRepositoryGet:
         mem_storage = make_mem_storage()
         repo = MemGraphRepository(mem_storage=mem_storage)
 
-        with pytest.raises(EntityNotFoundError):
+        with pytest.raises(EntityNotFoundError) as exception:
             await repo.get(graph_id=graph.id)
+
+        assert str(graph.id) in str(exception.value)
+
+        assert "Graph" in str(exception.value)
 
 
 class TestMemGraphRepositorySave:

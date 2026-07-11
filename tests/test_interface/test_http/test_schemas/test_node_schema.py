@@ -54,7 +54,7 @@ class ValidFakeNodeSchema(NodeSchema[FakeNode]):
 
 class TestNodeSchemaContractEnforcement:
     def test_raises_when_type_field_is_absent(self) -> None:
-        with pytest.raises(MissingDiscriminatorFieldError):
+        with pytest.raises(MissingDiscriminatorFieldError) as exception:
 
             class MissingTypeSchema(NodeSchema[FakeNode]):  # pyright: ignore[reportUnusedClass]
                 @classmethod
@@ -62,8 +62,10 @@ class TestNodeSchemaContractEnforcement:
                 def domain(cls) -> type[FakeNode]:
                     return FakeNode
 
+        assert "MissingTypeSchema" in str(exception.value)
+
     def test_raises_when_type_is_plain_string(self) -> None:
-        with pytest.raises(MissingDiscriminatorFieldError):
+        with pytest.raises(MissingDiscriminatorFieldError) as exception:
 
             class FlatStringTypeSchema(NodeSchema[FakeNode]):  # pyright: ignore[reportUnusedClass]
                 type: str = "fake_node"
@@ -72,6 +74,8 @@ class TestNodeSchemaContractEnforcement:
                 @override
                 def domain(cls) -> type[FakeNode]:
                     return FakeNode
+
+        assert "FlatStringTypeSchema" in str(exception.value)
 
 
 class TestNodeSchemaDomainClassmethod:
@@ -93,8 +97,10 @@ class TestNodeSchemaRegistryErrors:
     def test_raises_for_unmapped_domain_type(self) -> None:
         class UnknownNode: ...  # pyright: ignore[reportUnusedClass]
 
-        with pytest.raises(UnmappedTypeSchemaError):
+        with pytest.raises(UnmappedTypeSchemaError) as exception:
             NodeSchemaRegistry.get_from_domain(UnknownNode)  # pyright: ignore[reportArgumentType]
+
+        assert "UnknownNode" in str(exception.value)
 
 
 class TestNodeSchemaRegistryRegister:
@@ -104,5 +110,7 @@ class TestNodeSchemaRegistryRegister:
         assert NodeSchemaRegistry.get_from_domain(FakeNode) is ValidFakeNodeSchema
 
     def test_raises_for_duplicate_registration(self) -> None:
-        with pytest.raises(DuplicateSchemaRegistrationError):
+        with pytest.raises(DuplicateSchemaRegistrationError) as exception:
             NodeSchemaRegistry.register(ValidFakeNodeSchema)
+
+        assert "ValidFakeNodeSchema" in str(exception.value)

@@ -161,9 +161,12 @@ class TestGraphValidation:
         self, make_fake_node: MakeFakeNode
     ) -> None:
         node = make_fake_node()
+        root_id = uuid4()
 
-        with pytest.raises(GraphRootNotInNodesError):
-            Graph(edges=frozenset(), nodes=frozenset({node}), root_id=uuid4())
+        with pytest.raises(GraphRootNotInNodesError) as exception:
+            Graph(edges=frozenset(), nodes=frozenset({node}), root_id=root_id)
+
+        assert str(root_id) in str(exception.value)
 
     def test_raises_when_edge_references_unknown_node(
         self, make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode

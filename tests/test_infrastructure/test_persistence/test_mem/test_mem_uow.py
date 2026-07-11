@@ -125,10 +125,14 @@ class TestMemUoWValidation:
         mem_storage = MemStorage()
         uow = MemUoW(mem_storage=mem_storage)
 
-        with pytest.raises(UoWAlreadyPreparedError):
+        with pytest.raises(UoWAlreadyPreparedError) as already_prepared:
             async with uow:
                 await uow._prepare()  # pyright: ignore[reportPrivateUsage]
 
-        with pytest.raises(UoWNotPreparedError):
+        assert "MemUoW" in str(already_prepared.value)
+
+        with pytest.raises(UoWNotPreparedError) as not_prepared:
             async with uow:
                 await uow._finish()  # pyright: ignore[reportPrivateUsage]
+
+        assert "MemUoW" in str(not_prepared.value)

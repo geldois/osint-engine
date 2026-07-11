@@ -137,5 +137,7 @@ class TestNodePresenterErrors:
     def test_raises_for_unmapped_node_type(self, make_fake_node: MakeFakeNode) -> None:
         node = make_fake_node()
 
-        with pytest.raises(UnmappedTypeSchemaError):
+        with pytest.raises(UnmappedTypeSchemaError) as exception:
             node_to_schema(node)
+
+        assert type(node).__name__ in str(exception.value)

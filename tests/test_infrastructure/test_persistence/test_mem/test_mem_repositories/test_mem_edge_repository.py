@@ -62,8 +62,12 @@ class TestMemEdgeRepositoryGet:
         mem_storage = make_mem_storage()
         repo = MemEdgeRepository(mem_storage=mem_storage)
 
-        with pytest.raises(EntityNotFoundError):
+        with pytest.raises(EntityNotFoundError) as exception:
             await repo.get(edge_id=edge.id)
+
+        assert str(edge.id) in str(exception.value)
+
+        assert "Edge" in str(exception.value)
 
 
 class TestMemEdgeRepositorySave:
