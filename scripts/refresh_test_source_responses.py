@@ -1,7 +1,7 @@
 """
 Refreshes API response fixtures used by infrastructure tests.
 
-Run with: uv run python scripts/refresh_api_responses.py
+Run with: uv run python scripts/refresh_test_source_responses.py
 """
 
 from __future__ import annotations
@@ -12,14 +12,14 @@ from pathlib import Path
 
 from httpx2 import URL, Client, Timeout
 
-FETCHERS_DIR = Path("tests/test_infrastructure/test_sources")
+SOURCES_DIR = Path("tests/test_infrastructure/test_sources")
 
 
 class _BrasilAPI:
     API_NAME: str = "brasilapi"
     BASE_URL: URL = URL("https://brasilapi.com.br/api/")
     CASES: dict[str, list[tuple[str, str]]] = {
-        "cnpj/v1/": [(f"{API_NAME}_cnpj_v1_valid.json", "00.000.000/0001-91")]
+        "cnpj/v1/": [(f"{API_NAME}_cnpj_v1.json", "00.000.000/0001-91")]
     }
 
 
@@ -38,7 +38,9 @@ def main() -> None:
 
     with _build_http_client() as client:
         for api in apis:
-            out_dir = FETCHERS_DIR / f"test_{api.API_NAME}" / "responses"
+            out_dir = (
+                SOURCES_DIR / f"test_{api.API_NAME}" / "test_endpoints" / "responses"
+            )
             out_dir.mkdir(parents=True, exist_ok=True)
 
             for endpoint, cases in api.CASES.items():

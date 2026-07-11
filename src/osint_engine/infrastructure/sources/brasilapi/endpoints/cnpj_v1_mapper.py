@@ -40,6 +40,13 @@ def _map_address(*, payload: Payload) -> Address:
     )
 
 
+def _map_secondary_cnae(*, payload: Payload) -> Cnae:
+    return Cnae(
+        code=str(payload.require(key="codigo", expected_type=int)),
+        description=payload.require(key="descricao", expected_type=str),
+    )
+
+
 def _map_cnaes(*, payload: Payload) -> set[Cnae]:
     return {
         Cnae(
@@ -47,10 +54,7 @@ def _map_cnaes(*, payload: Payload) -> set[Cnae]:
             description=payload.require(key="cnae_fiscal_descricao", expected_type=str),
         )
     } | {
-        Cnae(
-            code=str(payload.require(key="codigo", expected_type=int, data=cnae)),
-            description=payload.require(key="descricao", expected_type=str, data=cnae),
-        )
+        _map_secondary_cnae(payload=payload.scope(data=cnae))
         for cnae in payload.require(
             key="cnaes_secundarios", expected_type=list[dict[str, object]]
         )
@@ -59,7 +63,6 @@ def _map_cnaes(*, payload: Payload) -> set[Cnae]:
 
 
 def _map_company(*, payload: Payload) -> Company:
-    share_capital_float = payload.optional(key="capital_social", expected_type=float)
     return Company(
         activity_start_date=payload.require(
             key="data_inicio_atividade", expected_type=str
@@ -80,12 +83,10 @@ def _map_company(*, payload: Payload) -> Company:
         registration_status_reason=payload.require(
             key="descricao_motivo_situacao_cadastral", expected_type=str
         ),
-        share_capital=Decimal(
-            str(
-                share_capital_float
-                if share_capital_float is not None
-                else payload.require(key="capital_social", expected_type=int)
-            )
+        share_capital=payload.require(
+            key="capital_social",
+            expected_type=int | float,
+            cast_to=lambda value: Decimal(str(value)),
         ),
         size_category=payload.require(key="porte", expected_type=str),
         trade_name=payload.require(key="nome_fantasia", expected_type=str),
@@ -109,6 +110,14 @@ def _map_phones(*, payload: Payload) -> set[Phone]:
     }
 
 
+def _map_person(*, payload: Payload) -> Person:
+    return Person(
+        age_range=payload.require(key="faixa_etaria", expected_type=str),
+        cpf=payload.require(key="cnpj_cpf_do_socio", expected_type=str),
+        name=payload.require(key="nome_socio", expected_type=str),
+    )
+
+
 def _map_persons_and_ownerships(
     *, payload: Payload, company_id: CompanyID
 ) -> tuple[set[Person], set[PersonOwnsCompany]]:
@@ -119,25 +128,18 @@ def _map_persons_and_ownerships(
         if not partner or not _is_person(partner=partner):
             continue
 
-        person = Person(
-            age_range=payload.require(
-                key="faixa_etaria", expected_type=str, data=partner
-            ),
-            cpf=payload.require(
-                key="cnpj_cpf_do_socio", expected_type=str, data=partner
-            ),
-            name=payload.require(key="nome_socio", expected_type=str, data=partner),
-        )
+        partner_payload = payload.scope(data=partner)
+        person = _map_person(payload=partner_payload)
 
         persons.add(person)
 
         ownerships.add(
             PersonOwnsCompany(
-                entry_date=payload.require(
-                    key="data_entrada_sociedade", expected_type=str, data=partner
+                entry_date=partner_payload.require(
+                    key="data_entrada_sociedade", expected_type=str
                 ),
-                role=payload.require(
-                    key="qualificacao_socio", expected_type=str, data=partner
+                role=partner_payload.require(
+                    key="qualificacao_socio", expected_type=str
                 ),
                 source_id=person.id,
                 target_id=company_id,

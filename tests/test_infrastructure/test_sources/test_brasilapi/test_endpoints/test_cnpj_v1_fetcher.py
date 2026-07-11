@@ -10,16 +10,16 @@ from osint_engine.infrastructure.errors.data_source_error import DataSourceReque
 from tests.data.brasilapi import CNPJ, COMPLETE_PAYLOAD_DATA
 
 if TYPE_CHECKING:
-    from tests.test_infrastructure.test_sources.test_brasilapi.conftest import (
-        MakeBrasilAPICNPJFetcher,
+    from tests.test_infrastructure.test_sources.test_brasilapi.test_endpoints.conftest import (  # noqa: E501
+        MakeBrasilAPICNPJv1Fetcher,
     )
 
 
-class TestBrasilAPICNPJFetcherOnHTTPStatusError:
+class TestBrasilAPICNPJv1FetcherOnHTTPStatusError:
     @pytest.mark.asyncio
     @pytest.mark.parametrize("status_code", [400, 404, 429, 500, 503])
     async def test_wraps_error_preserving_status_code(
-        self, make_brasilapi_cnpj_fetcher: MakeBrasilAPICNPJFetcher, status_code: int
+        self, make_brasilapi_cnpj_fetcher: MakeBrasilAPICNPJv1Fetcher, status_code: int
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(status_code)
@@ -34,10 +34,10 @@ class TestBrasilAPICNPJFetcherOnHTTPStatusError:
         assert exception.value.source == "brasilapi"
 
 
-class TestBrasilAPICNPJFetcherOnNetworkFailure:
+class TestBrasilAPICNPJv1FetcherOnNetworkFailure:
     @pytest.mark.asyncio
     async def test_wraps_request_error_without_status_code(
-        self, make_brasilapi_cnpj_fetcher: MakeBrasilAPICNPJFetcher
+        self, make_brasilapi_cnpj_fetcher: MakeBrasilAPICNPJv1Fetcher
     ) -> None:
         def handler(request: Request) -> Response:
             message = "connection refused"
@@ -54,10 +54,10 @@ class TestBrasilAPICNPJFetcherOnNetworkFailure:
         assert exception.value.source == "brasilapi"
 
 
-class TestBrasilAPICNPJFetcherOnMalformedJSON:
+class TestBrasilAPICNPJv1FetcherOnMalformedJSON:
     @pytest.mark.asyncio
     async def test_wraps_decode_error_without_status_code(
-        self, make_brasilapi_cnpj_fetcher: MakeBrasilAPICNPJFetcher
+        self, make_brasilapi_cnpj_fetcher: MakeBrasilAPICNPJv1Fetcher
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(status_code=200, content=b"not valid json {{{")
@@ -72,10 +72,10 @@ class TestBrasilAPICNPJFetcherOnMalformedJSON:
         assert exception.value.source == "brasilapi"
 
 
-class TestBrasilAPICNPJFetcherOnSuccess:
+class TestBrasilAPICNPJv1FetcherOnSuccess:
     @pytest.mark.asyncio
     async def test_returns_graph(
-        self, make_brasilapi_cnpj_fetcher: MakeBrasilAPICNPJFetcher
+        self, make_brasilapi_cnpj_fetcher: MakeBrasilAPICNPJv1Fetcher
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(200, json=COMPLETE_PAYLOAD_DATA)

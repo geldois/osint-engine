@@ -15,8 +15,8 @@ from osint_engine.infrastructure.persistence.mem.mem_seeder import seed_mem_stor
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
 from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
-from osint_engine.infrastructure.sources.brasilapi.brasilapi_fetcher import (
-    BrasilAPICNPJFetcher,
+from osint_engine.infrastructure.sources.brasilapi.endpoints.cnpj_v1_fetcher import (
+    BrasilAPICNPJv1Fetcher,
 )
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ def build_container(
     http_client: AsyncClient,
     mem_storage: MemStorage | None = None,
 ) -> Container:
-    fetchers = Fetchers(cnpj_fetcher=BrasilAPICNPJFetcher(http_client=http_client))
+    fetchers = Fetchers(cnpj_fetcher=BrasilAPICNPJv1Fetcher(http_client=http_client))
 
     pyjwt_service = PyJWTService(settings=settings)
     services = Services(jwt_service=pyjwt_service)

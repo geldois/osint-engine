@@ -3,12 +3,17 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+import pytest
+
 from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
 from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.entities.nodes.email import Email
 from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.infrastructure.sources.brasilapi.brasilapi_mapper import (
+from osint_engine.infrastructure.errors.data_source_error import (
+    UnexpectedFieldTypeError,
+)
+from osint_engine.infrastructure.sources.brasilapi.endpoints.cnpj_v1_mapper import (
     _map_address,  # pyright: ignore[reportPrivateUsage]
     _map_cnaes,  # pyright: ignore[reportPrivateUsage]
     _map_company,  # pyright: ignore[reportPrivateUsage]
@@ -27,9 +32,7 @@ from tests.data.brasilapi import (
 
 if TYPE_CHECKING:
     from osint_engine.infrastructure.sources.payload import Payload
-    from tests.test_infrastructure.test_sources.test_brasilapi.conftest import (
-        MakePayload,
-    )
+    from tests.test_infrastructure.test_sources.conftest import MakePayload
 
 
 # TEST DOUBLES
@@ -193,6 +196,14 @@ class TestMapCompany:
 
         assert company.share_capital == Decimal("1.5")
 
+    def test_share_capital_with_unexpected_type_raises(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPANY_DATA, "capital_social": "not a number"}
+
+        with pytest.raises(UnexpectedFieldTypeError):
+            _map_company(payload=make_payload(source="brasilapi", data=data))
+
 
 class TestMapEmail:
     def test_returns_email_when_address_is_present(
@@ -207,6 +218,12 @@ class TestMapEmail:
         assert isinstance(result, Email)
 
         assert result.address == "contato@bb.com.br"
+
+    def test_raises_when_email_has_unexpected_type(
+        self, make_payload: MakePayload
+    ) -> None:
+        with pytest.raises(UnexpectedFieldTypeError):
+            _map_email(payload=make_payload(source="brasilapi", data={"email": 123}))
 
 
 class TestMapPhones:
@@ -254,6 +271,14 @@ class TestMapPhones:
         phones = _map_phones(payload=make_payload(source="brasilapi", data={}))
 
         assert phones == set()
+
+    def test_raises_when_phone_has_unexpected_type(
+        self, make_payload: MakePayload
+    ) -> None:
+        data: dict[str, object] = {"ddd_telefone_1": 6134939002}
+
+        with pytest.raises(UnexpectedFieldTypeError):
+            _map_phones(payload=make_payload(source="brasilapi", data=data))
 
 
 class TestMapPersonsAndOwnerships:

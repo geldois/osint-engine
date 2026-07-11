@@ -1,15 +1,24 @@
 from __future__ import annotations
 
-from typing import cast, get_origin
+from collections.abc import Callable
+from types import UnionType
+from typing import Union, cast, get_origin, overload
 
 from osint_engine.infrastructure.errors.data_source_error import (
     UnexpectedFieldTypeError,
     UnexpectedPayloadError,
 )
 
+type _Caster[Field, Cast] = Callable[[Field], Cast]
 
-def _runtime_type(tp: type) -> type:
-    return get_origin(tp) or tp
+
+def _runtime_type(tp: type | UnionType) -> type | UnionType:
+    origin = get_origin(tp)
+
+    if origin is Union or origin is UnionType:
+        return tp
+
+    return origin or tp
 
 
 class Payload:
@@ -17,22 +26,32 @@ class Payload:
         self._source = source
         self._data = data
 
-    def has_key(self, key: str, /) -> bool:
-        return self._data.get(key) is not None
+    def scope(self, *, data: dict[str, object]) -> Payload:
+        cls = type(self)
 
+        return cls(source=self._source, data=data)
+
+    @overload
     def require[Field: object](
+        self, *, key: str, expected_type: type[Field], cast_to: None = None
+    ) -> Field: ...
+
+    @overload
+    def require[Field: object, Cast: object](
+        self, *, key: str, expected_type: type[Field], cast_to: _Caster[Field, Cast]
+    ) -> Cast: ...
+
+    def require[Field: object, Cast: object](
         self,
         *,
         key: str,
         expected_type: type[Field],
-        data: dict[str, object] | None = None,
-    ) -> Field:
-        data = data if data is not None else self._data
-
-        if key not in data:
+        cast_to: _Caster[Field, Cast] | None = None,
+    ) -> Field | Cast:
+        if key not in self._data:
             raise UnexpectedPayloadError(source=self._source, missing_field=key)
 
-        field = data[key]
+        field = self._data[key]
 
         if not isinstance(field, _runtime_type(expected_type)):
             raise UnexpectedFieldTypeError(
@@ -42,23 +61,40 @@ class Payload:
                 field_type=type(field),
             )
 
-        return cast("Field", field)
+        field = cast("Field", field)
 
+        return cast_to(field) if cast_to is not None else field
+
+    @overload
     def optional[Field: object](
+        self, *, key: str, expected_type: type[Field], cast_to: None = None
+    ) -> Field | None: ...
+
+    @overload
+    def optional[Field: object, Cast: object](
+        self, *, key: str, expected_type: type[Field], cast_to: _Caster[Field, Cast]
+    ) -> Cast | None: ...
+
+    def optional[Field: object, Cast: object](
         self,
         *,
         key: str,
         expected_type: type[Field],
-        data: dict[str, object] | None = None,
-    ) -> Field | None:
-        data = data if data is not None else self._data
-
-        if key not in data:
+        cast_to: _Caster[Field, Cast] | None = None,
+    ) -> Field | Cast | None:
+        if key not in self._data or self._data[key] is None:
             return None
 
-        field = data[key]
+        field = self._data[key]
 
-        if field is None or not isinstance(field, _runtime_type(expected_type)):
-            return None
+        if not isinstance(field, _runtime_type(expected_type)):
+            raise UnexpectedFieldTypeError(
+                source=self._source,
+                key=key,
+                expected_type=expected_type,
+                field_type=type(field),
+            )
 
-        return cast("Field", field)
+        field = cast("Field", field)
+
+        return cast_to(field) if cast_to is not None else field
