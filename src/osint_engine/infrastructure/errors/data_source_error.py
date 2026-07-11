@@ -1,8 +1,15 @@
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from osint_engine.infrastructure.errors.infrastructure_error import InfrastructureError
+
+if TYPE_CHECKING:
+    from types import UnionType
+
+
+def _type_name(subject: type | UnionType) -> str:
+    return subject.__name__ if isinstance(subject, type) else str(subject)
 
 
 class DataSourceError(InfrastructureError): ...
@@ -30,12 +37,17 @@ class DataSourceRequestError(DataSourceError):
 class UnexpectedFieldTypeError(DataSourceError):
     source: str
     key: str
-    expected_type: type
+    expected_type: type | UnionType
     field_type: type
 
     @override
     def __init__(
-        self, *, source: str, key: str, expected_type: type, field_type: type
+        self,
+        *,
+        source: str,
+        key: str,
+        expected_type: type | UnionType,
+        field_type: type,
     ) -> None:
         super().__init__(
             source=source, key=key, expected_type=expected_type, field_type=field_type
@@ -45,8 +57,8 @@ class UnexpectedFieldTypeError(DataSourceError):
     def _build_message(self) -> str:
         return (
             f"'{self.source}' returned field '{self.key}' "
-            f"with type '{self.field_type.__name__}', "
-            f"expected '{self.expected_type.__name__}'."
+            f"with type '{_type_name(self.field_type)}', "
+            f"expected '{_type_name(self.expected_type)}'."
         )
 
 

@@ -7,7 +7,7 @@ from typing import ClassVar, final, override
 
 def _verify_error_code(*, subject: type[DomainError]) -> None:
     if subject.error_code is None and not isabstract(subject):
-        raise MissingErrorIdentityContractError
+        raise MissingErrorIdentityContractError(subject=subject)
 
 
 class DomainError(ABC, Exception):
@@ -38,8 +38,8 @@ class MissingErrorIdentityContractError(
     subject: type[DomainError]
 
     @override
-    def __init__(self) -> None:
-        super().__init__(subject=type(self))
+    def __init__(self, *, subject: type[DomainError]) -> None:
+        super().__init__(subject=subject)
 
     @override
     def _build_message(self) -> str:
