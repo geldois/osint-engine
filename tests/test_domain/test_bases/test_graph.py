@@ -15,11 +15,34 @@ from osint_engine.domain.errors.graph_error import (
     GraphInconsistentError,
     GraphRootNotInNodesError,
 )
+from tests.fakes.domain import TEST_NODE, FakeEdge, FakeNodeID
 
 if TYPE_CHECKING:
     from hypothesis.strategies import DataObject
 
     from tests.conftest import MakeFakeEdge, MakeFakeNode
+
+# TEST DOUBLES
+
+
+class FakeNodeWithContentIdentity(Node[FakeNodeID], namespace=TEST_NODE):
+    content: str
+    extra_field: str
+
+    def __init__(
+        self,
+        *,
+        identity_fields: frozenset[str] = frozenset({"content"}),
+        content: str,
+        extra_field: str,
+        **kwargs: object,
+    ) -> None:
+        super().__init__(
+            identity_fields=identity_fields,
+            content=content,
+            extra_field=extra_field,
+            **kwargs,
+        )
 
 
 class TestGraphSubclassContract:
@@ -51,6 +74,13 @@ class TestGraphSubclassContract:
 
         assert isinstance(graph.nodes, frozenset)
 
+    def test_graph_id_is_not_none(self, make_fake_node: MakeFakeNode) -> None:
+        node = make_fake_node()
+
+        graph = Graph(edges=frozenset(), nodes=frozenset({node}), root_id=node.id)
+
+        assert graph.id is not None
+
 
 class TestGraphIdentity:
     @given(data=strategies.data())
@@ -79,6 +109,45 @@ class TestGraphIdentity:
         )
 
         assert id_canonical == id_permuted
+
+    def test_graph_id_ignores_node_content_id_divergence(self) -> None:
+        node_a = FakeNodeWithContentIdentity(content="root", extra_field="value_a")
+        node_b = FakeNodeWithContentIdentity(content="root", extra_field="value_b")
+
+        assert node_a.id == node_b.id
+
+        assert node_a.content_id != node_b.content_id
+
+        graph_a = Graph(edges=frozenset(), nodes=frozenset({node_a}), root_id=node_a.id)
+        graph_b = Graph(edges=frozenset(), nodes=frozenset({node_b}), root_id=node_b.id)
+
+        assert graph_a.id == graph_b.id
+
+    def test_graph_id_ignores_edge_content_id_divergence(
+        self, make_fake_node: MakeFakeNode
+    ) -> None:
+        node_x = make_fake_node()
+        node_y = make_fake_node()
+
+        edge_a = FakeEdge(source_id=node_x.id, target_id=node_y.id, content="content_a")
+        edge_b = FakeEdge(source_id=node_x.id, target_id=node_y.id, content="content_b")
+
+        assert edge_a.id == edge_b.id
+
+        assert edge_a.content_id != edge_b.content_id
+
+        graph_a = Graph(
+            edges=frozenset({edge_a}),
+            nodes=frozenset({node_x, node_y}),
+            root_id=node_x.id,
+        )
+        graph_b = Graph(
+            edges=frozenset({edge_b}),
+            nodes=frozenset({node_x, node_y}),
+            root_id=node_x.id,
+        )
+
+        assert graph_a.id == graph_b.id
 
 
 class TestGraphValidation:

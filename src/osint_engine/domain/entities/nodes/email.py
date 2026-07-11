@@ -14,4 +14,4 @@ class Email(Node[EmailID], namespace=EntityNAMESPACE.EMAIL):
 
     @override
     def __init__(self, *, address: str) -> None:
-        super().__init__(address=address)
+        super().__init__(identity_fields=frozenset({"address"}), address=address)

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import FrozenInstanceError
 from inspect import isabstract
 from typing import ClassVar, final, override
 
@@ -28,14 +27,6 @@ class DomainError(ABC, Exception):
             object.__setattr__(self, k, v)
 
         super().__init__(self._build_message())
-
-    @final
-    def __setattr__(self, name: str, value: object, /) -> None:
-        raise FrozenInstanceError
-
-    @final
-    def __delattr__(self, name: str, /) -> None:
-        raise FrozenInstanceError
 
     @abstractmethod
     def _build_message(self) -> str: ...

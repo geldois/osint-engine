@@ -112,6 +112,24 @@ class EntityInvalidIdentityFieldError(
         )
 
 
+class EntityEmptyIdentityFieldNameError(
+    EntityError, error_code="ENTITY_EMPTY_IDENTITY_FIELD_NAME"
+):
+    subject: type[Entity[UUID]]
+
+    @override
+    def __init__(self, *, subject: type[Entity[UUID]]) -> None:
+        super().__init__(subject=subject)
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"'{self.subject.__name__}' identity contract violation - "
+            f"identity_fields cannot contain empty strings: "
+            f"pass non-empty field names as identity_fields"
+        )
+
+
 class EntityNotFoundError(EntityError, error_code="ENTITY_NOT_FOUND"):
     entity_id: UUID
     subject: type[Entity[UUID]]

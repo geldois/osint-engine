@@ -14,4 +14,4 @@ class Sanction(Node[SanctionID], namespace=EntityNAMESPACE.SANCTION):
 
     @override
     def __init__(self, *, organ: Literal["CEIS", "CNEP"]) -> None:
-        super().__init__(organ=organ)
+        super().__init__(identity_fields=frozenset({"organ"}), organ=organ)

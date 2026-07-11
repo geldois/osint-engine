@@ -41,6 +41,10 @@ class FakeEntity(Entity[FakeEntityID], namespace=TEST):
         content: str,
         **kwargs: object,
     ) -> None:
+        identity_fields = (
+            identity_fields if identity_fields is not None else frozenset({"content"})
+        )
+
         super().__init__(identity_fields=identity_fields, content=content, **kwargs)
 
 
@@ -77,4 +81,8 @@ class FakeNode(Node[FakeNodeID], namespace=TEST_NODE):
         content: str,
         **kwargs: object,
     ) -> None:
+        identity_fields = (
+            identity_fields if identity_fields is not None else frozenset({"content"})
+        )
+
         super().__init__(identity_fields=identity_fields, content=content, **kwargs)

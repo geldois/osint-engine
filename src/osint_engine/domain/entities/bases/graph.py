@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING, NewType, cast, override
-from uuid import UUID, uuid5
+from uuid import UUID
 
 from osint_engine.domain.entities.entity import Entity
 from osint_engine.domain.errors.graph_error import (
@@ -45,22 +44,20 @@ class Graph(Entity[GraphID], namespace=EntityNAMESPACE.GRAPH):
         ):
             raise GraphInconsistentError
 
-        super().__init__(edges=edges, nodes=nodes, root_id=root_id)
+        super().__init__(
+            identity_fields=frozenset({"edges", "nodes", "root_id"}),
+            edges=edges,
+            nodes=nodes,
+            root_id=root_id,
+        )
 
     @classmethod
     @override
     def _calculate_id(cls, **kwargs: object) -> GraphID:
         edges = cast("frozenset[Edge[UUID, UUID, UUID]]", kwargs["edges"])
         nodes = cast("frozenset[Node[UUID]]", kwargs["nodes"])
-        root_id = cast("UUID", kwargs["root_id"])
 
-        payload = json.dumps(
-            {
-                "edges": sorted(str(edge.id) for edge in edges),
-                "nodes": sorted(str(node.id) for node in nodes),
-                "root_id": str(root_id),
-            },
-            sort_keys=True,
-        )
+        kwargs["edges"] = tuple(sorted(edge.id for edge in edges))
+        kwargs["nodes"] = tuple(sorted(node.id for node in nodes))
 
-        return cls.id_type(uuid5(namespace=cls.namespace, name=payload))
+        return super()._calculate_id(**kwargs)

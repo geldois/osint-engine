@@ -1,5 +1,3 @@
-from dataclasses import FrozenInstanceError
-
 import pytest
 
 from osint_engine.domain.errors.domain_error import (
@@ -37,12 +35,3 @@ class TestDomainErrorSubclassContract:
                     return "test"
 
 
-class TestDomainErrorProperties:
-    def test_domain_error_instances_are_immutable(self) -> None:
-        error = FakeDomainError(content="test")
-
-        with pytest.raises(FrozenInstanceError):
-            error.content = "testing..."
-
-        with pytest.raises(FrozenInstanceError):
-            del error.content

@@ -14,4 +14,4 @@ class Phone(Node[PhoneID], namespace=EntityNAMESPACE.PHONE):
 
     @override
     def __init__(self, *, number: str) -> None:
-        super().__init__(number=number)
+        super().__init__(identity_fields=frozenset({"number"}), number=number)

@@ -9,6 +9,7 @@ from inspect import isabstract
 from typing import (
     TYPE_CHECKING,
     Generic,
+    TypeGuard,
     TypeVar,
     final,
     get_args,
@@ -17,6 +18,7 @@ from typing import (
 from uuid import UUID, uuid4, uuid5
 
 from osint_engine.domain.errors.entity_error import (
+    EntityEmptyIdentityFieldNameError,
     EntityInvalidIdentityFieldError,
     EntityInvalidIDTypeError,
     EntityMissingIDTypeError,
@@ -38,14 +40,23 @@ _DETERMINISTIC_TYPES: tuple[type, ...] = (
     Decimal,
     int,
     str,
+    tuple,
     type(None),
     UUID,
 )
 
 
+def _is_tuple(*, value: object) -> TypeGuard[tuple[object, ...]]:
+    return isinstance(value, tuple)
+
+
 def _validate_deterministic_type(*, value: object) -> None:
     if type(value) not in _DETERMINISTIC_TYPES:
         raise EntityNonDeterministicValueError(value=value)
+
+    if _is_tuple(value=value):
+        for v in value:
+            _validate_deterministic_type(value=v)
 
 
 def _validate_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> None:
@@ -57,6 +68,9 @@ def _validate_identity_fields(
     *, identity_fields: frozenset[str], subject: type, valid_fields: dict[str, object]
 ) -> None:
     for field in identity_fields:
+        if not field:
+            raise EntityEmptyIdentityFieldNameError(subject=subject)
+
         if field not in valid_fields:
             raise EntityInvalidIdentityFieldError(
                 field=field, subject=subject, valid_fields=valid_fields
@@ -64,6 +78,7 @@ def _validate_identity_fields(
 
 
 class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
+    content_id: IDType_co
     id: IDType_co
 
     @final
@@ -104,25 +119,16 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
         _validate_entity_id_type(subject=cls)
 
     @abstractmethod
-    def __init__(
-        self, *, identity_fields: frozenset[str] | None = None, **kwargs: object
-    ) -> None:
-        identified_by: dict[str, object] | None = None
+    def __init__(self, *, identity_fields: frozenset[str], **kwargs: object) -> None:
+        object.__setattr__(self, "content_id", self._calculate_id(**kwargs))
 
-        if identity_fields is not None:
-            _validate_identity_fields(
-                identity_fields=identity_fields, subject=type(self), valid_fields=kwargs
-            )
-
-            identified_by = {field: kwargs[field] for field in identity_fields}
-
-        object.__setattr__(
-            self,
-            "id",
-            self._calculate_id(
-                **(identified_by if identified_by is not None else kwargs)
-            ),
+        _validate_identity_fields(
+            identity_fields=identity_fields, subject=type(self), valid_fields=kwargs
         )
+
+        identified_by = {field: kwargs[field] for field in identity_fields}
+
+        object.__setattr__(self, "id", self._calculate_id(**identified_by))
 
         for k, v in kwargs.items():
             object.__setattr__(self, k, v)
@@ -148,15 +154,17 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
 
     @classmethod
     def _calculate_id(cls, **kwargs: object) -> IDType_co:
-        values: list[object] = []
+        parameter_pairs: list[tuple[str, object]] = []
 
-        for value in kwargs.values():
-            _validate_deterministic_type(value=value)
+        for parameter_name, parameter in kwargs.items():
+            _validate_deterministic_type(value=parameter)
 
-            values.append(value)
+            parameter_pairs.append((parameter_name, parameter))
 
-        values.sort(key=lambda v: (type(v).__name__, str(v)))
+        parameter_pairs.sort(key=lambda pair: (pair[0], str(pair[1])))
 
         return cls.id_type(
-            uuid5(namespace=cls.namespace, name=json.dumps(values, default=str))
+            uuid5(
+                namespace=cls.namespace, name=json.dumps(parameter_pairs, default=str)
+            )
         )
