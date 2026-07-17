@@ -63,6 +63,18 @@ def _validate_deterministic_type(*, value: object) -> None:
             _validate_deterministic_type(value=v)
 
 
+def _constructor_parameters(*, subject: type) -> dict[str, inspect.Parameter]:
+    return {
+        parameter_name: parameter
+        for parameter_name, parameter in inspect.signature(
+            obj=subject.__init__
+        ).parameters.items()
+        if parameter_name != "self"
+        and parameter.kind
+        not in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL)
+    }
+
+
 def _validate_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> None:
     if not hasattr(subject, "id_type") and not isabstract(subject):
         raise EntityMissingIDTypeError(subject=subject)
@@ -187,7 +199,7 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
     @classmethod
     @final
     def init_parameters(cls) -> dict[str, object]:
-        return dict(inspect.signature(obj=cls.__init__).parameters)
+        return dict(_constructor_parameters(subject=cls))
 
     @final
     def evolve(self, **changes: object) -> Self:
@@ -197,10 +209,5 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
     def reconstruct_kwargs(self) -> dict[str, object]:
         return {
             parameter_name: getattr(self, parameter_name)
-            for parameter_name, parameter in inspect.signature(
-                obj=type(self).__init__
-            ).parameters.items()
-            if parameter_name != "self"
-            and parameter.kind
-            not in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL)
+            for parameter_name in _constructor_parameters(subject=type(self))
         }

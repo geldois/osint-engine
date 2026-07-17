@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
 
 from osint_engine.application.errors.revision_error import EmptyRevisionSelectionError
-from osint_engine.domain.entities.entity import Entity
+from osint_engine.domain.entities.bases.entity import Entity
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

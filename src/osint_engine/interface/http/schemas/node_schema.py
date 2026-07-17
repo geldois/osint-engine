@@ -78,18 +78,18 @@ class CnaeSchema(NodeSchema[Cnae]):
 class CompanySchema(NodeSchema[Company]):
     type: Literal["company"] = "company"
 
-    activity_start_date: str
+    activity_start_date: str | None
     cnpj: str
     id: UUID
-    is_headquarters: bool
-    legal_name: str
-    legal_nature: str
-    registration_status: str
-    registration_status_date: str
-    registration_status_reason: str
-    share_capital: Decimal
-    size_category: str
-    trade_name: str
+    is_headquarters: bool | None
+    legal_name: str | None
+    legal_nature: str | None
+    registration_status: str | None
+    registration_status_date: str | None
+    registration_status_reason: str | None
+    share_capital: Decimal | None
+    size_category: str | None
+    trade_name: str | None
 
     @classmethod
     @override

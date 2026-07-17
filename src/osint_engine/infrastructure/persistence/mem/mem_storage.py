@@ -6,7 +6,7 @@ from dataclasses import FrozenInstanceError
 from typing import TYPE_CHECKING, final, override
 from uuid import UUID
 
-from osint_engine.domain.entities.entity import Entity
+from osint_engine.domain.entities.bases.entity import Entity
 
 if TYPE_CHECKING:
     from osint_engine.application.auth.user import User

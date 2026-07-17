@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 import pytest
@@ -9,6 +10,7 @@ from osint_engine.application.errors.revision_error import EntityIDMismatchError
 from osint_engine.application.revision.policies.revision_merge_policy import (
     merge_by_filled_fields_policy,
 )
+from osint_engine.domain.entities.nodes.company import Company
 
 if TYPE_CHECKING:
     from tests.conftest import (
@@ -134,6 +136,52 @@ class TestMergeReconciliation:
         right_first = merge_by_filled_fields_policy(newer, older)
 
         assert left_first.entity.label == right_first.entity.label == "old"
+
+
+class TestMergeReconciliationWithCompanyStub:
+    def test_enriched_company_fills_qsa_stub_sharing_a_normalized_cnpj(
+        self,
+        make_entity_revision: MakeEntityRevision,
+    ) -> None:
+        stub = Company(
+            activity_start_date=None,
+            cnpj="33.754.482/0001-24",
+            is_headquarters=None,
+            legal_name="PREVI",
+            legal_nature=None,
+            registration_status=None,
+            registration_status_date=None,
+            registration_status_reason=None,
+            share_capital=None,
+            size_category=None,
+            trade_name=None,
+        )
+        enriched = Company(
+            activity_start_date="1988-03-01",
+            cnpj="33754482000124",
+            is_headquarters=True,
+            legal_name="PREVI",
+            legal_nature="Fundação",
+            registration_status="ATIVA",
+            registration_status_date="1988-03-01",
+            registration_status_reason="SEM MOTIVO",
+            share_capital=Decimal("0"),
+            size_category="DEMAIS",
+            trade_name="PREVI",
+        )
+
+        assert stub.id == enriched.id
+
+        stub_revision = make_entity_revision(entity=stub, fetched_at=_EARLY)
+        enriched_revision = make_entity_revision(entity=enriched, fetched_at=_LATE)
+
+        merged = merge_by_filled_fields_policy(stub_revision, enriched_revision)
+
+        assert merged.entity.activity_start_date == "1988-03-01"
+
+        assert merged.entity.is_headquarters is True
+
+        assert merged.entity.trade_name == "PREVI"
 
 
 class TestMergeEqualFetchedAtTiebreak:

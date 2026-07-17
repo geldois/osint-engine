@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
-from typing import NewType
+from typing import NewType, override
 from uuid import UUID, uuid4
 
 import pytest
 
-from osint_engine.domain.entities.entity import Entity
+from osint_engine.domain.entities.bases.entity import Entity
 from osint_engine.domain.errors.entity_error import (
     EntityEmptyIDFieldNameError,
     EntityInvalidIDFieldError,
@@ -35,18 +35,27 @@ class FakeEntityWithContentIdentity(
     content: str
     extra_field: str
 
-    def __init__(
-        self,
-        *,
-        content: str,
-        extra_field: str,
-        **kwargs: object,
-    ) -> None:
-        super().__init__(
-            content=content,
-            extra_field=extra_field,
-            **kwargs,
-        )
+    def __init__(self, *, content: str, extra_field: str, **kwargs: object) -> None:
+        super().__init__(content=content, extra_field=extra_field, **kwargs)
+
+
+class FakeEntityWithNormalizingIdentity(
+    Entity[FakeEntityID], id_fields=frozenset({"content"}), namespace=TEST
+):
+    content: str
+
+    def __init__(self, *, content: str, **kwargs: object) -> None:
+        super().__init__(content=content, **kwargs)
+
+    @classmethod
+    @override
+    def _calculate_id(cls, **kwargs: object) -> FakeEntityID:
+        content = kwargs["content"]
+
+        if isinstance(content, str):
+            kwargs["content"] = content.strip().lower()
+
+        return super()._calculate_id(**kwargs)
 
 
 class FakeFakeEntity:
@@ -292,6 +301,19 @@ class TestEntityIdentityFieldsValidation:
 
         assert "nonexistent_field" in str(exception.value)
 
+    def test_raises_when_identity_field_is_self(self) -> None:
+        with pytest.raises(EntityInvalidIDFieldError) as exception:
+
+            class _FakeEntity(  # pyright: ignore[reportUnusedClass]
+                Entity[FakeEntityID],
+                id_fields=frozenset({"self"}),
+                namespace=TEST,
+            ):
+                def __init__(self, **kwargs: object) -> None:
+                    super().__init__(**kwargs)
+
+        assert "self" in str(exception.value)
+
     def test_raises_when_identity_field_name_is_empty_string(
         self,
     ) -> None:
@@ -315,6 +337,21 @@ class TestEntityIdentityFieldsValidation:
                     super().__init__(**kwargs)
 
         assert "_FakeEntity" in str(exception.value)
+
+
+class TestEntityInitParameters:
+    def test_returns_declared_init_fields(self) -> None:
+        assert set(FakeEntityWithContentIdentity.init_parameters()) == {
+            "content",
+            "extra_field",
+        }
+
+    def test_excludes_self_and_var_keyword_parameters(self) -> None:
+        parameters = FakeEntityWithContentIdentity.init_parameters()
+
+        assert "self" not in parameters
+
+        assert "kwargs" not in parameters
 
 
 class TestEntityReconstructKwargs:
@@ -388,3 +425,48 @@ class TestEntityEvolve:
         evolved = entity.evolve(content="Bob")
 
         assert evolved.id != entity.id
+
+
+class TestEntityCalculateIdOverride:
+    # Mechanism behind Company/Person/Graph:
+    # _calculate_id normalizes, __init__ stores raw.
+
+    def test_id_is_same_for_equivalent_but_differently_raw_content(self) -> None:
+        padded = FakeEntityWithNormalizingIdentity(content="  ALICE  ")
+        clean = FakeEntityWithNormalizingIdentity(content="alice")
+
+        assert padded.id == clean.id
+
+    def test_id_differs_for_genuinely_different_content(self) -> None:
+        entity_a = FakeEntityWithNormalizingIdentity(content="alice")
+        entity_b = FakeEntityWithNormalizingIdentity(content="bob")
+
+        assert entity_a.id != entity_b.id
+
+    def test_stored_value_preserves_the_raw_content(self) -> None:
+        entity = FakeEntityWithNormalizingIdentity(content="  ALICE  ")
+
+        assert entity.content == "  ALICE  "
+
+    def test_reconstruct_kwargs_returns_the_raw_content(self) -> None:
+        entity = FakeEntityWithNormalizingIdentity(content="  ALICE  ")
+
+        assert entity.reconstruct_kwargs()["content"] == "  ALICE  "
+
+    def test_evolve_with_no_changes_preserves_id_and_raw_content(self) -> None:
+        entity = FakeEntityWithNormalizingIdentity(content="  ALICE  ")
+
+        evolved = entity.evolve()
+
+        assert evolved.id == entity.id
+
+        assert evolved.content == "  ALICE  "
+
+    def test_id_differs_from_id_computed_without_normalization(self) -> None:
+        entity = FakeEntityWithNormalizingIdentity(content="  ALICE  ")
+
+        naive_id = Entity._calculate_id.__func__(  # pyright: ignore[reportPrivateUsage]
+            FakeEntityWithNormalizingIdentity, content="  ALICE  "
+        )
+
+        assert naive_id != entity.id

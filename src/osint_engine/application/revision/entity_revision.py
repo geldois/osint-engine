@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from uuid import UUID
 
 from osint_engine.application.errors.revision_error import NonUTCAttributeError
-from osint_engine.domain.entities.entity import Entity
+from osint_engine.domain.entities.bases.entity import Entity
 
 if TYPE_CHECKING:
     from datetime import datetime

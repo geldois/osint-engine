@@ -43,6 +43,15 @@ PARTNER_PERSON: dict[str, object] = {
     "data_entrada_sociedade": "2023-01-26",
 }
 
+PARTNER_LEGAL_ENTITY: dict[str, object] = {
+    "identificador_de_socio": 1,
+    "nome_socio": "PREVI - CAIXA DE PREVIDENCIA DOS FUNCIONARIOS DO BANCO DO BRASIL",
+    "cnpj_cpf_do_socio": "33754482000124",
+    "faixa_etaria": "NÃO SE APLICA",
+    "qualificacao_socio": "Acionista Controlador",
+    "data_entrada_sociedade": "1988-03-01",
+}
+
 COMPLETE_PAYLOAD_DATA: dict[str, object] = {
     **ADDRESS_DATA,
     **COMPANY_DATA,
@@ -50,5 +59,5 @@ COMPLETE_PAYLOAD_DATA: dict[str, object] = {
     "ddd_telefone_1": "6134939002",
     "ddd_telefone_2": "6134931040",
     "email": "contato@bb.com.br",
-    "qsa": [PARTNER_PERSON],
+    "qsa": [PARTNER_PERSON, PARTNER_LEGAL_ENTITY],
 }

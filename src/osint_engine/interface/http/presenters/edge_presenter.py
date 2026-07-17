@@ -7,6 +7,7 @@ from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
 from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
 from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
 from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
+from osint_engine.domain.entities.edges.company_owns_company import CompanyOwnsCompany
 from osint_engine.domain.entities.edges.company_received_sanction import (
     CompanyReceivedSanction,
 )
@@ -24,6 +25,7 @@ from osint_engine.interface.http.schemas.edge_schema import (
     CompanyHasMemberSchema,
     CompanyHasPhoneSchema,
     CompanyLocatedAtSchema,
+    CompanyOwnsCompanySchema,
     CompanyReceivedSanctionSchema,
     EdgeSchemaUnion,
     PersonHasEmailSchema,
@@ -67,6 +69,18 @@ def company_has_phone_to_schema(*, edge: CompanyHasPhone) -> CompanyHasPhoneSche
 def company_located_at_to_schema(*, edge: CompanyLocatedAt) -> CompanyLocatedAtSchema:
     return CompanyLocatedAtSchema(
         id=edge.id, source_id=edge.source_id, target_id=edge.target_id
+    )
+
+
+def company_owns_company_to_schema(
+    *, edge: CompanyOwnsCompany
+) -> CompanyOwnsCompanySchema:
+    return CompanyOwnsCompanySchema(
+        id=edge.id,
+        entry_date=edge.entry_date,
+        role=edge.role,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
     )
 
 
@@ -122,6 +136,7 @@ _EDGE_MAP: dict[type[Edge[UUID, UUID, UUID]], Callable[..., EdgeSchemaUnion]] = 
     CompanyHasMember: company_has_member_to_schema,
     CompanyHasPhone: company_has_phone_to_schema,
     CompanyLocatedAt: company_located_at_to_schema,
+    CompanyOwnsCompany: company_owns_company_to_schema,
     CompanyReceivedSanction: company_received_sanction_to_schema,
     PersonHasEmail: person_has_email_to_schema,
     PersonHasPhone: person_has_phone_to_schema,

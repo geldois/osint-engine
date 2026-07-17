@@ -5,6 +5,7 @@ from uuid import UUID
 
 from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
+from osint_engine.domain.value_objects.normalization import digits_only
 
 PersonID = NewType("PersonID", UUID)
 
@@ -25,3 +26,13 @@ class Person(
                 if key not in {"__class__", "self"}
             }
         )
+
+    @classmethod
+    @override
+    def _calculate_id(cls, **kwargs: object) -> PersonID:
+        cpf = kwargs["cpf"]
+
+        if isinstance(cpf, str):
+            kwargs["cpf"] = digits_only(value=cpf)
+
+        return super()._calculate_id(**kwargs)

@@ -4,8 +4,8 @@ from typing import NewType, override
 from uuid import UUID
 
 from osint_engine.domain.entities.bases.edge import Edge
+from osint_engine.domain.entities.bases.entity import Entity
 from osint_engine.domain.entities.bases.node import Node
-from osint_engine.domain.entities.entity import Entity
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 
 FakeEntityID = NewType("FakeEntityID", UUID)

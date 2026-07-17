@@ -18,8 +18,8 @@ from osint_engine.application.revision.policies.revision_selection_policy import
 )
 from osint_engine.config.container import Policies
 from osint_engine.config.settings import Settings
+from osint_engine.domain.entities.bases.entity import Entity
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.entity import Entity
 from osint_engine.infrastructure.hashers.argon2_password_hasher import (
     Argon2PasswordHasher,
 )

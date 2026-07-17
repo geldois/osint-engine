@@ -6,7 +6,7 @@ from uuid import UUID
 
 from osint_engine.application.errors.revision_error import EntityIDMismatchError
 from osint_engine.application.revision.entity_revision import EntityRevision
-from osint_engine.domain.entities.entity import Entity
+from osint_engine.domain.entities.bases.entity import Entity
 
 
 class RevisionMergePolicy(Protocol):

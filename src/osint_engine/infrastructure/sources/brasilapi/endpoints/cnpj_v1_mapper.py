@@ -9,6 +9,7 @@ from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
 from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
 from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
 from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
+from osint_engine.domain.entities.edges.company_owns_company import CompanyOwnsCompany
 from osint_engine.domain.entities.edges.person_owns_company import PersonOwnsCompany
 from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.domain.entities.nodes.cnae import Cnae
@@ -21,11 +22,16 @@ if TYPE_CHECKING:
     from osint_engine.infrastructure.sources.payload import Payload
 
 
+_PARTNER_IS_LEGAL_ENTITY = 1
 _PARTNER_IS_PERSON = 2
 
 
 def _is_person(*, partner: dict[str, object]) -> bool:
     return partner.get("identificador_de_socio") == _PARTNER_IS_PERSON
+
+
+def _is_legal_entity(*, partner: dict[str, object]) -> bool:
+    return partner.get("identificador_de_socio") == _PARTNER_IS_LEGAL_ENTITY
 
 
 def _map_address(*, payload: Payload) -> Address:
@@ -149,6 +155,53 @@ def _map_persons_and_ownerships(
     return persons, ownerships
 
 
+def _map_company_stub(*, payload: Payload) -> Company:
+    return Company(
+        activity_start_date=None,
+        cnpj=payload.require(key="cnpj_cpf_do_socio", expected_type=str),
+        is_headquarters=None,
+        legal_name=payload.require(key="nome_socio", expected_type=str),
+        legal_nature=None,
+        registration_status=None,
+        registration_status_date=None,
+        registration_status_reason=None,
+        share_capital=None,
+        size_category=None,
+        trade_name=None,
+    )
+
+
+def _map_company_partners_and_ownerships(
+    *, payload: Payload, company_id: CompanyID
+) -> tuple[set[Company], set[CompanyOwnsCompany]]:
+    companies: set[Company] = set()
+    ownerships: set[CompanyOwnsCompany] = set()
+
+    for partner in payload.require(key="qsa", expected_type=list[dict[str, object]]):
+        if not partner or not _is_legal_entity(partner=partner):
+            continue
+
+        partner_payload = payload.scope(data=partner)
+        partner_company = _map_company_stub(payload=partner_payload)
+
+        companies.add(partner_company)
+
+        ownerships.add(
+            CompanyOwnsCompany(
+                entry_date=partner_payload.require(
+                    key="data_entrada_sociedade", expected_type=str
+                ),
+                role=partner_payload.require(
+                    key="qualificacao_socio", expected_type=str
+                ),
+                source_id=partner_company.id,
+                target_id=company_id,
+            )
+        )
+
+    return companies, ownerships
+
+
 def map_graph(*, payload: Payload) -> Graph:
     address = _map_address(payload=payload)
     cnaes = _map_cnaes(payload=payload)
@@ -158,8 +211,11 @@ def map_graph(*, payload: Payload) -> Graph:
     persons, person_owns_companies = _map_persons_and_ownerships(
         payload=payload, company_id=company.id
     )
+    owning_companies, company_owns_companies = _map_company_partners_and_ownerships(
+        payload=payload, company_id=company.id
+    )
 
-    nodes = {address, company} | cnaes | persons | phones
+    nodes = {address, company} | cnaes | persons | phones | owning_companies
 
     if email is not None:
         nodes |= {email}
@@ -175,6 +231,7 @@ def map_graph(*, payload: Payload) -> Graph:
             for phone in phones
         }
         | person_owns_companies
+        | company_owns_companies
         | {CompanyLocatedAt(source_id=company.id, target_id=address.id)}
     )
     if email is not None:

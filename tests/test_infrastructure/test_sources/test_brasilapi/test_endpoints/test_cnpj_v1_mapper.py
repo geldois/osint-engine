@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
+from osint_engine.domain.entities.edges.company_owns_company import CompanyOwnsCompany
 from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.entities.nodes.email import Email
@@ -17,6 +18,7 @@ from osint_engine.infrastructure.sources.brasilapi.endpoints.cnpj_v1_mapper impo
     _map_address,  # pyright: ignore[reportPrivateUsage]
     _map_cnaes,  # pyright: ignore[reportPrivateUsage]
     _map_company,  # pyright: ignore[reportPrivateUsage]
+    _map_company_partners_and_ownerships,  # pyright: ignore[reportPrivateUsage]
     _map_email,  # pyright: ignore[reportPrivateUsage]
     _map_persons_and_ownerships,  # pyright: ignore[reportPrivateUsage]
     _map_phones,  # pyright: ignore[reportPrivateUsage]
@@ -27,6 +29,7 @@ from tests.data.brasilapi import (
     CNAE_DATA,
     COMPANY_DATA,
     COMPLETE_PAYLOAD_DATA,
+    PARTNER_LEGAL_ENTITY,
     PARTNER_PERSON,
 )
 
@@ -367,6 +370,119 @@ class TestMapPersonsAndOwnerships:
         assert ownerships == set()
 
 
+class TestMapCompanyPartnersAndOwnerships:
+    def test_maps_company_stub_fields(self, make_payload: MakePayload) -> None:
+        companies, _ = _map_company_partners_and_ownerships(
+            payload=make_payload(
+                source="brasilapi", data={"qsa": [PARTNER_LEGAL_ENTITY]}
+            ),
+            company_id=_COMPANY_ID,
+        )
+
+        partner_company = next(iter(companies))
+
+        assert partner_company.cnpj == "33754482000124"
+
+        assert partner_company.legal_name == (
+            "PREVI - CAIXA DE PREVIDENCIA DOS FUNCIONARIOS DO BANCO DO BRASIL"
+        )
+
+    def test_company_stub_has_no_enrichment_fields(
+        self, make_payload: MakePayload
+    ) -> None:
+        companies, _ = _map_company_partners_and_ownerships(
+            payload=make_payload(
+                source="brasilapi", data={"qsa": [PARTNER_LEGAL_ENTITY]}
+            ),
+            company_id=_COMPANY_ID,
+        )
+
+        partner_company = next(iter(companies))
+
+        assert partner_company.activity_start_date is None
+
+        assert partner_company.is_headquarters is None
+
+        assert partner_company.legal_nature is None
+
+        assert partner_company.registration_status is None
+
+        assert partner_company.registration_status_date is None
+
+        assert partner_company.registration_status_reason is None
+
+        assert partner_company.share_capital is None
+
+        assert partner_company.size_category is None
+
+        assert partner_company.trade_name is None
+
+    def test_maps_ownership_fields(self, make_payload: MakePayload) -> None:
+        _, ownerships = _map_company_partners_and_ownerships(
+            payload=make_payload(
+                source="brasilapi", data={"qsa": [PARTNER_LEGAL_ENTITY]}
+            ),
+            company_id=_COMPANY_ID,
+        )
+
+        ownership = next(iter(ownerships))
+
+        assert ownership.entry_date == "1988-03-01"
+
+        assert ownership.role == "Acionista Controlador"
+
+        assert ownership.target_id == _COMPANY_ID
+
+    def test_ownership_source_id_matches_company_stub_id(
+        self, make_payload: MakePayload
+    ) -> None:
+        companies, ownerships = _map_company_partners_and_ownerships(
+            payload=make_payload(
+                source="brasilapi", data={"qsa": [PARTNER_LEGAL_ENTITY]}
+            ),
+            company_id=_COMPANY_ID,
+        )
+
+        partner_company = next(iter(companies))
+        ownership = next(iter(ownerships))
+
+        assert ownership.source_id == partner_company.id
+
+    def test_skips_partner_with_non_legal_entity_identifier(
+        self, make_payload: MakePayload
+    ) -> None:
+        companies, ownerships = _map_company_partners_and_ownerships(
+            payload=make_payload(source="brasilapi", data={"qsa": [PARTNER_PERSON]}),
+            company_id=_COMPANY_ID,
+        )
+
+        assert companies == set()
+
+        assert ownerships == set()
+
+    def test_skips_empty_partner_dict(self, make_payload: MakePayload) -> None:
+        companies, ownerships = _map_company_partners_and_ownerships(
+            payload=make_payload(source="brasilapi", data={"qsa": [{}]}),
+            company_id=_COMPANY_ID,
+        )
+
+        assert companies == set()
+
+        assert ownerships == set()
+
+    def test_returns_empty_sets_when_qsa_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        companies, ownerships = _map_company_partners_and_ownerships(
+            payload=make_payload(source="brasilapi", data={"qsa": []}),
+            company_id=_COMPANY_ID,
+        )
+
+        assert companies == set()
+
+        assert ownerships == set()
+
+
 class TestMapGraph:
     def test_root_id_is_company_node(self, make_payload: MakePayload) -> None:
         graph = map_graph(
@@ -452,6 +568,26 @@ class TestMapGraph:
         person_nodes = {node for node in graph.nodes if isinstance(node, Person)}
 
         assert len(person_nodes) == 1
+
+    def test_company_node_count_matches_qsa_legal_entity_entries_plus_root(
+        self, make_payload: MakePayload
+    ) -> None:
+        graph = map_graph(
+            payload=make_payload(source="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        company_nodes = {node for node in graph.nodes if isinstance(node, Company)}
+
+        assert len(company_nodes) == 2
+
+    def test_company_owns_company_edge_present_for_legal_entity_partner(
+        self, make_payload: MakePayload
+    ) -> None:
+        graph = map_graph(
+            payload=make_payload(source="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        assert any(isinstance(edge, CompanyOwnsCompany) for edge in graph.edges)
 
 
 class TestMapGraphWithRealAPISnapshot:

@@ -13,6 +13,7 @@ from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
 from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
 from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
 from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
+from osint_engine.domain.entities.edges.company_owns_company import CompanyOwnsCompany
 from osint_engine.domain.entities.edges.company_received_sanction import (
     CompanyReceivedSanction,
 )
@@ -100,6 +101,18 @@ class CompanyLocatedAtSchema(EdgeSchema[CompanyLocatedAt]):
         return CompanyLocatedAt
 
 
+class CompanyOwnsCompanySchema(EdgeSchema[CompanyOwnsCompany]):
+    type: Literal["company_owns_company"] = "company_owns_company"
+
+    entry_date: str
+    role: str
+
+    @classmethod
+    @override
+    def domain(cls) -> type[CompanyOwnsCompany]:
+        return CompanyOwnsCompany
+
+
 class CompanyReceivedSanctionSchema(EdgeSchema[CompanyReceivedSanction]):
     type: Literal["company_received_sanction"] = "company_received_sanction"
 
@@ -166,6 +179,7 @@ EdgeSchemaUnion = (
     | CompanyHasMemberSchema
     | CompanyHasPhoneSchema
     | CompanyLocatedAtSchema
+    | CompanyOwnsCompanySchema
     | CompanyReceivedSanctionSchema
     | PersonHasEmailSchema
     | PersonHasPhoneSchema
@@ -211,6 +225,7 @@ EdgeSchemaRegistry.register(CompanyHasEmailSchema)
 EdgeSchemaRegistry.register(CompanyHasMemberSchema)
 EdgeSchemaRegistry.register(CompanyHasPhoneSchema)
 EdgeSchemaRegistry.register(CompanyLocatedAtSchema)
+EdgeSchemaRegistry.register(CompanyOwnsCompanySchema)
 EdgeSchemaRegistry.register(CompanyReceivedSanctionSchema)
 EdgeSchemaRegistry.register(PersonHasEmailSchema)
 EdgeSchemaRegistry.register(PersonHasPhoneSchema)

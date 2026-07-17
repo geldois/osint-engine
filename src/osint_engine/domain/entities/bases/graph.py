@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, NewType, cast, override
 from uuid import UUID
 
-from osint_engine.domain.entities.entity import Entity
+from osint_engine.domain.entities.bases.entity import Entity
 from osint_engine.domain.errors.graph_error import (
     GraphHasNoNodesError,
     GraphInconsistentError,

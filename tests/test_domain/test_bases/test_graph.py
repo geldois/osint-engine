@@ -7,9 +7,9 @@ import pytest
 from hypothesis import HealthCheck, given, settings, strategies
 
 from osint_engine.domain.entities.bases.edge import Edge
+from osint_engine.domain.entities.bases.entity import Entity
 from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.bases.node import Node
-from osint_engine.domain.entities.entity import Entity
 from osint_engine.domain.errors.graph_error import (
     GraphHasNoNodesError,
     GraphInconsistentError,

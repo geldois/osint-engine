@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from uuid import UUID
 
-    from osint_engine.domain.entities.entity import Entity
+    from osint_engine.domain.entities.bases.entity import Entity
 
 
 class EntityError(DomainError, error_code=None): ...
