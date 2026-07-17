@@ -12,12 +12,92 @@ exclusively from official public records.
 
 A **CNPJ** enters the engine as a root identifier. The engine queries official public records, constructs a typed
 immutable graph, and returns it — ready to traverse. Each **Node** represents a real-world entity: a company, a person,
-an address, a CNAE classification, a phone, or an email. Each **Edge** names the relationship between two nodes:
-`company_has_member`, `person_owns_company`, `company_located_at`, and so on.
+an address, a CNAE classification, a phone, an email, or a sanction. Each **Edge** names the relationship between two
+nodes: `company_has_member`, `person_owns_company`, `company_located_at`, `company_received_sanction`, and so on.
 
 Every node and edge carries a stable, deterministic identity derived exclusively from its content. The same CNPJ
 expanded on different machines at different times always produces the same graph with the same IDs — making the
 structure idempotent by construction, not by convention.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Domain
+        Graph("Graph")
+        Node("Node")
+        Edge("Edge")
+        User("User")
+    end
+
+    Client("HTTP Request") --> FastAPI("FastAPI App")
+    FastAPI --> Logging("Logging Middleware")
+    FastAPI --> ErrorHandler("Error Handler")
+    FastAPI --> AuthRouter("Auth Router")
+    FastAPI --> CNPJRouter("CNPJ Router")
+
+    AuthRouter --> PostToken("POST /auth/token")
+    CNPJRouter --> JWTGuard("JWT Guard")
+    CNPJRouter --> GetCNPJ("GET /cnpj/{cnpj}")
+
+    Bootstrap("build_container") --> Container("Container")
+    Container --> Fetchers("Fetchers")
+    Container --> Policies("Policies")
+    Container --> Services("Services")
+    Container --> UoWFactory("UoWFactory")
+    Container --> UseCases("UseCases")
+
+    UseCases --> AuthenticateUser("AuthenticateUser")
+    UseCases --> ExpandByCNPJ("ExpandByCNPJ")
+    Services --> PyJWTService("PyJWTService")
+    Fetchers --> CNPJFetcher("BrasilAPICNPJv1Fetcher")
+
+    PostToken --> AuthenticateUser
+    GetCNPJ --> ExpandByCNPJ
+    JWTGuard --> PyJWTService
+
+    AuthenticateUser --> UoWFactory
+    AuthenticateUser --> Argon2("Argon2PasswordHasher")
+    AuthenticateUser --> PyJWTService
+
+    ExpandByCNPJ --> UoWFactory
+    ExpandByCNPJ --> CNPJFetcher
+    CNPJFetcher --> BrasilAPI("BrasilAPI")
+    CNPJFetcher --> Mapper("cnpj_v1_mapper")
+    Mapper --> EntityRevision("EntityRevision")
+    EntityRevision --> Graph
+
+    UoWFactory --> MemUoW("MemUoW")
+    MemUoW --> Snapshot("MemStorageSnapshot")
+    MemUoW --> NodeRepo("MemNodeRepository")
+    MemUoW --> EdgeRepo("MemEdgeRepository")
+    MemUoW --> GraphRepo("MemGraphRepository")
+    MemUoW --> UserRepo("MemUserRepository")
+
+    Policies --> MergePolicy("RevisionMergePolicy")
+    Policies --> SelectionPolicy("RevisionSelectionPolicy")
+    MergePolicy --> NodeRepo
+    MergePolicy --> EdgeRepo
+    MergePolicy --> GraphRepo
+    SelectionPolicy --> NodeRepo
+    SelectionPolicy --> EdgeRepo
+    SelectionPolicy --> GraphRepo
+
+    NodeRepo --> Snapshot
+    EdgeRepo --> Snapshot
+    GraphRepo --> Snapshot
+    UserRepo --> Snapshot
+    Snapshot --> MemStorage("MemStorage")
+
+    NodeRepo --> Node
+    EdgeRepo --> Edge
+    GraphRepo --> Graph
+    UserRepo --> User
+
+    GetCNPJ --> GraphPresenter("Graph Presenter")
+    GraphPresenter --> GraphSchema("GraphSchema")
+    PostToken --> TokenSchema("TokenSchema")
+```
 
 ## API
 
@@ -94,6 +174,19 @@ distinction exists only in the type-checker's world.
 
 See [ADR-0004](docs/adr/0004-idtype-co-typevar-for-covariant-id-typing.md).
 
+### Temporal reconciliation via revisions
+
+An entity captures *what* something is; *when* it was observed and how repeated observations reconcile are separate
+concerns that must never leak into the content-addressable identity. Every fetched entity is wrapped in an immutable
+`EntityRevision` that stamps `fetched_at` at the I/O boundary — the fetcher owns provenance, the mapper stays a pure
+payload-to-graph function, and the `id` never absorbs a timestamp. When a re-fetch arrives for an entity already stored
+under the same `id`, a pluggable `RevisionMergePolicy` reconciles the two by filled fields — the newest observation wins,
+the older one fills nulls — and a `RevisionSelectionPolicy` chooses the current revision by newest `fetched_at`.
+Repositories retain every revision keyed by `content_id`, so a leaner re-fetch can never silently overwrite a richer
+prior observation.
+
+See [ADR-0015](docs/adr/0015-fetcher-returns-entity-revision.md).
+
 ## Setup
 
 ```bash
@@ -137,7 +230,7 @@ uv run python -m osint_engine
 ### Test
 
 ```bash
-uv run pytest
+uv run pytest --cov
 ```
 
 ### Local CI
