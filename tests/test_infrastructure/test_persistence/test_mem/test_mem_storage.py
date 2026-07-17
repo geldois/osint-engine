@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import FrozenInstanceError
 from typing import TYPE_CHECKING
 
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from osint_engine.application.auth.user import User
+    from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.graph import Graph
     from osint_engine.domain.entities.bases.node import Node
@@ -29,9 +31,13 @@ class TestMemStorageInitialization:
         assert not (mem_storage.users and mem_storage.users is None)
 
     def test_references_storages_injected_during_instantiaton(self) -> None:
-        edges: dict[UUID, Edge[UUID, UUID, UUID]] = {}
-        graphs: dict[UUID, Graph] = {}
-        nodes: dict[UUID, Node[UUID]] = {}
+        edges: defaultdict[UUID, dict[UUID, EntityRevision[Edge[UUID, UUID, UUID]]]] = (
+            defaultdict(dict)
+        )
+        graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]] = defaultdict(dict)
+        nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]] = defaultdict(
+            dict
+        )
         users: dict[str, User] = {}
 
         mem_storage = MemStorage(edges=edges, graphs=graphs, nodes=nodes, users=users)
@@ -46,6 +52,12 @@ class TestMemStorageInitialization:
 
 
 class TestMemStorageProperties:
+    def test_rebinding_an_attribute_is_rejected(self) -> None:
+        mem_storage = MemStorage()
+
+        with pytest.raises(FrozenInstanceError):
+            mem_storage.edges = mem_storage.edges
+
     def test_instances_are_immutable(self) -> None:
         mem_storage = MemStorage()
 

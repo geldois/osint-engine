@@ -1,129 +1,177 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pytest
 
 from osint_engine.domain.errors.entity_error import EntityNotFoundError
-from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
-from osint_engine.infrastructure.persistence.mem.repositories.mem_graph_repository import (  # noqa: E501
-    MemGraphRepository,
-)
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeFakeEdge, MakeFakeNode, MakeGraph, MakeMemStorage
+    from tests.conftest import MakeEntityRevision, MakeGraph, MakeMemStorage
+    from tests.test_infrastructure.test_persistence.test_mem.test_mem_repositories.conftest import (  # noqa: E501
+        MakeMemGraphRepository,
+    )
+
+
+_EARLY = datetime(2026, 1, 1, tzinfo=UTC)
+_LATE = datetime(2026, 6, 1, tzinfo=UTC)
+
+
+# TESTS
 
 
 class TestMemGraphRepositoryFind:
     @pytest.mark.asyncio
-    async def test_find_returns_graph_when_graph_exists(
-        self, make_graph: MakeGraph, make_mem_storage: MakeMemStorage
+    async def test_returns_none_when_absent(
+        self,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
     ) -> None:
-        graph = make_graph()
-        mem_storage = make_mem_storage(graphs=[graph])
-        repo = MemGraphRepository(mem_storage=mem_storage)
+        repo = make_mem_graph_repository(mem_storage=make_mem_storage())
 
-        found = await repo.find(graph_id=graph.id)
-
-        assert found is graph
+        assert await repo.find(id_=make_graph().id) is None
 
     @pytest.mark.asyncio
-    async def test_find_returns_none_when_graph_does_not_exist(
-        self, make_graph: MakeGraph, make_mem_storage: MakeMemStorage
+    async def test_returns_the_stored_revision(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
     ) -> None:
-        graph = make_graph()
-        mem_storage = make_mem_storage()
-        repo = MemGraphRepository(mem_storage=mem_storage)
+        revision = make_entity_revision(entity=make_graph())
+        repo = make_mem_graph_repository(
+            mem_storage=make_mem_storage(graphs=[revision])
+        )
 
-        found = await repo.find(graph_id=graph.id)
+        assert await repo.find(id_=revision.entity.id) is revision
 
-        assert found is None
+    @pytest.mark.asyncio
+    async def test_returns_the_exact_revision_by_content_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        revision = make_entity_revision(entity=make_graph())
+        repo = make_mem_graph_repository(
+            mem_storage=make_mem_storage(graphs=[revision])
+        )
+
+        found = await repo.find(
+            id_=revision.entity.id, content_id=revision.entity.content_id
+        )
+
+        assert found is revision
+
+    @pytest.mark.asyncio
+    async def test_returns_none_for_unknown_content_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        revision = make_entity_revision(entity=make_graph())
+        repo = make_mem_graph_repository(
+            mem_storage=make_mem_storage(graphs=[revision])
+        )
+
+        assert await repo.find(id_=revision.entity.id, content_id=uuid4()) is None
 
 
 class TestMemGraphRepositoryGet:
     @pytest.mark.asyncio
-    async def test_get_returns_graph_when_graph_exists(
-        self, make_graph: MakeGraph, make_mem_storage: MakeMemStorage
+    async def test_returns_the_stored_revision(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
     ) -> None:
-        graph = make_graph()
-        mem_storage = make_mem_storage(graphs=[graph])
-        repo = MemGraphRepository(mem_storage=mem_storage)
+        revision = make_entity_revision(entity=make_graph())
+        repo = make_mem_graph_repository(
+            mem_storage=make_mem_storage(graphs=[revision])
+        )
 
-        found = await repo.find(graph_id=graph.id)
-
-        assert found is graph
+        assert await repo.get(id_=revision.entity.id) is revision
 
     @pytest.mark.asyncio
-    async def test_get_raises_when_graph_does_not_exist(
-        self, make_graph: MakeGraph, make_mem_storage: MakeMemStorage
+    async def test_raises_with_id_and_subject_when_absent(
+        self,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
     ) -> None:
         graph = make_graph()
-        mem_storage = make_mem_storage()
-        repo = MemGraphRepository(mem_storage=mem_storage)
+        repo = make_mem_graph_repository(mem_storage=make_mem_storage())
 
         with pytest.raises(EntityNotFoundError) as exception:
-            await repo.get(graph_id=graph.id)
+            await repo.get(id_=graph.id)
 
         assert str(graph.id) in str(exception.value)
 
         assert "Graph" in str(exception.value)
 
 
-class TestMemGraphRepositorySave:
+class TestMemGraphRepositoryMerge:
     @pytest.mark.asyncio
-    async def test_save_stores_graph_in_storage(
-        self, make_graph: MakeGraph, make_mem_storage: MakeMemStorage
+    async def test_first_write_stores_the_revision_under_id_and_content_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        revision = make_entity_revision(entity=make_graph())
+        mem_storage = make_mem_storage()
+        repo = make_mem_graph_repository(mem_storage=mem_storage)
+
+        returned = await repo.merge(revision=revision)
+
+        assert returned is revision
+
+        assert (
+            mem_storage.graphs[revision.entity.id][revision.entity.content_id]
+            is revision
+        )
+
+    @pytest.mark.asyncio
+    async def test_with_an_existing_identical_graph_stores_the_newest_revision(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
     ) -> None:
         graph = make_graph()
-        mem_storage = make_mem_storage()
-        repo = MemGraphRepository(mem_storage=mem_storage)
+        stored = make_entity_revision(entity=graph, fetched_at=_EARLY)
+        incoming = make_entity_revision(entity=graph, fetched_at=_LATE)
+        repo = make_mem_graph_repository(mem_storage=make_mem_storage(graphs=[stored]))
 
-        await repo.save(graph=graph)
+        merged = await repo.merge(revision=incoming)
 
-        assert graph.id in mem_storage.graphs
+        assert merged is incoming
 
     @pytest.mark.asyncio
-    async def test_save_is_idempotent_and_does_not_overwrite(
+    async def test_many_persists_every_revision(
         self,
-        make_fake_edge: MakeFakeEdge,
-        make_fake_node: MakeFakeNode,
+        make_entity_revision: MakeEntityRevision,
         make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
     ) -> None:
-        node_a = make_fake_node()
-        node_b = make_fake_node()
-        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
-
-        graph_a = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
-        graph_b = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
-
-        assert graph_a.id == graph_b.id
-
-        mem_storage = MemStorage(graphs={graph_a.id: graph_a})
-        repo = MemGraphRepository(mem_storage=mem_storage)
-
-        await repo.save(graph=graph_a)
-
-        await repo.save(graph=graph_b)
-
-        assert mem_storage.graphs[graph_a.id] is graph_a
-
-        assert mem_storage.graphs[graph_a.id] is not graph_b
-
-        assert mem_storage.graphs[graph_b.id] is graph_a
-
-        assert mem_storage.graphs[graph_b.id] is not graph_b
-
-    @pytest.mark.asyncio
-    async def test_save_many_persists_all_graphs(
-        self, make_graph: MakeGraph, make_mem_storage: MakeMemStorage
-    ) -> None:
-        graph_a = make_graph()
-        graph_b = make_graph()
+        first = make_entity_revision(entity=make_graph())
+        second = make_entity_revision(entity=make_graph())
         mem_storage = make_mem_storage()
-        repo = MemGraphRepository(mem_storage=mem_storage)
+        repo = make_mem_graph_repository(mem_storage=mem_storage)
 
-        await repo.save_many(graphs=frozenset({graph_a, graph_b}))
+        await repo.merge_many(revisions=frozenset({first, second}))
 
-        assert mem_storage.graphs[graph_a.id] is graph_a
+        assert first.entity.id in mem_storage.graphs
 
-        assert mem_storage.graphs[graph_b.id] is graph_b
+        assert second.entity.id in mem_storage.graphs

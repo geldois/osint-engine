@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from json import JSONDecodeError
 from typing import TYPE_CHECKING, override
 
 from httpx2 import AsyncClient, HTTPStatusError, RequestError
 
 from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
+from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.infrastructure.errors.data_source_error import DataSourceRequestError
 from osint_engine.infrastructure.sources.brasilapi.brasilapi_fetcher import (
     BrasilAPIFetcher,
@@ -25,7 +27,7 @@ class BrasilAPICNPJv1Fetcher(BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/
         super().__init__(http_client=http_client)
 
     @override
-    async def fetch(self, cnpj: str, /) -> Graph:
+    async def fetch(self, cnpj: str, /) -> EntityRevision[Graph]:
         self._logger.info("cnpj.fetch.start", cnpj=cnpj)
 
         try:
@@ -33,6 +35,8 @@ class BrasilAPICNPJv1Fetcher(BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/
             response.raise_for_status()
 
             data: dict[str, object] = response.json()
+
+            fetched_at = datetime.now(tz=UTC)
 
             self._logger.info("cnpj.fetch.success", cnpj=cnpj)
         except HTTPStatusError as exception:
@@ -58,4 +62,6 @@ class BrasilAPICNPJv1Fetcher(BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/
 
         payload = Payload(source=self._SOURCE, data=data)
 
-        return map_graph(payload=payload)
+        return EntityRevision(
+            entity=map_graph(payload=payload), fetched_at=fetched_at, merged_at=None
+        )

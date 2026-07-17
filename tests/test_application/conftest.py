@@ -5,32 +5,16 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
 from tests.fakes.fetchers import FakeCNPJFetcher
 
 if TYPE_CHECKING:
+    from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.graph import Graph
-    from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
-    from tests.conftest import MakeGraph, MakeMemStorage
+    from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
+    from tests.conftest import MakeEntityRevision, MakeGraph, MakeMemUoW
 
 type MakeFakeCNPJFetcher = Callable[..., FakeCNPJFetcher]
-type MakeMemUoW = Callable[..., MemUoW]
 type MakeMemUoWFactory = Callable[..., MakeMemUoW]
-
-
-@pytest.fixture
-def make_mem_uow(make_mem_storage: MakeMemStorage) -> MakeMemUoW:
-    """
-    *,
-    mem_storage: MemStorage | None = None
-    """
-
-    def mem_uow(*, mem_storage: MemStorage | None = None) -> MemUoW:
-        storage = mem_storage if mem_storage is not None else make_mem_storage()
-
-        return MemUoW(mem_storage=storage)
-
-    return mem_uow
 
 
 @pytest.fixture
@@ -49,13 +33,21 @@ def make_mem_uow_factory(make_mem_uow: MakeMemUoW) -> MakeMemUoWFactory:
 
 
 @pytest.fixture
-def make_fake_cnpj_fetcher(make_graph: MakeGraph) -> MakeFakeCNPJFetcher:
+def make_fake_cnpj_fetcher(
+    make_entity_revision: MakeEntityRevision, make_graph: MakeGraph
+) -> MakeFakeCNPJFetcher:
     """
     *,
-    graph: Graph | None = None
+    revision: EntityRevision[Graph] | None = None
     """
 
-    def fake_cnpj_fetcher(*, graph: Graph | None = None) -> FakeCNPJFetcher:
-        return FakeCNPJFetcher(graph=graph if graph is not None else make_graph())
+    def fake_cnpj_fetcher(
+        *, revision: EntityRevision[Graph] | None = None
+    ) -> FakeCNPJFetcher:
+        return FakeCNPJFetcher(
+            revision=revision
+            if revision is not None
+            else make_entity_revision(entity=make_graph())
+        )
 
     return fake_cnpj_fetcher

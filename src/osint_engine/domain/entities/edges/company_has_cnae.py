@@ -12,7 +12,9 @@ CompanyHasCnaeID = NewType("CompanyHasCnaeID", UUID)
 
 
 class CompanyHasCnae(
-    Edge[CompanyHasCnaeID, CompanyID, CnaeID], namespace=EntityNAMESPACE.COMPANY_CNAE
+    Edge[CompanyHasCnaeID, CompanyID, CnaeID],
+    id_fields=None,
+    namespace=EntityNAMESPACE.COMPANY_CNAE,
 ):
     @override
     def __init__(self, *, source_id: CompanyID, target_id: CnaeID) -> None:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from osint_engine.application.contracts.uow import UoW
 from osint_engine.infrastructure.errors.uow_error import (
@@ -24,11 +24,27 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_user_repositor
     MemUserRepository,
 )
 
+if TYPE_CHECKING:
+    from osint_engine.application.revision.policies.revision_merge_policy import (
+        RevisionMergePolicy,
+    )
+    from osint_engine.application.revision.policies.revision_selection_policy import (
+        RevisionSelectionPolicy,
+    )
+
 
 class MemUoW(UoW):
     @override
-    def __init__(self, *, mem_storage: MemStorage) -> None:
+    def __init__(
+        self,
+        *,
+        mem_storage: MemStorage,
+        revision_merge_policy: RevisionMergePolicy,
+        revision_selection_policy: RevisionSelectionPolicy,
+    ) -> None:
         self._mem_storage = mem_storage
+        self.revision_merge_policy = revision_merge_policy
+        self.revision_selection_policy = revision_selection_policy
 
     def _is_prepared(self) -> bool:
         return all(
@@ -43,9 +59,21 @@ class MemUoW(UoW):
 
         self._snapshot = MemStorageSnapshot(mem_storage=self._mem_storage)
 
-        self.edges = MemEdgeRepository(mem_storage=self._snapshot)
-        self.graphs = MemGraphRepository(mem_storage=self._snapshot)
-        self.nodes = MemNodeRepository(mem_storage=self._snapshot)
+        self.edges = MemEdgeRepository(
+            mem_storage=self._snapshot,
+            revision_merge_policy=self.revision_merge_policy,
+            revision_selection_policy=self.revision_selection_policy,
+        )
+        self.graphs = MemGraphRepository(
+            mem_storage=self._snapshot,
+            revision_merge_policy=self.revision_merge_policy,
+            revision_selection_policy=self.revision_selection_policy,
+        )
+        self.nodes = MemNodeRepository(
+            mem_storage=self._snapshot,
+            revision_merge_policy=self.revision_merge_policy,
+            revision_selection_policy=self.revision_selection_policy,
+        )
         self.users = MemUserRepository(mem_storage=self._snapshot)
 
     @override

@@ -15,36 +15,38 @@ TargetID_co = TypeVar("TargetID_co", bound=UUID, covariant=True)
 class Edge(
     Entity[IDType_co],
     Generic[IDType_co, SourceID_co, TargetID_co],  # noqa: UP046
+    id_fields=frozenset({"source_id", "target_id"}),
     namespace=EntityNAMESPACE.EDGE,
 ):
     source_id: SourceID_co
     target_id: TargetID_co
 
-    @abstractmethod
     @override
-    def __init__(
-        self,
+    def __init_subclass__(
+        cls,
         *,
-        identity_fields: frozenset[str] | None = None,
-        source_id: SourceID_co,
-        target_id: TargetID_co,
+        id_fields: frozenset[str] | None,
+        namespace: EntityNAMESPACE,
         **kwargs: object,
     ) -> None:
         """
         source_id and target_id are always included in identity calculation,
-        regardless of identity_fields.
+        regardless of id_fields.
         """
 
-        identity_fields = (
-            identity_fields if identity_fields is not None else frozenset[str]()
-        ) | frozenset({"source_id", "target_id"})
+        if id_fields is not None:
+            cls.id_fields |= id_fields
 
+        super().__init_subclass__(
+            id_fields=cls.id_fields, namespace=namespace, **kwargs
+        )
+
+    @abstractmethod
+    @override
+    def __init__(
+        self, *, source_id: SourceID_co, target_id: TargetID_co, **kwargs: object
+    ) -> None:
         if source_id == target_id:
             raise EdgeSelfLoopError(node_id=source_id)
 
-        super().__init__(
-            identity_fields=identity_fields,
-            source_id=source_id,
-            target_id=target_id,
-            **kwargs,
-        )
+        super().__init__(source_id=source_id, target_id=target_id, **kwargs)

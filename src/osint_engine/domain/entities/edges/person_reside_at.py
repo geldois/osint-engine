@@ -13,6 +13,7 @@ PersonResideAtID = NewType("PersonResideAtID", UUID)
 
 class PersonResideAt(
     Edge[PersonResideAtID, PersonID, AddressID],
+    id_fields=None,
     namespace=EntityNAMESPACE.PERSON_ADDRESS,
 ):
     @override

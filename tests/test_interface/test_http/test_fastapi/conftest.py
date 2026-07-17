@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
     from fastapi import FastAPI
 
-    from osint_engine.config.container import Container
+    from osint_engine.config.container import Container, Policies
     from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
     from tests.conftest import MakeMemStorage
 
@@ -54,7 +54,7 @@ def make_settings(settings: Settings) -> MakeSettings:
     secret_key: str | None = None
     """
 
-    def settings_(  # noqa: PLR0913
+    def settings_(
         *,
         access_token_expire_minutes: int | None = None,
         admin_password: str | None = None,
@@ -95,28 +95,35 @@ def make_settings(settings: Settings) -> MakeSettings:
 
 @pytest.fixture
 def make_container(
-    settings: Settings, http_client: AsyncClient, make_mem_storage: MakeMemStorage
+    settings: Settings,
+    http_client: AsyncClient,
+    make_mem_storage: MakeMemStorage,
+    policies: Policies,
 ) -> MakeContainer:
     """
     *,
     settings: Settings | None = None,
     http_client: AsyncClient | None = None,
-    mem_storage: MemStorage | None = None
+    mem_storage: MemStorage | None = None,
+    policies: Policies | None = None
     """
 
     settings_ = settings
     http_client_ = http_client
+    policies_ = policies
 
     def container_(
         *,
         settings: Settings | None = None,
         http_client: AsyncClient | None = None,
         mem_storage: MemStorage | None = None,
+        policies: Policies | None = None,
     ) -> Container:
         return build_container(
             settings=settings if settings is not None else settings_,
             http_client=http_client if http_client is not None else http_client_,
             mem_storage=mem_storage if mem_storage is not None else make_mem_storage(),
+            policies=policies if policies is not None else policies_,
         )
 
     return container_

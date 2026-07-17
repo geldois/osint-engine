@@ -9,7 +9,11 @@ from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 AddressID = NewType("AddressID", UUID)
 
 
-class Address(Node[AddressID], namespace=EntityNAMESPACE.ADDRESS):
+class Address(
+    Node[AddressID],
+    id_fields=frozenset({"cep", "number"}),
+    namespace=EntityNAMESPACE.ADDRESS,
+):
     cep: str
     city: str
     complement: str
@@ -31,12 +35,9 @@ class Address(Node[AddressID], namespace=EntityNAMESPACE.ADDRESS):
         street: str,
     ) -> None:
         super().__init__(
-            identity_fields=frozenset({"cep", "number"}),
-            cep=cep,
-            city=city,
-            complement=complement,
-            neighborhood=neighborhood,
-            number=number,
-            state=state,
-            street=street,
+            **{
+                key: value
+                for key, value in locals().items()
+                if key not in {"__class__", "self"}
+            }
         )

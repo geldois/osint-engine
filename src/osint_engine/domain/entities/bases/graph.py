@@ -18,10 +18,29 @@ if TYPE_CHECKING:
 GraphID = NewType("GraphID", UUID)
 
 
-class Graph(Entity[GraphID], namespace=EntityNAMESPACE.GRAPH):
+class Graph(
+    Entity[GraphID],
+    id_fields=frozenset({"edges", "nodes", "root_id"}),
+    namespace=EntityNAMESPACE.GRAPH,
+):
     edges: frozenset[Edge[UUID, UUID, UUID]]
     nodes: frozenset[Node[UUID]]
     root_id: UUID
+
+    @override
+    def __init_subclass__(
+        cls,
+        *,
+        id_fields: frozenset[str] | None,
+        namespace: EntityNAMESPACE,
+        **kwargs: object,
+    ) -> None:
+        if id_fields is not None:
+            cls.id_fields |= id_fields
+
+        super().__init_subclass__(
+            id_fields=cls.id_fields, namespace=namespace, **kwargs
+        )
 
     @override
     def __init__(
@@ -44,12 +63,7 @@ class Graph(Entity[GraphID], namespace=EntityNAMESPACE.GRAPH):
         ):
             raise GraphInconsistentError
 
-        super().__init__(
-            identity_fields=frozenset({"edges", "nodes", "root_id"}),
-            edges=edges,
-            nodes=nodes,
-            root_id=root_id,
-        )
+        super().__init__(edges=edges, nodes=nodes, root_id=root_id)
 
     @classmethod
     @override

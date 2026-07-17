@@ -12,7 +12,9 @@ if TYPE_CHECKING:
 CompanyID = NewType("CompanyID", UUID)
 
 
-class Company(Node[CompanyID], namespace=EntityNAMESPACE.COMPANY):
+class Company(
+    Node[CompanyID], id_fields=frozenset({"cnpj"}), namespace=EntityNAMESPACE.COMPANY
+):
     activity_start_date: str
     cnpj: str
     is_headquarters: bool
@@ -42,16 +44,9 @@ class Company(Node[CompanyID], namespace=EntityNAMESPACE.COMPANY):
         trade_name: str,
     ) -> None:
         super().__init__(
-            identity_fields=frozenset({"cnpj"}),
-            activity_start_date=activity_start_date,
-            cnpj=cnpj,
-            is_headquarters=is_headquarters,
-            legal_name=legal_name,
-            legal_nature=legal_nature,
-            registration_status=registration_status,
-            registration_status_date=registration_status_date,
-            registration_status_reason=registration_status_reason,
-            share_capital=share_capital,
-            size_category=size_category,
-            trade_name=trade_name,
+            **{
+                key: value
+                for key, value in locals().items()
+                if key not in {"__class__", "self"}
+            }
         )

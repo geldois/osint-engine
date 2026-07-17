@@ -10,6 +10,12 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
     from osint_engine.application.contracts.services.jwt_service import JWTService
     from osint_engine.application.contracts.uow import UoW
+    from osint_engine.application.revision.policies.revision_merge_policy import (
+        RevisionMergePolicy,
+    )
+    from osint_engine.application.revision.policies.revision_selection_policy import (
+        RevisionSelectionPolicy,
+    )
     from osint_engine.application.use_cases.authentication.authenticate_user import (
         AuthenticateUser,
     )
@@ -21,6 +27,7 @@ if TYPE_CHECKING:
 class Container:
     settings: Settings
     fetchers: Fetchers
+    policies: Policies
     services: Services
     uow_factory: Callable[[], UoW]
     use_cases: UseCases
@@ -29,6 +36,12 @@ class Container:
 @dataclass(frozen=True, kw_only=True)
 class Fetchers:
     cnpj_fetcher: CNPJFetcher
+
+
+@dataclass(frozen=True, kw_only=True)
+class Policies:
+    revision_merge_policy: RevisionMergePolicy
+    revision_selection_policy: RevisionSelectionPolicy
 
 
 @dataclass(frozen=True, kw_only=True)

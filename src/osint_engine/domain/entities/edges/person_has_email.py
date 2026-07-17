@@ -12,7 +12,9 @@ PersonHasEmailID = NewType("PersonHasEmailID", UUID)
 
 
 class PersonHasEmail(
-    Edge[PersonHasEmailID, PersonID, EmailID], namespace=EntityNAMESPACE.PERSON_EMAIL
+    Edge[PersonHasEmailID, PersonID, EmailID],
+    id_fields=None,
+    namespace=EntityNAMESPACE.PERSON_EMAIL,
 ):
     @override
     def __init__(self, *, source_id: PersonID, target_id: EmailID) -> None:

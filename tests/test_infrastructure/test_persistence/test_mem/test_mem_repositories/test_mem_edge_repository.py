@@ -1,131 +1,169 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
 
 from osint_engine.domain.errors.entity_error import EntityNotFoundError
-from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
-from osint_engine.infrastructure.persistence.mem.repositories.mem_edge_repository import (  # noqa: E501
-    MemEdgeRepository,
-)
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeFakeEdge, MakeMemStorage
+    from tests.conftest import MakeEntityRevision, MakeFakeEdge, MakeMemStorage
+    from tests.test_infrastructure.test_persistence.test_mem.test_mem_repositories.conftest import (  # noqa: E501
+        MakeMemEdgeRepository,
+    )
+
+
+_EARLY = datetime(2026, 1, 1, tzinfo=UTC)
+_LATE = datetime(2026, 6, 1, tzinfo=UTC)
+
+
+# TESTS
 
 
 class TestMemEdgeRepositoryFind:
     @pytest.mark.asyncio
-    async def test_find_returns_edge_when_edge_exists(
-        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
+    async def test_returns_none_when_absent(
+        self,
+        make_fake_edge: MakeFakeEdge,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
     ) -> None:
-        edge = make_fake_edge()
-        mem_storage = make_mem_storage(edges=[edge])
-        repo = MemEdgeRepository(mem_storage=mem_storage)
+        repo = make_mem_edge_repository(mem_storage=make_mem_storage())
 
-        found = await repo.find(edge_id=edge.id)
-
-        assert found is edge
+        assert await repo.find(id_=make_fake_edge().id) is None
 
     @pytest.mark.asyncio
-    async def test_find_returns_none_when_edge_does_not_exist(
-        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
+    async def test_returns_the_stored_revision(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_edge: MakeFakeEdge,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
     ) -> None:
-        edge = make_fake_edge()
-        mem_storage = make_mem_storage()
-        repo = MemEdgeRepository(mem_storage=mem_storage)
+        revision = make_entity_revision(entity=make_fake_edge())
+        repo = make_mem_edge_repository(mem_storage=make_mem_storage(edges=[revision]))
 
-        found = await repo.find(edge_id=edge.id)
+        assert await repo.find(id_=revision.entity.id) is revision
 
-        assert found is None
+    @pytest.mark.asyncio
+    async def test_returns_the_exact_revision_by_content_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_edge: MakeFakeEdge,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
+    ) -> None:
+        revision = make_entity_revision(entity=make_fake_edge())
+        repo = make_mem_edge_repository(mem_storage=make_mem_storage(edges=[revision]))
+
+        found = await repo.find(
+            id_=revision.entity.id, content_id=revision.entity.content_id
+        )
+
+        assert found is revision
+
+    @pytest.mark.asyncio
+    async def test_returns_none_for_unknown_content_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_edge: MakeFakeEdge,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
+    ) -> None:
+        revision = make_entity_revision(entity=make_fake_edge())
+        repo = make_mem_edge_repository(mem_storage=make_mem_storage(edges=[revision]))
+
+        assert await repo.find(id_=revision.entity.id, content_id=uuid4()) is None
 
 
 class TestMemEdgeRepositoryGet:
     @pytest.mark.asyncio
-    async def test_get_returns_edge_when_edge_exists(
-        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
+    async def test_returns_the_stored_revision(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_edge: MakeFakeEdge,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
     ) -> None:
-        edge = make_fake_edge()
-        mem_storage = make_mem_storage(edges=[edge])
-        repo = MemEdgeRepository(mem_storage=mem_storage)
+        revision = make_entity_revision(entity=make_fake_edge())
+        repo = make_mem_edge_repository(mem_storage=make_mem_storage(edges=[revision]))
 
-        found = await repo.find(edge_id=edge.id)
-
-        assert found is edge
+        assert await repo.get(id_=revision.entity.id) is revision
 
     @pytest.mark.asyncio
-    async def test_get_raises_when_edge_does_not_exist(
-        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
+    async def test_raises_with_id_and_subject_when_absent(
+        self,
+        make_fake_edge: MakeFakeEdge,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
     ) -> None:
         edge = make_fake_edge()
-        mem_storage = make_mem_storage()
-        repo = MemEdgeRepository(mem_storage=mem_storage)
+        repo = make_mem_edge_repository(mem_storage=make_mem_storage())
 
         with pytest.raises(EntityNotFoundError) as exception:
-            await repo.get(edge_id=edge.id)
+            await repo.get(id_=edge.id)
 
         assert str(edge.id) in str(exception.value)
 
         assert "Edge" in str(exception.value)
 
 
-class TestMemEdgeRepositorySave:
+class TestMemEdgeRepositoryMerge:
     @pytest.mark.asyncio
-    async def test_save_stores_edge_in_storage(
-        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
+    async def test_first_write_stores_the_revision_under_id_and_content_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_edge: MakeFakeEdge,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
+    ) -> None:
+        revision = make_entity_revision(entity=make_fake_edge())
+        mem_storage = make_mem_storage()
+        repo = make_mem_edge_repository(mem_storage=mem_storage)
+
+        returned = await repo.merge(revision=revision)
+
+        assert returned is revision
+
+        assert (
+            mem_storage.edges[revision.entity.id][revision.entity.content_id]
+            is revision
+        )
+
+    @pytest.mark.asyncio
+    async def test_with_an_existing_identical_edge_stores_the_newest_revision(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_edge: MakeFakeEdge,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
     ) -> None:
         edge = make_fake_edge()
-        mem_storage = make_mem_storage()
-        repo = MemEdgeRepository(mem_storage=mem_storage)
+        stored = make_entity_revision(entity=edge, fetched_at=_EARLY)
+        incoming = make_entity_revision(entity=edge, fetched_at=_LATE)
+        repo = make_mem_edge_repository(mem_storage=make_mem_storage(edges=[stored]))
 
-        await repo.save(edge=edge)
+        merged = await repo.merge(revision=incoming)
 
-        assert edge.id in mem_storage.edges
-
-    @pytest.mark.asyncio
-    async def test_save_is_idempotent_and_does_not_overwrite(
-        self, make_fake_edge: MakeFakeEdge
-    ) -> None:
-        source_id = uuid4()
-        target_id = uuid4()
-        content = "test"
-
-        edge_a = make_fake_edge(
-            source_id=source_id, target_id=target_id, content=content
-        )
-        edge_b = make_fake_edge(
-            source_id=source_id, target_id=target_id, content=content
-        )
-
-        assert edge_a.id == edge_b.id
-
-        mem_storage = MemStorage(edges={edge_a.id: edge_a})
-        repo = MemEdgeRepository(mem_storage=mem_storage)
-
-        await repo.save(edge=edge_a)
-
-        await repo.save(edge=edge_b)
-
-        assert mem_storage.edges[edge_a.id] is edge_a
-
-        assert mem_storage.edges[edge_a.id] is not edge_b
-
-        assert mem_storage.edges[edge_b.id] is edge_a
-
-        assert mem_storage.edges[edge_b.id] is not edge_b
+        assert merged is incoming
 
     @pytest.mark.asyncio
-    async def test_save_many_persists_all_edges(
-        self, make_fake_edge: MakeFakeEdge, make_mem_storage: MakeMemStorage
+    async def test_many_persists_every_revision(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_edge: MakeFakeEdge,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
     ) -> None:
-        edge_a = make_fake_edge()
-        edge_b = make_fake_edge()
+        first = make_entity_revision(entity=make_fake_edge())
+        second = make_entity_revision(entity=make_fake_edge())
         mem_storage = make_mem_storage()
-        repo = MemEdgeRepository(mem_storage=mem_storage)
+        repo = make_mem_edge_repository(mem_storage=mem_storage)
 
-        await repo.save_many(edges=frozenset({edge_a, edge_b}))
+        await repo.merge_many(revisions=frozenset({first, second}))
 
-        assert mem_storage.edges[edge_a.id] is edge_a
+        assert first.entity.id in mem_storage.edges
 
-        assert mem_storage.edges[edge_b.id] is edge_b
+        assert second.entity.id in mem_storage.edges

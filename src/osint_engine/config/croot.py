@@ -3,11 +3,23 @@ from __future__ import annotations
 from functools import partial
 from typing import TYPE_CHECKING
 
+from osint_engine.application.revision.policies.revision_merge_policy import (
+    merge_by_filled_fields_policy,
+)
+from osint_engine.application.revision.policies.revision_selection_policy import (
+    select_current_by_newest_fetched,
+)
 from osint_engine.application.use_cases.authentication.authenticate_user import (
     AuthenticateUser,
 )
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
-from osint_engine.config.container import Container, Fetchers, Services, UseCases
+from osint_engine.config.container import (
+    Container,
+    Fetchers,
+    Policies,
+    Services,
+    UseCases,
+)
 from osint_engine.infrastructure.hashers.argon2_password_hasher import (
     Argon2PasswordHasher,
 )
@@ -30,6 +42,7 @@ def build_container(
     settings: Settings,
     http_client: AsyncClient,
     mem_storage: MemStorage | None = None,
+    policies: Policies | None = None,
 ) -> Container:
     fetchers = Fetchers(cnpj_fetcher=BrasilAPICNPJv1Fetcher(http_client=http_client))
 
@@ -43,8 +56,21 @@ def build_container(
         settings=settings, mem_storage=mem_storage, password_hasher=password_hasher
     )
 
+    policies = (
+        policies
+        if policies is not None
+        else Policies(
+            revision_merge_policy=merge_by_filled_fields_policy,
+            revision_selection_policy=select_current_by_newest_fetched,
+        )
+    )
+
     def uow_factory() -> MemUoW:
-        return MemUoW(mem_storage=mem_storage)
+        return MemUoW(
+            mem_storage=mem_storage,
+            revision_merge_policy=policies.revision_merge_policy,
+            revision_selection_policy=policies.revision_selection_policy,
+        )
 
     use_cases = UseCases(
         authenticate_user=partial(
@@ -58,6 +84,7 @@ def build_container(
     return Container(
         settings=settings,
         fetchers=fetchers,
+        policies=policies,
         services=services,
         uow_factory=uow_factory,
         use_cases=use_cases,

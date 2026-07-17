@@ -13,6 +13,7 @@ CompanyHasMemberID = NewType("CompanyHasMemberID", UUID)
 
 class CompanyHasMember(
     Edge[CompanyHasMemberID, CompanyID, PersonID],
+    id_fields=None,
     namespace=EntityNAMESPACE.COMPANY_PERSON,
 ):
     @override

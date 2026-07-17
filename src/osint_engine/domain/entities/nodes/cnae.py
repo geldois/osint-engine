@@ -9,14 +9,16 @@ from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 CnaeID = NewType("CnaeID", UUID)
 
 
-class Cnae(Node[CnaeID], namespace=EntityNAMESPACE.CNAE):
+class Cnae(Node[CnaeID], id_fields=frozenset({"code"}), namespace=EntityNAMESPACE.CNAE):
     code: str
     description: str
 
     @override
     def __init__(self, *, code: str, description: str) -> None:
         super().__init__(
-            identity_fields=frozenset({"code"}),
-            code=code,
-            description=description,
+            **{
+                key: value
+                for key, value in locals().items()
+                if key not in {"__class__", "self"}
+            }
         )

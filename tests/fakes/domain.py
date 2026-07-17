@@ -27,62 +27,62 @@ TEST = _make_test_namespace(name="TEST")
 TEST_DIFF = _make_test_namespace(name="TEST_DIFF")
 TEST_EDGE = _make_test_namespace(name="TEST_EDGE")
 TEST_GRAPH = _make_test_namespace(name="TEST_GRAPH")
+TEST_MERGEABLE = _make_test_namespace(name="TEST_MERGEABLE")
 TEST_NODE = _make_test_namespace(name="TEST_NODE")
 
 
-class FakeEntity(Entity[FakeEntityID], namespace=TEST):
+class FakeEntity(
+    Entity[FakeEntityID], id_fields=frozenset({"content"}), namespace=TEST
+):
+    content: str
+
+    @override
+    def __init__(self, *, content: str, **kwargs: object) -> None:
+        super().__init__(content=content, **kwargs)
+
+
+class FakeEdge(
+    Edge[FakeEdgeID, UUID, UUID], id_fields=frozenset({"content"}), namespace=TEST_EDGE
+):
     content: str
 
     @override
     def __init__(
-        self,
-        *,
-        identity_fields: frozenset[str] | None = None,
-        content: str,
-        **kwargs: object,
-    ) -> None:
-        identity_fields = (
-            identity_fields if identity_fields is not None else frozenset({"content"})
-        )
-
-        super().__init__(identity_fields=identity_fields, content=content, **kwargs)
-
-
-class FakeEdge(Edge[FakeEdgeID, UUID, UUID], namespace=TEST_EDGE):
-    content: str
-
-    @override
-    def __init__(
-        self,
-        *,
-        identity_fields: frozenset[str] | None = None,
-        source_id: UUID,
-        target_id: UUID,
-        content: str,
-        **kwargs: object,
+        self, *, source_id: UUID, target_id: UUID, content: str, **kwargs: object
     ) -> None:
         super().__init__(
-            identity_fields=identity_fields,
-            source_id=source_id,
-            target_id=target_id,
-            content=content,
-            **kwargs,
+            source_id=source_id, target_id=target_id, content=content, **kwargs
         )
 
 
-class FakeNode(Node[FakeNodeID], namespace=TEST_NODE):
+class FakeDefaultEdge(
+    Edge[FakeEdgeID, UUID, UUID], id_fields=None, namespace=TEST_EDGE
+):
     content: str
 
     @override
     def __init__(
-        self,
-        *,
-        identity_fields: frozenset[str] | None = None,
-        content: str,
-        **kwargs: object,
+        self, *, source_id: UUID, target_id: UUID, content: str, **kwargs: object
     ) -> None:
-        identity_fields = (
-            identity_fields if identity_fields is not None else frozenset({"content"})
+        super().__init__(
+            source_id=source_id, target_id=target_id, content=content, **kwargs
         )
 
-        super().__init__(identity_fields=identity_fields, content=content, **kwargs)
+
+class FakeNode(Node[FakeNodeID], id_fields=frozenset({"content"}), namespace=TEST_NODE):
+    content: str
+
+    @override
+    def __init__(self, *, content: str, **kwargs: object) -> None:
+        super().__init__(content=content, **kwargs)
+
+
+class FakeMergeableNode(
+    Node[FakeNodeID], id_fields=frozenset({"key"}), namespace=TEST_MERGEABLE
+):
+    key: str
+    label: str | None
+
+    @override
+    def __init__(self, *, key: str, label: str | None = None, **kwargs: object) -> None:
+        super().__init__(key=key, label=label, **kwargs)

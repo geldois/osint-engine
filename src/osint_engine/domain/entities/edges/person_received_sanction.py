@@ -13,6 +13,7 @@ PersonReceivedSanctionID = NewType("PersonReceivedSanctionID", UUID)
 
 class PersonReceivedSanction(
     Edge[PersonReceivedSanctionID, PersonID, SanctionID],
+    id_fields=None,
     namespace=EntityNAMESPACE.PERSON_SANCTION,
 ):
     @override

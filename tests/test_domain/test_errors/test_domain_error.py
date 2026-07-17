@@ -35,5 +35,3 @@ class TestDomainErrorSubclassContract:
                     return "test"
 
         assert "FakeConcreteDomainErrorWithoutErrorCodeError" in str(exception.value)
-
-

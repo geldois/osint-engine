@@ -13,6 +13,7 @@ PersonOwnsCompanyID = NewType("PersonOwnsCompanyID", UUID)
 
 class PersonOwnsCompany(
     Edge[PersonOwnsCompanyID, PersonID, CompanyID],
+    id_fields=None,
     namespace=EntityNAMESPACE.PERSON_COMPANY,
 ):
     entry_date: str
@@ -20,16 +21,11 @@ class PersonOwnsCompany(
 
     @override
     def __init__(
-        self,
-        *,
-        entry_date: str,
-        role: str,
-        source_id: PersonID,
-        target_id: CompanyID,
+        self, *, source_id: PersonID, target_id: CompanyID, entry_date: str, role: str
     ) -> None:
         super().__init__(
-            entry_date=entry_date,
-            role=role,
             source_id=source_id,
             target_id=target_id,
+            entry_date=entry_date,
+            role=role,
         )

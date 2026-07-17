@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC
 from typing import TYPE_CHECKING
 
 import pytest
@@ -74,7 +75,7 @@ class TestBrasilAPICNPJv1FetcherOnMalformedJSON:
 
 class TestBrasilAPICNPJv1FetcherOnSuccess:
     @pytest.mark.asyncio
-    async def test_returns_graph(
+    async def test_returns_a_graph_revision_stamped_at_the_fetch_boundary(
         self, make_brasilapi_cnpj_fetcher: MakeBrasilAPICNPJv1Fetcher
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
@@ -84,4 +85,8 @@ class TestBrasilAPICNPJv1FetcherOnSuccess:
 
         result = await fetcher.fetch(CNPJ)
 
-        assert isinstance(result, Graph)
+        assert isinstance(result.entity, Graph)
+
+        assert result.fetched_at.tzinfo is UTC
+
+        assert result.merged_at is None

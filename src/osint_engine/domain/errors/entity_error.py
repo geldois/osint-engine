@@ -50,6 +50,22 @@ class EntityMissingIDTypeError(EntityError, error_code="ENTITY_MISSING_ID_TYPE")
         )
 
 
+class EntityMissingIDFieldsError(EntityError, error_code="ENTITY_MISSING_ID_FIELDS"):
+    subject: type[Entity[UUID]]
+
+    @override
+    def __init__(self, *, subject: type[Entity[UUID]]) -> None:
+        super().__init__(subject=subject)
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"'{self.subject.__name__}' identity contract violation - "
+            f"pass 'id_fields' in: "
+            f"class {self.subject.__name__}(..., id_fields=frozenset[str])"
+        )
+
+
 class EntityMissingNamespaceError(EntityError, error_code="ENTITY_MISSING_NAMESPACE"):
     subject: type[Entity[UUID]]
 
@@ -86,9 +102,7 @@ class EntityNonDeterministicValueError(
         )
 
 
-class EntityInvalidIdentityFieldError(
-    EntityError, error_code="ENTITY_INVALID_IDENTIFIED_BY_FIELD"
-):
+class EntityInvalidIDFieldError(EntityError, error_code="ENTITY_INVALID_ID_FIELD"):
     field: str
     subject: type[Entity[UUID]]
     valid_fields: dict[str, object]
@@ -108,13 +122,11 @@ class EntityInvalidIdentityFieldError(
         return (
             f"'{self.field}' identity contract violation - "
             f"'{self.field}' is not a declared attribute of '{self.subject.__name__}': "
-            f"identity_fields must be a subset of {set(self.valid_fields.keys())}"
+            f"id_fields must be a subset of {set(self.valid_fields.keys())}"
         )
 
 
-class EntityEmptyIdentityFieldNameError(
-    EntityError, error_code="ENTITY_EMPTY_IDENTITY_FIELD_NAME"
-):
+class EntityEmptyIDFieldNameError(EntityError, error_code="ENTITY_EMPTY_ID_FIELD_NAME"):
     subject: type[Entity[UUID]]
 
     @override
@@ -125,8 +137,8 @@ class EntityEmptyIdentityFieldNameError(
     def _build_message(self) -> str:
         return (
             f"'{self.subject.__name__}' identity contract violation - "
-            f"identity_fields cannot contain empty strings: "
-            f"pass non-empty field names as identity_fields"
+            f"id_fields cannot contain empty strings: "
+            f"pass non-empty field names as id_fields"
         )
 
 

@@ -13,6 +13,7 @@ CompanyLocatedAtID = NewType("CompanyLocatedAtID", UUID)
 
 class CompanyLocatedAt(
     Edge[CompanyLocatedAtID, CompanyID, AddressID],
+    id_fields=None,
     namespace=EntityNAMESPACE.COMPANY_ADDRESS,
 ):
     @override

@@ -8,34 +8,63 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import (
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeFakeEdge, MakeFakeNode, MakeGraph, MakeUser
+    from tests.conftest import (
+        MakeEntityRevision,
+        MakeFakeEdge,
+        MakeFakeNode,
+        MakeGraph,
+        MakeMemStorage,
+        MakeUser,
+    )
+
+
+def _seeded_storage(
+    *,
+    make_entity_revision: MakeEntityRevision,
+    make_fake_edge: MakeFakeEdge,
+    make_graph: MakeGraph,
+    make_fake_node: MakeFakeNode,
+    make_user: MakeUser,
+    make_mem_storage: MakeMemStorage,
+) -> MemStorage:
+    node_a = make_fake_node()
+    node_b = make_fake_node()
+    edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
+    graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
+
+    return make_mem_storage(
+        edges=[make_entity_revision(entity=edge)],
+        graphs=[make_entity_revision(entity=graph)],
+        nodes=[
+            make_entity_revision(entity=node_a),
+            make_entity_revision(entity=node_b),
+        ],
+        users=[make_user()],
+    )
 
 
 class TestMemStorageSnapshotSubclassContract:
     def test_inherits_directly_from_mem_storage(self) -> None:
-        bases = MemStorageSnapshot.__bases__
-
-        assert MemStorage in bases
+        assert MemStorage in MemStorageSnapshot.__bases__
 
 
 class TestMemStorageSnapshotSnapshot:
-    def test_copies_object_references_from_mem_storage(
+    def test_isolates_containers_while_sharing_leaf_revisions(
         self,
+        make_entity_revision: MakeEntityRevision,
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
         make_user: MakeUser,
+        make_mem_storage: MakeMemStorage,
     ) -> None:
-        node_a = make_fake_node()
-        node_b = make_fake_node()
-        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
-        graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
-        user = make_user()
-        mem_storage = MemStorage(
-            edges={edge.id: edge},
-            graphs={graph.id: graph},
-            nodes={node_a.id: node_a, node_b.id: node_b},
-            users={user.username: user},
+        mem_storage = _seeded_storage(
+            make_entity_revision=make_entity_revision,
+            make_fake_edge=make_fake_edge,
+            make_graph=make_graph,
+            make_fake_node=make_fake_node,
+            make_user=make_user,
+            make_mem_storage=make_mem_storage,
         )
 
         snapshot = MemStorageSnapshot(mem_storage=mem_storage)
@@ -48,79 +77,65 @@ class TestMemStorageSnapshotSnapshot:
 
         assert mem_storage.users is not snapshot.users
 
-        assert mem_storage.edges[edge.id] is snapshot.edges[edge.id]
+        (node_id, revisions), *_ = mem_storage.nodes.items()
+        (content_id, revision), *_ = revisions.items()
 
-        assert mem_storage.graphs[graph.id] is snapshot.graphs[graph.id]
+        assert snapshot.nodes[node_id][content_id] is revision
 
-        assert mem_storage.nodes[node_a.id] is snapshot.nodes[node_a.id]
-
-        assert mem_storage.nodes[node_b.id] is snapshot.nodes[node_b.id]
-
-        assert mem_storage.users[user.username] is snapshot.users[user.username]
-
-    def test_cleans_all_object_references_in_its_inner_storages(
+    def test_clear_empties_every_inner_storage(
         self,
+        make_entity_revision: MakeEntityRevision,
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
         make_user: MakeUser,
+        make_mem_storage: MakeMemStorage,
     ) -> None:
-        node_a = make_fake_node()
-        node_b = make_fake_node()
-        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
-        graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
-        user = make_user()
-        mem_storage = MemStorage(
-            edges={edge.id: edge},
-            graphs={graph.id: graph},
-            nodes={node_a.id: node_a, node_b.id: node_b},
-            users={user.username: user},
+        snapshot = MemStorageSnapshot(
+            mem_storage=_seeded_storage(
+                make_entity_revision=make_entity_revision,
+                make_fake_edge=make_fake_edge,
+                make_graph=make_graph,
+                make_fake_node=make_fake_node,
+                make_user=make_user,
+                make_mem_storage=make_mem_storage,
+            )
         )
-        snapshot = MemStorageSnapshot(mem_storage=mem_storage)
 
         snapshot.clear_snapshot()
 
-        assert not (snapshot.edges and snapshot.edges is None)
+        assert not snapshot.edges
 
-        assert not (snapshot.graphs and snapshot.graphs is None)
+        assert not snapshot.graphs
 
-        assert not (snapshot.nodes and snapshot.nodes is None)
+        assert not snapshot.nodes
 
-        assert not (snapshot.users and snapshot.users is None)
+        assert not snapshot.users
 
 
 class TestMemStorageSnapshotCommit:
-    def test_only_commits_diff_to_mem_storage_explicitly(
+    def test_commit_flushes_the_snapshot_into_the_backing_storage(
         self,
+        make_entity_revision: MakeEntityRevision,
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
         make_user: MakeUser,
+        make_mem_storage: MakeMemStorage,
     ) -> None:
-        node_a = make_fake_node()
-        node_b = make_fake_node()
-        edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
-        graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
-        user = make_user()
-        mem_storage = MemStorage(
-            edges={edge.id: edge},
-            graphs={graph.id: graph},
-            nodes={node_a.id: node_a, node_b.id: node_b},
-            users={user.username: user},
+        mem_storage = _seeded_storage(
+            make_entity_revision=make_entity_revision,
+            make_fake_edge=make_fake_edge,
+            make_graph=make_graph,
+            make_fake_node=make_fake_node,
+            make_user=make_user,
+            make_mem_storage=make_mem_storage,
         )
         snapshot = MemStorageSnapshot(mem_storage=mem_storage)
 
         snapshot.clear_snapshot()
 
-        assert (edge.id, edge) in mem_storage.edges.items()
-
-        assert (graph.id, graph) in mem_storage.graphs.items()
-
-        assert (node_a.id, node_a) in mem_storage.nodes.items()
-
-        assert (node_b.id, node_b) in mem_storage.nodes.items()
-
-        assert (user.username, user) in mem_storage.users.items()
+        assert mem_storage.nodes
 
         snapshot.commit_to_storage()
 

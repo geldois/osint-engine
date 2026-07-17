@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 from abc import ABC, abstractmethod
 from dataclasses import FrozenInstanceError
@@ -8,7 +9,9 @@ from decimal import Decimal
 from inspect import isabstract
 from typing import (
     TYPE_CHECKING,
+    ClassVar,
     Generic,
+    Self,
     TypeGuard,
     TypeVar,
     final,
@@ -18,9 +21,10 @@ from typing import (
 from uuid import UUID, uuid4, uuid5
 
 from osint_engine.domain.errors.entity_error import (
-    EntityEmptyIdentityFieldNameError,
-    EntityInvalidIdentityFieldError,
+    EntityEmptyIDFieldNameError,
+    EntityInvalidIDFieldError,
     EntityInvalidIDTypeError,
+    EntityMissingIDFieldsError,
     EntityMissingIDTypeError,
     EntityNonDeterministicValueError,
 )
@@ -64,15 +68,15 @@ def _validate_entity_id_type[IDType: UUID](*, subject: type[Entity[IDType]]) -> 
         raise EntityMissingIDTypeError(subject=subject)
 
 
-def _validate_identity_fields(
-    *, identity_fields: frozenset[str], subject: type, valid_fields: dict[str, object]
-) -> None:
-    for field in identity_fields:
+def _validate_id_fields(*, subject: type[Entity[UUID]]) -> None:
+    for field in subject.id_fields:
         if not field:
-            raise EntityEmptyIdentityFieldNameError(subject=subject)
+            raise EntityEmptyIDFieldNameError(subject=subject)
+
+        valid_fields = subject.init_parameters()
 
         if field not in valid_fields:
-            raise EntityInvalidIdentityFieldError(
+            raise EntityInvalidIDFieldError(
                 field=field, subject=subject, valid_fields=valid_fields
             )
 
@@ -80,10 +84,25 @@ def _validate_identity_fields(
 class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
     content_id: IDType_co
     id: IDType_co
+    id_fields: ClassVar[frozenset[str]]
+    namespace: ClassVar[UUID]
 
-    @final
-    def __init_subclass__(cls, *, namespace: EntityNAMESPACE, **kwargs: object) -> None:
+    def __init_subclass__(
+        cls,
+        *,
+        id_fields: frozenset[str] | None,
+        namespace: EntityNAMESPACE,
+        **kwargs: object,
+    ) -> None:
         super().__init_subclass__(**kwargs)
+
+        if id_fields is None and not isabstract(cls):
+            raise EntityMissingIDFieldsError(subject=cls)
+
+        if id_fields is not None:
+            cls.id_fields = id_fields
+
+            _validate_id_fields(subject=cls)
 
         cls.namespace = namespace.namespace
 
@@ -119,14 +138,10 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
         _validate_entity_id_type(subject=cls)
 
     @abstractmethod
-    def __init__(self, *, identity_fields: frozenset[str], **kwargs: object) -> None:
+    def __init__(self, **kwargs: object) -> None:
         object.__setattr__(self, "content_id", self._calculate_id(**kwargs))
 
-        _validate_identity_fields(
-            identity_fields=identity_fields, subject=type(self), valid_fields=kwargs
-        )
-
-        identified_by = {field: kwargs[field] for field in identity_fields}
+        identified_by = {field: kwargs[field] for field in self.id_fields}
 
         object.__setattr__(self, "id", self._calculate_id(**identified_by))
 
@@ -168,3 +183,24 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
                 namespace=cls.namespace, name=json.dumps(parameter_pairs, default=str)
             )
         )
+
+    @classmethod
+    @final
+    def init_parameters(cls) -> dict[str, object]:
+        return dict(inspect.signature(obj=cls.__init__).parameters)
+
+    @final
+    def evolve(self, **changes: object) -> Self:
+        return type(self)(**{**self.reconstruct_kwargs(), **changes})
+
+    @final
+    def reconstruct_kwargs(self) -> dict[str, object]:
+        return {
+            parameter_name: getattr(self, parameter_name)
+            for parameter_name, parameter in inspect.signature(
+                obj=type(self).__init__
+            ).parameters.items()
+            if parameter_name != "self"
+            and parameter.kind
+            not in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL)
+        }

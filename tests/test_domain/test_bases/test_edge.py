@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from osint_engine.domain.errors.edge_error import EdgeSelfLoopError
-from tests.fakes.domain import FakeEdge
+from tests.fakes.domain import FakeDefaultEdge, FakeEdge
 
 
 class TestEdgeIdentity:
@@ -15,12 +15,8 @@ class TestEdgeIdentity:
         source = uuid4()
         target = uuid4()
 
-        edge_a = FakeEdge(
-            identity_fields=None, source_id=source, target_id=target, content="edge_a"
-        )
-        edge_b = FakeEdge(
-            identity_fields=None, source_id=source, target_id=target, content="edge_b"
-        )
+        edge_a = FakeDefaultEdge(source_id=source, target_id=target, content="edge_a")
+        edge_b = FakeDefaultEdge(source_id=source, target_id=target, content="edge_b")
 
         assert edge_a.id == edge_b.id
 
@@ -28,18 +24,8 @@ class TestEdgeIdentity:
         source = uuid4()
         target = uuid4()
 
-        edge_a = FakeEdge(
-            identity_fields=frozenset({"content"}),
-            source_id=source,
-            target_id=target,
-            content="edge_a",
-        )
-        edge_b = FakeEdge(
-            identity_fields=frozenset({"content"}),
-            source_id=source,
-            target_id=target,
-            content="edge_b",
-        )
+        edge_a = FakeEdge(source_id=source, target_id=target, content="edge_a")
+        edge_b = FakeEdge(source_id=source, target_id=target, content="edge_b")
 
         assert edge_a.id != edge_b.id
 

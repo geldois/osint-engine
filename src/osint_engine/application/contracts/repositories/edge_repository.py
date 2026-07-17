@@ -1,31 +1,11 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from uuid import UUID
 
-if TYPE_CHECKING:
-    from uuid import UUID
+from osint_engine.application.contracts.repositories.entity_repository import (
+    EntityRepository,
+)
+from osint_engine.domain.entities.bases.edge import Edge
 
-    from osint_engine.domain.entities.bases.edge import Edge
 
-
-class EdgeRepository(ABC):
-    @abstractmethod
-    def __init__(self) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def find(self, *, edge_id: UUID) -> Edge[UUID, UUID, UUID] | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def get(self, *, edge_id: UUID) -> Edge[UUID, UUID, UUID]:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def save(self, *, edge: Edge[UUID, UUID, UUID]) -> None:
-        raise NotImplementedError
-
-    @abstractmethod
-    async def save_many(self, *, edges: frozenset[Edge[UUID, UUID, UUID]]) -> None:
-        raise NotImplementedError
+class EdgeRepository(EntityRepository[Edge[UUID, UUID, UUID]]): ...

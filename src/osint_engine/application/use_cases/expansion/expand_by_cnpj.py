@@ -32,10 +32,10 @@ class ExpandByCNPJ(Query[Graph]):
         _logger.info("cnpj.expansion.start", cnpj=self.cnpj)
 
         async with self.uow_factory() as uow:
-            graph = await self.cnpj_fetcher.fetch(self.cnpj)
+            revision = await self.cnpj_fetcher.fetch(self.cnpj)
 
-            await uow.graphs.save(graph=graph)
+            await uow.graphs.merge(revision=revision)
 
         _logger.info("cnpj.expansion.success", cnpj=self.cnpj)
 
-        return graph
+        return revision.entity

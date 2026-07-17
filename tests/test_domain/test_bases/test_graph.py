@@ -15,7 +15,7 @@ from osint_engine.domain.errors.graph_error import (
     GraphInconsistentError,
     GraphRootNotInNodesError,
 )
-from tests.fakes.domain import TEST_NODE, FakeEdge, FakeNodeID
+from tests.fakes.domain import TEST_NODE, FakeDefaultEdge, FakeNodeID
 
 if TYPE_CHECKING:
     from hypothesis.strategies import DataObject
@@ -25,20 +25,20 @@ if TYPE_CHECKING:
 # TEST DOUBLES
 
 
-class FakeNodeWithContentIdentity(Node[FakeNodeID], namespace=TEST_NODE):
+class FakeNodeWithContentIdentity(
+    Node[FakeNodeID], id_fields=frozenset({"content"}), namespace=TEST_NODE
+):
     content: str
     extra_field: str
 
     def __init__(
         self,
         *,
-        identity_fields: frozenset[str] = frozenset({"content"}),
         content: str,
         extra_field: str,
         **kwargs: object,
     ) -> None:
         super().__init__(
-            identity_fields=identity_fields,
             content=content,
             extra_field=extra_field,
             **kwargs,
@@ -129,8 +129,12 @@ class TestGraphIdentity:
         node_x = make_fake_node()
         node_y = make_fake_node()
 
-        edge_a = FakeEdge(source_id=node_x.id, target_id=node_y.id, content="content_a")
-        edge_b = FakeEdge(source_id=node_x.id, target_id=node_y.id, content="content_b")
+        edge_a = FakeDefaultEdge(
+            source_id=node_x.id, target_id=node_y.id, content="content_a"
+        )
+        edge_b = FakeDefaultEdge(
+            source_id=node_x.id, target_id=node_y.id, content="content_b"
+        )
 
         assert edge_a.id == edge_b.id
 

@@ -8,9 +8,10 @@ import pytest
 
 from osint_engine.domain.entities.entity import Entity
 from osint_engine.domain.errors.entity_error import (
-    EntityEmptyIdentityFieldNameError,
-    EntityInvalidIdentityFieldError,
+    EntityEmptyIDFieldNameError,
+    EntityInvalidIDFieldError,
     EntityInvalidIDTypeError,
+    EntityMissingIDFieldsError,
     EntityMissingIDTypeError,
     EntityNonDeterministicValueError,
 )
@@ -19,45 +20,36 @@ from tests.fakes.domain import TEST, TEST_DIFF, FakeEntity, FakeEntityID
 # TEST DOUBLES
 
 
-class FakeEntityWithDiffNAMESPACE(Entity[FakeEntityID], namespace=TEST_DIFF):
+class FakeEntityWithDiffNAMESPACE(
+    Entity[FakeEntityID], id_fields=frozenset({"content"}), namespace=TEST_DIFF
+):
     content: str
 
-    def __init__(
-        self,
-        *,
-        identity_fields: frozenset[str] = frozenset({"content"}),
-        content: str,
-        **kwargs: object,
-    ) -> None:
-        super().__init__(identity_fields=identity_fields, content=content, **kwargs)
+    def __init__(self, *, content: str, **kwargs: object) -> None:
+        super().__init__(content=content, **kwargs)
 
 
-class FakeEntityWithNonexistentIdentityField(Entity[FakeEntityID], namespace=TEST):
-    def __init__(self, *, identity_fields: frozenset[str], **kwargs: object) -> None:
-        super().__init__(identity_fields=identity_fields, **kwargs)
-
-
-class FakeEntityWithContentIdentity(Entity[FakeEntityID], namespace=TEST):
+class FakeEntityWithContentIdentity(
+    Entity[FakeEntityID], id_fields=frozenset({"content"}), namespace=TEST
+):
     content: str
     extra_field: str
 
     def __init__(
         self,
         *,
-        identity_fields: frozenset[str] = frozenset({"content"}),
         content: str,
         extra_field: str,
         **kwargs: object,
     ) -> None:
         super().__init__(
-            identity_fields=identity_fields,
             content=content,
             extra_field=extra_field,
             **kwargs,
         )
 
 
-class FakeFakeEntity:  # Not an Entity — sentinel for type-mismatch tests
+class FakeFakeEntity:
     def __init__(self, *, content: str) -> None:
         self.id = uuid4()
         self.content = content
@@ -146,11 +138,15 @@ class TestEntitySubclassContract:
     def test_raises_without_id_type_parameter(self) -> None:
         with pytest.raises(EntityMissingIDTypeError) as exception:
 
-            class FakeEntityWithoutIDType(Entity, namespace=TEST):  # pyright: ignore[reportUnusedClass, reportMissingTypeArgument]
-                def __init__(
-                    self, *, identity_fields: frozenset[str], **kwargs: object
-                ) -> None:
-                    super().__init__(identity_fields=identity_fields, **kwargs)
+            class FakeEntityWithoutIDType(  # pyright: ignore[reportUnusedClass]
+                Entity,  # pyright: ignore[reportMissingTypeArgument]
+                id_fields=frozenset({"content"}),
+                namespace=TEST,
+            ):
+                content: str
+
+                def __init__(self, *, content: str, **kwargs: object) -> None:
+                    super().__init__(content=content, **kwargs)
 
         assert "FakeEntityWithoutIDType" in str(exception.value)
 
@@ -158,12 +154,12 @@ class TestEntitySubclassContract:
         with pytest.raises(EntityMissingIDTypeError) as exception:
 
             class FakeEntityWithFlatIDType(  # pyright: ignore[reportUnusedClass]
-                Entity[UUID], namespace=TEST
+                Entity[UUID], id_fields=frozenset({"content"}), namespace=TEST
             ):
-                def __init__(
-                    self, identity_fields: frozenset[str], **kwargs: object
-                ) -> None:
-                    super().__init__(identity_fields=identity_fields, **kwargs)
+                content: str
+
+                def __init__(self, content: str, **kwargs: object) -> None:
+                    super().__init__(content=content, **kwargs)
 
         assert "FakeEntityWithFlatIDType" in str(exception.value)
 
@@ -176,12 +172,13 @@ class TestEntitySubclassContract:
 
             class FakeEntityWithWrongIDType(  # pyright: ignore[reportUnusedClass]
                 Entity[WrongIDType],  # pyright: ignore[reportInvalidTypeArguments]
+                id_fields=frozenset({"content"}),
                 namespace=TEST,
             ):
-                def __init__(
-                    self, identity_fields: frozenset[str], **kwargs: object
-                ) -> None:
-                    super().__init__(identity_fields=identity_fields, **kwargs)
+                content: str
+
+                def __init__(self, content: str, **kwargs: object) -> None:
+                    super().__init__(content=content, **kwargs)
 
         assert "WrongIDType" in str(exception.value)
 
@@ -266,30 +263,128 @@ class TestEntityIdentityFieldsValidation:
     def test_raises_when_identity_field_is_absent_from_kwargs(
         self,
     ) -> None:
-        with pytest.raises(EntityInvalidIdentityFieldError) as exception:
-            FakeEntityWithNonexistentIdentityField(
-                identity_fields=frozenset({"nonexistent_field"})
-            )
+        with pytest.raises(EntityInvalidIDFieldError) as exception:
+
+            class _FakeEntity(  # pyright: ignore[reportUnusedClass]
+                Entity[FakeEntityID],
+                id_fields=frozenset({"nonexistent_field"}),
+                namespace=TEST,
+            ):
+                def __init__(self, **kwargs: object) -> None:
+                    super().__init__(**kwargs)
 
         assert "nonexistent_field" in str(exception.value)
 
     def test_raises_when_any_identity_field_is_unknown(
         self,
     ) -> None:
-        with pytest.raises(EntityInvalidIdentityFieldError) as exception:
-            FakeEntityWithNonexistentIdentityField(
-                identity_fields=frozenset({"content", "nonexistent_field"}),
-                content="test",
-            )
+        with pytest.raises(EntityInvalidIDFieldError) as exception:
+
+            class _FakeEntity(  # pyright: ignore[reportUnusedClass]
+                Entity[FakeEntityID],
+                id_fields=frozenset({"content", "nonexistent_field"}),
+                namespace=TEST,
+            ):
+                content: str
+
+                def __init__(self, *, content: str, **kwargs: object) -> None:
+                    super().__init__(content=content, **kwargs)
 
         assert "nonexistent_field" in str(exception.value)
 
     def test_raises_when_identity_field_name_is_empty_string(
         self,
     ) -> None:
-        with pytest.raises(EntityEmptyIdentityFieldNameError) as exception:
-            FakeEntityWithNonexistentIdentityField(
-                identity_fields=frozenset({""}),
-            )
+        with pytest.raises(EntityEmptyIDFieldNameError) as exception:
 
-        assert "FakeEntityWithNonexistentIdentityField" in str(exception.value)
+            class _FakeEntity(  # pyright: ignore[reportUnusedClass]
+                Entity[FakeEntityID], id_fields=frozenset({""}), namespace=TEST
+            ):
+                def __init__(self, **kwargs: object) -> None:
+                    super().__init__(**kwargs)
+
+        assert "FakeEntity" in str(exception.value)
+
+    def test_raises_when_id_fields_is_none_on_a_concrete_entity(self) -> None:
+        with pytest.raises(EntityMissingIDFieldsError) as exception:
+
+            class _FakeEntity(  # pyright: ignore[reportUnusedClass]
+                Entity[FakeEntityID], id_fields=None, namespace=TEST
+            ):
+                def __init__(self, **kwargs: object) -> None:
+                    super().__init__(**kwargs)
+
+        assert "_FakeEntity" in str(exception.value)
+
+
+class TestEntityReconstructKwargs:
+    def test_returns_declared_init_fields_with_their_current_values(self) -> None:
+        entity = FakeEntityWithContentIdentity(content="Alice", extra_field="value")
+
+        assert entity.reconstruct_kwargs() == {
+            "content": "Alice",
+            "extra_field": "value",
+        }
+
+    def test_excludes_self_and_var_keyword_parameters(self) -> None:
+        kwargs = FakeEntityWithContentIdentity(
+            content="Alice", extra_field="value"
+        ).reconstruct_kwargs()
+
+        assert "self" not in kwargs
+
+        assert "kwargs" not in kwargs
+
+    def test_round_trips_through_the_constructor(self) -> None:
+        entity = FakeEntityWithContentIdentity(content="Alice", extra_field="value")
+
+        rebuilt = type(entity)(**entity.reconstruct_kwargs())  # pyright: ignore[reportArgumentType]
+
+        assert rebuilt == entity
+
+        assert rebuilt.content_id == entity.content_id
+
+
+class TestEntityEvolve:
+    def test_preserves_unspecified_fields(self) -> None:
+        entity = FakeEntityWithContentIdentity(content="Alice", extra_field="original")
+
+        evolved = entity.evolve(extra_field="changed")
+
+        assert evolved.content == "Alice"
+
+        assert evolved.extra_field == "changed"
+
+    def test_returns_a_new_instance_of_the_same_type(self) -> None:
+        entity = FakeEntityWithContentIdentity(content="Alice", extra_field="value")
+
+        evolved = entity.evolve(extra_field="other")
+
+        assert type(evolved) is type(entity)
+
+        assert evolved is not entity
+
+    def test_with_no_changes_reproduces_an_identical_entity(self) -> None:
+        entity = FakeEntityWithContentIdentity(content="Alice", extra_field="value")
+
+        evolved = entity.evolve()
+
+        assert evolved == entity
+
+        assert evolved.content_id == entity.content_id
+
+    def test_changing_a_non_identity_field_keeps_id_but_shifts_content_id(self) -> None:
+        entity = FakeEntityWithContentIdentity(content="Alice", extra_field="value")
+
+        evolved = entity.evolve(extra_field="other")
+
+        assert evolved.id == entity.id
+
+        assert evolved.content_id != entity.content_id
+
+    def test_changing_an_identity_field_recomputes_id(self) -> None:
+        entity = FakeEntityWithContentIdentity(content="Alice", extra_field="value")
+
+        evolved = entity.evolve(content="Bob")
+
+        assert evolved.id != entity.id

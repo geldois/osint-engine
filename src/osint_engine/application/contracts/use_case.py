@@ -5,14 +5,14 @@ from dataclasses import FrozenInstanceError
 from typing import final
 
 
-class UseCase[ReturnType: object](ABC):
+class UseCase[Return: object](ABC):
     @abstractmethod
     def __init__(self, **kwargs: object) -> None:
         for k, v in kwargs.items():
             object.__setattr__(self, k, v)
 
     @abstractmethod
-    async def execute(self) -> ReturnType:
+    async def execute(self) -> Return:
         raise NotImplementedError
 
     @final
@@ -27,4 +27,4 @@ class UseCase[ReturnType: object](ABC):
 class Command(UseCase[None]): ...
 
 
-class Query[ReturnType: object](UseCase[ReturnType]): ...
+class Query[Return: object](UseCase[Return]): ...

@@ -12,7 +12,9 @@ CompanyHasPhoneID = NewType("CompanyHasPhoneID", UUID)
 
 
 class CompanyHasPhone(
-    Edge[CompanyHasPhoneID, CompanyID, PhoneID], namespace=EntityNAMESPACE.COMPANY_PHONE
+    Edge[CompanyHasPhoneID, CompanyID, PhoneID],
+    id_fields=None,
+    namespace=EntityNAMESPACE.COMPANY_PHONE,
 ):
     @override
     def __init__(self, *, source_id: CompanyID, target_id: PhoneID) -> None:

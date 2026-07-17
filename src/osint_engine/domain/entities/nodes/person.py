@@ -9,7 +9,9 @@ from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 PersonID = NewType("PersonID", UUID)
 
 
-class Person(Node[PersonID], namespace=EntityNAMESPACE.PERSON):
+class Person(
+    Node[PersonID], id_fields=frozenset({"cpf"}), namespace=EntityNAMESPACE.PERSON
+):
     age_range: str
     cpf: str
     name: str
@@ -17,8 +19,9 @@ class Person(Node[PersonID], namespace=EntityNAMESPACE.PERSON):
     @override
     def __init__(self, *, age_range: str, cpf: str, name: str) -> None:
         super().__init__(
-            identity_fields=frozenset({"cpf"}),
-            age_range=age_range,
-            cpf=cpf,
-            name=name,
+            **{
+                key: value
+                for key, value in locals().items()
+                if key not in {"__class__", "self"}
+            }
         )
