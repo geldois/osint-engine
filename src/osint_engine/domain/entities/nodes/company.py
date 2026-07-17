@@ -5,7 +5,7 @@ from uuid import UUID
 
 from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
-from osint_engine.domain.value_objects.normalization import digits_only
+from osint_engine.domain.value_objects.normalization import normalize_str_to_digits_only
 
 if TYPE_CHECKING:
     from decimal import Decimal
@@ -58,6 +58,6 @@ class Company(
         cnpj = kwargs["cnpj"]
 
         if isinstance(cnpj, str):
-            kwargs["cnpj"] = digits_only(value=cnpj)
+            kwargs["cnpj"] = normalize_str_to_digits_only(value=cnpj)
 
         return super()._calculate_id(**kwargs)

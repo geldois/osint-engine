@@ -49,7 +49,7 @@ class AddressSchema(NodeSchema[Address]):
 
     cep: str
     city: str
-    complement: str
+    complement: str | None
     id: UUID
     neighborhood: str
     number: str

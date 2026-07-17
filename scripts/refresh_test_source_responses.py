@@ -19,7 +19,8 @@ class _BrasilAPI:
     API_NAME: str = "brasilapi"
     BASE_URL: URL = URL("https://brasilapi.com.br/api/")
     CASES: dict[str, list[tuple[str, str]]] = {
-        "cnpj/v1/": [(f"{API_NAME}_cnpj_v1.json", "00.000.000/0001-91")]
+        "cnpj/v1/": [(f"{API_NAME}_cnpj_v1.json", "00.000.000/0001-91")],
+        "cep/v2/": [(f"{API_NAME}_cep_v2.json", "70040912")]
     }
 
 

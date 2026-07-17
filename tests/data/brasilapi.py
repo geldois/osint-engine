@@ -61,3 +61,18 @@ COMPLETE_PAYLOAD_DATA: dict[str, object] = {
     "email": "contato@bb.com.br",
     "qsa": [PARTNER_PERSON, PARTNER_LEGAL_ENTITY],
 }
+
+CEP = "70040912"
+
+NUMBER = "100"
+
+CEP_DATA: dict[str, object] = {
+    "cep": "70040912",
+    "state": "DF",
+    "city": "Brasília",
+    "neighborhood": "Asa Norte",
+    "street": "SAUN Quadra 5 Lote B Torres I, II e III",
+    "service": "open-cep",
+    "timezoneName": None,
+    "location": {"type": "Point", "coordinates": {}},
+}

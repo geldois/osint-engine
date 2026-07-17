@@ -5,6 +5,10 @@ from uuid import UUID
 
 from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
+from osint_engine.domain.value_objects.normalization import (
+    normalize_address_number,
+    normalize_str_to_digits_only,
+)
 
 AddressID = NewType("AddressID", UUID)
 
@@ -16,7 +20,7 @@ class Address(
 ):
     cep: str
     city: str
-    complement: str
+    complement: str | None
     neighborhood: str
     number: str
     state: str
@@ -28,7 +32,7 @@ class Address(
         *,
         cep: str,
         city: str,
-        complement: str,
+        complement: str | None,
         neighborhood: str,
         number: str,
         state: str,
@@ -41,3 +45,17 @@ class Address(
                 if key not in {"__class__", "self"}
             }
         )
+
+    @classmethod
+    @override
+    def _calculate_id(cls, **kwargs: object) -> AddressID:
+        cep = kwargs["cep"]
+        number = kwargs["number"]
+
+        if isinstance(cep, str):
+            kwargs["cep"] = normalize_str_to_digits_only(value=cep)
+
+        if isinstance(number, str):
+            kwargs["number"] = normalize_address_number(value=number)
+
+        return super()._calculate_id(**kwargs)
