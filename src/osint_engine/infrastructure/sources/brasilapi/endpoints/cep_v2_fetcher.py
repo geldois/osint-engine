@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from json.decoder import JSONDecodeError
+from json import JSONDecodeError
 from typing import TYPE_CHECKING, override
 
 from httpx2 import AsyncClient, HTTPStatusError, RequestError
@@ -27,7 +27,7 @@ class BrasilAPICEPv2Fetcher(BrasilAPIFetcher, CEPFetcher, url_suffix="cep/v2/"):
         super().__init__(http_client=http_client)
 
     @override
-    async def fetch(self, cep: str, number: str, /) -> EntityRevision[Address]:
+    async def fetch(self, *, cep: str, number: str) -> EntityRevision[Address]:
         self._logger.info("cep.fetch.start", cep=cep)
 
         try:

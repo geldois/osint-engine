@@ -28,7 +28,7 @@ class TestBrasilAPICEPv2FetcherOnHTTPStatusError:
         fetcher = make_brasilapi_cep_fetcher(handler=handler)
 
         with pytest.raises(DataSourceRequestError) as exception:
-            await fetcher.fetch(CEP, NUMBER)
+            await fetcher.fetch(cep=CEP, number=NUMBER)
 
         assert exception.value.status_code == status_code
 
@@ -48,7 +48,7 @@ class TestBrasilAPICEPv2FetcherOnNetworkFailure:
         fetcher = make_brasilapi_cep_fetcher(handler=handler)
 
         with pytest.raises(DataSourceRequestError) as exception:
-            await fetcher.fetch(CEP, NUMBER)
+            await fetcher.fetch(cep=CEP, number=NUMBER)
 
         assert exception.value.status_code is None
 
@@ -66,7 +66,7 @@ class TestBrasilAPICEPv2FetcherOnMalformedJSON:
         fetcher = make_brasilapi_cep_fetcher(handler=handler)
 
         with pytest.raises(DataSourceRequestError) as exception:
-            await fetcher.fetch(CEP, NUMBER)
+            await fetcher.fetch(cep=CEP, number=NUMBER)
 
         assert exception.value.status_code is None
 
@@ -83,7 +83,7 @@ class TestBrasilAPICEPv2FetcherOnSuccess:
 
         fetcher = make_brasilapi_cep_fetcher(handler=handler)
 
-        result = await fetcher.fetch(CEP, NUMBER)
+        result = await fetcher.fetch(cep=CEP, number=NUMBER)
 
         assert isinstance(result.entity, Address)
 

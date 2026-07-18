@@ -27,7 +27,7 @@ class BrasilAPICNPJv1Fetcher(BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/
         super().__init__(http_client=http_client)
 
     @override
-    async def fetch(self, cnpj: str, /) -> EntityRevision[Graph]:
+    async def fetch(self, *, cnpj: str) -> EntityRevision[Graph]:
         self._logger.info("cnpj.fetch.start", cnpj=cnpj)
 
         try:

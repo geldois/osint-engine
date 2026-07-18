@@ -32,7 +32,7 @@ class ExpandByCNPJ(Query[Graph]):
         _logger.info("cnpj.expansion.start", cnpj=self.cnpj)
 
         async with self.uow_factory() as uow:
-            revision = await self.cnpj_fetcher.fetch(self.cnpj)
+            revision = await self.cnpj_fetcher.fetch(cnpj=self.cnpj)
 
             await uow.graphs.merge(revision=revision)
 

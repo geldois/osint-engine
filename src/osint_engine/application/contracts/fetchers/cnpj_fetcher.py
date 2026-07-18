@@ -10,5 +10,5 @@ if TYPE_CHECKING:
 
 class CNPJFetcher(ABC):
     @abstractmethod
-    async def fetch(self, cnpj: str, /) -> EntityRevision[Graph]:
+    async def fetch(self, *, cnpj: str) -> EntityRevision[Graph]:
         raise NotImplementedError

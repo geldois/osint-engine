@@ -28,7 +28,7 @@ class TestBrasilAPICNPJv1FetcherOnHTTPStatusError:
         fetcher = make_brasilapi_cnpj_fetcher(handler=handler)
 
         with pytest.raises(DataSourceRequestError) as exception:
-            await fetcher.fetch(CNPJ)
+            await fetcher.fetch(cnpj=CNPJ)
 
         assert exception.value.status_code == status_code
 
@@ -48,7 +48,7 @@ class TestBrasilAPICNPJv1FetcherOnNetworkFailure:
         fetcher = make_brasilapi_cnpj_fetcher(handler=handler)
 
         with pytest.raises(DataSourceRequestError) as exception:
-            await fetcher.fetch(CNPJ)
+            await fetcher.fetch(cnpj=CNPJ)
 
         assert exception.value.status_code is None
 
@@ -66,7 +66,7 @@ class TestBrasilAPICNPJv1FetcherOnMalformedJSON:
         fetcher = make_brasilapi_cnpj_fetcher(handler=handler)
 
         with pytest.raises(DataSourceRequestError) as exception:
-            await fetcher.fetch(CNPJ)
+            await fetcher.fetch(cnpj=CNPJ)
 
         assert exception.value.status_code is None
 
@@ -83,7 +83,7 @@ class TestBrasilAPICNPJv1FetcherOnSuccess:
 
         fetcher = make_brasilapi_cnpj_fetcher(handler=handler)
 
-        result = await fetcher.fetch(CNPJ)
+        result = await fetcher.fetch(cnpj=CNPJ)
 
         assert isinstance(result.entity, Graph)
 

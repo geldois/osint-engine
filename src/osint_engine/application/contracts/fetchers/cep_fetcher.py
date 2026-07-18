@@ -10,5 +10,5 @@ if TYPE_CHECKING:
 
 class CEPFetcher(ABC):
     @abstractmethod
-    async def fetch(self, cep: str, number: str, /) -> EntityRevision[Address]:
+    async def fetch(self, *, cep: str, number: str) -> EntityRevision[Address]:
         raise NotImplementedError

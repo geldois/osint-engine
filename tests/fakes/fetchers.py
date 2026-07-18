@@ -14,5 +14,5 @@ class FakeCNPJFetcher(CNPJFetcher):
         self.revision = revision
 
     @override
-    async def fetch(self, cnpj: str, /) -> EntityRevision[Graph]:
+    async def fetch(self, *, cnpj: str) -> EntityRevision[Graph]:
         return self.revision
