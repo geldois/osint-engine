@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -66,6 +67,17 @@ class TestConfigureLoggingEventDictFields:
         get_logger().info("event")
 
         assert "timestamp" in log_capture.entries[0]
+
+    def test_log_event_timestamp_is_iso8601_formatted(
+        self, log_capture: LogCapture
+    ) -> None:
+        get_logger().info("event")
+
+        timestamp = log_capture.entries[0]["timestamp"]
+
+        assert isinstance(timestamp, str)
+
+        datetime.fromisoformat(timestamp)
 
     def test_log_event_includes_correlation_id_when_set(
         self, log_capture: LogCapture

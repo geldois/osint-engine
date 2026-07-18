@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import Union
 
 import pytest
 
@@ -32,6 +33,23 @@ class TestRuntimeType:
 
         assert not isinstance("3", union_type)
 
+    def test_returns_typing_union_unchanged_so_isinstance_still_works(self) -> None:
+        # typing.Union's get_origin() is `typing.Union` itself, distinct from
+        # types.UnionType (which is what `int | float` produces) — both
+        # branches of the `origin is Union or origin is UnionType` check
+        # must independently short-circuit to true.
+        typing_union = Union[int, str]  # noqa: UP007
+
+        runtime_type = _runtime_type(typing_union)
+
+        assert runtime_type is typing_union
+
+        assert isinstance(3, runtime_type)
+
+        assert isinstance("3", runtime_type)
+
+        assert not isinstance(3.0, runtime_type)
+
 
 class TestPayloadRequire:
     def test_raises_when_key_is_missing(self) -> None:
@@ -40,13 +58,17 @@ class TestPayloadRequire:
         with pytest.raises(UnexpectedPayloadError) as exception:
             payload.require(key="field", expected_type=str)
 
-        assert "field" in str(exception.value)
+        assert exception.value.missing_field == "field"
 
     def test_raises_when_field_type_does_not_match_expected_type(self) -> None:
         payload = Payload(source="test", data={"field": 1})
 
         with pytest.raises(UnexpectedFieldTypeError) as exception:
             payload.require(key="field", expected_type=str)
+
+        assert exception.value.source == "test"
+
+        assert exception.value.key == "field"
 
         assert "int" in str(exception.value)
 
@@ -109,6 +131,10 @@ class TestPayloadOptional:
 
         with pytest.raises(UnexpectedFieldTypeError) as exception:
             payload.optional(key="field", expected_type=str)
+
+        assert exception.value.source == "test"
+
+        assert exception.value.key == "field"
 
         assert "int" in str(exception.value)
 

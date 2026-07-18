@@ -15,6 +15,9 @@ if TYPE_CHECKING:
         MakePortalTransparenciaCNEPFetcher,
     )
 
+# TEST DOUBLES
+
+
 _CNEP_RESPONSE_DATA = {
     "dataFimSancao": "2026-01-01",
     "dataInicioSancao": "2024-01-01",
@@ -29,6 +32,9 @@ _CNEP_RESPONSE_DATA = {
     "tipoSancao": {"descricaoResumida": "Suspensão"},
     "valorMulta": "1.000,50",
 }
+
+
+# TESTS
 
 
 class TestPortalTransparenciaCNEPFetcherOnHTTPStatusError:

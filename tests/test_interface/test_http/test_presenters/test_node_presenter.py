@@ -141,6 +141,54 @@ class TestNodePresenterFieldMapping:
 
         assert result.trade_name == _COMPANY.trade_name
 
+        assert result.activity_start_date == _COMPANY.activity_start_date
+
+        assert result.legal_nature == _COMPANY.legal_nature
+
+        assert result.registration_status == _COMPANY.registration_status
+
+        assert result.registration_status_date == _COMPANY.registration_status_date
+
+        assert result.registration_status_reason == _COMPANY.registration_status_reason
+
+        assert result.size_category == _COMPANY.size_category
+
+    def test_person_fields_are_correctly_mapped(self) -> None:
+        result = node_to_schema(_PERSON)
+
+        assert isinstance(result, PersonSchema)
+
+        assert result.id == _PERSON.id
+
+        assert result.age_range == _PERSON.age_range
+
+        assert result.cpf == _PERSON.cpf
+
+        assert result.name == _PERSON.name
+
+    def test_sanction_fields_are_correctly_mapped(self) -> None:
+        result = node_to_schema(_SANCTION)
+
+        assert isinstance(result, SanctionSchema)
+
+        assert result.id == _SANCTION.id
+
+        assert result.end_date == _SANCTION.end_date
+
+        assert result.fine_amount == _SANCTION.fine_amount
+
+        assert result.organ == _SANCTION.organ
+
+        assert result.process_number == _SANCTION.process_number
+
+        assert result.publication_date == _SANCTION.publication_date
+
+        assert result.sanction_type == _SANCTION.sanction_type
+
+        assert result.sanctioning_body == _SANCTION.sanctioning_body
+
+        assert result.start_date == _SANCTION.start_date
+
 
 class TestNodePresenterErrors:
     def test_raises_for_unmapped_node_type(self, make_fake_node: MakeFakeNode) -> None:

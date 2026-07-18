@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from jwt import decode as jwt_decode  # pyright: ignore[reportUnknownVariableType]
 
 if TYPE_CHECKING:
     from httpx2 import AsyncClient
@@ -37,6 +38,24 @@ class TestPostToken:
         assert isinstance(body["access_token"], str)
 
         assert len(body["access_token"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_access_token_carries_authenticated_user_claims(
+        self, fastapi_app_client: AsyncClient, settings: Settings
+    ) -> None:
+        response = await fastapi_app_client.post(
+            "/auth/token",
+            data={"username": "admin", "password": settings.admin_password},
+        )
+        access_token = response.json()["access_token"]
+
+        claims = jwt_decode(
+            jwt=access_token, key=settings.secret_key, algorithms=["HS256"]
+        )
+
+        assert claims["sub"] == "admin"
+
+        assert claims["role"] == "ADMIN"
 
     @pytest.mark.asyncio
     async def test_invalid_password_returns_401(

@@ -75,6 +75,7 @@ class TestParseFineAmount:
         assert exception.value.source == "portal_transparencia"
         assert exception.value.key == "valorMulta"
         assert exception.value.raw_value == "not-a-number"
+        assert exception.value.reason == "not a valid pt-BR monetary amount"
 
 
 class TestMapSanction:
@@ -109,10 +110,13 @@ class TestMapSanction:
     ) -> None:
         data = {**_SANCTION_DATA, "valorMulta": "not-a-number"}
 
-        with pytest.raises(UnexpectedFieldFormatError):
+        with pytest.raises(UnexpectedFieldFormatError) as exception:
             _map_sanction(
                 payload=make_payload(source="portal_transparencia", data=data)
             )
+
+        assert exception.value.source == "portal_transparencia"
+        assert exception.value.key == "valorMulta"
 
 
 class TestMapCompanyStub:

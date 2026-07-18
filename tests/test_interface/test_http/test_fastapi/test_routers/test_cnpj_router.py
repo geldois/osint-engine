@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 import pytest
 import pytest_asyncio
@@ -72,6 +73,19 @@ class TestGetCnpjAuthentication:
         assert response.status_code == 401
 
 
+class TestCnpjRouterScope:
+    @pytest.mark.asyncio
+    async def test_unrelated_path_is_not_routed_to_cnpj_handler(
+        self, client: AsyncClient
+    ) -> None:
+        """The router is mounted under /cnpj; without that prefix a
+        `{cnpj:path}` route would swallow every unrelated path."""
+
+        response = await client.get("/some/unrelated/path")
+
+        assert response.status_code == 404
+
+
 class TestGetCnpjExpansion:
     @pytest.mark.asyncio
     async def test_valid_token_returns_200(
@@ -92,3 +106,13 @@ class TestGetCnpjExpansion:
         )
 
         assert "x-correlation-id" in response.headers
+
+    @pytest.mark.asyncio
+    async def test_correlation_id_header_is_a_valid_uuid(
+        self, client: AsyncClient, valid_token: str
+    ) -> None:
+        response = await client.get(
+            f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+        )
+
+        UUID(response.headers["x-correlation-id"])

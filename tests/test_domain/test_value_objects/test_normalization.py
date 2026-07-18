@@ -11,7 +11,9 @@ from osint_engine.domain.value_objects.normalization import (
 
 class TestDigitsOnly:
     def test_strips_punctuation_from_formatted_document_number(self) -> None:
-        assert normalize_str_to_digits_only(value="33.754.482/0001-24") == "33754482000124"  # noqa: E501
+        assert (
+            normalize_str_to_digits_only(value="33.754.482/0001-24") == "33754482000124"
+        )
 
     def test_strips_asterisks_from_masked_document_number(self) -> None:
         assert normalize_str_to_digits_only(value="***128734**") == "128734"
@@ -80,9 +82,7 @@ class TestNormalizeAddressNumberSuffixCanonicalization:
     ) -> None:
         assert normalize_address_number(value=value) == expected
 
-    @pytest.mark.parametrize(
-        "variant", ["100A", "100-A", "100/A", "100 A", "100a"]
-    )
+    @pytest.mark.parametrize("variant", ["100A", "100-A", "100/A", "100 A", "100a"])
     def test_equivalent_suffix_variants_produce_the_same_value(
         self, variant: str
     ) -> None:
@@ -97,6 +97,8 @@ class TestNormalizeAddressNumberNonNumericFallback:
         [
             ("LOTE A", "LOTE-A"),
             ("QUADRA-5", "QUADRA-5"),
+            ("- KM -", "KM"),
+            ("X-KM-X", "X-KM-X"),
         ],
     )
     def test_unifies_separators_when_value_has_no_leading_digits(
@@ -120,6 +122,17 @@ class TestNormalizeAddressNumberNoNumberCanonicalization:
             value="0"
         )
 
+    def test_stripping_the_ordinal_indicator_does_not_swallow_adjacent_letters(
+        self,
+    ) -> None:
+        """
+        Regression: only 'º'/'°' are ordinal indicators to be trimmed before
+        the no-number check; a value that merely ends adjacent to one (e.g.
+        'Xº') must not be misclassified as S/N.
+        """
+
+        assert normalize_address_number(value="Xº") != "S/N"
+
 
 class TestNormalizeAddressNumberIdentityRegression:
     """
@@ -132,6 +145,4 @@ class TestNormalizeAddressNumberIdentityRegression:
         assert normalize_address_number(value="S/N") != ""
 
     def test_blank_input_does_not_collide_with_the_digit_zero(self) -> None:
-        assert normalize_address_number(value="") != normalize_address_number(
-            value="0"
-        )
+        assert normalize_address_number(value="") != normalize_address_number(value="0")

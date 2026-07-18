@@ -17,6 +17,7 @@ from osint_engine.infrastructure.errors.infrastructure_error import (
 from osint_engine.infrastructure.errors.token_error import InvalidTokenError
 from osint_engine.interface.errors.interface_error import InterfaceError
 from osint_engine.interface.errors.sanitization_error import InvalidCNPJError
+from osint_engine.interface.http.fastapi import error_handler as error_handler_module
 from osint_engine.interface.http.fastapi.error_handler import build_error_handler
 from osint_engine.observability.context import correlation_id
 
@@ -209,6 +210,32 @@ class TestErrorHandlerDebugField:
         data = _body(make_handle_error(debug=False)(_REQUEST, ValueError("boom")))
 
         assert "debug" not in data
+
+
+class TestErrorHandlerLogSeverity:
+    def test_5xx_at_server_error_boundary_logs_as_error(
+        self,
+        make_handle_error: _MakeHandleError,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """HTTP_SERVER_ERROR (500) is the boundary: status < 500 logs info,
+        status >= 500 (inclusive) must log error, not info."""
+
+        calls: list[str] = []
+        logger = error_handler_module._logger  # pyright: ignore[reportPrivateUsage]
+
+        def record_info(*args: object, **kwargs: object) -> None:  # noqa: ARG001
+            calls.append("info")
+
+        def record_error(*args: object, **kwargs: object) -> None:  # noqa: ARG001
+            calls.append("error")
+
+        monkeypatch.setattr(logger, "info", record_info)
+        monkeypatch.setattr(logger, "error", record_error)
+
+        make_handle_error()(_REQUEST, ValueError("boom"))
+
+        assert calls == ["error"]
 
 
 class TestErrorHandlerCorrelationId:

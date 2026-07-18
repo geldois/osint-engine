@@ -5,8 +5,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
 from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
+from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
+from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
 from osint_engine.domain.entities.edges.company_owns_company import CompanyOwnsCompany
+from osint_engine.domain.entities.edges.person_owns_company import PersonOwnsCompany
 from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.entities.nodes.email import Email
@@ -369,6 +373,21 @@ class TestMapPersonsAndOwnerships:
 
         assert ownerships == set()
 
+    def test_keeps_scanning_after_skipping_a_non_person_partner(
+        self, make_payload: MakePayload
+    ) -> None:
+        persons, ownerships = _map_persons_and_ownerships(
+            payload=make_payload(
+                source="brasilapi",
+                data={"qsa": [PARTNER_LEGAL_ENTITY, PARTNER_PERSON]},
+            ),
+            company_id=_COMPANY_ID,
+        )
+
+        assert len(persons) == 1
+
+        assert len(ownerships) == 1
+
 
 class TestMapCompanyPartnersAndOwnerships:
     def test_maps_company_stub_fields(self, make_payload: MakePayload) -> None:
@@ -586,6 +605,23 @@ class TestMapGraph:
         graph = map_graph(
             payload=make_payload(source="brasilapi", data=COMPLETE_PAYLOAD_DATA)
         )
+
+        assert any(isinstance(edge, CompanyOwnsCompany) for edge in graph.edges)
+
+    def test_all_edge_kinds_coexist_in_the_same_union(
+        self, make_payload: MakePayload
+    ) -> None:
+        graph = map_graph(
+            payload=make_payload(source="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        assert any(isinstance(edge, CompanyHasCnae) for edge in graph.edges)
+
+        assert any(isinstance(edge, CompanyHasMember) for edge in graph.edges)
+
+        assert any(isinstance(edge, CompanyHasPhone) for edge in graph.edges)
+
+        assert any(isinstance(edge, PersonOwnsCompany) for edge in graph.edges)
 
         assert any(isinstance(edge, CompanyOwnsCompany) for edge in graph.edges)
 

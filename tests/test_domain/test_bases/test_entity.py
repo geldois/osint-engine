@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
+from inspect import isabstract
 from typing import NewType, override
 from uuid import UUID, uuid4
 
 import pytest
 
 from osint_engine.domain.entities.bases.entity import Entity
+from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.errors.entity_error import (
     EntityEmptyIDFieldNameError,
     EntityInvalidIDFieldError,
@@ -16,6 +18,8 @@ from osint_engine.domain.errors.entity_error import (
     EntityNonDeterministicValueError,
 )
 from tests.fakes.domain import TEST, TEST_DIFF, FakeEntity, FakeEntityID
+
+OtherEntityID = NewType("OtherEntityID", UUID)
 
 # TEST DOUBLES
 
@@ -62,6 +66,23 @@ class FakeFakeEntity:
     def __init__(self, *, content: str) -> None:
         self.id = uuid4()
         self.content = content
+
+
+class NonGenericMixin:
+    """A plain, non-generic co-base mixed alongside an Entity[...] base."""
+
+
+class BadNewType:
+    """
+    A NewType-shaped object (has `__supertype__`) whose call does not
+    actually produce a UUID, exercising the id_type probe's failure path.
+    """
+
+    __supertype__ = UUID
+    __name__ = "BadNewType"
+
+    def __call__(self, _value: object) -> object:
+        return "not-a-uuid"
 
 
 # TESTS
@@ -193,6 +214,125 @@ class TestEntitySubclassContract:
 
         assert "FakeEntityWithWrongIDType" in str(exception.value)
 
+    def test_raises_when_the_generic_arg_does_not_produce_a_uuid(self) -> None:
+        bad_id_type = BadNewType()
+
+        with pytest.raises(EntityInvalidIDTypeError) as exception:
+
+            class FakeEntityWithBadProbe(  # pyright: ignore[reportUnusedClass]
+                Entity[bad_id_type],  # pyright: ignore[reportInvalidTypeArguments]
+                id_fields=frozenset({"content"}),
+                namespace=TEST,
+            ):
+                content: str
+
+                def __init__(self, content: str, **kwargs: object) -> None:
+                    super().__init__(content=content, **kwargs)
+
+        assert "BadNewType" in str(exception.value)
+
+        assert "FakeEntityWithBadProbe" in str(exception.value)
+
+    def test_binds_namespace_from_the_declared_entity_namespace(self) -> None:
+        assert FakeEntity.namespace == TEST.namespace
+
+    def test_stops_scanning_bases_at_the_first_non_generic_base(self) -> None:
+        class FakeEntityWithLeadingMixin(
+            NonGenericMixin,
+            Entity[FakeEntityID],
+            id_fields=frozenset({"content"}),
+            namespace=TEST,
+        ):
+            content: str
+
+            def __init__(self, *, content: str, **kwargs: object) -> None:
+                super().__init__(content=content, **kwargs)
+
+        assert FakeEntityWithLeadingMixin.id_type.__name__ == FakeEntityID.__name__
+
+    def test_skips_a_leading_generic_base_that_is_not_an_entity(self) -> None:
+        class FakeEntityWithLeadingNonEntityGeneric(
+            list[OtherEntityID],
+            Entity[FakeEntityID],
+            id_fields=frozenset({"content"}),
+            namespace=TEST,
+        ):
+            content: str
+
+            def __init__(self, *, content: str, **kwargs: object) -> None:
+                list.__init__(self)  # pyright: ignore[reportUnknownMemberType]
+
+                Entity.__init__(  # pyright: ignore[reportUnknownMemberType]
+                    self, content=content, **kwargs
+                )
+
+        assert (
+            FakeEntityWithLeadingNonEntityGeneric.id_type.__name__
+            == FakeEntityID.__name__
+        )
+
+    def test_does_not_let_a_trailing_non_entity_generic_overwrite_id_type(
+        self,
+    ) -> None:
+        class FakeEntityWithTrailingNonEntityGeneric(
+            Entity[FakeEntityID],
+            list[OtherEntityID],
+            id_fields=frozenset({"content"}),
+            namespace=TEST,
+        ):
+            content: str
+
+            def __init__(self, *, content: str, **kwargs: object) -> None:
+                Entity.__init__(  # pyright: ignore[reportUnknownMemberType]
+                    self, content=content, **kwargs
+                )
+
+                list.__init__(self)  # pyright: ignore[reportUnknownMemberType]
+
+        assert (
+            FakeEntityWithTrailingNonEntityGeneric.id_type.__name__
+            == FakeEntityID.__name__
+        )
+
+    def test_skips_a_leading_generic_base_without_a_newtype_arg(self) -> None:
+        class FakeEntityWithLeadingPlainGeneric(
+            Node[UUID],
+            Entity[FakeEntityID],
+            id_fields=frozenset({"content"}),
+            namespace=TEST,
+        ):
+            content: str
+
+            def __init__(self, *, content: str, **kwargs: object) -> None:
+                super().__init__(content=content, **kwargs)
+
+        assert (
+            FakeEntityWithLeadingPlainGeneric.id_type.__name__ == FakeEntityID.__name__
+        )
+
+    def test_does_not_raise_for_a_concrete_subclass_with_id_type_bound(self) -> None:
+        class FakeEntityWithBoundIDType(
+            Entity[FakeEntityID], id_fields=frozenset({"content"}), namespace=TEST
+        ):
+            content: str
+
+            def __init__(self, *, content: str, **kwargs: object) -> None:
+                super().__init__(content=content, **kwargs)
+
+        assert FakeEntityWithBoundIDType.id_type is not None
+
+    def test_does_not_raise_for_an_abstract_subclass_without_id_type(self) -> None:
+        class FakeAbstractEntity(
+            Entity,  # pyright: ignore[reportMissingTypeArgument]
+            id_fields=None,
+            namespace=TEST,
+        ):
+            """Abstract intermediate base: no __init__ override, no generic bind."""
+
+        assert not hasattr(FakeAbstractEntity, "id_type")
+
+        assert isabstract(FakeAbstractEntity)
+
 
 class TestEntityValueSemantics:
     def test_entity_is_hashable(self) -> None:
@@ -266,6 +406,14 @@ class TestEntityIDCalculation:
             FakeEntity._calculate_id(content=value)  # pyright: ignore[reportPrivateUsage]
 
         assert type(value).__name__ in str(exception.value)
+
+    def test_raises_when_a_tuple_element_is_not_deterministic(self) -> None:
+        nested_invalid = ["not_deterministic"]
+
+        with pytest.raises(EntityNonDeterministicValueError) as exception:
+            FakeEntity._calculate_id(content=("a", nested_invalid))  # pyright: ignore[reportPrivateUsage]
+
+        assert type(nested_invalid).__name__ in str(exception.value)
 
 
 class TestEntityIdentityFieldsValidation:

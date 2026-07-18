@@ -35,3 +35,16 @@ class TestDomainErrorSubclassContract:
                     return "test"
 
         assert "FakeConcreteDomainErrorWithoutErrorCodeError" in str(exception.value)
+
+    def test_does_not_raise_for_a_concrete_subclass_with_an_error_code(self) -> None:
+        assert FakeDomainError.error_code == "TEST"
+
+    def test_does_not_raise_for_an_abstract_subclass_without_an_error_code(
+        self,
+    ) -> None:
+        class FakeAbstractDomainError(  # pyright: ignore[reportUnusedClass]
+            DomainError, error_code=None
+        ):
+            """Abstract intermediate base: no __init__/_build_message override."""
+
+        assert FakeAbstractDomainError.error_code is None
