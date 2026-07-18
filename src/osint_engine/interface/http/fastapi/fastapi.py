@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Exception composition root — see http_status_mapper.py for the rationale
+# behind referencing infrastructure error types directly from interface.
 from osint_engine.application.errors.application_error import ApplicationError
 from osint_engine.domain.errors.domain_error import DomainError
 from osint_engine.infrastructure.errors.infrastructure_error import InfrastructureError
