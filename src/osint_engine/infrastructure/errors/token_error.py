@@ -5,10 +5,10 @@ from typing import override
 from osint_engine.infrastructure.errors.infrastructure_error import InfrastructureError
 
 
-class TokenError(InfrastructureError): ...
+class TokenError(InfrastructureError, error_code=None): ...
 
 
-class InvalidTokenError(TokenError):
+class InvalidTokenError(TokenError, error_code="TOKEN_INVALID"):
     detail: str
 
     @override

@@ -4,8 +4,12 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from structlog.stdlib import get_logger
 
+from osint_engine.application.errors.application_error import ApplicationError
 from osint_engine.config.container import Container
 from osint_engine.domain.errors.domain_error import DomainError
+from osint_engine.infrastructure.errors.infrastructure_error import (
+    InfrastructureError,
+)
 from osint_engine.interface.errors.interface_error import InterfaceError
 from osint_engine.interface.http.mappers.http_status_mapper import (
     HTTP_SERVER_ERROR,
@@ -47,7 +51,10 @@ def build_error_handler(
         )
         error_code = (
             exception.error_code
-            if isinstance(exception, (DomainError, InterfaceError))
+            if isinstance(
+                exception,
+                (DomainError, ApplicationError, InfrastructureError, InterfaceError),
+            )
             else None
         )
         error_schema = ErrorSchema(

@@ -9,7 +9,11 @@ import pytest
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+from osint_engine.application.errors.application_error import ApplicationError
 from osint_engine.domain.errors.domain_error import DomainError
+from osint_engine.infrastructure.errors.infrastructure_error import (
+    InfrastructureError,
+)
 from osint_engine.infrastructure.errors.token_error import InvalidTokenError
 from osint_engine.interface.errors.interface_error import InterfaceError
 from osint_engine.interface.errors.sanitization_error import InvalidCNPJError
@@ -43,6 +47,28 @@ class _FakeInterfaceError(InterfaceError, error_code="TEST_INTERFACE_ERROR"):
     @override
     def _build_message(self) -> str:
         return "fake interface error"
+
+
+class _FakeApplicationError(ApplicationError, error_code="TEST_APPLICATION_ERROR"):
+    @override
+    def __init__(self) -> None:
+        super().__init__()
+
+    @override
+    def _build_message(self) -> str:
+        return "fake application error"
+
+
+class _FakeInfrastructureError(
+    InfrastructureError, error_code="TEST_INFRASTRUCTURE_ERROR"
+):
+    @override
+    def __init__(self) -> None:
+        super().__init__()
+
+    @override
+    def _build_message(self) -> str:
+        return "fake infrastructure error"
 
 
 _REQUEST = Request(
@@ -142,6 +168,20 @@ class TestErrorHandlerErrorCode:
         data = _body(make_handle_error()(_REQUEST, _FakeInterfaceError()))
 
         assert data["type"] == "TEST_INTERFACE_ERROR"
+
+    def test_application_error_includes_type_field(
+        self, make_handle_error: _MakeHandleError
+    ) -> None:
+        data = _body(make_handle_error()(_REQUEST, _FakeApplicationError()))
+
+        assert data["type"] == "TEST_APPLICATION_ERROR"
+
+    def test_infrastructure_error_includes_type_field(
+        self, make_handle_error: _MakeHandleError
+    ) -> None:
+        data = _body(make_handle_error()(_REQUEST, _FakeInfrastructureError()))
+
+        assert data["type"] == "TEST_INFRASTRUCTURE_ERROR"
 
     def test_generic_exception_omits_type_field(
         self, make_handle_error: _MakeHandleError

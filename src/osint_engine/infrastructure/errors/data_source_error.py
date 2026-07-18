@@ -12,10 +12,10 @@ def _type_name(subject: type | UnionType) -> str:
     return subject.__name__ if isinstance(subject, type) else str(subject)
 
 
-class DataSourceError(InfrastructureError): ...
+class DataSourceError(InfrastructureError, error_code=None): ...
 
 
-class DataSourceRequestError(DataSourceError):
+class DataSourceRequestError(DataSourceError, error_code="DATA_SOURCE_REQUEST_FAILED"):
     source: str
     status_code: int | None
 
@@ -34,7 +34,9 @@ class DataSourceRequestError(DataSourceError):
         return f"'{self.source}' request failed {status_code_report}."
 
 
-class UnexpectedFieldTypeError(DataSourceError):
+class UnexpectedFieldTypeError(
+    DataSourceError, error_code="DATA_SOURCE_UNEXPECTED_FIELD_TYPE"
+):
     source: str
     key: str
     expected_type: type | UnionType
@@ -62,7 +64,9 @@ class UnexpectedFieldTypeError(DataSourceError):
         )
 
 
-class UnexpectedPayloadError(DataSourceError):
+class UnexpectedPayloadError(
+    DataSourceError, error_code="DATA_SOURCE_UNEXPECTED_PAYLOAD"
+):
     source: str
     missing_field: str
 

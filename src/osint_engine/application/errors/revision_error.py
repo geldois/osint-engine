@@ -8,10 +8,10 @@ if TYPE_CHECKING:
     from uuid import UUID
 
 
-class RevisionError(ApplicationError): ...
+class RevisionError(ApplicationError, error_code=None): ...
 
 
-class EntityIDMismatchError(RevisionError):
+class EntityIDMismatchError(RevisionError, error_code="REVISION_ENTITY_ID_MISMATCH"):
     left_id: UUID
     right_id: UUID
 
@@ -27,7 +27,7 @@ class EntityIDMismatchError(RevisionError):
         )
 
 
-class NonUTCAttributeError(RevisionError):
+class NonUTCAttributeError(RevisionError, error_code="REVISION_NON_UTC_ATTRIBUTE"):
     attribute: Literal["fetched_at", "merged_at"]
     tzinfo: str
 
@@ -42,7 +42,9 @@ class NonUTCAttributeError(RevisionError):
         return f"Revision.{self.attribute} must be UTC, got tzinfo={self.tzinfo}."
 
 
-class EmptyRevisionSelectionError(RevisionError):
+class EmptyRevisionSelectionError(
+    RevisionError, error_code="REVISION_EMPTY_SELECTION"
+):
     @override
     def __init__(self) -> None:
         super().__init__()

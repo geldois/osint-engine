@@ -8,10 +8,10 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.uow import UoW
 
 
-class UoWError(InfrastructureError): ...
+class UoWError(InfrastructureError, error_code=None): ...
 
 
-class UoWAlreadyPreparedError(UoWError):
+class UoWAlreadyPreparedError(UoWError, error_code="UOW_ALREADY_PREPARED"):
     subject: type[UoW]
 
     @override
@@ -26,7 +26,7 @@ class UoWAlreadyPreparedError(UoWError):
         )
 
 
-class UoWNotPreparedError(UoWError):
+class UoWNotPreparedError(UoWError, error_code="UOW_NOT_PREPARED"):
     subject: type[UoW]
 
     @override
