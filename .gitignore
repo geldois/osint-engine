@@ -215,3 +215,4 @@ __marimo__/
 .env.prod
 .env.test
 .remember
+mutants/

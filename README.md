@@ -230,7 +230,7 @@ uv run python -m osint_engine
 ### Test
 
 ```bash
-uv run pytest --cov
+uv run pytest --cov --cov-branch
 ```
 
 ### Local CI
