@@ -66,7 +66,16 @@ _PERSON = Person(age_range="31 a 40 anos", cpf="123.456.789-09", name="João Sil
 
 _PHONE = Phone(number="+5511999999999")
 
-_SANCTION = Sanction(organ="CEIS")
+_SANCTION = Sanction(
+    end_date="2024-12-31",
+    fine_amount=Decimal("1000.00"),
+    organ="CEIS",
+    process_number="12345/2024",
+    publication_date="2024-01-01",
+    sanction_type="Suspensão",
+    sanctioning_body="CEIS",
+    start_date="2024-01-01",
+)
 
 
 # TESTS

@@ -112,7 +112,7 @@ class EmailSchema(NodeSchema[Email]):
 class PersonSchema(NodeSchema[Person]):
     type: Literal["person"] = "person"
 
-    age_range: str
+    age_range: str | None
     cpf: str
     id: UUID
     name: str
@@ -138,8 +138,15 @@ class PhoneSchema(NodeSchema[Phone]):
 class SanctionSchema(NodeSchema[Sanction]):
     type: Literal["sanction"] = "sanction"
 
+    end_date: str | None
+    fine_amount: Decimal | None
     id: UUID
     organ: Literal["CEIS", "CNEP"]
+    process_number: str | None
+    publication_date: str | None
+    sanction_type: str
+    sanctioning_body: str
+    start_date: str | None
 
     @classmethod
     @override

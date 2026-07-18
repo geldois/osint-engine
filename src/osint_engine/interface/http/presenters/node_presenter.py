@@ -77,7 +77,17 @@ def phone_to_schema(*, node: Phone) -> PhoneSchema:
 
 
 def sanction_to_schema(*, node: Sanction) -> SanctionSchema:
-    return SanctionSchema(id=node.id, organ=node.organ)
+    return SanctionSchema(
+        id=node.id,
+        end_date=node.end_date,
+        fine_amount=node.fine_amount,
+        organ=node.organ,
+        process_number=node.process_number,
+        publication_date=node.publication_date,
+        sanction_type=node.sanction_type,
+        sanctioning_body=node.sanctioning_body,
+        start_date=node.start_date,
+    )
 
 
 _NODE_MAP: dict[type[Node[UUID]], Callable[..., NodeSchemaUnion]] = {
