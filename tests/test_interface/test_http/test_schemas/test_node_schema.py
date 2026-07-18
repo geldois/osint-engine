@@ -17,6 +17,7 @@ from osint_engine.interface.http.schemas.node_schema import (
 from tests.fakes.domain import FakeNode
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from uuid import UUID
 
     from osint_engine.domain.entities.bases.node import Node
@@ -104,12 +105,20 @@ class TestNodeSchemaRegistryErrors:
 
 
 class TestNodeSchemaRegistryRegister:
+    @pytest.fixture(autouse=True)
+    def _unregister_fake_node(self) -> Iterator[None]:
+        yield
+
+        NodeSchemaRegistry._REGISTRY.pop(FakeNode, None)  # pyright: ignore[reportPrivateUsage]
+
     def test_register_maps_schema_to_domain_key(self) -> None:
         NodeSchemaRegistry.register(ValidFakeNodeSchema)
 
         assert NodeSchemaRegistry.get_from_domain(FakeNode) is ValidFakeNodeSchema
 
     def test_raises_for_duplicate_registration(self) -> None:
+        NodeSchemaRegistry.register(ValidFakeNodeSchema)
+
         with pytest.raises(DuplicateSchemaRegistrationError) as exception:
             NodeSchemaRegistry.register(ValidFakeNodeSchema)
 

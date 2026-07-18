@@ -64,9 +64,35 @@ packages = ["src/osint_engine"]
 pythonpath = ["src", "tests"]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "session"
+# mutmut's working copy under mutants/ duplicates every module path (including
+# tests/conftest.py); without this, a stray mutants/ dir left over from an
+# interrupted `mutmut run` makes plain `pytest` collection fail with
+# ImportPathMismatchError instead of just ignoring the mutation workspace.
+# Includes pytest's own defaults since setting this option replaces rather
+# than extends them.
+norecursedirs = [
+  "*.egg",
+  ".*",
+  "_darcs",
+  "build",
+  "CVS",
+  "dist",
+  "mutants",
+  "node_modules",
+  "venv",
+  "{arch}",
+]
 
 [tool.pytest-language-server]
 exclude = ["build/**", "dist/**", ".tox/**"]
+
+[tool.mutmut]
+source_paths = ["src/"]
+pytest_add_cli_args_test_selection = ["tests/"]
+# EntityNAMESPACE defines __init__ on an Enum member; mutmut's trampoline
+# instrumentation collides with Enum's __set_name__/__init__ metaclass
+# machinery on this file (KeyError: '_mutmut_orig'), so it is excluded.
+do_not_mutate = ["src/osint_engine/domain/value_objects/entity_namespace.py"]
 
 [tool.ruff]
 line-length = 88
