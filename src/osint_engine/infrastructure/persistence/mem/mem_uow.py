@@ -14,6 +14,9 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import (
 from osint_engine.infrastructure.persistence.mem.repositories.mem_edge_repository import (  # noqa: E501
     MemEdgeRepository,
 )
+from osint_engine.infrastructure.persistence.mem.repositories.mem_external_credential_repository import (  # noqa: E501
+    MemExternalCredentialRepository,
+)
 from osint_engine.infrastructure.persistence.mem.repositories.mem_graph_repository import (  # noqa: E501
     MemGraphRepository,
 )
@@ -49,7 +52,14 @@ class MemUoW(UoW):
     def _is_prepared(self) -> bool:
         return all(
             hasattr(self, attribute)
-            for attribute in ("_snapshot", "edges", "graphs", "nodes", "users")
+            for attribute in (
+                "_snapshot",
+                "edges",
+                "external_credentials",
+                "graphs",
+                "nodes",
+                "users",
+            )
         )
 
     @override
@@ -63,6 +73,9 @@ class MemUoW(UoW):
             mem_storage=self._snapshot,
             revision_merge_policy=self.revision_merge_policy,
             revision_selection_policy=self.revision_selection_policy,
+        )
+        self.external_credentials = MemExternalCredentialRepository(
+            mem_storage=self._snapshot
         )
         self.graphs = MemGraphRepository(
             mem_storage=self._snapshot,
@@ -86,6 +99,8 @@ class MemUoW(UoW):
         del self._snapshot
 
         del self.edges
+
+        del self.external_credentials
 
         del self.graphs
 

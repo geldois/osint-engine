@@ -9,6 +9,10 @@ from uuid import UUID
 from osint_engine.domain.entities.bases.entity import Entity
 
 if TYPE_CHECKING:
+    from osint_engine.application.auth.external_credential import (
+        ExternalCredential,
+        Provider,
+    )
     from osint_engine.application.auth.user import User
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.edge import Edge
@@ -18,6 +22,7 @@ if TYPE_CHECKING:
 
 class MemStorage:
     edges: defaultdict[UUID, dict[UUID, EntityRevision[Edge[UUID, UUID, UUID]]]]
+    external_credentials: dict[tuple[str, Provider], ExternalCredential]
     graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]]
     nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]]
     users: dict[str, User]
@@ -27,12 +32,19 @@ class MemStorage:
         *,
         edges: defaultdict[UUID, dict[UUID, EntityRevision[Edge[UUID, UUID, UUID]]]]
         | None = None,
+        external_credentials: dict[tuple[str, Provider], ExternalCredential]
+        | None = None,
         graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]] | None = None,
         nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]] | None = None,
         users: dict[str, User] | None = None,
     ) -> None:
         object.__setattr__(
             self, "edges", edges if edges is not None else defaultdict(dict)
+        )
+        object.__setattr__(
+            self,
+            "external_credentials",
+            external_credentials if external_credentials is not None else {},
         )
         object.__setattr__(
             self, "graphs", graphs if graphs is not None else defaultdict(dict)
@@ -67,6 +79,7 @@ class MemStorageSnapshot(MemStorage):
 
         super().__init__(
             edges=self.deepcopy_entity_storage(mem_storage.edges),
+            external_credentials=copy(mem_storage.external_credentials),
             graphs=self.deepcopy_entity_storage(mem_storage.graphs),
             nodes=self.deepcopy_entity_storage(mem_storage.nodes),
             users=copy(mem_storage.users),
@@ -86,6 +99,7 @@ class MemStorageSnapshot(MemStorage):
 
     def clear_snapshot(self) -> None:
         self.edges.clear()
+        self.external_credentials.clear()
         self.graphs.clear()
         self.nodes.clear()
         self.users.clear()
@@ -93,6 +107,9 @@ class MemStorageSnapshot(MemStorage):
     def commit_to_storage(self) -> None:
         self._mem_storage.edges.clear()
         self._mem_storage.edges.update(self.edges)
+
+        self._mem_storage.external_credentials.clear()
+        self._mem_storage.external_credentials.update(self.external_credentials)
 
         self._mem_storage.graphs.clear()
         self._mem_storage.graphs.update(self.graphs)

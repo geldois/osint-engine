@@ -20,7 +20,14 @@ if TYPE_CHECKING:
         MakeUser,
     )
 
-_LIFECYCLE_ATTRIBUTES = ("_snapshot", "edges", "graphs", "nodes", "users")
+_LIFECYCLE_ATTRIBUTES = (
+    "_snapshot",
+    "edges",
+    "external_credentials",
+    "graphs",
+    "nodes",
+    "users",
+)
 
 
 class TestMemUoWContextLifecycle:
