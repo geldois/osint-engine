@@ -4,6 +4,7 @@ from typing import NewType, override
 from uuid import UUID
 
 from osint_engine.domain.entities.bases.node import Node
+from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 from osint_engine.domain.value_objects.normalization import (
     normalize_address_number,
@@ -11,6 +12,8 @@ from osint_engine.domain.value_objects.normalization import (
 )
 
 AddressID = NewType("AddressID", UUID)
+
+_CEP_DIGIT_LENGTH = 8
 
 
 class Address(
@@ -53,7 +56,18 @@ class Address(
         number = kwargs["number"]
 
         if isinstance(cep, str):
-            kwargs["cep"] = normalize_str_to_digits_only(value=cep)
+            normalized = normalize_str_to_digits_only(value=cep)
+
+            if len(normalized) != _CEP_DIGIT_LENGTH:
+                raise EntityInvalidIdentifierError(
+                    subject=cls,
+                    field="cep",
+                    raw_value=cep,
+                    expected_length=_CEP_DIGIT_LENGTH,
+                    actual_length=len(normalized),
+                )
+
+            kwargs["cep"] = normalized
 
         if isinstance(number, str):
             kwargs["number"] = normalize_address_number(value=number)

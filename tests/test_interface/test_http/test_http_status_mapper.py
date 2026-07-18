@@ -8,7 +8,10 @@ import pytest
 from osint_engine.application.errors.auth_error import InvalidCredentialsError
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.errors.domain_error import MissingErrorIdentityContractError
-from osint_engine.domain.errors.entity_error import EntityNotFoundError
+from osint_engine.domain.errors.entity_error import (
+    EntityInvalidIdentifierError,
+    EntityNotFoundError,
+)
 from osint_engine.domain.errors.graph_error import (
     GraphHasNoNodesError,
     GraphInconsistentError,
@@ -16,6 +19,7 @@ from osint_engine.domain.errors.graph_error import (
 )
 from osint_engine.infrastructure.errors.data_source_error import (
     DataSourceError,
+    UnexpectedFieldFormatError,
     UnexpectedFieldTypeError,
     UnexpectedPayloadError,
 )
@@ -28,7 +32,7 @@ from osint_engine.interface.http.mappers.http_status_mapper import map_status_fr
 # TEST DOUBLES
 
 
-class _ConcreteDataSourceError(DataSourceError):
+class _ConcreteDataSourceError(DataSourceError, error_code="TEST_DATA_SOURCE_ERROR"):
     @override
     def __init__(self) -> None:
         super().__init__()
@@ -38,7 +42,7 @@ class _ConcreteDataSourceError(DataSourceError):
         return "data source error"
 
 
-class _ConcreteUoWError(UoWError):
+class _ConcreteUoWError(UoWError, error_code="TEST_UOW_ERROR"):
     @override
     def __init__(self) -> None:
         super().__init__()
@@ -90,6 +94,27 @@ class TestStatusMapping:
                 UnexpectedPayloadError(source="api", missing_field="cnpj"),
                 500,
                 id="UnexpectedPayloadError→500",
+            ),
+            pytest.param(
+                UnexpectedFieldFormatError(
+                    source="api",
+                    key="valorMulta",
+                    raw_value="not-a-number",
+                    reason="not a valid pt-BR monetary amount",
+                ),
+                500,
+                id="UnexpectedFieldFormatError→500",
+            ),
+            pytest.param(
+                EntityInvalidIdentifierError(
+                    subject=Company,
+                    field="cnpj",
+                    raw_value="123",
+                    expected_length=14,
+                    actual_length=3,
+                ),
+                422,
+                id="EntityInvalidIdentifierError→422",
             ),
             pytest.param(
                 _ConcreteDataSourceError(), 502, id="DataSourceError(catch-all)→502"

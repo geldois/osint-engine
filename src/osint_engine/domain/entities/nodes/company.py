@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, NewType, override
 from uuid import UUID
 
 from osint_engine.domain.entities.bases.node import Node
+from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 from osint_engine.domain.value_objects.normalization import normalize_str_to_digits_only
 
@@ -11,6 +12,8 @@ if TYPE_CHECKING:
     from decimal import Decimal
 
 CompanyID = NewType("CompanyID", UUID)
+
+_CNPJ_DIGIT_LENGTH = 14
 
 
 class Company(
@@ -58,6 +61,17 @@ class Company(
         cnpj = kwargs["cnpj"]
 
         if isinstance(cnpj, str):
-            kwargs["cnpj"] = normalize_str_to_digits_only(value=cnpj)
+            normalized = normalize_str_to_digits_only(value=cnpj)
+
+            if len(normalized) != _CNPJ_DIGIT_LENGTH:
+                raise EntityInvalidIdentifierError(
+                    subject=cls,
+                    field="cnpj",
+                    raw_value=cnpj,
+                    expected_length=_CNPJ_DIGIT_LENGTH,
+                    actual_length=len(normalized),
+                )
+
+            kwargs["cnpj"] = normalized
 
         return super()._calculate_id(**kwargs)

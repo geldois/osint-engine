@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import pytest
+
 from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
 
 # TEST DOUBLES
 
@@ -35,3 +38,28 @@ class TestPersonIdentityNormalization:
         person = _make_person(cpf="***128734**")
 
         assert person.cpf == "***128734**"
+
+
+class TestPersonIdentityValidation:
+    def test_raises_when_masked_cpf_has_fewer_than_eleven_characters(self) -> None:
+        with pytest.raises(EntityInvalidIdentifierError):
+            _make_person(cpf="***128734*")
+
+    def test_raises_when_masked_cpf_has_more_than_eleven_characters(self) -> None:
+        with pytest.raises(EntityInvalidIdentifierError):
+            _make_person(cpf="***128734***")
+
+    def test_raises_when_unmasked_cpf_has_fewer_than_eleven_digits(self) -> None:
+        with pytest.raises(EntityInvalidIdentifierError):
+            _make_person(cpf="1287346")
+
+    def test_error_reports_subject_field_and_actual_length(self) -> None:
+        with pytest.raises(EntityInvalidIdentifierError) as exc_info:
+            _make_person(cpf="1287346")
+
+        error = exc_info.value
+
+        assert error.subject is Person
+        assert error.field == "cpf"
+        assert error.expected_length == 11
+        assert error.actual_length == 7

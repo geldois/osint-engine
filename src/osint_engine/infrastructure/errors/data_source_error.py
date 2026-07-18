@@ -80,3 +80,23 @@ class UnexpectedPayloadError(
             f"'{self.source}' returned an unexpected payload: "
             f"required field '{self.missing_field}' is missing."
         )
+
+
+class UnexpectedFieldFormatError(
+    DataSourceError, error_code="DATA_SOURCE_UNEXPECTED_FIELD_FORMAT"
+):
+    source: str
+    key: str
+    raw_value: str
+    reason: str
+
+    @override
+    def __init__(self, *, source: str, key: str, raw_value: str, reason: str) -> None:
+        super().__init__(source=source, key=key, raw_value=raw_value, reason=reason)
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"'{self.source}' returned field '{self.key}' "
+            f"with value '{self.raw_value}' in an unexpected format: {self.reason}."
+        )

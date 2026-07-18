@@ -4,6 +4,7 @@ import pytest
 
 from osint_engine.domain.value_objects.normalization import (
     normalize_address_number,
+    normalize_masked_document,
     normalize_str_to_digits_only,
 )
 
@@ -20,6 +21,23 @@ class TestDigitsOnly:
 
     def test_returns_empty_string_when_value_has_no_digits(self) -> None:
         assert normalize_str_to_digits_only(value="S/N") == ""
+
+
+class TestNormalizeMaskedDocument:
+    def test_strips_punctuation_but_preserves_digits_and_mask(self) -> None:
+        assert normalize_masked_document(value="128.734.***-**") == "128734*****"
+
+    def test_leaves_a_leading_mask_variant_unchanged_in_shape(self) -> None:
+        assert normalize_masked_document(value="***128734**") == "***128734**"
+
+    def test_returns_unchanged_value_when_already_digits_only(self) -> None:
+        assert normalize_masked_document(value="33754482000124") == "33754482000124"
+
+    def test_preserves_total_length_across_differently_placed_masks(self) -> None:
+        formatted = normalize_masked_document(value="128.734.***-**")
+        masked = normalize_masked_document(value="***128734**")
+
+        assert len(formatted) == len(masked) == 11
 
 
 class TestNormalizeAddressNumberNumericCanonicalization:

@@ -142,6 +142,42 @@ class EntityEmptyIDFieldNameError(EntityError, error_code="ENTITY_EMPTY_ID_FIELD
         )
 
 
+class EntityInvalidIdentifierError(
+    EntityError, error_code="ENTITY_INVALID_IDENTIFIER"
+):
+    subject: type[Entity[UUID]]
+    field: str
+    raw_value: str
+    expected_length: int
+    actual_length: int
+
+    @override
+    def __init__(
+        self,
+        *,
+        subject: type[Entity[UUID]],
+        field: str,
+        raw_value: str,
+        expected_length: int,
+        actual_length: int,
+    ) -> None:
+        super().__init__(
+            subject=subject,
+            field=field,
+            raw_value=raw_value,
+            expected_length=expected_length,
+            actual_length=actual_length,
+        )
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"'{self.subject.__name__}.{self.field}' must contain exactly "
+            f"{self.expected_length} digits, got '{self.raw_value}' "
+            f"with {self.actual_length} digits."
+        )
+
+
 class EntityNotFoundError(EntityError, error_code="ENTITY_NOT_FOUND"):
     entity_id: UUID
     subject: type[Entity[UUID]]

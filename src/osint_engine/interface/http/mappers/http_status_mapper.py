@@ -1,12 +1,17 @@
 from osint_engine.application.errors.auth_error import InvalidCredentialsError
 from osint_engine.domain.errors.domain_error import DomainError
-from osint_engine.domain.errors.entity_error import EntityError, EntityNotFoundError
+from osint_engine.domain.errors.entity_error import (
+    EntityError,
+    EntityInvalidIdentifierError,
+    EntityNotFoundError,
+)
 from osint_engine.domain.errors.graph_error import (
     GraphHasNoNodesError,
     GraphRootNotInNodesError,
 )
 from osint_engine.infrastructure.errors.data_source_error import (
     DataSourceError,
+    UnexpectedFieldFormatError,
     UnexpectedFieldTypeError,
     UnexpectedPayloadError,
 )
@@ -22,8 +27,10 @@ _STATUS_MAP: tuple[tuple[type[Exception], int], ...] = (
     (SanitizationError, 422),
     (GraphHasNoNodesError, 422),
     (GraphRootNotInNodesError, 422),
+    (EntityInvalidIdentifierError, 422),
     (UnexpectedFieldTypeError, 500),
     (UnexpectedPayloadError, 500),
+    (UnexpectedFieldFormatError, 500),
     (DataSourceError, 502),
     (EntityError, 500),
     (SchemaError, 500),

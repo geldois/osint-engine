@@ -12,19 +12,23 @@ from osint_engine.infrastructure.errors.data_source_error import (
 type _Caster[Field, Cast] = Callable[[Field], Cast]
 
 
-def _runtime_type(tp: type | UnionType) -> type | UnionType:
-    origin = get_origin(tp)
+def _runtime_type(type_: type | UnionType, /) -> type | UnionType:
+    origin = get_origin(type_)
 
     if origin is Union or origin is UnionType:
-        return tp
+        return type_
 
-    return origin or tp
+    return origin or type_
 
 
 class Payload:
     def __init__(self, *, source: str, data: dict[str, object]) -> None:
         self._source = source
         self._data = data
+
+    @property
+    def source(self) -> str:
+        return self._source
 
     def scope(self, *, data: dict[str, object]) -> Payload:
         cls = type(self)
