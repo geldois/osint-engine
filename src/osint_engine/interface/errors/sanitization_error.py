@@ -22,3 +22,21 @@ class InvalidCNPJError(SanitizationError, error_code="SANITIZATION_INVALID_CNPJ"
             f"CNPJ must contain exactly 14 digits, "
             f"got '{self.input_value}' with {self.digit_count} digits"
         )
+
+
+class InvalidCPFOrCNPJError(
+    SanitizationError, error_code="SANITIZATION_INVALID_CPF_OR_CNPJ"
+):
+    input_value: str
+    digit_count: int
+
+    @override
+    def __init__(self, *, input_value: str, digit_count: int) -> None:
+        super().__init__(input_value=input_value, digit_count=digit_count)
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"CPF or CNPJ must contain exactly 11 or 14 digits, "
+            f"got '{self.input_value}' with {self.digit_count} digits"
+        )
