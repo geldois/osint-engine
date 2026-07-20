@@ -12,6 +12,10 @@ from osint_engine.application.revision.policies.revision_selection_policy import
 from osint_engine.application.use_cases.authentication.authenticate_user import (
     AuthenticateUser,
 )
+from osint_engine.application.use_cases.credentials.save_credential import (
+    SaveExternalCredential,
+)
+from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
 from osint_engine.config.container import (
     Container,
@@ -30,6 +34,9 @@ from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 from osint_engine.infrastructure.sources.brasilapi.endpoints.cnpj_v1_fetcher import (
     BrasilAPICNPJv1Fetcher,
 )
+from osint_engine.infrastructure.sources.portal_transparencia.endpoints.cnep_fetcher import (  # noqa: E501
+    PortalTransparenciaCNEPFetcher,
+)
 
 if TYPE_CHECKING:
     from httpx2 import AsyncClient
@@ -44,7 +51,10 @@ def build_container(
     mem_storage: MemStorage | None = None,
     policies: Policies | None = None,
 ) -> Container:
-    fetchers = Fetchers(cnpj_fetcher=BrasilAPICNPJv1Fetcher(http_client=http_client))
+    fetchers = Fetchers(
+        cnep_fetcher=PortalTransparenciaCNEPFetcher(http_client=http_client),
+        cnpj_fetcher=BrasilAPICNPJv1Fetcher(http_client=http_client),
+    )
 
     pyjwt_service = PyJWTService(settings=settings)
     services = Services(jwt_service=pyjwt_service)
@@ -76,8 +86,14 @@ def build_container(
         authenticate_user=partial(
             AuthenticateUser, uow_factory=uow_factory, password_hasher=password_hasher
         ),
+        expand_by_cnep=partial(
+            ExpandByCNEP, uow_factory=uow_factory, cnep_fetcher=fetchers.cnep_fetcher
+        ),
         expand_by_cnpj=partial(
             ExpandByCNPJ, uow_factory=uow_factory, cnpj_fetcher=fetchers.cnpj_fetcher
+        ),
+        save_external_credential=partial(
+            SaveExternalCredential, uow_factory=uow_factory
         ),
     )
 

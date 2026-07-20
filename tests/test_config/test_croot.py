@@ -181,6 +181,23 @@ class TestBuildContainerWiring:
         assert container.fetchers.cnpj_fetcher is not None
 
     @pytest.mark.asyncio
+    async def test_wires_the_cnep_fetcher_into_the_container(
+        self,
+        settings: Settings,
+        http_client: AsyncClient,
+        make_mem_storage: MakeMemStorage,
+        policies: Policies,
+    ) -> None:
+        container = build_container(
+            settings=settings,
+            http_client=http_client,
+            mem_storage=make_mem_storage(),
+            policies=policies,
+        )
+
+        assert container.fetchers.cnep_fetcher is not None
+
+    @pytest.mark.asyncio
     async def test_uow_factory_produces_independent_working_uows(
         self,
         settings: Settings,

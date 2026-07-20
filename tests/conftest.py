@@ -8,6 +8,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from osint_engine.application.auth.external_credential import (
+    ExternalCredential,
+    Provider,
+)
 from osint_engine.application.auth.user import Role, User
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.application.revision.policies.revision_merge_policy import (
@@ -51,6 +55,7 @@ class MakeEntityRevision(Protocol):
 
 type MakeFakeEdge = Callable[..., FakeEdge]
 type MakeFakeNode = Callable[..., FakeNode]
+type MakeExternalCredential = Callable[..., ExternalCredential]
 type MakeFakeMergeableNode = Callable[..., FakeMergeableNode]
 type MakeGraph = Callable[..., Graph]
 type MakeMemStorage = Callable[..., MemStorage]
@@ -214,6 +219,7 @@ def make_mem_storage() -> MakeMemStorage:
     """
     *,
     edges: Iterable[EntityRevision[Edge[UUID, UUID, UUID]]] | None = None,
+    external_credentials: Iterable[ExternalCredential] | None = None,
     graphs: Iterable[EntityRevision[Graph]] | None = None,
     nodes: Iterable[EntityRevision[Node[UUID]]] | None = None,
     users: Iterable[User] | None = None
@@ -222,12 +228,19 @@ def make_mem_storage() -> MakeMemStorage:
     def mem_storage(
         *,
         edges: Iterable[EntityRevision[Edge[UUID, UUID, UUID]]] | None = None,
+        external_credentials: Iterable[ExternalCredential] | None = None,
         graphs: Iterable[EntityRevision[Graph]] | None = None,
         nodes: Iterable[EntityRevision[Node[UUID]]] | None = None,
         users: Iterable[User] | None = None,
     ) -> MemStorage:
         return MemStorage(
             edges=_entity_store(edges),
+            external_credentials={
+                (credential.username, credential.provider): credential
+                for credential in external_credentials
+            }
+            if external_credentials is not None
+            else None,
             graphs=_entity_store(graphs),
             nodes=_entity_store(nodes),
             users={user.username: user for user in users}
@@ -282,6 +295,30 @@ def make_policies() -> MakePolicies:
         )
 
     return policies
+
+
+@pytest.fixture
+def make_external_credential() -> MakeExternalCredential:
+    """
+    *,
+    api_key: str | None = None,
+    provider: Provider = Provider.PORTAL_TRANSPARENCIA,
+    username: str | None = None
+    """
+
+    def external_credential(
+        *,
+        api_key: str | None = None,
+        provider: Provider = Provider.PORTAL_TRANSPARENCIA,
+        username: str | None = None,
+    ) -> ExternalCredential:
+        return ExternalCredential(
+            api_key=api_key if api_key is not None else str(uuid4()),
+            provider=provider,
+            username=username if username is not None else str(uuid4()),
+        )
+
+    return external_credential
 
 
 @pytest.fixture

@@ -5,7 +5,11 @@ from uuid import uuid4
 
 import pytest
 
+from osint_engine.application.auth.external_credential import Provider
 from osint_engine.application.errors.auth_error import InvalidCredentialsError
+from osint_engine.application.errors.external_credential_error import (
+    ExternalCredentialNotFoundError,
+)
 from osint_engine.application.errors.revision_error import EmptyRevisionSelectionError
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.errors.domain_error import MissingErrorIdentityContractError
@@ -80,6 +84,13 @@ class TestStatusMapping:
                 InvalidCredentialsError(username="user"),
                 401,
                 id="InvalidCredentialsError→401",
+            ),
+            pytest.param(
+                ExternalCredentialNotFoundError(
+                    username="user", provider=Provider.PORTAL_TRANSPARENCIA
+                ),
+                404,
+                id="ExternalCredentialNotFoundError→404",
             ),
             pytest.param(
                 InvalidTokenError(detail="expired"), 401, id="InvalidTokenError→401"

@@ -3,6 +3,9 @@
 # infrastructure, interface) to translate raises into responses. It is the
 # one place import direction runs outward-in rather than inward-out.
 from osint_engine.application.errors.auth_error import InvalidCredentialsError
+from osint_engine.application.errors.external_credential_error import (
+    ExternalCredentialNotFoundError,
+)
 from osint_engine.application.errors.revision_error import RevisionError
 from osint_engine.domain.errors.domain_error import DomainError
 from osint_engine.domain.errors.edge_error import EdgeSelfLoopError
@@ -28,6 +31,7 @@ from osint_engine.interface.http.errors.schema_error import SchemaError
 
 _STATUS_MAP: tuple[tuple[type[Exception], int], ...] = (
     (EntityNotFoundError, 404),
+    (ExternalCredentialNotFoundError, 404),
     (InvalidCredentialsError, 401),
     (InvalidTokenError, 401),
     (TokenError, 401),

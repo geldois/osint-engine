@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.fakes.fetchers import FakeCNPJFetcher
+from tests.fakes.fetchers import FakeCNEPFetcher, FakeCNPJFetcher
 
 if TYPE_CHECKING:
     from osint_engine.application.revision.entity_revision import EntityRevision
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
     from tests.conftest import MakeEntityRevision, MakeGraph, MakeMemUoW
 
+type MakeFakeCNEPFetcher = Callable[..., FakeCNEPFetcher]
 type MakeFakeCNPJFetcher = Callable[..., FakeCNPJFetcher]
 type MakeMemUoWFactory = Callable[..., MakeMemUoW]
 
@@ -51,3 +52,24 @@ def make_fake_cnpj_fetcher(
         )
 
     return fake_cnpj_fetcher
+
+
+@pytest.fixture
+def make_fake_cnep_fetcher(
+    make_entity_revision: MakeEntityRevision, make_graph: MakeGraph
+) -> MakeFakeCNEPFetcher:
+    """
+    *,
+    revision: EntityRevision[Graph] | None = None
+    """
+
+    def fake_cnep_fetcher(
+        *, revision: EntityRevision[Graph] | None = None
+    ) -> FakeCNEPFetcher:
+        return FakeCNEPFetcher(
+            revision=revision
+            if revision is not None
+            else make_entity_revision(entity=make_graph())
+        )
+
+    return fake_cnep_fetcher
