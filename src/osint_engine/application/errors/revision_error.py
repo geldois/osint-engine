@@ -42,9 +42,7 @@ class NonUTCAttributeError(RevisionError, error_code="REVISION_NON_UTC_ATTRIBUTE
         return f"Revision.{self.attribute} must be UTC, got tzinfo={self.tzinfo}."
 
 
-class EmptyRevisionSelectionError(
-    RevisionError, error_code="REVISION_EMPTY_SELECTION"
-):
+class EmptyRevisionSelectionError(RevisionError, error_code="REVISION_EMPTY_SELECTION"):
     @override
     def __init__(self) -> None:
         super().__init__()

@@ -142,9 +142,7 @@ class EntityEmptyIDFieldNameError(EntityError, error_code="ENTITY_EMPTY_ID_FIELD
         )
 
 
-class EntityInvalidIdentifierError(
-    EntityError, error_code="ENTITY_INVALID_IDENTIFIER"
-):
+class EntityInvalidIdentifierError(EntityError, error_code="ENTITY_INVALID_IDENTIFIER"):
     subject: type[Entity[UUID]]
     field: str
     raw_value: str

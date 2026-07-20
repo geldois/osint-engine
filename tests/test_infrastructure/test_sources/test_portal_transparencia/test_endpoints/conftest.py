@@ -13,9 +13,7 @@ from osint_engine.infrastructure.sources.portal_transparencia.endpoints.cnep_fet
     PortalTransparenciaCNEPFetcher,
 )
 
-type MakePortalTransparenciaCNEPFetcher = Callable[
-    ..., PortalTransparenciaCNEPFetcher
-]
+type MakePortalTransparenciaCNEPFetcher = Callable[..., PortalTransparenciaCNEPFetcher]
 
 
 @pytest.fixture

@@ -36,9 +36,7 @@ class PortalTransparenciaCNEPFetcher(
         self._logger.info("cnep.fetch.start", cpf_or_cnpj=cpf_or_cnpj, cnep_id=cnep_id)
 
         try:
-            path = (
-                cpf_or_cnpj if cnep_id is None else f"{cpf_or_cnpj}/{cnep_id}"
-            )
+            path = cpf_or_cnpj if cnep_id is None else f"{cpf_or_cnpj}/{cnep_id}"
             url = self._BASE_URL.join(url=path)
 
             headers = self._build_headers(credential=credential)
