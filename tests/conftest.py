@@ -101,6 +101,7 @@ def settings() -> Settings:
         admin_password="admin_password",
         cors_origins=["http://localhost:3000"],
         debug=True,
+        docs_redirect_root=False,
         fetcher_connect_timeout=15,
         fetcher_read_timeout=30,
         host="127.0.0.1",

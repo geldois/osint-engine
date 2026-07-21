@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 # Exception composition root — see http_status_mapper.py for the rationale
 # behind referencing infrastructure error types directly from interface.
@@ -36,6 +37,12 @@ _HANDLED_EXCEPTIONS: tuple[type[Exception], ...] = (
 
 def build_fastapi_app(*, container: Container) -> FastAPI:
     fastapi_app = FastAPI()
+
+    if container.settings.docs_redirect_root:
+        async def redirect_root_to_docs() -> RedirectResponse:
+            return RedirectResponse(url="/docs")
+
+        fastapi_app.get(path="/", include_in_schema=False)(redirect_root_to_docs)
 
     fastapi_app.include_router(router=build_auth_router(container=container))
     fastapi_app.include_router(router=build_cnep_router(container=container))

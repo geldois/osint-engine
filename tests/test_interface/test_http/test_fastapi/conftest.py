@@ -46,6 +46,7 @@ def make_settings(settings: Settings) -> MakeSettings:
     admin_password: str | None = None,
     cors_origins: list[str] | None = None,
     debug: bool | None = None,
+    docs_redirect_root: bool | None = None,
     fetcher_connect_timeout: float | None = None,
     fetcher_read_timeout: float | None = None,
     host: str | None = None,
@@ -60,6 +61,7 @@ def make_settings(settings: Settings) -> MakeSettings:
         admin_password: str | None = None,
         cors_origins: list[str] | None = None,
         debug: bool | None = None,
+        docs_redirect_root: bool | None = None,
         fetcher_connect_timeout: float | None = None,
         fetcher_read_timeout: float | None = None,
         host: str | None = None,
@@ -78,6 +80,9 @@ def make_settings(settings: Settings) -> MakeSettings:
             if cors_origins is not None
             else settings.cors_origins,
             debug=debug if debug is not None else settings.debug,
+            docs_redirect_root=docs_redirect_root
+            if docs_redirect_root is not None
+            else settings.docs_redirect_root,
             fetcher_connect_timeout=fetcher_connect_timeout
             if fetcher_connect_timeout is not None
             else settings.fetcher_connect_timeout,

@@ -35,6 +35,7 @@ class Settings:
     admin_password: str
     cors_origins: list[str]
     debug: bool
+    docs_redirect_root: bool
     fetcher_connect_timeout: float
     fetcher_read_timeout: float
     host: str
@@ -62,6 +63,10 @@ class Settings:
     @staticmethod
     def _load_debug() -> bool:
         return getenv(key="DEBUG", default="false").lower() == "true"
+
+    @staticmethod
+    def _load_docs_redirect_root() -> bool:
+        return getenv(key="DOCS_REDIRECT_ROOT", default="false").lower() == "true"
 
     @staticmethod
     def _load_fetcher_connect_timeout() -> float:
@@ -96,6 +101,7 @@ class Settings:
             admin_password=cls._load_admin_password(),
             cors_origins=cls._load_cors_origins(),
             debug=cls._load_debug(),
+            docs_redirect_root=cls._load_docs_redirect_root(),
             fetcher_connect_timeout=cls._load_fetcher_connect_timeout(),
             fetcher_read_timeout=cls._load_fetcher_read_timeout(),
             host=cls._load_host(),
