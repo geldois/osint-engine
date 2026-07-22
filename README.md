@@ -35,10 +35,15 @@ flowchart LR
     FastAPI --> ErrorHandler("Error Handler")
     FastAPI --> AuthRouter("Auth Router")
     FastAPI --> CNPJRouter("CNPJ Router")
+    FastAPI --> CredentialsRouter("Credentials Router")
 
     AuthRouter --> PostToken("POST /auth/token")
-    CNPJRouter --> JWTGuard("JWT Guard")
+    AuthRouter --> PostViewerToken("POST /auth/viewer-token")
+    CNPJRouter --> RoleGuard("Role Guard")
+    CNPJRouter --> CnpjRateLimit("CNPJ Rate Limit")
     CNPJRouter --> GetCNPJ("GET /cnpj/{cnpj}")
+    CredentialsRouter --> RoleGuard
+    CredentialsRouter --> PostCredential("POST /credentials")
 
     Bootstrap("build_container") --> Container("Container")
     Container --> Fetchers("Fetchers")
@@ -53,8 +58,10 @@ flowchart LR
     Fetchers --> CNPJFetcher("BrasilAPICNPJv1Fetcher")
 
     PostToken --> AuthenticateUser
+    PostViewerToken --> PyJWTService
     GetCNPJ --> ExpandByCNPJ
-    JWTGuard --> PyJWTService
+    RoleGuard --> PyJWTService
+    CnpjRateLimit --> PyJWTService
 
     AuthenticateUser --> UoWFactory
     AuthenticateUser --> Argon2("Argon2PasswordHasher")
@@ -101,7 +108,8 @@ flowchart LR
 
 ## API
 
-All endpoints except `/auth/token` require a Bearer token. Obtain one first, then use it on every subsequent request.
+Every endpoint except `/auth/token` and `/auth/viewer-token` requires a Bearer token. Obtain one first, then use it
+on every subsequent request.
 
 ### Authentication
 
@@ -112,11 +120,19 @@ Content-Type: application/x-www-form-urlencoded
 username=admin&password=<ADMIN_PASSWORD>
 ```
 
-Returns:
+Returns an `ADMIN`-role token, 60-minute TTL (`ACCESS_TOKEN_EXPIRE_MINUTES`):
 
 ```json
 { "access_token": "<token>", "token_type": "bearer" }
 ```
+
+```http
+POST /auth/viewer-token
+```
+
+Issues a `VIEWER`-role token with no credential — 20-minute TTL by default (`VIEWER_TOKEN_EXPIRE_MINUTES`), same
+response shape as above. Intended for public demo access: it can read `/cnpj/{cnpj}` but is rejected with `403` on
+`/credentials`. See [ADR-0020](docs/adr/0020-role-guard-for-per-route-authorization.md).
 
 ### Graph expansion
 
@@ -125,17 +141,34 @@ GET /cnpj/{cnpj}
 Authorization: Bearer <token>
 ```
 
-Returns a `GraphSchema` containing the root company, all connected entities, and all typed relationships. The current
-data source is [BrasilAPI](https://brasilapi.com.br) (see [ADR-0005](docs/adr/0005-brasilapi-as-mvp-cnpj-data-source.md)).
+Returns a `GraphSchema` containing the root company, all connected entities, and all typed relationships. Available
+to both `ADMIN` and `VIEWER` tokens. The current data source is [BrasilAPI](https://brasilapi.com.br) (see
+[ADR-0005](docs/adr/0005-brasilapi-as-mvp-cnpj-data-source.md)).
+
+### Rate limiting
+
+| Endpoint | Limit | Keyed by |
+| --- | --- | --- |
+| `POST /auth/token` | 5 / 15 min | Client IP |
+| `POST /auth/viewer-token` | 20 / min | Client IP |
+| `GET /cnpj/{cnpj}` (`ADMIN`) | 60 / min | Shared `ADMIN` bucket |
+| `GET /cnpj/{cnpj}` (`VIEWER`) | 10 / min | Shared `VIEWER` bucket |
+
+A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
+`Access-Control-Expose-Headers`. See [ADR-0021](docs/adr/0021-fastapi-throttle-over-slowapi-for-rate-limiting.md).
+
+### Errors
 
 Every response includes an `X-Correlation-ID` header for end-to-end request tracing. Error responses carry the same
 correlation ID in the body alongside a machine-readable `type` field derived from the domain error hierarchy. A `401`
-response always includes `WWW-Authenticate: Bearer` per RFC 6750.
+response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `403` means a valid token lacks the required role;
+a `429` means a rate limit was exceeded.
 
 ## Stack
 
 - **Runtime:** Python 3.12, FastAPI, Uvicorn
 - **Auth:** PyJWT (HS256 access tokens), argon2-cffi (Argon2id password hashing)
+- **Rate limiting:** fastapi-throttle (in-memory)
 - **HTTP client:** httpx2 (async)
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
