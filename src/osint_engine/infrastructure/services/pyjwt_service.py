@@ -24,10 +24,15 @@ class PyJWTService(JWTService):
         return self._JWT_ALGORITHM
 
     @override
-    def create_access_token(self, *, username: str, role: str) -> str:
-        expiration_time = datetime.now(tz=UTC) + timedelta(
-            minutes=self.access_token_expire_minutes
+    def create_access_token(
+        self, *, username: str, role: str, expire_minutes: int | None = None
+    ) -> str:
+        minutes = (
+            expire_minutes
+            if expire_minutes is not None
+            else self.access_token_expire_minutes
         )
+        expiration_time = datetime.now(tz=UTC) + timedelta(minutes=minutes)
 
         return encode(
             payload={"exp": expiration_time, "sub": username, "role": role},

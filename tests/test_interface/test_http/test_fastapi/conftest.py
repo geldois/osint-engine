@@ -52,7 +52,8 @@ def make_settings(settings: Settings) -> MakeSettings:
     host: str | None = None,
     log_level: str | None = None,
     port: int | None = None,
-    secret_key: str | None = None
+    secret_key: str | None = None,
+    viewer_token_expire_minutes: int | None = None
     """
 
     def settings_(
@@ -68,6 +69,7 @@ def make_settings(settings: Settings) -> MakeSettings:
         log_level: str | None = None,
         port: int | None = None,
         secret_key: str | None = None,
+        viewer_token_expire_minutes: int | None = None,
     ) -> Settings:
         return Settings(
             access_token_expire_minutes=access_token_expire_minutes
@@ -93,6 +95,9 @@ def make_settings(settings: Settings) -> MakeSettings:
             log_level=log_level if log_level is not None else settings.log_level,
             port=port if port is not None else settings.port,
             secret_key=secret_key if secret_key is not None else settings.secret_key,
+            viewer_token_expire_minutes=viewer_token_expire_minutes
+            if viewer_token_expire_minutes is not None
+            else settings.viewer_token_expire_minutes,
         )
 
     return settings_

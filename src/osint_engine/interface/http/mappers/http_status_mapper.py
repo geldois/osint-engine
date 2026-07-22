@@ -26,6 +26,8 @@ from osint_engine.infrastructure.errors.data_source_error import (
 )
 from osint_engine.infrastructure.errors.token_error import InvalidTokenError, TokenError
 from osint_engine.infrastructure.errors.uow_error import UoWError
+from osint_engine.interface.errors.authorization_error import InsufficientRoleError
+from osint_engine.interface.errors.rate_limit_error import RateLimitExceededError
 from osint_engine.interface.errors.sanitization_error import SanitizationError
 from osint_engine.interface.http.errors.schema_error import SchemaError
 
@@ -35,6 +37,8 @@ _STATUS_MAP: tuple[tuple[type[Exception], int], ...] = (
     (InvalidCredentialsError, 401),
     (InvalidTokenError, 401),
     (TokenError, 401),
+    (InsufficientRoleError, 403),
+    (RateLimitExceededError, 429),
     (SanitizationError, 422),
     (GraphHasNoNodesError, 422),
     (GraphRootNotInNodesError, 422),

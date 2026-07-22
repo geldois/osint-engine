@@ -42,6 +42,7 @@ class Settings:
     log_level: str
     port: int
     secret_key: str
+    viewer_token_expire_minutes: int
 
     @staticmethod
     def _load_access_token_expire_minutes() -> int:
@@ -92,6 +93,10 @@ class Settings:
     def _load_secret_key() -> str:
         return environ["SECRET_KEY"]
 
+    @staticmethod
+    def _load_viewer_token_expire_minutes() -> int:
+        return int(getenv(key="VIEWER_TOKEN_EXPIRE_MINUTES", default="20"))
+
     @classmethod
     def from_env(cls) -> Settings:
         _load_dotenv()
@@ -108,4 +113,5 @@ class Settings:
             log_level=cls._load_log_level(),
             port=cls._load_port(),
             secret_key=cls._load_secret_key(),
+            viewer_token_expire_minutes=cls._load_viewer_token_expire_minutes(),
         )

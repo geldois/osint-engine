@@ -7,6 +7,7 @@ import pytest
 import pytest_asyncio
 from httpx2 import ASGITransport, AsyncClient, MockTransport, Request, Response
 
+from osint_engine.application.auth.user import Role
 from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
 from tests.data.brasilapi import CNPJ, COMPLETE_PAYLOAD_DATA
 
@@ -43,7 +44,12 @@ async def client(
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role="admin")
+    return pyjwt_service.create_access_token(username="admin", role=Role.ADMIN)
+
+
+@pytest.fixture
+def viewer_token(pyjwt_service: PyJWTService) -> str:
+    return pyjwt_service.create_access_token(username="visitor", role=Role.VIEWER)
 
 
 # TESTS
@@ -116,3 +122,42 @@ class TestGetCnpjExpansion:
         )
 
         UUID(response.headers["x-correlation-id"])
+
+    @pytest.mark.asyncio
+    async def test_viewer_token_also_returns_200(
+        self, client: AsyncClient, viewer_token: str
+    ) -> None:
+        response = await client.get(
+            f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {viewer_token}"}
+        )
+
+        assert response.status_code == 200
+
+
+class TestCnpjRateLimit:
+    @pytest.mark.asyncio
+    async def test_viewer_exceeding_limit_returns_429(
+        self, client: AsyncClient, viewer_token: str
+    ) -> None:
+        headers = {"Authorization": f"Bearer {viewer_token}"}
+
+        for _ in range(10):
+            await client.get(f"/cnpj/{CNPJ}", headers=headers)
+
+        response = await client.get(f"/cnpj/{CNPJ}", headers=headers)
+
+        assert response.status_code == 429
+
+    @pytest.mark.asyncio
+    async def test_admin_bucket_is_isolated_from_viewer_bucket(
+        self, client: AsyncClient, valid_token: str, viewer_token: str
+    ) -> None:
+        viewer_headers = {"Authorization": f"Bearer {viewer_token}"}
+        admin_headers = {"Authorization": f"Bearer {valid_token}"}
+
+        for _ in range(11):
+            await client.get(f"/cnpj/{CNPJ}", headers=viewer_headers)
+
+        response = await client.get(f"/cnpj/{CNPJ}", headers=admin_headers)
+
+        assert response.status_code == 200

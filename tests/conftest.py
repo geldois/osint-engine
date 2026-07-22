@@ -108,6 +108,7 @@ def settings() -> Settings:
         log_level="info",
         port=8000,
         secret_key="a-secret-key-with-at-least-32-bytes-for-hs256",
+        viewer_token_expire_minutes=20,
     )
 
 

@@ -7,6 +7,7 @@ import pytest_asyncio
 from httpx2 import ASGITransport, AsyncClient
 
 from osint_engine.application.auth.external_credential import Provider
+from osint_engine.application.auth.user import Role
 from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
 
 if TYPE_CHECKING:
@@ -38,7 +39,12 @@ async def client(
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role="admin")
+    return pyjwt_service.create_access_token(username="admin", role=Role.ADMIN)
+
+
+@pytest.fixture
+def viewer_token(pyjwt_service: PyJWTService) -> str:
+    return pyjwt_service.create_access_token(username="visitor", role=Role.VIEWER)
 
 
 class TestPostCredentialAuthentication:
@@ -50,6 +56,20 @@ class TestPostCredentialAuthentication:
         )
 
         assert response.status_code == 401
+
+
+class TestPostCredentialAuthorization:
+    @pytest.mark.asyncio
+    async def test_viewer_token_returns_403(
+        self, client: AsyncClient, viewer_token: str
+    ) -> None:
+        response = await client.post(
+            "/credentials",
+            json={"api_key": "test-api-key", "provider": "PORTAL_TRANSPARENCIA"},
+            headers={"Authorization": f"Bearer {viewer_token}"},
+        )
+
+        assert response.status_code == 403
 
 
 class TestPostCredentialSubmission:

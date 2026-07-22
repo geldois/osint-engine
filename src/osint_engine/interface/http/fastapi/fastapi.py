@@ -39,6 +39,7 @@ def build_fastapi_app(*, container: Container) -> FastAPI:
     fastapi_app = FastAPI()
 
     if container.settings.docs_redirect_root:
+
         async def redirect_root_to_docs() -> RedirectResponse:
             return RedirectResponse(url="/docs")
 
@@ -64,6 +65,7 @@ def build_fastapi_app(*, container: Container) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["Retry-After"],
     )
 
     return fastapi_app

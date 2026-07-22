@@ -13,6 +13,7 @@ from osint_engine.infrastructure.errors.infrastructure_error import (
     InfrastructureError,
 )
 from osint_engine.interface.errors.interface_error import InterfaceError
+from osint_engine.interface.errors.rate_limit_error import RateLimitExceededError
 from osint_engine.interface.http.mappers.http_status_mapper import (
     HTTP_SERVER_ERROR,
     HTTP_UNAUTHORIZED,
@@ -31,7 +32,11 @@ def build_error_handler(
         status = map_status_from_error(exception)
 
         headers = (
-            {"WWW-Authenticate": "Bearer"} if status == HTTP_UNAUTHORIZED else None
+            {"WWW-Authenticate": "Bearer"}
+            if status == HTTP_UNAUTHORIZED
+            else {"Retry-After": str(exception.retry_after_seconds)}
+            if isinstance(exception, RateLimitExceededError)
+            else None
         )
 
         suitable_logger = _logger.info if status < HTTP_SERVER_ERROR else _logger.error

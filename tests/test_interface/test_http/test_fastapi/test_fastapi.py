@@ -91,3 +91,21 @@ class TestFastAPICORSConfiguration:
             "x-custom-header"
             in response.headers.get("access-control-allow-headers", "").lower()
         )
+
+    @pytest.mark.asyncio
+    async def test_actual_response_exposes_retry_after_header(
+        self, fastapi_app_client: AsyncClient, settings: Settings
+    ) -> None:
+        """Retry-After must be exposed, otherwise browser JS can't read it to
+        build a rate-limit countdown — a bare CORS default hides it."""
+
+        response = await fastapi_app_client.post(
+            "/auth/token",
+            data={"username": "admin", "password": "wrong_password"},
+            headers={"Origin": settings.cors_origins[0]},
+        )
+
+        assert (
+            "retry-after"
+            in response.headers.get("access-control-expose-headers", "").lower()
+        )

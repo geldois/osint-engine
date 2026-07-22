@@ -390,6 +390,18 @@ wheels = [
 ]
 
 [[package]]
+name = "fastapi-throttle"
+version = "0.1.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fastapi" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b3/ef/b71c86ced9cabc075ed4629178960ccdaf55b56f37a5392c574b2fa4ad35/fastapi_throttle-0.1.8.tar.gz", hash = "sha256:b0867be26bf3335cae0ecb7069c5cb7d246e14dbbd51329050af7043435370ce", size = 7970, upload-time = "2025-08-26T13:13:28.554Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/15/81/972fa6f3fd2b45fa11fd7269aa24a242dd51c093ed45937f201224cc7e85/fastapi_throttle-0.1.8-py3-none-any.whl", hash = "sha256:ba04991eae1795b13b1d3a514a6967ba4588218dc92375e4c45e12cdebe160e2", size = 8649, upload-time = "2025-08-26T13:13:27.78Z" },
+]
+
+[[package]]
 name = "filelock"
 version = "3.29.0"
 source = { registry = "https://pypi.org/simple" }
@@ -861,6 +873,7 @@ source = { editable = "." }
 dependencies = [
     { name = "argon2-cffi" },
     { name = "fastapi" },
+    { name = "fastapi-throttle" },
     { name = "httpx2" },
     { name = "pydantic" },
     { name = "pyjwt" },
@@ -889,6 +902,7 @@ dev = [
 requires-dist = [
     { name = "argon2-cffi", specifier = ">=25.1.0" },
     { name = "fastapi", specifier = ">=0.136" },
+    { name = "fastapi-throttle", specifier = ">=0.1.8" },
     { name = "httpx2", specifier = ">=2.4" },
     { name = "pydantic", specifier = ">=2.13" },
     { name = "pyjwt", specifier = ">=2.13.0" },
