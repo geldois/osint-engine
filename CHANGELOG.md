@@ -2,6 +2,96 @@
 
 <!-- version list -->
 
+## v1.6.0 (2026-07-22)
+
+### Bug Fixes
+
+- **http**: Map TokenError, EdgeSelfLoopError and RevisionError to HTTP status codes
+  ([`10a2329`](https://github.com/geldois/osint-engine/commit/10a232917442d1023e2ab74ccf5f7e828b6907e2))
+
+- **http**: Restore router-level jwt_guard on cnep and credentials routers
+  ([`b143c77`](https://github.com/geldois/osint-engine/commit/b143c777e1e053d66383dbe405847ba7c3296b3a))
+
+### Build System
+
+- **deps**: Add graphifyy dev dependency for local graphify skill execution
+  ([`0f89639`](https://github.com/geldois/osint-engine/commit/0f89639d47b77a5dab7a43cef237d334ab45387d))
+
+### Chores
+
+- **config**: Raise FETCHER_CONNECT_TIMEOUT default to 30s
+  ([`3384a88`](https://github.com/geldois/osint-engine/commit/3384a886d9db38ad37c8ff412c7fb0e93218e5e6))
+
+- **deps**: Pin uv toolchain, add mutmut, tidy pre-commit config
+  ([`db28155`](https://github.com/geldois/osint-engine/commit/db28155681061708183fc9144af644960fa77639))
+
+- **git**: Declare graphify merge driver for graph.json
+  ([`e1fdaca`](https://github.com/geldois/osint-engine/commit/e1fdaca2cf42c2be5950d7bc18291e150c85e5b8))
+
+- **gitignore**: Ignore graphify-out/ knowledge graph output directory
+  ([`6999fcb`](https://github.com/geldois/osint-engine/commit/6999fcb7a39b9764e76ae52f7aabbe9b4bcc9f5d))
+
+### Code Style
+
+- Apply ruff format line-break normalization to pre-existing files
+  ([`0b8985f`](https://github.com/geldois/osint-engine/commit/0b8985ffca0265bd81573f8366b60bf65776cb99))
+
+### Continuous Integration
+
+- **security**: Pin GitHub Actions and container images to immutable digests
+  ([`1f7c757`](https://github.com/geldois/osint-engine/commit/1f7c7579c51bae1eb93967e58d49694214620443))
+
+### Documentation
+
+- Record ADRs for role-guard authorization and fastapi-throttle over slowapi
+  ([`efff7ad`](https://github.com/geldois/osint-engine/commit/efff7adcae5ac50a6dff724bef556d8c361c2540))
+
+- Record error-code contract ADR and correct CNEP wiring status
+  ([`9aab537`](https://github.com/geldois/osint-engine/commit/9aab537ea776ca172dc0d2d958edcfae2e6cfc21))
+
+### Features
+
+- **auth**: Add public viewer-token role, per-route authorization, and rate limiting
+  ([`8db5e09`](https://github.com/geldois/osint-engine/commit/8db5e09fd7e55efa88622786d89b17c8f1a89e00))
+
+- **cep**: Add cep/v2 address enrichment fetcher, mapper and number normalization
+  ([`17846a4`](https://github.com/geldois/osint-engine/commit/17846a40375285f18dc404bc8caed30a4c282bd6))
+
+- **cnep**: Integrate Portal da Transparência CNEP/CEIS sanctions source
+  ([`7fd1f4a`](https://github.com/geldois/osint-engine/commit/7fd1f4af3f5e37b689ecd9c77444f9f1d6e9adc4))
+
+- **cnep**: Wire CNEP/CEIS sanctions expansion and external credential storage end-to-end
+  ([`9ff6cd8`](https://github.com/geldois/osint-engine/commit/9ff6cd8e7d4ac8be329cb2f6e68b8b8b39b0dbfa))
+
+- **http**: Add opt-in DOCS_REDIRECT_ROOT setting to redirect / to /docs
+  ([`71d41ad`](https://github.com/geldois/osint-engine/commit/71d41ad571ae6360cfce463b172902767847280b))
+
+- **sanction**: Expand Sanction entity with organ+process identity, dates and fine amount
+  ([`6469eff`](https://github.com/geldois/osint-engine/commit/6469eff94b72cf9f119b864f8a059e84bb379029))
+
+- **sanitize**: Add sanitize_cpf_or_cnpj for dual-format CPF/CNPJ identifiers
+  ([`e98655e`](https://github.com/geldois/osint-engine/commit/e98655eac723e2704e4db7db26151ab7ccfbbc5f))
+
+- **validation**: Reject malformed CEP/CNPJ identifiers and format-invalid source fields
+  ([`1418417`](https://github.com/geldois/osint-engine/commit/1418417dceafa5d0455574f201be84e6ac5d3d25))
+
+### Refactoring
+
+- **errors**: Require explicit error_code on ApplicationError and InfrastructureError subclasses
+  ([`ba43a60`](https://github.com/geldois/osint-engine/commit/ba43a607a44fdddd08e24321719963759f53d72e))
+
+- **fetchers**: Make CEPFetcher and CNPJFetcher contracts keyword-only
+  ([`c0ec1dc`](https://github.com/geldois/osint-engine/commit/c0ec1dcefaec3d7a7ad560df11ce7cd63499822c))
+
+### Testing
+
+- Harden test suite against mutmut survivors, raise mutation score to 96%
+  ([`db9cf98`](https://github.com/geldois/osint-engine/commit/db9cf9882dbb00c86d1c46cc2d60510e40a60ba6))
+
+- **mutmut**: Enable mutation testing infra and fix root causes blocking its run
+  ([`3d92d82`](https://github.com/geldois/osint-engine/commit/3d92d8230282dd6af46062ce42188a4e199cb7d8))
+
+
 ## v1.5.0 (2026-07-17)
 
 ### Bug Fixes
