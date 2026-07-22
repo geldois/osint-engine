@@ -34,13 +34,19 @@ def _is_legal_entity(*, partner: dict[str, object]) -> bool:
     return partner.get("identificador_de_socio") == _PARTNER_IS_LEGAL_ENTITY
 
 
-def _map_address(*, payload: Payload) -> Address:
+def _map_address(*, payload: Payload) -> Address | None:
+    cep = payload.optional(key="cep", expected_type=str)
+    numero = payload.optional(key="numero", expected_type=str)
+
+    if not cep or not numero:
+        return None
+
     return Address(
-        cep=payload.require(key="cep", expected_type=str),
+        cep=cep,
         city=payload.require(key="municipio", expected_type=str),
         complement=payload.require(key="complemento", expected_type=str),
         neighborhood=payload.require(key="bairro", expected_type=str),
-        number=payload.require(key="numero", expected_type=str),
+        number=numero,
         state=payload.require(key="uf", expected_type=str),
         street=payload.require(key="logradouro", expected_type=str),
     )
@@ -100,9 +106,12 @@ def _map_company(*, payload: Payload) -> Company:
 
 
 def _map_email(*, payload: Payload) -> Email | None:
-    if payload.optional(key="email", expected_type=str) is None:
+    email = payload.optional(key="email", expected_type=str)
+
+    if email is None:
         return None
-    return Email(address=payload.require(key="email", expected_type=str))
+
+    return Email(address=email)
 
 
 def _map_phones(*, payload: Payload) -> set[Phone]:
@@ -215,7 +224,10 @@ def map_graph(*, payload: Payload) -> Graph:
         payload=payload, company_id=company.id
     )
 
-    nodes = {address, company} | cnaes | persons | phones | owning_companies
+    nodes = {company} | cnaes | persons | phones | owning_companies
+
+    if address is not None:
+        nodes |= {address}
 
     if email is not None:
         nodes |= {email}
@@ -232,8 +244,11 @@ def map_graph(*, payload: Payload) -> Graph:
         }
         | person_owns_companies
         | company_owns_companies
-        | {CompanyLocatedAt(source_id=company.id, target_id=address.id)}
     )
+
+    if address is not None:
+        edges |= {CompanyLocatedAt(source_id=company.id, target_id=address.id)}
+
     if email is not None:
         edges |= {CompanyHasEmail(source_id=company.id, target_id=email.id)}
 

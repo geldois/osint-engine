@@ -9,6 +9,7 @@ from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
 from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
 from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
 from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
+from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
 from osint_engine.domain.entities.edges.company_owns_company import CompanyOwnsCompany
 from osint_engine.domain.entities.edges.person_owns_company import PersonOwnsCompany
 from osint_engine.domain.entities.nodes.address import Address
@@ -84,6 +85,22 @@ class TestMapAddress:
         assert address.number == "SN"
 
         assert address.state == "DF"
+
+    def test_returns_none_when_cep_is_empty(self, make_payload: MakePayload) -> None:
+        data = {**ADDRESS_DATA, "cep": ""}
+
+        address = _map_address(payload=make_payload(source="brasilapi", data=data))
+
+        assert address is None
+
+    def test_returns_none_when_numero_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**ADDRESS_DATA, "numero": ""}
+
+        address = _map_address(payload=make_payload(source="brasilapi", data=data))
+
+        assert address is None
 
 
 class TestMapCnaes:
@@ -518,6 +535,42 @@ class TestMapGraph:
         )
 
         assert any(isinstance(node, Address) for node in graph.nodes)
+
+    def test_no_address_node_when_cep_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPLETE_PAYLOAD_DATA, "cep": ""}
+
+        graph = map_graph(payload=make_payload(source="brasilapi", data=data))
+
+        assert not any(isinstance(node, Address) for node in graph.nodes)
+
+    def test_no_address_node_when_numero_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPLETE_PAYLOAD_DATA, "numero": ""}
+
+        graph = map_graph(payload=make_payload(source="brasilapi", data=data))
+
+        assert not any(isinstance(node, Address) for node in graph.nodes)
+
+    def test_no_address_edge_when_cep_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPLETE_PAYLOAD_DATA, "cep": ""}
+
+        graph = map_graph(payload=make_payload(source="brasilapi", data=data))
+
+        assert not any(isinstance(edge, CompanyLocatedAt) for edge in graph.edges)
+
+    def test_no_address_edge_when_numero_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPLETE_PAYLOAD_DATA, "numero": ""}
+
+        graph = map_graph(payload=make_payload(source="brasilapi", data=data))
+
+        assert not any(isinstance(edge, CompanyLocatedAt) for edge in graph.edges)
 
     def test_email_node_present_when_payload_has_email(
         self, make_payload: MakePayload
