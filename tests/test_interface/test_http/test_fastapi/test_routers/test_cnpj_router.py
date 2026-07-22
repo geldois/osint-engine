@@ -141,7 +141,7 @@ class TestCnpjRateLimit:
     ) -> None:
         headers = {"Authorization": f"Bearer {viewer_token}"}
 
-        for _ in range(10):
+        for _ in range(5):
             await client.get(f"/cnpj/{CNPJ}", headers=headers)
 
         response = await client.get(f"/cnpj/{CNPJ}", headers=headers)
@@ -155,9 +155,26 @@ class TestCnpjRateLimit:
         viewer_headers = {"Authorization": f"Bearer {viewer_token}"}
         admin_headers = {"Authorization": f"Bearer {valid_token}"}
 
-        for _ in range(11):
+        for _ in range(6):
             await client.get(f"/cnpj/{CNPJ}", headers=viewer_headers)
 
         response = await client.get(f"/cnpj/{CNPJ}", headers=admin_headers)
 
         assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_global_bucket_caps_traffic_regardless_of_role_limit(
+        self, client: AsyncClient, valid_token: str
+    ) -> None:
+        """ADMIN's own bucket allows 60/min, well past the 30/min combined
+        ceiling that protects the shared upstream BrasilAPI quota — the
+        global bucket must reject before ADMIN's role bucket would."""
+
+        headers = {"Authorization": f"Bearer {valid_token}"}
+
+        for _ in range(30):
+            await client.get(f"/cnpj/{CNPJ}", headers=headers)
+
+        response = await client.get(f"/cnpj/{CNPJ}", headers=headers)
+
+        assert response.status_code == 429

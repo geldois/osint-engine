@@ -69,11 +69,20 @@ def build_viewer_token_rate_limit() -> Callable[[Request, Response], Awaitable[N
 def build_cnpj_rate_limit(
     *, container: Container
 ) -> Callable[[Request, Response], Awaitable[None]]:
+    """Every CNPJ lookup proxies to the upstream BrasilAPI, whose own
+    per-minute quota is undocumented and shared across all callers of this
+    deployment (they all originate from this server's IP). The per-role
+    buckets alone can sum past that shared quota under concurrent load, so a
+    global bucket caps the combined outbound rate regardless of role split."""
+
     admin_limit = _translate_rate_limit_error(
         RateLimiter(times=60, seconds=60, key_func=lambda _request: "cnpj:ADMIN")
     )
     viewer_limit = _translate_rate_limit_error(
-        RateLimiter(times=10, seconds=60, key_func=lambda _request: "cnpj:VIEWER")
+        RateLimiter(times=5, seconds=60, key_func=lambda _request: "cnpj:VIEWER")
+    )
+    global_limit = _translate_rate_limit_error(
+        RateLimiter(times=30, seconds=60, key_func=lambda _request: "cnpj:GLOBAL")
     )
 
     async def cnpj_rate_limit(request: Request, response: Response) -> None:
@@ -83,5 +92,7 @@ def build_cnpj_rate_limit(
             await admin_limit(request, response)
         else:
             await viewer_limit(request, response)
+
+        await global_limit(request, response)
 
     return cnpj_rate_limit

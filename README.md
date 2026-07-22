@@ -154,10 +154,14 @@ to both `ADMIN` and `VIEWER` tokens. The current data source is [BrasilAPI](http
 | `POST /auth/token` | 5 / 15 min | Client IP |
 | `POST /auth/viewer-token` | 20 / min | Client IP |
 | `GET /cnpj/{cnpj}` (`ADMIN`) | 60 / min | Shared `ADMIN` bucket |
-| `GET /cnpj/{cnpj}` (`VIEWER`) | 10 / min | Shared `VIEWER` bucket |
+| `GET /cnpj/{cnpj}` (`VIEWER`) | 5 / min | Shared `VIEWER` bucket |
+| `GET /cnpj/{cnpj}` (combined) | 30 / min | Shared global bucket |
 
 A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
-`Access-Control-Expose-Headers`. See [ADR-0021](docs/adr/0021-fastapi-throttle-over-slowapi-for-rate-limiting.md).
+`Access-Control-Expose-Headers`. See [ADR-0021](docs/adr/0021-fastapi-throttle-over-slowapi-for-rate-limiting.md). The
+combined `GET /cnpj/{cnpj}` bucket caps total outbound BrasilAPI traffic regardless of role split, since every
+request proxies through this deployment's own IP against BrasilAPI's undocumented per-minute quota (see
+[ADR-0005](docs/adr/0005-brasilapi-as-mvp-cnpj-data-source.md)).
 
 ### Errors
 
