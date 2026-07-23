@@ -30,6 +30,11 @@ class TestCLIWiring:
 
         assert result.exit_code == 0
 
+    def test_wait_db_command_is_registered(self, cli_runner: CliRunner) -> None:
+        result = cli_runner.invoke(cli.typer_app, ["wait-db", "--help"])
+
+        assert result.exit_code == 0
+
     def test_main_invokes_typer_app(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls: list[None] = []
 

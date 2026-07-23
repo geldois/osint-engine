@@ -268,11 +268,13 @@ Docker Desktop's default networking — the first run downloads dependencies fro
 
 `osint-engine migrate` needs the `migrate` CLI on `PATH` (installed by `mise install`, pinned to the same version
 the Dockerfile uses) and a running Postgres reachable at `DATABASE_URL` — unlike the test suite, `serve`/`migrate`
-don't spin one up for you:
+don't spin one up for you. `docker-compose.yml` starts a persistent local Postgres matching `.env.example`'s
+credentials, and `osint-engine wait-db` blocks until it actually accepts connections (Postgres reports the
+container as "started" well before it's ready to accept connections — polling avoids a race against it):
 
 ```bash
-docker run --name osint-engine-postgres -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password \
-  -e POSTGRES_DB=osint_engine -p 5432:5432 -d postgres:18
+docker compose up -d
+uv run osint-engine wait-db
 uv run osint-engine migrate up
 uv run osint-engine serve
 ```
