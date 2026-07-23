@@ -11,6 +11,8 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-24.04
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
     steps:
       - name: Checkout
@@ -25,6 +27,25 @@ jobs:
 
       - name: Install dependencies
         run: uv sync
+
+      - name: Log in to Docker Hub
+        # Forked-repo pull requests don't have access to repository secrets,
+        # so this step is skipped rather than failing the job — the pull
+        # step below then falls back to Docker Hub's anonymous rate limit.
+        if: ${{ env.DOCKERHUB_USERNAME != '' }}
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull testcontainers images
+        # Authenticated pulls get a much higher Docker Hub rate limit than
+        # anonymous ones, and shared GitHub Actions runner IPs can otherwise
+        # get throttled. A dedicated step also keeps an image-pull failure
+        # from being misread as a test failure.
+        run: |
+          docker pull postgres:18
+          docker pull testcontainers/ryuk:0.8.1
 
       - name: Test
         run: uv run pytest --cov --cov-branch --cov-report=xml --cov-report=term
@@ -43,6 +64,8 @@ jobs:
     # mutant runs take far longer than the regular test job, so this reports
     # survivors without blocking pull requests.
     continue-on-error: true
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
     steps:
       - name: Checkout
@@ -57,6 +80,21 @@ jobs:
 
       - name: Install dependencies
         run: uv sync
+
+      - name: Log in to Docker Hub
+        # Forked-repo pull requests don't have access to repository secrets,
+        # so this step is skipped rather than failing the job — the pull
+        # step below then falls back to Docker Hub's anonymous rate limit.
+        if: ${{ env.DOCKERHUB_USERNAME != '' }}
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull testcontainers images
+        run: |
+          docker pull postgres:18
+          docker pull testcontainers/ryuk:0.8.1
 
       - name: Run mutation tests
         run: uv run mutmut run --max-children 4 || true
