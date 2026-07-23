@@ -35,8 +35,8 @@ def _is_legal_entity(*, partner: dict[str, object]) -> bool:
 
 
 def _map_address(*, payload: Payload) -> Address | None:
-    cep = payload.optional(key="cep", expected_type=str)
-    numero = payload.optional(key="numero", expected_type=str)
+    cep = payload.require(key="cep", expected_type=str)
+    numero = payload.require(key="numero", expected_type=str)
 
     if not cep or not numero:
         return None

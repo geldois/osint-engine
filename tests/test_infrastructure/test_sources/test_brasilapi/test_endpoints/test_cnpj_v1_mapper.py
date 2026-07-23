@@ -93,9 +93,7 @@ class TestMapAddress:
 
         assert address is None
 
-    def test_returns_none_when_numero_is_empty(
-        self, make_payload: MakePayload
-    ) -> None:
+    def test_returns_none_when_numero_is_empty(self, make_payload: MakePayload) -> None:
         data = {**ADDRESS_DATA, "numero": ""}
 
         address = _map_address(payload=make_payload(source="brasilapi", data=data))
@@ -536,9 +534,7 @@ class TestMapGraph:
 
         assert any(isinstance(node, Address) for node in graph.nodes)
 
-    def test_no_address_node_when_cep_is_empty(
-        self, make_payload: MakePayload
-    ) -> None:
+    def test_no_address_node_when_cep_is_empty(self, make_payload: MakePayload) -> None:
         data = {**COMPLETE_PAYLOAD_DATA, "cep": ""}
 
         graph = map_graph(payload=make_payload(source="brasilapi", data=data))
@@ -554,9 +550,7 @@ class TestMapGraph:
 
         assert not any(isinstance(node, Address) for node in graph.nodes)
 
-    def test_no_address_edge_when_cep_is_empty(
-        self, make_payload: MakePayload
-    ) -> None:
+    def test_no_address_edge_when_cep_is_empty(self, make_payload: MakePayload) -> None:
         data = {**COMPLETE_PAYLOAD_DATA, "cep": ""}
 
         graph = map_graph(payload=make_payload(source="brasilapi", data=data))
