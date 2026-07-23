@@ -22,11 +22,13 @@ ENV PATH="/app/.venv/bin:$PATH"
 WORKDIR /app
 
 RUN useradd --no-create-home --no-log-init -s /sbin/nologin -u 1001 appuser
+COPY --from=migrate/migrate:v4.19.1 /usr/local/bin/migrate /usr/local/bin/migrate
 USER appuser
 
 COPY --from=build --chown=appuser:appuser /app/.venv /app/.venv
 COPY --from=build --chown=appuser:appuser /app/src /app/src
+COPY --chown=appuser:appuser migrations /app/migrations
 
 EXPOSE 8000
 
-CMD ["python", "-m", "osint_engine"]
+CMD ["osint-engine", "serve"]

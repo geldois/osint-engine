@@ -34,8 +34,10 @@ class Settings:
     access_token_expire_minutes: int
     admin_password: str
     cors_origins: list[str]
+    database_url: str
     debug: bool
     docs_redirect_root: bool
+    external_credential_encryption_key: str
     fetcher_connect_timeout: float
     fetcher_read_timeout: float
     host: str
@@ -62,12 +64,20 @@ class Settings:
         ]
 
     @staticmethod
+    def _load_database_url() -> str:
+        return environ["DATABASE_URL"]
+
+    @staticmethod
     def _load_debug() -> bool:
         return getenv(key="DEBUG", default="false").lower() == "true"
 
     @staticmethod
     def _load_docs_redirect_root() -> bool:
         return getenv(key="DOCS_REDIRECT_ROOT", default="false").lower() == "true"
+
+    @staticmethod
+    def _load_external_credential_encryption_key() -> str:
+        return environ["EXTERNAL_CREDENTIAL_ENCRYPTION_KEY"]
 
     @staticmethod
     def _load_fetcher_connect_timeout() -> float:
@@ -105,8 +115,12 @@ class Settings:
             access_token_expire_minutes=cls._load_access_token_expire_minutes(),
             admin_password=cls._load_admin_password(),
             cors_origins=cls._load_cors_origins(),
+            database_url=cls._load_database_url(),
             debug=cls._load_debug(),
             docs_redirect_root=cls._load_docs_redirect_root(),
+            external_credential_encryption_key=(
+                cls._load_external_credential_encryption_key()
+            ),
             fetcher_connect_timeout=cls._load_fetcher_connect_timeout(),
             fetcher_read_timeout=cls._load_fetcher_read_timeout(),
             host=cls._load_host(),

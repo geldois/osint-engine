@@ -16,10 +16,12 @@ from osint_engine.application.revision.policies.revision_selection_policy import
 from osint_engine.config.container import Policies
 from osint_engine.config.croot import build_container
 from osint_engine.domain.entities.bases.entity import Entity
-from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
+from osint_engine.infrastructure.persistence.hybrid_uow import HybridUoW
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    from asyncpg import Pool
 
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.config.settings import Settings
@@ -64,6 +66,7 @@ class TestBuildContainerMemStorage:
         self,
         settings: Settings,
         http_client: AsyncClient,
+        pg_pool: Pool,
         make_mem_storage: MakeMemStorage,
         make_user: MakeUser,
         policies: Policies,
@@ -74,6 +77,10 @@ class TestBuildContainerMemStorage:
         container = build_container(
             settings=settings,
             http_client=http_client,
+            pg_pool=pg_pool,
+            external_credential_encryption_key=(
+                settings.external_credential_encryption_key
+            ),
             mem_storage=mem_storage,
             policies=policies,
         )
@@ -91,11 +98,16 @@ class TestBuildContainerMemStorage:
         self,
         settings: Settings,
         http_client: AsyncClient,
+        pg_pool: Pool,
         policies: Policies,
     ) -> None:
         container = build_container(
             settings=settings,
             http_client=http_client,
+            pg_pool=pg_pool,
+            external_credential_encryption_key=(
+                settings.external_credential_encryption_key
+            ),
             mem_storage=None,
             policies=policies,
         )
@@ -115,18 +127,23 @@ class TestBuildContainerPolicies:
         self,
         settings: Settings,
         http_client: AsyncClient,
+        pg_pool: Pool,
         make_mem_storage: MakeMemStorage,
     ) -> None:
         container = build_container(
             settings=settings,
             http_client=http_client,
+            pg_pool=pg_pool,
+            external_credential_encryption_key=(
+                settings.external_credential_encryption_key
+            ),
             mem_storage=make_mem_storage(),
             policies=None,
         )
 
         uow = container.uow_factory()
 
-        assert isinstance(uow, MemUoW)
+        assert isinstance(uow, HybridUoW)
 
         async with uow:
             assert uow.revision_merge_policy is merge_by_filled_fields_policy
@@ -137,6 +154,7 @@ class TestBuildContainerPolicies:
         self,
         settings: Settings,
         http_client: AsyncClient,
+        pg_pool: Pool,
         make_mem_storage: MakeMemStorage,
     ) -> None:
         custom_policies = Policies(
@@ -147,6 +165,10 @@ class TestBuildContainerPolicies:
         container = build_container(
             settings=settings,
             http_client=http_client,
+            pg_pool=pg_pool,
+            external_credential_encryption_key=(
+                settings.external_credential_encryption_key
+            ),
             mem_storage=make_mem_storage(),
             policies=custom_policies,
         )
@@ -155,7 +177,7 @@ class TestBuildContainerPolicies:
 
         uow = container.uow_factory()
 
-        assert isinstance(uow, MemUoW)
+        assert isinstance(uow, HybridUoW)
 
         async with uow:
             assert uow.revision_merge_policy is _noop_merge_policy
@@ -168,12 +190,17 @@ class TestBuildContainerWiring:
         self,
         settings: Settings,
         http_client: AsyncClient,
+        pg_pool: Pool,
         make_mem_storage: MakeMemStorage,
         policies: Policies,
     ) -> None:
         container = build_container(
             settings=settings,
             http_client=http_client,
+            pg_pool=pg_pool,
+            external_credential_encryption_key=(
+                settings.external_credential_encryption_key
+            ),
             mem_storage=make_mem_storage(),
             policies=policies,
         )
@@ -185,12 +212,17 @@ class TestBuildContainerWiring:
         self,
         settings: Settings,
         http_client: AsyncClient,
+        pg_pool: Pool,
         make_mem_storage: MakeMemStorage,
         policies: Policies,
     ) -> None:
         container = build_container(
             settings=settings,
             http_client=http_client,
+            pg_pool=pg_pool,
+            external_credential_encryption_key=(
+                settings.external_credential_encryption_key
+            ),
             mem_storage=make_mem_storage(),
             policies=policies,
         )
@@ -202,12 +234,17 @@ class TestBuildContainerWiring:
         self,
         settings: Settings,
         http_client: AsyncClient,
+        pg_pool: Pool,
         make_mem_storage: MakeMemStorage,
         policies: Policies,
     ) -> None:
         container = build_container(
             settings=settings,
             http_client=http_client,
+            pg_pool=pg_pool,
+            external_credential_encryption_key=(
+                settings.external_credential_encryption_key
+            ),
             mem_storage=make_mem_storage(),
             policies=policies,
         )

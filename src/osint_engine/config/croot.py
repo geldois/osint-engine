@@ -27,9 +27,9 @@ from osint_engine.config.container import (
 from osint_engine.infrastructure.hashers.argon2_password_hasher import (
     Argon2PasswordHasher,
 )
+from osint_engine.infrastructure.persistence.hybrid_uow import HybridUoW
 from osint_engine.infrastructure.persistence.mem.mem_seeder import seed_mem_storage
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
-from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
 from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 from osint_engine.infrastructure.sources.brasilapi.endpoints.cnpj_v1_fetcher import (
     BrasilAPICNPJv1Fetcher,
@@ -39,15 +39,18 @@ from osint_engine.infrastructure.sources.portal_transparencia.endpoints.cnep_fet
 )
 
 if TYPE_CHECKING:
+    from asyncpg import Pool
     from httpx2 import AsyncClient
 
     from osint_engine.config.settings import Settings
 
 
-def build_container(
+def build_container(  # noqa: PLR0913
     *,
     settings: Settings,
     http_client: AsyncClient,
+    pg_pool: Pool,
+    external_credential_encryption_key: str,
     mem_storage: MemStorage | None = None,
     policies: Policies | None = None,
 ) -> Container:
@@ -75,9 +78,11 @@ def build_container(
         )
     )
 
-    def uow_factory() -> MemUoW:
-        return MemUoW(
+    def uow_factory() -> HybridUoW:
+        return HybridUoW(
             mem_storage=mem_storage,
+            pg_pool=pg_pool,
+            encryption_key=external_credential_encryption_key,
             revision_merge_policy=policies.revision_merge_policy,
             revision_selection_policy=policies.revision_selection_policy,
         )

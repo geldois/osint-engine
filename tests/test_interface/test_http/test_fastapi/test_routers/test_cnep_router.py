@@ -59,11 +59,15 @@ async def client(
         provider=Provider.PORTAL_TRANSPARENCIA,
         username="admin",
     )
-    mem_storage = make_mem_storage(external_credentials=[credential])
+    mem_storage = make_mem_storage()
 
     container = make_container(
         http_client=portal_transparencia_http_client, mem_storage=mem_storage
     )
+
+    async with container.uow_factory() as uow:
+        await uow.external_credentials.save(credential=credential)
+
     app = build_fastapi_app(container=container)
 
     async with AsyncClient(

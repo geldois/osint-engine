@@ -14,6 +14,7 @@ from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
+    from asyncpg import Pool
     from fastapi import FastAPI
 
     from osint_engine.config.container import Container, Policies
@@ -45,8 +46,10 @@ def make_settings(settings: Settings) -> MakeSettings:
     access_token_expire_minutes: int | None = None,
     admin_password: str | None = None,
     cors_origins: list[str] | None = None,
+    database_url: str | None = None,
     debug: bool | None = None,
     docs_redirect_root: bool | None = None,
+    external_credential_encryption_key: str | None = None,
     fetcher_connect_timeout: float | None = None,
     fetcher_read_timeout: float | None = None,
     host: str | None = None,
@@ -61,8 +64,10 @@ def make_settings(settings: Settings) -> MakeSettings:
         access_token_expire_minutes: int | None = None,
         admin_password: str | None = None,
         cors_origins: list[str] | None = None,
+        database_url: str | None = None,
         debug: bool | None = None,
         docs_redirect_root: bool | None = None,
+        external_credential_encryption_key: str | None = None,
         fetcher_connect_timeout: float | None = None,
         fetcher_read_timeout: float | None = None,
         host: str | None = None,
@@ -81,10 +86,16 @@ def make_settings(settings: Settings) -> MakeSettings:
             cors_origins=cors_origins
             if cors_origins is not None
             else settings.cors_origins,
+            database_url=database_url
+            if database_url is not None
+            else settings.database_url,
             debug=debug if debug is not None else settings.debug,
             docs_redirect_root=docs_redirect_root
             if docs_redirect_root is not None
             else settings.docs_redirect_root,
+            external_credential_encryption_key=external_credential_encryption_key
+            if external_credential_encryption_key is not None
+            else settings.external_credential_encryption_key,
             fetcher_connect_timeout=fetcher_connect_timeout
             if fetcher_connect_timeout is not None
             else settings.fetcher_connect_timeout,
@@ -107,6 +118,7 @@ def make_settings(settings: Settings) -> MakeSettings:
 def make_container(
     settings: Settings,
     http_client: AsyncClient,
+    pg_pool: Pool,
     make_mem_storage: MakeMemStorage,
     policies: Policies,
 ) -> MakeContainer:
@@ -120,18 +132,26 @@ def make_container(
 
     settings_ = settings
     http_client_ = http_client
+    pg_pool_ = pg_pool
     policies_ = policies
 
     def container_(
         *,
         settings: Settings | None = None,
         http_client: AsyncClient | None = None,
+        pg_pool: Pool | None = None,
         mem_storage: MemStorage | None = None,
         policies: Policies | None = None,
     ) -> Container:
         return build_container(
             settings=settings if settings is not None else settings_,
             http_client=http_client if http_client is not None else http_client_,
+            pg_pool=pg_pool if pg_pool is not None else pg_pool_,
+            external_credential_encryption_key=(
+                (
+                    settings if settings is not None else settings_
+                ).external_credential_encryption_key
+            ),
             mem_storage=mem_storage if mem_storage is not None else make_mem_storage(),
             policies=policies if policies is not None else policies_,
         )

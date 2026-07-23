@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, cast
 from uuid import UUID, uuid4
 
 import pytest
@@ -31,8 +31,11 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
 from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 from tests.fakes.domain import FakeEdge, FakeMergeableNode, FakeNode
+from tests.fakes.persistence import FakePgPool
 
 if TYPE_CHECKING:
+    from asyncpg import Pool
+
     from osint_engine.application.revision.policies.revision_merge_policy import (
         RevisionMergePolicy,
     )
@@ -100,8 +103,12 @@ def settings() -> Settings:
         access_token_expire_minutes=60,
         admin_password="admin_password",
         cors_origins=["http://localhost:3000"],
+        database_url="postgresql://test:test@localhost:5432/test",
         debug=True,
         docs_redirect_root=False,
+        external_credential_encryption_key=(
+            "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+        ),
         fetcher_connect_timeout=15,
         fetcher_read_timeout=30,
         host="127.0.0.1",
@@ -110,6 +117,16 @@ def settings() -> Settings:
         secret_key="a-secret-key-with-at-least-32-bytes-for-hs256",
         viewer_token_expire_minutes=20,
     )
+
+
+@pytest.fixture
+def fake_pg_pool() -> FakePgPool:
+    return FakePgPool()
+
+
+@pytest.fixture
+def pg_pool(fake_pg_pool: FakePgPool) -> Pool:
+    return cast("Pool", fake_pg_pool)
 
 
 @pytest.fixture

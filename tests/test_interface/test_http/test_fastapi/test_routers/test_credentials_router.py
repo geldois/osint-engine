@@ -13,22 +13,20 @@ from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-    from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
+    from osint_engine.config.container import Container
     from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
-    from tests.conftest import MakeMemStorage
     from tests.test_interface.test_http.test_fastapi.conftest import MakeContainer
 
 
 @pytest.fixture
-def mem_storage(make_mem_storage: MakeMemStorage) -> MemStorage:
-    return make_mem_storage()
+def container(make_container: MakeContainer) -> Container:
+    return make_container()
 
 
 @pytest_asyncio.fixture(loop_scope="session")
 async def client(
-    make_container: MakeContainer, mem_storage: MemStorage
+    container: Container,
 ) -> AsyncGenerator[AsyncClient, None]:
-    container = make_container(mem_storage=mem_storage)
     app = build_fastapi_app(container=container)
 
     async with AsyncClient(
@@ -87,7 +85,7 @@ class TestPostCredentialSubmission:
 
     @pytest.mark.asyncio
     async def test_saves_the_credential_for_the_authenticated_username(
-        self, client: AsyncClient, valid_token: str, mem_storage: MemStorage
+        self, client: AsyncClient, valid_token: str, container: Container
     ) -> None:
         await client.post(
             "/credentials",
@@ -95,8 +93,10 @@ class TestPostCredentialSubmission:
             headers={"Authorization": f"Bearer {valid_token}"},
         )
 
-        credential = mem_storage.external_credentials[
-            ("admin", Provider.PORTAL_TRANSPARENCIA)
-        ]
+        async with container.uow_factory() as uow:
+            credential = await uow.external_credentials.find(
+                username="admin", provider=Provider.PORTAL_TRANSPARENCIA
+            )
 
+        assert credential is not None
         assert credential.api_key == "test-api-key"
