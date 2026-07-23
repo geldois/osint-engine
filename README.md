@@ -173,13 +173,17 @@ a `429` means a rate limit was exceeded.
 ## Stack
 
 - **Runtime:** Python 3.12, FastAPI, Uvicorn
+- **CLI:** Typer (`osint-engine serve` / `osint-engine migrate up|down`)
 - **Auth:** PyJWT (HS256 access tokens), argon2-cffi (Argon2id password hashing)
+- **Persistence:** PostgreSQL via asyncpg + aiosql (external credentials), golang-migrate
+  (schema migrations), in-memory snapshot store (graph/user data)
+- **Encryption:** cryptography (Fernet, application-layer encryption of stored API keys)
 - **Rate limiting:** fastapi-throttle (in-memory)
 - **HTTP client:** httpx2 (async)
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
 - **Tooling:** uv, Ruff, basedpyright (strict), Commitizen
-- **Testing:** pytest, pytest-asyncio
+- **Testing:** pytest, pytest-asyncio, testcontainers
 
 ## Design
 
@@ -242,7 +246,7 @@ cd osint-engine
 ```bash
 mise install
 uv run pre-commit install
-cp .env.example .env  # then set SECRET_KEY and ADMIN_PASSWORD
+cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
 ```
 
 ### Windows
@@ -263,7 +267,8 @@ Docker Desktop's default networking — the first run downloads dependencies fro
 ### Run
 
 ```bash
-uv run python -m osint_engine
+uv run osint-engine migrate up
+uv run osint-engine serve
 ```
 
 ### Test
@@ -271,6 +276,18 @@ uv run python -m osint_engine
 ```bash
 uv run pytest --cov --cov-branch
 ```
+
+`tests/test_infrastructure/test_persistence/test_pg/` spins up a real Postgres via
+`testcontainers`, pulling the `postgres:18` and `testcontainers/ryuk:0.8.1` images from
+Docker Hub on first run (cached locally afterward). If pulls hang or time out, your
+DNS resolver may not be resolving Docker Hub reliably — point the Docker daemon at a
+known-good resolver in `/etc/docker/daemon.json`:
+
+```json
+{ "dns": ["1.1.1.1", "8.8.8.8"] }
+```
+
+then `sudo systemctl restart docker` and re-run the pulls.
 
 ### Local CI
 
