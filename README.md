@@ -258,7 +258,7 @@ cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EX
 ```powershell
 mise install
 uv run pre-commit install
-copy .env.example .env  # then set SECRET_KEY and ADMIN_PASSWORD
+copy .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
 ```
 
 > `--network host` in `.actrc` is Linux-only and has no effect on Docker Desktop. Internet access works via
@@ -266,7 +266,13 @@ Docker Desktop's default networking — the first run downloads dependencies fro
 
 ### Run
 
+`osint-engine migrate` needs the `migrate` CLI on `PATH` (installed by `mise install`, pinned to the same version
+the Dockerfile uses) and a running Postgres reachable at `DATABASE_URL` — unlike the test suite, `serve`/`migrate`
+don't spin one up for you:
+
 ```bash
+docker run --name osint-engine-postgres -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=osint_engine -p 5432:5432 -d postgres:18
 uv run osint-engine migrate up
 uv run osint-engine serve
 ```

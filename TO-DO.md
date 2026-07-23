@@ -7,11 +7,6 @@ for actions, uv, and pre-commit hooks
 
 ## chore(persistence)
 
-- `osint-engine migrate up`/`down` shell out to a bare `migrate` binary
-  (`src/osint_engine/interface/cli/commands/migrate.py`); the Dockerfile pulls it via a
-  multi-stage `COPY --from=migrate/migrate:v4.19.1`, but local dev has no equivalent —
-  document/automate a local install (Homebrew, `go install`, or a `mise` backend) so
-  `migrate` isn't a silent prerequisite
 - `migrate.py`'s `-path migrations` is relative to the current working directory; it only
   resolves correctly because the Dockerfile sets `WORKDIR /app` and copies `migrations/`
   there — an `osint-engine` installed from a wheel and run outside the repo/container root
