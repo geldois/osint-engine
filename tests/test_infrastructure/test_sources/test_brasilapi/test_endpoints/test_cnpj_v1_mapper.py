@@ -230,6 +230,24 @@ class TestMapCompany:
 
         assert "str" in str(exception.value)
 
+    def test_registration_status_date_is_none_when_payload_has_null(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPANY_DATA, "data_situacao_cadastral": None}
+
+        company = _map_company(payload=make_payload(source="brasilapi", data=data))
+
+        assert company.registration_status_date is None
+
+    def test_size_category_is_none_when_payload_has_null(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPANY_DATA, "porte": None}
+
+        company = _map_company(payload=make_payload(source="brasilapi", data=data))
+
+        assert company.size_category is None
+
 
 class TestMapEmail:
     def test_returns_email_when_address_is_present(

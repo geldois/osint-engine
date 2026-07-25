@@ -89,7 +89,11 @@ def _map_company(*, payload: Payload) -> Company:
         registration_status=payload.require(
             key="descricao_situacao_cadastral", expected_type=str
         ),
-        registration_status_date=payload.require(
+        # BrasilAPI's OpenAPI schema declares this field non-nullable, but
+        # production traffic has returned `null` for it (legacy Receita
+        # Federal records with no recorded status date), and the endpoint
+        # is an unvalidated passthrough proxy — so the doc is wrong here.
+        registration_status_date=payload.optional(
             key="data_situacao_cadastral", expected_type=str
         ),
         registration_status_reason=payload.require(
@@ -100,7 +104,7 @@ def _map_company(*, payload: Payload) -> Company:
             expected_type=int | float,
             cast_to=lambda value: Decimal(str(value)),
         ),
-        size_category=payload.require(key="porte", expected_type=str),
+        size_category=payload.optional(key="porte", expected_type=str),
         trade_name=payload.require(key="nome_fantasia", expected_type=str),
     )
 
