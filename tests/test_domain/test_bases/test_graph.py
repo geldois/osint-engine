@@ -84,15 +84,7 @@ class TestGraphSubclassContract:
 
 class TestGraphIdentity:
     @given(data=strategies.data())
-    @settings(
-        suppress_health_check=[
-            HealthCheck.function_scoped_fixture,
-            # mutmut re-invokes this test in-process (stats collection, then
-            # per-mutant run), which hypothesis reports as differing
-            # executors; the test itself runs under a single real executor.
-            HealthCheck.differing_executors,
-        ]
-    )
+    @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
     def test_id_is_stable_under_element_permutations(
         self,
         data: DataObject,
