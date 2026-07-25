@@ -217,5 +217,8 @@ __marimo__/
 .remember
 mutants/
 
-# graphify
-graphify-out/
+# code-review-graph
+.code-review-graph/
+
+# Claude Code local overrides
+.claude/settings.local.json
