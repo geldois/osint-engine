@@ -6,8 +6,8 @@ import pytest
 from typer.testing import CliRunner
 
 from osint_engine.config.settings import Settings
-from osint_engine.interface.cli import cli
 from osint_engine.interface.cli.commands import migrate
+from osint_engine.interface.cli.typer import typer_app
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ def test_migrate_commands_invoke_golang_migrate(
     monkeypatch.setattr(Settings, "from_env", classmethod(from_env))
     monkeypatch.setattr(migrate.subprocess, "run", run)
 
-    result = cli_runner.invoke(cli.typer_app, ["migrate", direction])
+    result = cli_runner.invoke(typer_app.typer_app, ["migrate", direction])
 
     assert result.exit_code == 0
     assert calls == [

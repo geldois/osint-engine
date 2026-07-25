@@ -9,7 +9,7 @@ from httpx2 import ASGITransport, AsyncClient, Timeout
 
 from osint_engine.config.croot import build_container
 from osint_engine.config.settings import Settings
-from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
+from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator

@@ -8,7 +8,7 @@ import pytest_asyncio
 from httpx2 import ASGITransport, AsyncClient, MockTransport, Request, Response
 
 from osint_engine.application.auth.user import Role
-from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
+from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 from tests.data.brasilapi import CNPJ, COMPLETE_PAYLOAD_DATA
 
 if TYPE_CHECKING:

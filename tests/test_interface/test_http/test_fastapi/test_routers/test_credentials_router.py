@@ -8,7 +8,7 @@ from httpx2 import ASGITransport, AsyncClient
 
 from osint_engine.application.auth.external_credential import Provider
 from osint_engine.application.auth.user import Role
-from osint_engine.interface.http.fastapi.fastapi import build_fastapi_app
+from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator

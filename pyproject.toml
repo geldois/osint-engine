@@ -33,7 +33,7 @@ dependencies = [
 ]
 
 [project.scripts]
-osint-engine = "osint_engine.interface.cli.cli:main"
+osint-engine = "osint_engine.interface.cli.typer.typer_app:main"
 
 [project.urls]
 Repository = "https://github.com/geldois/osint-engine"

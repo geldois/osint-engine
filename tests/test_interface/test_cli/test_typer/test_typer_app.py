@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from typer.testing import CliRunner
 
-from osint_engine.interface.cli import cli
+from osint_engine.interface.cli.typer import typer_app
 
 
 @pytest.fixture
@@ -12,26 +12,28 @@ def cli_runner() -> CliRunner:
 
 
 class TestCLIWiring:
-    """cli.py only wires commands onto typer_app; per-command behavior is
-    covered in test_commands/."""
+    """
+    typer_app.py only wires commands onto typer_app; per-command behavior is
+    covered in test_commands/.
+    """
 
     def test_serve_command_is_registered(self, cli_runner: CliRunner) -> None:
-        result = cli_runner.invoke(cli.typer_app, ["serve", "--help"])
+        result = cli_runner.invoke(typer_app.typer_app, ["serve", "--help"])
 
         assert result.exit_code == 0
 
     def test_migrate_up_command_is_registered(self, cli_runner: CliRunner) -> None:
-        result = cli_runner.invoke(cli.typer_app, ["migrate", "up", "--help"])
+        result = cli_runner.invoke(typer_app.typer_app, ["migrate", "up", "--help"])
 
         assert result.exit_code == 0
 
     def test_migrate_down_command_is_registered(self, cli_runner: CliRunner) -> None:
-        result = cli_runner.invoke(cli.typer_app, ["migrate", "down", "--help"])
+        result = cli_runner.invoke(typer_app.typer_app, ["migrate", "down", "--help"])
 
         assert result.exit_code == 0
 
     def test_wait_db_command_is_registered(self, cli_runner: CliRunner) -> None:
-        result = cli_runner.invoke(cli.typer_app, ["wait-db", "--help"])
+        result = cli_runner.invoke(typer_app.typer_app, ["wait-db", "--help"])
 
         assert result.exit_code == 0
 
@@ -41,8 +43,8 @@ class TestCLIWiring:
         def typer_app_call() -> None:
             calls.append(None)
 
-        monkeypatch.setattr(cli, "typer_app", typer_app_call)
+        monkeypatch.setattr(typer_app, "typer_app", typer_app_call)
 
-        cli.main()
+        typer_app.main()
 
         assert calls == [None]
