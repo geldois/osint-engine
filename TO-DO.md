@@ -13,13 +13,13 @@ for actions, uv, and pre-commit hooks
   fails, since `migrations/` isn't packaged as package data; fine for the current
   Docker-only deployment target, revisit if a non-container install path is ever needed
 
+## feat(ceis)
+
+- CEIS (Cadastro de Empresas Inidôneas e Suspensas) sanctions are not yet implemented — only CNEP is (see [ADR-0019](docs/adr/0019-portal-transparencia-as-cnep-ceis-sanctions-source.md)); `Sanction.organ` already accepts `Literal["CEIS", "CNEP"]`, so follow the same `PortalTransparenciaFetcher` subclassing pattern as `PortalTransparenciaCNEPFetcher`/`cnep_mapper` for the CEIS endpoint, and decide whether it joins `ExpandByCNEP` or becomes its own use case
+
 ## feat(cep)
 
 - `BrasilAPICEPv2Fetcher`/`cep_v2_mapper` are built and fully tested but unwired — no use case calls `CEPFetcher.fetch(cep, number)` yet; the intended consumer is roadmap step 3 (text ingestion), which supplies `number` from regex extraction and uses this fetcher to fill in city/state/neighborhood/street around it; do not chain it from `cnpj_v1`, whose `_map_address` already returns a complete `Address`
-
-## feat(cnep)
-
-- `PortalTransparenciaCNEPFetcher`/`cnep_mapper` are built and fully tested but unwired — not present in `Container`/`Fetchers` (`src/osint_engine/config/container.py`), and no use case produces `Sanction` nodes yet; wiring requires an `ExternalCredential` with a Portal da Transparência API key (see [ADR-0019](docs/adr/0019-portal-transparencia-as-cnep-ceis-sanctions-source.md)) — decide whether it joins `ExpandByCNPJ` or becomes its own use case before wiring
 
 ## feat(persistence)
 
