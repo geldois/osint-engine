@@ -38,8 +38,7 @@ class _AsyncResource[Resource]:
 
 @pytest.mark.asyncio
 async def test_serve_opens_both_resources_and_wires_hybrid_container(
-    settings: Settings,
-    monkeypatch: pytest.MonkeyPatch,
+    settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     http_client = cast("AsyncClient", object())
     pg_pool = cast("Pool", object())
@@ -55,10 +54,12 @@ async def test_serve_opens_both_resources_and_wires_hybrid_container(
 
     def build_http_client(*, settings: Settings) -> _AsyncResource[AsyncClient]:
         assert settings is settings_fixture
+
         return http_resource
 
     def create_pool(*, dsn: str) -> _AsyncResource[Pool]:
         assert dsn == settings.database_url
+
         return pg_resource
 
     def configure_logging(*, debug: bool) -> None:
@@ -69,19 +70,16 @@ async def test_serve_opens_both_resources_and_wires_hybrid_container(
         settings: Settings,
         http_client: AsyncClient,
         pg_pool: Pool,
-        external_credential_encryption_key: str,
     ) -> Container:
         assert settings is settings_fixture
         assert http_client is http_client_fixture
         assert pg_pool is pg_pool_fixture
-        assert (
-            external_credential_encryption_key
-            == settings.external_credential_encryption_key
-        )
+
         return container
 
     def build_fastapi_app(*, container: Container) -> FastAPI:
         assert container is container_fixture
+
         return fastapi_app
 
     async def serve_http(*, app: FastAPI, settings: Settings) -> None:

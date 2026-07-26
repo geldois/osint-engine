@@ -37,9 +37,6 @@ async def _serve() -> None:
             settings=settings,
             http_client=http_client,
             pg_pool=pg_pool,
-            external_credential_encryption_key=(
-                settings.external_credential_encryption_key
-            ),
         )
         fastapi_app = build_fastapi_app(container=container)
 

@@ -50,7 +50,7 @@ def build_container(  # noqa: PLR0913
     settings: Settings,
     http_client: AsyncClient,
     pg_pool: Pool,
-    external_credential_encryption_key: str,
+    external_credential_encryption_key: str | None = None,
     mem_storage: MemStorage | None = None,
     policies: Policies | None = None,
 ) -> Container:
@@ -67,6 +67,12 @@ def build_container(  # noqa: PLR0913
 
     seed_mem_storage(
         settings=settings, mem_storage=mem_storage, password_hasher=password_hasher
+    )
+
+    external_credential_encryption_key = (
+        external_credential_encryption_key
+        if external_credential_encryption_key is not None
+        else settings.external_credential_encryption_key
     )
 
     policies = (
