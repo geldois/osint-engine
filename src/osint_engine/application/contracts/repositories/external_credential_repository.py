@@ -22,5 +22,11 @@ class ExternalCredentialRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def list_configured_providers(
+        self, *, username: str
+    ) -> frozenset[Provider]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def save(self, *, credential: ExternalCredential) -> None:
         raise NotImplementedError

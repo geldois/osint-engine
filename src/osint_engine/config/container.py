@@ -21,6 +21,9 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.authentication.authenticate_user import (
         AuthenticateUser,
     )
+    from osint_engine.application.use_cases.credentials.list_credentials import (
+        ListExternalCredentials,
+    )
     from osint_engine.application.use_cases.credentials.save_credential import (
         SaveExternalCredential,
     )
@@ -64,4 +67,5 @@ class UseCases:
     expand_by_ceis: partial[ExpandByCEIS]
     expand_by_cnep: partial[ExpandByCNEP]
     expand_by_cnpj: partial[ExpandByCNPJ]
+    list_external_credentials: partial[ListExternalCredentials]
     save_external_credential: partial[SaveExternalCredential]

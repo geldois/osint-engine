@@ -115,3 +115,29 @@ class TestPgExternalCredentialRepository:
 
         assert isinstance(stored_api_key, str)
         assert stored_api_key != credential.api_key
+
+    @pytest.mark.asyncio(loop_scope="session")
+    async def test_list_configured_providers_returns_providers_for_username(
+        self,
+        repository: PgExternalCredentialRepository,
+        make_external_credential: MakeExternalCredential,
+    ) -> None:
+        credential = make_external_credential(username="analyst")
+
+        await repository.save(credential=credential)
+
+        providers = await repository.list_configured_providers(
+            username=credential.username
+        )
+
+        assert providers == frozenset({credential.provider})
+
+    @pytest.mark.asyncio(loop_scope="session")
+    async def test_list_configured_providers_returns_empty_for_unknown_username(
+        self, repository: PgExternalCredentialRepository
+    ) -> None:
+        providers = await repository.list_configured_providers(
+            username="unknown-user"
+        )
+
+        assert providers == frozenset()

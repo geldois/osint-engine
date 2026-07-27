@@ -30,3 +30,13 @@ class MemExternalCredentialRepository(ExternalCredentialRepository):
         self.external_credentials[(credential.username, credential.provider)] = (
             credential
         )
+
+    @override
+    async def list_configured_providers(
+        self, *, username: str
+    ) -> frozenset[Provider]:
+        return frozenset(
+            provider
+            for stored_username, provider in self.external_credentials
+            if stored_username == username
+        )

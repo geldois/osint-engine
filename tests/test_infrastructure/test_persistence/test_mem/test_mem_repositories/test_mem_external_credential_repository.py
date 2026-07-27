@@ -100,3 +100,56 @@ class TestMemExternalCredentialRepositorySave:
         key = (_CREDENTIAL.username, _CREDENTIAL.provider)
 
         assert mem_storage.external_credentials[key] is _CREDENTIAL
+
+
+class TestMemExternalCredentialRepositoryListConfiguredProviders:
+    @pytest.mark.asyncio
+    async def test_returns_providers_configured_for_the_given_username(self) -> None:
+        mem_storage = MemStorage(
+            external_credentials={
+                (_CREDENTIAL.username, _CREDENTIAL.provider): _CREDENTIAL
+            }
+        )
+        repo = MemExternalCredentialRepository(mem_storage=mem_storage)
+
+        providers = await repo.list_configured_providers(
+            username=_CREDENTIAL.username
+        )
+
+        assert providers == frozenset({Provider.PORTAL_TRANSPARENCIA})
+
+    @pytest.mark.asyncio
+    async def test_returns_empty_frozenset_when_username_has_no_credentials(
+        self,
+    ) -> None:
+        mem_storage = MemStorage()
+        repo = MemExternalCredentialRepository(mem_storage=mem_storage)
+
+        providers = await repo.list_configured_providers(
+            username=_CREDENTIAL.username
+        )
+
+        assert providers == frozenset()
+
+    @pytest.mark.asyncio
+    async def test_does_not_include_providers_configured_for_other_usernames(
+        self,
+    ) -> None:
+        other = ExternalCredential(
+            api_key="other-key",
+            provider=Provider.PORTAL_TRANSPARENCIA,
+            username="someone-else",
+        )
+        mem_storage = MemStorage(
+            external_credentials={
+                (_CREDENTIAL.username, _CREDENTIAL.provider): _CREDENTIAL,
+                (other.username, other.provider): other,
+            }
+        )
+        repo = MemExternalCredentialRepository(mem_storage=mem_storage)
+
+        providers = await repo.list_configured_providers(
+            username=_CREDENTIAL.username
+        )
+
+        assert providers == frozenset({Provider.PORTAL_TRANSPARENCIA})

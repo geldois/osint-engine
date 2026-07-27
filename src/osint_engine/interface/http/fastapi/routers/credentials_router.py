@@ -6,6 +6,9 @@ from fastapi import APIRouter, Depends, status
 
 from osint_engine.application.auth.user import Role
 from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_role_guard
+from osint_engine.interface.http.fastapi.routers.handlers.get.get_credentials import (
+    build_get_credentials_handler,
+)
 from osint_engine.interface.http.fastapi.routers.handlers.post.post_credential import (
     build_post_credential_handler,
 )
@@ -24,5 +27,7 @@ def build_credentials_router(*, container: Container) -> APIRouter:
     router.post(path="", status_code=status.HTTP_204_NO_CONTENT)(
         build_post_credential_handler(container=container)
     )
+
+    router.get(path="")(build_get_credentials_handler(container=container))
 
     return router

@@ -8,3 +8,8 @@ INSERT INTO external_credentials (username, provider, api_key)
 VALUES (:username, :provider, :api_key)
 ON CONFLICT (username, provider)
 DO UPDATE SET api_key = EXCLUDED.api_key;
+
+-- name: list_providers_by_username
+SELECT provider
+FROM external_credentials
+WHERE username = :username;

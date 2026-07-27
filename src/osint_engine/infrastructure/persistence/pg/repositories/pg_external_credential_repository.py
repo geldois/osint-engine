@@ -15,6 +15,8 @@ from osint_engine.application.contracts.repositories.external_credential_reposit
 )
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from asyncpg import Pool
 
 
@@ -24,26 +26,26 @@ class _ExternalCredentialRow(TypedDict):
     username: str
 
 
+class _ProviderRow(TypedDict):
+    provider: str
+
+
 class _ExternalCredentialQueries(Protocol):
     async def find_by_username_and_provider(
-        self,
-        connection: Pool,
-        *,
-        username: str,
-        provider: str,
+        self, connection: Pool, *, username: str, provider: str
     ) -> _ExternalCredentialRow | None: ...
 
     async def upsert(
-        self,
-        connection: Pool,
-        *,
-        username: str,
-        provider: str,
-        api_key: str,
+        self, connection: Pool, *, username: str, provider: str, api_key: str
     ) -> str: ...
+
+    def list_providers_by_username(
+        self, connection: Pool, *, username: str
+    ) -> AsyncIterator[_ProviderRow]: ...
 
 
 _QUERIES_PATH = Path(__file__).parent.parent / "queries" / "external_credentials.sql"
+
 # aiosql builds this object's attributes dynamically from the .sql file, so its
 # return type is inherently unknown to the type checker.
 _queries = cast(
@@ -65,9 +67,7 @@ class PgExternalCredentialRepository(ExternalCredentialRepository):
         self, *, username: str, provider: Provider
     ) -> ExternalCredential | None:
         row = await _queries.find_by_username_and_provider(
-            self._pool,
-            username=username,
-            provider=provider.value,
+            self._pool, username=username, provider=provider.value
         )
 
         if row is None:
@@ -90,4 +90,15 @@ class PgExternalCredentialRepository(ExternalCredentialRepository):
             username=credential.username,
             provider=credential.provider.value,
             api_key=encrypted_api_key,
+        )
+
+    @override
+    async def list_configured_providers(self, *, username: str) -> frozenset[Provider]:
+        return frozenset(
+            [
+                Provider(row["provider"])
+                async for row in _queries.list_providers_by_username(
+                    self._pool, username=username
+                )
+            ]
         )

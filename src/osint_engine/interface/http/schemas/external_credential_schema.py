@@ -8,3 +8,8 @@ from osint_engine.application.auth.external_credential import Provider  # noqa: 
 class ExternalCredentialSchema(BaseModel):
     api_key: str
     provider: Provider
+
+
+class ExternalCredentialStatusSchema(BaseModel):
+    configured: bool
+    provider: Provider

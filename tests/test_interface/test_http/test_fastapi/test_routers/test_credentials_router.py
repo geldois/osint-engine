@@ -100,3 +100,81 @@ class TestPostCredentialSubmission:
 
         assert credential is not None
         assert credential.api_key == "test-api-key"
+
+
+class TestGetCredentialAuthentication:
+    @pytest.mark.asyncio
+    async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
+        response = await client.get("/credentials")
+
+        assert response.status_code == 401
+
+
+class TestGetCredentialAuthorization:
+    @pytest.mark.asyncio
+    async def test_viewer_token_returns_403(
+        self, client: AsyncClient, viewer_token: str
+    ) -> None:
+        response = await client.get(
+            "/credentials", headers={"Authorization": f"Bearer {viewer_token}"}
+        )
+
+        assert response.status_code == 403
+
+
+class TestGetCredentialStatus:
+    @pytest.mark.asyncio
+    async def test_returns_not_configured_for_every_provider_by_default(
+        self, client: AsyncClient, valid_token: str
+    ) -> None:
+        response = await client.get(
+            "/credentials", headers={"Authorization": f"Bearer {valid_token}"}
+        )
+
+        assert response.status_code == 200
+        assert response.json() == [
+            {"configured": False, "provider": "PORTAL_TRANSPARENCIA"}
+        ]
+
+    @pytest.mark.asyncio
+    async def test_returns_configured_true_after_saving_a_credential(
+        self, client: AsyncClient, valid_token: str
+    ) -> None:
+        await client.post(
+            "/credentials",
+            json={"api_key": "test-api-key", "provider": "PORTAL_TRANSPARENCIA"},
+            headers={"Authorization": f"Bearer {valid_token}"},
+        )
+
+        response = await client.get(
+            "/credentials", headers={"Authorization": f"Bearer {valid_token}"}
+        )
+
+        assert response.json() == [
+            {"configured": True, "provider": "PORTAL_TRANSPARENCIA"}
+        ]
+
+    @pytest.mark.asyncio
+    async def test_does_not_reflect_credentials_saved_by_other_users(
+        self,
+        client: AsyncClient,
+        pyjwt_service: PyJWTService,
+        valid_token: str,
+    ) -> None:
+        other_admin_token = pyjwt_service.create_access_token(
+            username="other-admin", role=Role.ADMIN
+        )
+
+        await client.post(
+            "/credentials",
+            json={"api_key": "test-api-key", "provider": "PORTAL_TRANSPARENCIA"},
+            headers={"Authorization": f"Bearer {other_admin_token}"},
+        )
+
+        response = await client.get(
+            "/credentials", headers={"Authorization": f"Bearer {valid_token}"}
+        )
+
+        assert response.json() == [
+            {"configured": False, "provider": "PORTAL_TRANSPARENCIA"}
+        ]

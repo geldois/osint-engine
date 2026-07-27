@@ -28,6 +28,19 @@ class FakePgPool:
 
         return {"username": username, "provider": provider, "api_key": api_key}
 
+    async def fetch(self, query: str, *args: object) -> list[dict[str, str]]:
+        assert "FROM external_credentials" in query
+        assert len(args) == 1
+
+        (username,) = args
+        assert isinstance(username, str)
+
+        return [
+            {"provider": provider}
+            for stored_username, provider in self.external_credentials
+            if stored_username == username
+        ]
+
     async def execute(self, query: str, *args: object) -> str:
         assert "INSERT INTO external_credentials" in query
         assert len(args) == 3

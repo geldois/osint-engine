@@ -12,6 +12,9 @@ from osint_engine.application.revision.policies.revision_selection_policy import
 from osint_engine.application.use_cases.authentication.authenticate_user import (
     AuthenticateUser,
 )
+from osint_engine.application.use_cases.credentials.list_credentials import (
+    ListExternalCredentials,
+)
 from osint_engine.application.use_cases.credentials.save_credential import (
     SaveExternalCredential,
 )
@@ -110,6 +113,9 @@ def build_container(  # noqa: PLR0913
         ),
         expand_by_cnpj=partial(
             ExpandByCNPJ, uow_factory=uow_factory, cnpj_fetcher=fetchers.cnpj_fetcher
+        ),
+        list_external_credentials=partial(
+            ListExternalCredentials, uow_factory=uow_factory
         ),
         save_external_credential=partial(
             SaveExternalCredential, uow_factory=uow_factory
