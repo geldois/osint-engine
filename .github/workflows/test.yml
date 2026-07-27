@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      PORTAL_TRANSPARENCIA_API_KEY: ${{ secrets.PORTAL_TRANSPARENCIA_API_KEY }}
 
     steps:
       - name: Checkout
@@ -27,6 +28,16 @@ jobs:
 
       - name: Install dependencies
         run: uv sync
+
+      - name: Refresh test fixtures
+        # tests/**/responses/ is gitignored and regenerated against the live
+        # BrasilAPI/Portal da Transparência APIs. Forked-repo pull requests
+        # don't have access to repository secrets, so this step is skipped
+        # rather than failing the job — the golden-snapshot tests that depend
+        # on these fixtures then fail instead, same trade-off as the Docker
+        # Hub login step below.
+        if: ${{ env.PORTAL_TRANSPARENCIA_API_KEY != '' }}
+        run: uv run osint-engine refresh-fixtures
 
       - name: Log in to Docker Hub
         # Forked-repo pull requests don't have access to repository secrets,
