@@ -154,6 +154,67 @@ class TestGraphIdentity:
         assert graph_a.id == graph_b.id
 
 
+class TestGraphMerge:
+    def test_unions_nodes_and_edges_from_both_graphs(
+        self, make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode
+    ) -> None:
+        root = make_fake_node()
+        node_a = make_fake_node()
+        node_b = make_fake_node()
+        edge_a = make_fake_edge(source_id=root.id, target_id=node_a.id)
+        edge_b = make_fake_edge(source_id=root.id, target_id=node_b.id)
+
+        graph_a = Graph(
+            edges=frozenset({edge_a}),
+            nodes=frozenset({root, node_a}),
+            root_id=root.id,
+        )
+        graph_b = Graph(
+            edges=frozenset({edge_b}),
+            nodes=frozenset({root, node_b}),
+            root_id=root.id,
+        )
+
+        merged = graph_a.merge(other=graph_b)
+
+        assert merged.nodes == frozenset({root, node_a, node_b})
+        assert merged.edges == frozenset({edge_a, edge_b})
+
+    def test_keeps_the_root_id_of_the_graph_merge_is_called_on(
+        self, make_fake_node: MakeFakeNode
+    ) -> None:
+        root = make_fake_node()
+        other_node = make_fake_node()
+
+        graph_a = Graph(edges=frozenset(), nodes=frozenset({root}), root_id=root.id)
+        graph_b = Graph(
+            edges=frozenset(), nodes=frozenset({root, other_node}), root_id=root.id
+        )
+
+        merged = graph_a.merge(other=graph_b)
+
+        assert merged.root_id == root.id
+
+    def test_deduplicates_shared_nodes_and_edges(
+        self, make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode
+    ) -> None:
+        root = make_fake_node()
+        node = make_fake_node()
+        edge = make_fake_edge(source_id=root.id, target_id=node.id)
+
+        graph_a = Graph(
+            edges=frozenset({edge}), nodes=frozenset({root, node}), root_id=root.id
+        )
+        graph_b = Graph(
+            edges=frozenset({edge}), nodes=frozenset({root, node}), root_id=root.id
+        )
+
+        merged = graph_a.merge(other=graph_b)
+
+        assert merged.nodes == frozenset({root, node})
+        assert merged.edges == frozenset({edge})
+
+
 class TestGraphValidation:
     def test_raises_with_empty_node_set(self, make_fake_node: MakeFakeNode) -> None:
         node = make_fake_node()

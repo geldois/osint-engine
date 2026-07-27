@@ -75,3 +75,10 @@ class Graph(
         kwargs["nodes"] = tuple(sorted(node.id for node in nodes))
 
         return super()._calculate_id(**kwargs)
+
+    def merge(self, *, other: Graph) -> Graph:
+        return Graph(
+            edges=self.edges | other.edges,
+            nodes=self.nodes | other.nodes,
+            root_id=self.root_id,
+        )
