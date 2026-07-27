@@ -8,6 +8,9 @@ from httpx2 import Request, RequestError, Response
 
 from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.infrastructure.errors.data_source_error import DataSourceRequestError
+from osint_engine.infrastructure.errors.external_credential_error import (
+    ExternalCredentialRejectedError,
+)
 
 if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import ExternalCredential
@@ -57,6 +60,30 @@ class TestPortalTransparenciaCEISFetcherOnHTTPStatusError:
 
         assert exception.value.status_code == status_code
         assert exception.value.source == "portal_transparencia"
+
+
+class TestPortalTransparenciaCEISFetcherOnCredentialRejection:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status_code", [401, 403])
+    async def test_raises_external_credential_rejected_error(
+        self,
+        make_portal_transparencia_ceis_fetcher: MakePortalTransparenciaCEISFetcher,
+        portal_transparencia_credential: ExternalCredential,
+        status_code: int,
+    ) -> None:
+        def handler(request: Request) -> Response:  # noqa: ARG001
+            return Response(status_code)
+
+        fetcher = make_portal_transparencia_ceis_fetcher(handler=handler)
+
+        with pytest.raises(ExternalCredentialRejectedError) as exception:
+            await fetcher.fetch(
+                cpf_or_cnpj="33754482000124",
+                ceis_id=None,
+                credential=portal_transparencia_credential,
+            )
+
+        assert exception.value.username == portal_transparencia_credential.username
 
 
 class TestPortalTransparenciaCEISFetcherOnNetworkFailure:

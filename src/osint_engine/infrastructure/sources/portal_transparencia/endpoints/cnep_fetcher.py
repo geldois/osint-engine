@@ -68,6 +68,10 @@ class PortalTransparenciaCNEPFetcher(
                 status_code=exception.response.status_code,
             )
 
+            self._raise_for_credential_rejection(
+                exception=exception, credential=credential
+            )
+
             raise DataSourceRequestError(
                 source=self._SOURCE, status_code=exception.response.status_code
             ) from exception

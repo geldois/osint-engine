@@ -6,10 +6,19 @@ from typing import TYPE_CHECKING, final
 from httpx2 import URL, AsyncClient
 from structlog.stdlib import get_logger
 
+from osint_engine.application.auth.external_credential import Provider
+from osint_engine.infrastructure.errors.external_credential_error import (
+    ExternalCredentialRejectedError,
+)
+
 if TYPE_CHECKING:
+    from httpx2 import HTTPStatusError
+
     from osint_engine.application.auth.external_credential import ExternalCredential
 
 _logger = get_logger()
+
+_CREDENTIAL_REJECTED_STATUS_CODES = frozenset({401, 403})
 
 
 class PortalTransparenciaFetcher:
@@ -31,3 +40,12 @@ class PortalTransparenciaFetcher:
     @final
     def _build_headers(self, *, credential: ExternalCredential) -> dict[str, str]:
         return {self._API_KEY_HEADER: credential.api_key}
+
+    @final
+    def _raise_for_credential_rejection(
+        self, *, exception: HTTPStatusError, credential: ExternalCredential
+    ) -> None:
+        if exception.response.status_code in _CREDENTIAL_REJECTED_STATUS_CODES:
+            raise ExternalCredentialRejectedError(
+                username=credential.username, provider=Provider.PORTAL_TRANSPARENCIA
+            ) from exception

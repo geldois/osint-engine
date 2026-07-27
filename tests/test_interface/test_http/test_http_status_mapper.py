@@ -29,6 +29,9 @@ from osint_engine.infrastructure.errors.data_source_error import (
     UnexpectedFieldTypeError,
     UnexpectedPayloadError,
 )
+from osint_engine.infrastructure.errors.external_credential_error import (
+    ExternalCredentialRejectedError,
+)
 from osint_engine.infrastructure.errors.token_error import InvalidTokenError, TokenError
 from osint_engine.infrastructure.errors.uow_error import UoWError
 from osint_engine.interface.errors.sanitization_error import InvalidCNPJError
@@ -91,6 +94,13 @@ class TestStatusMapping:
                 ),
                 404,
                 id="ExternalCredentialNotFoundError→404",
+            ),
+            pytest.param(
+                ExternalCredentialRejectedError(
+                    username="user", provider=Provider.PORTAL_TRANSPARENCIA
+                ),
+                401,
+                id="ExternalCredentialRejectedError→401",
             ),
             pytest.param(
                 InvalidTokenError(detail="expired"), 401, id="InvalidTokenError→401"

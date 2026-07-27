@@ -24,6 +24,9 @@ from osint_engine.infrastructure.errors.data_source_error import (
     UnexpectedFieldTypeError,
     UnexpectedPayloadError,
 )
+from osint_engine.infrastructure.errors.external_credential_error import (
+    ExternalCredentialRejectedError,
+)
 from osint_engine.infrastructure.errors.token_error import InvalidTokenError, TokenError
 from osint_engine.infrastructure.errors.uow_error import UoWError
 from osint_engine.interface.errors.authorization_error import InsufficientRoleError
@@ -34,6 +37,7 @@ from osint_engine.interface.http.errors.schema_error import SchemaError
 _STATUS_MAP: tuple[tuple[type[Exception], int], ...] = (
     (EntityNotFoundError, 404),
     (ExternalCredentialNotFoundError, 404),
+    (ExternalCredentialRejectedError, 401),
     (InvalidCredentialsError, 401),
     (InvalidTokenError, 401),
     (TokenError, 401),
