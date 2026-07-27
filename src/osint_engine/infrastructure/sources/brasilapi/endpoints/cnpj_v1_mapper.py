@@ -43,7 +43,8 @@ def _map_address(*, payload: Payload) -> Address | None:
 
     return Address(
         cep=cep,
-        city=payload.require(key="municipio", expected_type=str),
+        # BrasilAPI's OpenAPI schema marks `municipio` `nullable: true`.
+        city=payload.optional(key="municipio", expected_type=str),
         complement=payload.require(key="complemento", expected_type=str),
         neighborhood=payload.require(key="bairro", expected_type=str),
         number=numero,

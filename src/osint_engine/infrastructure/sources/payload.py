@@ -22,6 +22,18 @@ def _runtime_type(type_: type | UnionType, /) -> type | UnionType:
 
 
 class Payload:
+    """
+    Typed, fail-fast accessor over an untrusted external JSON payload.
+
+    `require`/`optional` encode what the *source's own schema* promises,
+    not whether our domain happens to accept `None`. Use `optional` only
+    when the source documents the field as nullable/absent (`nullable:
+    true`, "pode ser nulo", or a schema known — and commented at the call
+    site — to be wrong in production). If the source gives no signal
+    either way, default to `require`: an unannounced `None` is exactly the
+    contract violation this class exists to catch loudly.
+    """
+
     def __init__(self, *, source: str, data: dict[str, object]) -> None:
         self._source = source
         self._data = data
@@ -52,6 +64,10 @@ class Payload:
         expected_type: type[Field],
         cast_to: _Caster[Field, Cast] | None = None,
     ) -> Field | Cast:
+        """
+        Read a field the source's schema promises is always present with this type.
+        """
+
         if key not in self._data:
             raise UnexpectedPayloadError(source=self._source, missing_field=key)
 
@@ -86,6 +102,10 @@ class Payload:
         expected_type: type[Field],
         cast_to: _Caster[Field, Cast] | None = None,
     ) -> Field | Cast | None:
+        """
+        Read a field the source's schema itself documents as absent-able or null.
+        """
+
         if key not in self._data or self._data[key] is None:
             return None
 
