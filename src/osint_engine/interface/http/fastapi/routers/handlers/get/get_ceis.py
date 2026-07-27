@@ -15,23 +15,23 @@ if TYPE_CHECKING:
     from osint_engine.config.container import Container
 
 
-def build_get_cnep_handler(
+def build_get_ceis_handler(
     *, container: Container
 ) -> Callable[
     [str, dict[str, object], int | None], Awaitable[GraphSchema | Response]
 ]:
     jwt_guard = build_jwt_guard(container=container)
 
-    async def get_cnep(
+    async def get_ceis(
         cpf_or_cnpj: str,
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
-        cnep_id: int | None = None,
+        ceis_id: int | None = None,
     ) -> GraphSchema | Response:
         cpf_or_cnpj = sanitize_cpf_or_cnpj(cpf_or_cnpj)
         username = str(payload["sub"])
 
-        use_case = container.use_cases.expand_by_cnep(
-            cpf_or_cnpj=cpf_or_cnpj, cnep_id=cnep_id, username=username
+        use_case = container.use_cases.expand_by_ceis(
+            cpf_or_cnpj=cpf_or_cnpj, ceis_id=ceis_id, username=username
         )
 
         graph = await use_case.execute()
@@ -41,4 +41,4 @@ def build_get_cnep_handler(
 
         return graph_to_schema(graph)
 
-    return get_cnep
+    return get_ceis

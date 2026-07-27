@@ -10,21 +10,27 @@ from osint_engine.application.auth.external_credential import (
     ExternalCredential,
     Provider,
 )
+from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandByCEIS
+from osint_engine.infrastructure.sources.portal_transparencia.endpoints.ceis_fetcher import (  # noqa: E501
+    PortalTransparenciaCEISFetcher,
+)
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
+from osint_engine.interface.http.schemas.graph_schema import GraphSchema
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
+    from osint_engine.config.container import Container
     from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
     from tests.conftest import MakeMemStorage
     from tests.test_interface.test_http.test_fastapi.conftest import MakeContainer
 
-_CNEP_RECORD_DATA = {
+_CEIS_RECORD_DATA = {
     "dataFimSancao": "2026-01-01",
     "dataInicioSancao": "2024-01-01",
     "dataPublicacaoSancao": "2024-01-15",
     "fundamentacao": [{"codigo": "1", "descricao": "Lei 8.666/1993, art. 87"}],
-    "linkPublicacao": "https://portaldatransparencia.gov.br/sancoes/cnep/123",
+    "linkPublicacao": "https://portaldatransparencia.gov.br/sancoes/ceis/123",
     "numeroProcesso": "123/2024",
     "orgaoSancionador": {"nome": "CGU"},
     "pessoa": {
@@ -33,44 +39,61 @@ _CNEP_RECORD_DATA = {
         "razaoSocialReceita": "EMPRESA LTDA",
     },
     "tipoSancao": {"descricaoResumida": "Suspensão"},
-    "valorMulta": "1.000,50",
 }
 
 CPF_OR_CNPJ = "33754482000124"
 
 
-@pytest_asyncio.fixture(loop_scope="session")
-async def portal_transparencia_http_client() -> AsyncGenerator[AsyncClient, None]:
-    """An HTTP client whose transport serves a valid CNEP payload."""
+@pytest.fixture
+def captured_request_url() -> dict[str, str]:
+    return {}
 
-    def handler(request: Request) -> Response:  # noqa: ARG001
-        return Response(200, json=[_CNEP_RECORD_DATA])
+
+@pytest_asyncio.fixture
+async def portal_transparencia_http_client(
+    captured_request_url: dict[str, str],
+) -> AsyncGenerator[AsyncClient, None]:
+    """An HTTP client whose transport serves a valid CEIS payload."""
+
+    def handler(request: Request) -> Response:
+        captured_request_url["url"] = str(request.url)
+
+        # No query string means the request targets the by-id endpoint
+        # (a single record); a query string means the collection endpoint
+        # (an array of records).
+        if request.url.query:
+            return Response(200, json=[_CEIS_RECORD_DATA])
+
+        return Response(200, json=_CEIS_RECORD_DATA)
 
     async with AsyncClient(transport=MockTransport(handler)) as http_client:
         yield http_client
 
 
-@pytest_asyncio.fixture(loop_scope="session")
-async def client(
+@pytest.fixture
+def ceis_container(
     make_container: MakeContainer,
     make_mem_storage: MakeMemStorage,
     portal_transparencia_http_client: AsyncClient,
-) -> AsyncGenerator[AsyncClient, None]:
+) -> Container:
+    return make_container(
+        http_client=portal_transparencia_http_client,
+        mem_storage=make_mem_storage(),
+    )
+
+
+@pytest_asyncio.fixture
+async def client(ceis_container: Container) -> AsyncGenerator[AsyncClient, None]:
     credential = ExternalCredential(
         api_key="test-api-key",
         provider=Provider.PORTAL_TRANSPARENCIA,
         username="admin",
     )
-    mem_storage = make_mem_storage()
 
-    container = make_container(
-        http_client=portal_transparencia_http_client, mem_storage=mem_storage
-    )
-
-    async with container.uow_factory() as uow:
+    async with ceis_container.uow_factory() as uow:
         await uow.external_credentials.save(credential=credential)
 
-    app = build_fastapi_app(container=container)
+    app = build_fastapi_app(container=ceis_container)
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -83,27 +106,25 @@ def valid_token(pyjwt_service: PyJWTService) -> str:
     return pyjwt_service.create_access_token(username="admin", role="admin")
 
 
-# TESTS
-
-
-class TestGetCnepAuthentication:
+class TestGetCEISAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
-        response = await client.get(f"/cnep/{CPF_OR_CNPJ}")
+        response = await client.get(f"/ceis/{CPF_OR_CNPJ}")
 
         assert response.status_code == 401
 
 
-class TestGetCnepExpansion:
+class TestGetCEISExpansion:
     @pytest.mark.asyncio
-    async def test_valid_token_and_known_credential_returns_200(
+    async def test_valid_token_and_known_credential_returns_graph_schema(
         self, client: AsyncClient, valid_token: str
     ) -> None:
         response = await client.get(
-            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/ceis/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
         )
 
         assert response.status_code == 200
+        GraphSchema.model_validate(response.json())
 
     @pytest.mark.asyncio
     async def test_returns_204_when_no_sanctions_are_found(
@@ -134,30 +155,41 @@ class TestGetCnepExpansion:
                 transport=ASGITransport(app=app), base_url="http://test"
             ) as client:
                 response = await client.get(
-                    f"/cnep/{CPF_OR_CNPJ}",
+                    f"/ceis/{CPF_OR_CNPJ}",
                     headers={"Authorization": f"Bearer {valid_token}"},
                 )
 
         assert response.status_code == 204
 
     @pytest.mark.asyncio
-    async def test_unknown_credential_returns_404(
-        self, client: AsyncClient, pyjwt_service: PyJWTService
-    ) -> None:
-        token = pyjwt_service.create_access_token(username="stranger", role="admin")
-
-        response = await client.get(
-            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {token}"}
-        )
-
-        assert response.status_code == 404
-
-    @pytest.mark.asyncio
-    async def test_invalid_cpf_or_cnpj_returns_422(
-        self, client: AsyncClient, valid_token: str
+    async def test_accepts_ceis_id_as_an_optional_query_parameter(
+        self,
+        captured_request_url: dict[str, str],
+        client: AsyncClient,
+        valid_token: str,
     ) -> None:
         response = await client.get(
-            "/cnep/123", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/ceis/{CPF_OR_CNPJ}",
+            params={"ceis_id": 42},
+            headers={"Authorization": f"Bearer {valid_token}"},
         )
 
-        assert response.status_code == 422
+        assert response.status_code == 200
+        assert captured_request_url["url"].endswith("ceis/42")
+
+
+class TestCEISCompositionRoot:
+    def test_container_resolves_ceis_fetcher_and_use_case(
+        self, ceis_container: Container
+    ) -> None:
+        assert isinstance(
+            ceis_container.fetchers.ceis_fetcher, PortalTransparenciaCEISFetcher
+        )
+
+        use_case = ceis_container.use_cases.expand_by_ceis(
+            cpf_or_cnpj=CPF_OR_CNPJ,
+            ceis_id=None,
+            username="admin",
+        )
+
+        assert isinstance(use_case, ExpandByCEIS)

@@ -7,8 +7,8 @@ import pytest
 from osint_engine.application.errors.external_credential_error import (
     ExternalCredentialNotFoundError,
 )
-from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
-from tests.fakes.fetchers import FakeCNEPFetcher
+from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandByCEIS
+from tests.fakes.fetchers import FakeCEISFetcher
 
 if TYPE_CHECKING:
     from tests.conftest import (
@@ -19,18 +19,18 @@ if TYPE_CHECKING:
         MakeMemUoW,
     )
     from tests.test_application.conftest import (
-        MakeFakeCNEPFetcher,
+        MakeFakeCEISFetcher,
         MakeMemUoWFactory,
     )
 
 
-class TestExpandByCNEPOrchestration:
+class TestExpandByCEISOrchestration:
     @pytest.mark.asyncio
     async def test_returns_the_graph_wrapped_by_the_fetched_revision(
         self,
         make_entity_revision: MakeEntityRevision,
         make_external_credential: MakeExternalCredential,
-        make_fake_cnep_fetcher: MakeFakeCNEPFetcher,
+        make_fake_ceis_fetcher: MakeFakeCEISFetcher,
         make_graph: MakeGraph,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
@@ -40,13 +40,13 @@ class TestExpandByCNEPOrchestration:
         credential = make_external_credential(username="alice")
         mem_storage = make_mem_storage(external_credentials=[credential])
         mem_uow = make_mem_uow(mem_storage=mem_storage)
-        cnep_fetcher = make_fake_cnep_fetcher(revision=revision)
+        ceis_fetcher = make_fake_ceis_fetcher(revision=revision)
 
-        use_case = ExpandByCNEP(
+        use_case = ExpandByCEIS(
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
-            cnep_fetcher=cnep_fetcher,
+            ceis_fetcher=ceis_fetcher,
             cpf_or_cnpj="10000000000000",
-            cnep_id=None,
+            ceis_id=None,
             username="alice",
         )
 
@@ -59,7 +59,7 @@ class TestExpandByCNEPOrchestration:
         self,
         make_entity_revision: MakeEntityRevision,
         make_external_credential: MakeExternalCredential,
-        make_fake_cnep_fetcher: MakeFakeCNEPFetcher,
+        make_fake_ceis_fetcher: MakeFakeCEISFetcher,
         make_graph: MakeGraph,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
@@ -69,13 +69,13 @@ class TestExpandByCNEPOrchestration:
         credential = make_external_credential(username="alice")
         mem_storage = make_mem_storage(external_credentials=[credential])
         mem_uow = make_mem_uow(mem_storage=mem_storage)
-        cnep_fetcher = make_fake_cnep_fetcher(revision=revision)
+        ceis_fetcher = make_fake_ceis_fetcher(revision=revision)
 
-        use_case = ExpandByCNEP(
+        use_case = ExpandByCEIS(
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
-            cnep_fetcher=cnep_fetcher,
+            ceis_fetcher=ceis_fetcher,
             cpf_or_cnpj="10000000000000",
-            cnep_id=None,
+            ceis_id=None,
             username="alice",
         )
 
@@ -88,16 +88,16 @@ class TestExpandByCNEPOrchestration:
     @pytest.mark.asyncio
     async def test_raises_when_credential_is_missing(
         self,
-        make_fake_cnep_fetcher: MakeFakeCNEPFetcher,
+        make_fake_ceis_fetcher: MakeFakeCEISFetcher,
         make_mem_uow_factory: MakeMemUoWFactory,
     ) -> None:
-        cnep_fetcher = make_fake_cnep_fetcher()
+        ceis_fetcher = make_fake_ceis_fetcher()
 
-        use_case = ExpandByCNEP(
+        use_case = ExpandByCEIS(
             uow_factory=make_mem_uow_factory(),
-            cnep_fetcher=cnep_fetcher,
+            ceis_fetcher=ceis_fetcher,
             cpf_or_cnpj="10000000000000",
-            cnep_id=None,
+            ceis_id=None,
             username="unknown_user",
         )
 
@@ -117,13 +117,13 @@ class TestExpandByCNEPOrchestration:
         credential = make_external_credential(username="alice")
         mem_storage = make_mem_storage(external_credentials=[credential])
         mem_uow = make_mem_uow(mem_storage=mem_storage)
-        cnep_fetcher = FakeCNEPFetcher(revision=None)
+        ceis_fetcher = FakeCEISFetcher(revision=None)
 
-        use_case = ExpandByCNEP(
+        use_case = ExpandByCEIS(
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
-            cnep_fetcher=cnep_fetcher,
+            ceis_fetcher=ceis_fetcher,
             cpf_or_cnpj="10000000000000",
-            cnep_id=None,
+            ceis_id=None,
             username="alice",
         )
 

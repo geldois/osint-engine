@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING, override
 
 from httpx2 import URL, AsyncClient, HTTPStatusError, RequestError
 
-from osint_engine.application.contracts.fetchers.cnep_fetcher import CNEPFetcher
+from osint_engine.application.contracts.fetchers.ceis_fetcher import CEISFetcher
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.infrastructure.errors.data_source_error import DataSourceRequestError
 from osint_engine.infrastructure.sources.payload import Payload
-from osint_engine.infrastructure.sources.portal_transparencia.endpoints.cnep_mapper import (  # noqa: E501
+from osint_engine.infrastructure.sources.portal_transparencia.endpoints.ceis_mapper import (  # noqa: E501
     map_graph,
 )
 from osint_engine.infrastructure.sources.portal_transparencia.portal_transparencia_fetcher import (  # noqa: E501
@@ -23,8 +23,8 @@ if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.graph import Graph
 
 
-class PortalTransparenciaCNEPFetcher(
-    PortalTransparenciaFetcher, CNEPFetcher, url_suffix="cnep/"
+class PortalTransparenciaCEISFetcher(
+    PortalTransparenciaFetcher, CEISFetcher, url_suffix="ceis/"
 ):
     @override
     def __init__(self, *, http_client: AsyncClient) -> None:
@@ -32,20 +32,20 @@ class PortalTransparenciaCNEPFetcher(
 
     @override
     async def fetch(
-        self, *, cpf_or_cnpj: str, cnep_id: int | None, credential: ExternalCredential
+        self, *, cpf_or_cnpj: str, ceis_id: int | None, credential: ExternalCredential
     ) -> EntityRevision[Graph] | None:
-        self._logger.info("cnep.fetch.start", cpf_or_cnpj=cpf_or_cnpj, cnep_id=cnep_id)
+        self._logger.info("ceis.fetch.start", cpf_or_cnpj=cpf_or_cnpj, ceis_id=ceis_id)
 
         try:
             headers = self._build_headers(credential=credential)
 
-            if cnep_id is None:
+            if ceis_id is None:
                 # The real API filters by CPF/CNPJ via query params on the
                 # collection endpoint and 403s on a trailing slash before "?".
                 url = URL(str(self._BASE_URL).removesuffix("/"))
                 params = {"codigoSancionado": cpf_or_cnpj, "pagina": "1"}
             else:
-                url = self._BASE_URL.join(url=str(cnep_id))
+                url = self._BASE_URL.join(url=str(ceis_id))
                 params = None
 
             response = await self._http_client.get(
@@ -58,13 +58,13 @@ class PortalTransparenciaCNEPFetcher(
             fetched_at = datetime.now(tz=UTC)
 
             self._logger.info(
-                "cnep.fetch.success", cpf_or_cnpj=cpf_or_cnpj, cnep_id=cnep_id
+                "ceis.fetch.success", cpf_or_cnpj=cpf_or_cnpj, ceis_id=ceis_id
             )
         except HTTPStatusError as exception:
             self._logger.warning(
-                "cnep.fetch.error",
+                "ceis.fetch.error",
                 cpf_or_cnpj=cpf_or_cnpj,
-                cnep_id=cnep_id,
+                ceis_id=ceis_id,
                 status_code=exception.response.status_code,
             )
 
@@ -73,9 +73,9 @@ class PortalTransparenciaCNEPFetcher(
             ) from exception
         except (RequestError, JSONDecodeError) as exception:
             self._logger.exception(
-                "cnep.fetch.error",
+                "ceis.fetch.error",
                 cpf_or_cnpj=cpf_or_cnpj,
-                cnep_id=cnep_id,
+                ceis_id=ceis_id,
                 exc_type=type(exception).__name__,
             )
 
@@ -83,7 +83,7 @@ class PortalTransparenciaCNEPFetcher(
                 source=self._SOURCE, status_code=None
             ) from exception
 
-        if cnep_id is not None:
+        if ceis_id is not None:
             data: dict[str, object] = raw
             graph = map_graph(payload=Payload(source=self._SOURCE, data=data))
         else:

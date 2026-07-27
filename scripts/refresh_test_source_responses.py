@@ -1,16 +1,23 @@
 """
 Refreshes API response fixtures used by infrastructure tests.
 
-Run with: uv run python scripts/refresh_test_source_responses.py
+Run with: uv run osint-engine refresh-fixtures
+(or directly: uv run python scripts/refresh_test_source_responses.py)
+
+Portal da Transparência's endpoints require PORTAL_TRANSPARENCIA_API_KEY set in
+the environment — request a key at https://api.portaldatransparencia.gov.br/.
 """
 
 from __future__ import annotations
 
 import json
 import re
+from os import environ
 from pathlib import Path
 
 from httpx2 import URL, Client, Timeout
+
+from osint_engine.config.dotenv import load_dotenv
 
 SOURCES_DIR = Path("tests/test_infrastructure/test_sources")
 
@@ -22,6 +29,28 @@ class _BrasilAPI:
         "cnpj/v1/": [(f"{API_NAME}_cnpj_v1.json", "00.000.000/0001-91")],
         "cep/v2/": [(f"{API_NAME}_cep_v2.json", "70040912")]
     }
+
+    @staticmethod
+    def headers() -> dict[str, str]:
+        return {}
+
+
+class _PortalTransparencia:
+    API_NAME: str = "portal_transparencia"
+    BASE_URL: URL = URL("https://api.portaldatransparencia.gov.br/api-de-dados/")
+    # The real API only returns a single object (matching map_graph's
+    # contract) from the by-id endpoint (GET .../cnep/{id}); the collection
+    # endpoint (GET .../cnep?codigoSancionado=...) returns an array instead.
+    # These ids must belong to a record that still exists — swap them if the
+    # source record is ever delisted.
+    CASES: dict[str, list[tuple[str, str]]] = {
+        "cnep/": [(f"{API_NAME}_cnep.json", "359510")],
+        "ceis/": [(f"{API_NAME}_ceis.json", "314300")],
+    }
+
+    @staticmethod
+    def headers() -> dict[str, str]:
+        return {"chave-api-dados": environ["PORTAL_TRANSPARENCIA_API_KEY"]}
 
 
 def _digits_only(value: str) -> str:
@@ -35,7 +64,9 @@ def _build_http_client() -> Client:
 
 
 def main() -> None:
-    apis = [_BrasilAPI]
+    load_dotenv()
+
+    apis = [_BrasilAPI, _PortalTransparencia]
 
     with _build_http_client() as client:
         for api in apis:
@@ -50,7 +81,7 @@ def main() -> None:
                 for filename, identifier in cases:
                     url = base.join(url=_digits_only(identifier))
 
-                    response = client.get(url)
+                    response = client.get(url, headers=api.headers())
                     response.raise_for_status()
 
                     (out_dir / filename).write_text(

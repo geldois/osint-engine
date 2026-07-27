@@ -17,6 +17,7 @@ from osint_engine.interface.http.fastapi.middlewares.logging_handler import (
     handle_logging,
 )
 from osint_engine.interface.http.fastapi.routers.auth_router import build_auth_router
+from osint_engine.interface.http.fastapi.routers.ceis_router import build_ceis_router
 from osint_engine.interface.http.fastapi.routers.cnep_router import build_cnep_router
 from osint_engine.interface.http.fastapi.routers.cnpj_router import build_cnpj_router
 from osint_engine.interface.http.fastapi.routers.credentials_router import (
@@ -46,6 +47,7 @@ def build_fastapi_app(*, container: Container) -> FastAPI:
         fastapi_app.get(path="/", include_in_schema=False)(redirect_root_to_docs)
 
     fastapi_app.include_router(router=build_auth_router(container=container))
+    fastapi_app.include_router(router=build_ceis_router(container=container))
     fastapi_app.include_router(router=build_cnep_router(container=container))
     fastapi_app.include_router(router=build_cnpj_router(container=container))
     fastapi_app.include_router(router=build_credentials_router(container=container))

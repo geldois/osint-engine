@@ -1,0 +1,46 @@
+{
+  "id": 359510,
+  "dataReferencia": "25/07/2026",
+  "dataInicioSancao": "29/07/2025",
+  "dataFimSancao": "29/10/2026",
+  "dataPublicacaoSancao": "28/07/2025",
+  "dataTransitadoJulgado": "Sem informação",
+  "dataOrigemInformacao": "15/08/2025",
+  "tipoSancao": {
+    "descricaoResumida": "Impedimento/proibição de contratar com prazo determinado",
+    "descricaoPortal": "Impedimento/proibição de contratar com prazo determinado"
+  },
+  "fonteSancao": {
+    "nomeExibicao": "Prefeitura Municipal de Chiador (MG)",
+    "telefoneContato": "32 98407-3499",
+    "enderecoContato": "Rua Padre Carlos Dondero, 16 - Centro - Chiador/MG"
+  },
+  "fundamentacao": null,
+  "orgaoSancionador": {
+    "nome": "Prefeitura Municipal de Chiador (MG)",
+    "siglaUf": "MG",
+    "poder": "Executivo",
+    "esfera": "MUNICIPAL"
+  },
+  "sancionado": {
+    "nome": "ESTRELA COMERCIAL DE TRÊS RIOS LTDA",
+    "codigoFormatado": "29.593.458/0001-83"
+  },
+  "valorMulta": "0,00",
+  "pessoa": {
+    "id": 594716783,
+    "cpfFormatado": "",
+    "cnpjFormatado": "29.593.458/0001-83",
+    "numeroInscricaoSocial": "",
+    "nome": "ESTRELA COMERCIAL  DE TRES RIOS LTDA",
+    "razaoSocialReceita": "ESTRELA COMERCIAL  DE TRES RIOS LTDA",
+    "nomeFantasiaReceita": "",
+    "tipo": "Entidades Empresariais Privadas"
+  },
+  "textoPublicacao": "Outro",
+  "linkPublicacao": "",
+  "detalhamentoPublicacao": "Mural da Prefeitura",
+  "numeroProcesso": "30/2025",
+  "abrangenciaDefinidaDecisaoJudicial": "No órgão sancionador",
+  "informacoesAdicionaisDoOrgaoSancionador": ""
+}

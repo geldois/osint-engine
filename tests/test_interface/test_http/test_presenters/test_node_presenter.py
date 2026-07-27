@@ -69,9 +69,11 @@ _PHONE = Phone(number="+5511999999999")
 _SANCTION = Sanction(
     end_date="2024-12-31",
     fine_amount=Decimal("1000.00"),
+    legal_basis=("Lei 8.666/1993, art. 87",),
     organ="CEIS",
     process_number="12345/2024",
     publication_date="2024-01-01",
+    publication_link="https://portaldatransparencia.gov.br/sancoes/ceis/12345",
     sanction_type="Suspensão",
     sanctioning_body="CEIS",
     start_date="2024-01-01",
@@ -182,6 +184,10 @@ class TestNodePresenterFieldMapping:
         assert result.process_number == _SANCTION.process_number
 
         assert result.publication_date == _SANCTION.publication_date
+
+        assert result.publication_link == _SANCTION.publication_link
+
+        assert result.legal_basis == _SANCTION.legal_basis
 
         assert result.sanction_type == _SANCTION.sanction_type
 

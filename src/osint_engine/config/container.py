@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from functools import partial
 
+    from osint_engine.application.contracts.fetchers.ceis_fetcher import CEISFetcher
     from osint_engine.application.contracts.fetchers.cnep_fetcher import CNEPFetcher
     from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
     from osint_engine.application.contracts.services.jwt_service import JWTService
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.credentials.save_credential import (
         SaveExternalCredential,
     )
+    from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandByCEIS
     from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
     from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
     from osint_engine.config.settings import Settings
@@ -40,6 +42,7 @@ class Container:
 
 @dataclass(frozen=True, kw_only=True)
 class Fetchers:
+    ceis_fetcher: CEISFetcher
     cnep_fetcher: CNEPFetcher
     cnpj_fetcher: CNPJFetcher
 
@@ -58,6 +61,7 @@ class Services:
 @dataclass(frozen=True, kw_only=True)
 class UseCases:
     authenticate_user: partial[AuthenticateUser]
+    expand_by_ceis: partial[ExpandByCEIS]
     expand_by_cnep: partial[ExpandByCNEP]
     expand_by_cnpj: partial[ExpandByCNPJ]
     save_external_credential: partial[SaveExternalCredential]

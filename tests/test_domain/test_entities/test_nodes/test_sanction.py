@@ -16,9 +16,11 @@ def _make_sanction(
     return Sanction(
         end_date="2025-01-01",
         fine_amount=fine_amount,
-        organ=organ,  # pyright: ignore[reportArgumentType]
+        legal_basis=("Lei 8.666/1993, art. 87",),
+        organ=organ, # pyright: ignore[reportArgumentType]
         process_number=process_number,
         publication_date="2024-01-01",
+        publication_link="https://portaldatransparencia.gov.br/sancoes/cnep/123",
         sanction_type="Suspensão",
         sanctioning_body="CGU",
         start_date="2024-01-01",
@@ -65,9 +67,13 @@ class TestSanctionFieldStorage:
 
         assert sanction.end_date == "2025-01-01"
         assert sanction.fine_amount == Decimal("1000.50")
+        assert sanction.legal_basis == ("Lei 8.666/1993, art. 87",)
         assert sanction.organ == "CNEP"
         assert sanction.process_number == "123/2024"
         assert sanction.publication_date == "2024-01-01"
+        assert sanction.publication_link == (
+            "https://portaldatransparencia.gov.br/sancoes/cnep/123"
+        )
         assert sanction.sanction_type == "Suspensão"
         assert sanction.sanctioning_body == "CGU"
         assert sanction.start_date == "2024-01-01"

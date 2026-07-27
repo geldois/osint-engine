@@ -15,6 +15,7 @@ from osint_engine.application.use_cases.authentication.authenticate_user import 
 from osint_engine.application.use_cases.credentials.save_credential import (
     SaveExternalCredential,
 )
+from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandByCEIS
 from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
 from osint_engine.config.container import (
@@ -33,6 +34,9 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 from osint_engine.infrastructure.sources.brasilapi.endpoints.cnpj_v1_fetcher import (
     BrasilAPICNPJv1Fetcher,
+)
+from osint_engine.infrastructure.sources.portal_transparencia.endpoints.ceis_fetcher import (  # noqa: E501
+    PortalTransparenciaCEISFetcher,
 )
 from osint_engine.infrastructure.sources.portal_transparencia.endpoints.cnep_fetcher import (  # noqa: E501
     PortalTransparenciaCNEPFetcher,
@@ -55,6 +59,7 @@ def build_container(  # noqa: PLR0913
     policies: Policies | None = None,
 ) -> Container:
     fetchers = Fetchers(
+        ceis_fetcher=PortalTransparenciaCEISFetcher(http_client=http_client),
         cnep_fetcher=PortalTransparenciaCNEPFetcher(http_client=http_client),
         cnpj_fetcher=BrasilAPICNPJv1Fetcher(http_client=http_client),
     )
@@ -96,6 +101,9 @@ def build_container(  # noqa: PLR0913
     use_cases = UseCases(
         authenticate_user=partial(
             AuthenticateUser, uow_factory=uow_factory, password_hasher=password_hasher
+        ),
+        expand_by_ceis=partial(
+            ExpandByCEIS, uow_factory=uow_factory, ceis_fetcher=fetchers.ceis_fetcher
         ),
         expand_by_cnep=partial(
             ExpandByCNEP, uow_factory=uow_factory, cnep_fetcher=fetchers.cnep_fetcher

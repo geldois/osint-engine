@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
+from osint_engine.application.contracts.fetchers.ceis_fetcher import CEISFetcher
 from osint_engine.application.contracts.fetchers.cnep_fetcher import CNEPFetcher
 from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
 
@@ -20,12 +21,23 @@ class FakeCNPJFetcher(CNPJFetcher):
         return self.revision
 
 
+class FakeCEISFetcher(CEISFetcher):
+    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+        self.revision = revision
+
+    @override
+    async def fetch(
+        self, *, cpf_or_cnpj: str, ceis_id: int | None, credential: ExternalCredential
+    ) -> EntityRevision[Graph] | None:
+        return self.revision
+
+
 class FakeCNEPFetcher(CNEPFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph]) -> None:
+    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
         self.revision = revision
 
     @override
     async def fetch(
         self, *, cpf_or_cnpj: str, cnep_id: int | None, credential: ExternalCredential
-    ) -> EntityRevision[Graph]:
+    ) -> EntityRevision[Graph] | None:
         return self.revision

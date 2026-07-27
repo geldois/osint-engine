@@ -9,9 +9,9 @@ if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.graph import Graph
 
 
-class CNEPFetcher(ABC):
+class CEISFetcher(ABC):
     @abstractmethod
     async def fetch(
-        self, *, cpf_or_cnpj: str, cnep_id: int | None, credential: ExternalCredential
+        self, *, cpf_or_cnpj: str, ceis_id: int | None, credential: ExternalCredential
     ) -> EntityRevision[Graph] | None:
         raise NotImplementedError

@@ -14,17 +14,17 @@ from osint_engine.domain.entities.bases.graph import Graph
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from osint_engine.application.contracts.fetchers.cnep_fetcher import CNEPFetcher
+    from osint_engine.application.contracts.fetchers.ceis_fetcher import CEISFetcher
     from osint_engine.application.contracts.uow import UoW
 
 _logger = get_logger()
 
 
-class ExpandByCNEP(Query[Graph | None]):
+class ExpandByCEIS(Query[Graph | None]):
     uow_factory: Callable[[], UoW]
-    cnep_fetcher: CNEPFetcher
+    ceis_fetcher: CEISFetcher
     cpf_or_cnpj: str
-    cnep_id: int | None
+    ceis_id: int | None
     username: str
 
     @override
@@ -32,22 +32,22 @@ class ExpandByCNEP(Query[Graph | None]):
         self,
         *,
         uow_factory: Callable[[], UoW],
-        cnep_fetcher: CNEPFetcher,
+        ceis_fetcher: CEISFetcher,
         cpf_or_cnpj: str,
-        cnep_id: int | None,
+        ceis_id: int | None,
         username: str,
     ) -> None:
         super().__init__(
             uow_factory=uow_factory,
-            cnep_fetcher=cnep_fetcher,
+            ceis_fetcher=ceis_fetcher,
             cpf_or_cnpj=cpf_or_cnpj,
-            cnep_id=cnep_id,
+            ceis_id=ceis_id,
             username=username,
         )
 
     @override
     async def execute(self) -> Graph | None:
-        _logger.info("cnep.expansion.start", cpf_or_cnpj=self.cpf_or_cnpj)
+        _logger.info("ceis.expansion.start", cpf_or_cnpj=self.cpf_or_cnpj)
 
         async with self.uow_factory() as uow:
             credential = await uow.external_credentials.find(
@@ -59,19 +59,19 @@ class ExpandByCNEP(Query[Graph | None]):
                     username=self.username, provider=Provider.PORTAL_TRANSPARENCIA
                 )
 
-            revision = await self.cnep_fetcher.fetch(
+            revision = await self.ceis_fetcher.fetch(
                 cpf_or_cnpj=self.cpf_or_cnpj,
-                cnep_id=self.cnep_id,
+                ceis_id=self.ceis_id,
                 credential=credential,
             )
 
             if revision is None:
-                _logger.info("cnep.expansion.empty", cpf_or_cnpj=self.cpf_or_cnpj)
+                _logger.info("ceis.expansion.empty", cpf_or_cnpj=self.cpf_or_cnpj)
 
                 return None
 
             await uow.graphs.merge(revision=revision)
 
-        _logger.info("cnep.expansion.success", cpf_or_cnpj=self.cpf_or_cnpj)
+        _logger.info("ceis.expansion.success", cpf_or_cnpj=self.cpf_or_cnpj)
 
         return revision.entity

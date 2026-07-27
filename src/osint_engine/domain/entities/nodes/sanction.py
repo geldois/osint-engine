@@ -19,9 +19,11 @@ class Sanction(
 ):
     end_date: str | None
     fine_amount: Decimal | None
+    legal_basis: tuple[str, ...]
     organ: Literal["CEIS", "CNEP"]
     process_number: str | None
     publication_date: str | None
+    publication_link: str
     sanction_type: str
     sanctioning_body: str
     start_date: str | None
@@ -32,9 +34,11 @@ class Sanction(
         *,
         end_date: str | None,
         fine_amount: Decimal | None,
+        legal_basis: tuple[str, ...],
         organ: Literal["CEIS", "CNEP"],
         process_number: str | None,
         publication_date: str | None,
+        publication_link: str,
         sanction_type: str,
         sanctioning_body: str,
         start_date: str | None,

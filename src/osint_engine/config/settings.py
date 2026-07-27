@@ -2,31 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from os import environ, getenv
-from pathlib import Path
 
-
-def _load_dotenv() -> None:
-    path = Path(".env")
-
-    if not path.exists():
-        return
-
-    with path.open(encoding="utf-8") as file:
-        for line in file:
-            ln = line.strip()
-
-            if not ln or ln.startswith("#") or "=" not in ln:
-                continue
-
-            k, _, v = ln.partition("=")
-
-            if not k or not (k[0].isalpha() or k[0] == "_"):
-                continue
-
-            k = k.strip().upper()
-            v = v.strip()
-
-            environ.setdefault(key=k, value=v)
+from osint_engine.config.dotenv import load_dotenv
 
 
 @dataclass(frozen=True)
@@ -109,7 +86,7 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> Settings:
-        _load_dotenv()
+        load_dotenv()
 
         return cls(
             access_token_expire_minutes=cls._load_access_token_expire_minutes(),

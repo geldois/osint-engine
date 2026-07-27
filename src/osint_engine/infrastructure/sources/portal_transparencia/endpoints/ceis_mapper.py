@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING
 
 from osint_engine.domain.entities.bases.graph import Graph
@@ -13,29 +12,12 @@ from osint_engine.domain.entities.edges.person_received_sanction import (
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.domain.entities.nodes.sanction import Sanction
-from osint_engine.infrastructure.errors.data_source_error import (
-    UnexpectedFieldFormatError,
-)
 
 if TYPE_CHECKING:
     from uuid import UUID
 
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.infrastructure.sources.payload import Payload
-
-
-def _parse_fine_amount(*, value: str, source: str, key: str) -> Decimal:
-    normalized = value.replace(".", "").replace(",", ".")
-
-    try:
-        return Decimal(normalized)
-    except InvalidOperation as exception:
-        raise UnexpectedFieldFormatError(
-            source=source,
-            key=key,
-            raw_value=value,
-            reason="not a valid pt-BR monetary amount",
-        ) from exception
 
 
 def _map_sanction(*, payload: Payload) -> Sanction:
@@ -55,19 +37,14 @@ def _map_sanction(*, payload: Payload) -> Sanction:
     return Sanction(
         # An ongoing sanction legitimately has no end date yet.
         end_date=payload.optional(key="dataFimSancao", expected_type=str),
-        # Non-monetary sanctions (e.g. suspension) legitimately have no fine.
-        fine_amount=payload.optional(
-            key="valorMulta",
-            expected_type=str,
-            cast_to=lambda value: _parse_fine_amount(
-                value=value, source=payload.source, key="valorMulta"
-            ),
-        ),
+        # CeisDTO doesn't declare valorMulta at all — CEIS sanctions never
+        # carry a fine amount.
+        fine_amount=None,
         legal_basis=tuple(
             payload.scope(data=item).require(key="descricao", expected_type=str)
             for item in fundamentacao
         ),
-        organ="CNEP",
+        organ="CEIS",
         process_number=payload.require(key="numeroProcesso", expected_type=str),
         publication_date=payload.require(
             key="dataPublicacaoSancao", expected_type=str
