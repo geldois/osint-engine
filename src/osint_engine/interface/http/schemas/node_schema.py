@@ -48,13 +48,13 @@ class AddressSchema(NodeSchema[Address]):
     type: Literal["address"] = "address"
 
     cep: str
-    city: str
+    city: str | None
     complement: str | None
     id: UUID
-    neighborhood: str
+    neighborhood: str | None
     number: str
-    state: str
-    street: str
+    state: str | None
+    street: str | None
 
     @classmethod
     @override

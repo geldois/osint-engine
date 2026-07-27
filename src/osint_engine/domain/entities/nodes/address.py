@@ -22,24 +22,24 @@ class Address(
     namespace=EntityNAMESPACE.ADDRESS,
 ):
     cep: str
-    city: str
+    city: str | None
     complement: str | None
-    neighborhood: str
+    neighborhood: str | None
     number: str
-    state: str
-    street: str
+    state: str | None
+    street: str | None
 
     @override
     def __init__(
         self,
         *,
         cep: str,
-        city: str,
+        city: str | None,
         complement: str | None,
-        neighborhood: str,
+        neighborhood: str | None,
         number: str,
-        state: str,
-        street: str,
+        state: str | None,
+        street: str | None,
     ) -> None:
         super().__init__(
             **{
