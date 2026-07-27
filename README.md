@@ -46,6 +46,7 @@ flowchart LR
     CNPJRouter --> GetCNPJ("GET /cnpj/{cnpj}")
     CredentialsRouter --> RoleGuard
     CredentialsRouter --> PostCredential("POST /credentials")
+    CredentialsRouter --> GetCredentials("GET /credentials")
 
     Bootstrap("build_container") --> Container("Container")
     Container --> Fetchers("Fetchers")
