@@ -281,6 +281,17 @@ uv run osint-engine serve
 
 ### Test
 
+`tests/**/responses/` (golden HTTP fixtures for the BrasilAPI/Portal da Transparência
+source tests) is untracked and regenerated on demand, not committed — run this once
+before testing, and again whenever the fixtures need refreshing:
+
+```bash
+uv run osint-engine refresh-fixtures
+```
+
+Portal da Transparência's fixtures require a real, working `PORTAL_TRANSPARENCIA_API_KEY`
+in `.env` — request one at <https://api.portaldatransparencia.gov.br/>.
+
 ```bash
 uv run pytest --cov --cov-branch
 ```
@@ -296,16 +307,6 @@ known-good resolver in `/etc/docker/daemon.json`:
 ```
 
 then `sudo systemctl restart docker` and re-run the pulls.
-
-`tests/**/responses/` (golden HTTP fixtures for the BrasilAPI/Portal da Transparência
-source tests) is untracked and regenerated on demand, not committed:
-
-```bash
-uv run osint-engine refresh-fixtures
-```
-
-Portal da Transparência's fixtures require a real, working `PORTAL_TRANSPARENCIA_API_KEY`
-in `.env` — request one at <https://api.portaldatransparencia.gov.br/>.
 
 ### Local CI
 
