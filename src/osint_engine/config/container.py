@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Awaitable, Callable
     from functools import partial
 
     from osint_engine.application.contracts.fetchers.ceis_fetcher import CEISFetcher
@@ -40,6 +40,7 @@ class Container:
     settings: Settings
     fetchers: Fetchers
     policies: Policies
+    readiness_probe: Callable[[], Awaitable[None]]
     services: Services
     uow_factory: Callable[[], UoW]
     use_cases: UseCases

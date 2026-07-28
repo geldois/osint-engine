@@ -136,43 +136,16 @@ class TestGetCnpjExpansion:
 
 class TestCnpjRateLimit:
     @pytest.mark.asyncio
-    async def test_viewer_exceeding_limit_returns_429(
+    async def test_shared_bucket_returns_429_past_100_requests(
         self, client: AsyncClient, viewer_token: str
     ) -> None:
+        """The expansion limiter is a single per-route bucket shared across all
+        callers (fixed key_func), regardless of role — 100 requests/min caps the
+        combined outbound rate to the upstream API. The 101st is rejected."""
+
         headers = {"Authorization": f"Bearer {viewer_token}"}
 
-        for _ in range(5):
-            await client.get(f"/cnpj/{CNPJ}", headers=headers)
-
-        response = await client.get(f"/cnpj/{CNPJ}", headers=headers)
-
-        assert response.status_code == 429
-
-    @pytest.mark.asyncio
-    async def test_admin_bucket_is_isolated_from_viewer_bucket(
-        self, client: AsyncClient, valid_token: str, viewer_token: str
-    ) -> None:
-        viewer_headers = {"Authorization": f"Bearer {viewer_token}"}
-        admin_headers = {"Authorization": f"Bearer {valid_token}"}
-
-        for _ in range(6):
-            await client.get(f"/cnpj/{CNPJ}", headers=viewer_headers)
-
-        response = await client.get(f"/cnpj/{CNPJ}", headers=admin_headers)
-
-        assert response.status_code == 200
-
-    @pytest.mark.asyncio
-    async def test_global_bucket_caps_traffic_regardless_of_role_limit(
-        self, client: AsyncClient, valid_token: str
-    ) -> None:
-        """ADMIN's own bucket allows 60/min, well past the 30/min combined
-        ceiling that protects the shared upstream BrasilAPI quota — the
-        global bucket must reject before ADMIN's role bucket would."""
-
-        headers = {"Authorization": f"Bearer {valid_token}"}
-
-        for _ in range(30):
+        for _ in range(100):
             await client.get(f"/cnpj/{CNPJ}", headers=headers)
 
         response = await client.get(f"/cnpj/{CNPJ}", headers=headers)

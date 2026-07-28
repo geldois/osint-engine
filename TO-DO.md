@@ -35,3 +35,11 @@ for actions, uv, and pre-commit hooks
 - make commits atomic across PostgreSQL credentials and the in-memory graph/user
   snapshot; `HybridUoW` intentionally persists credentials during repository
   `save()` and only coordinates the in-memory snapshot during `commit()`
+
+## fix(rate-limit)
+
+- expansion buckets are a flat 100/min per route, but Portal da Transparência's token ceiling is 90/min from
+  06:00–23:59 (higher overnight); with three Portal-backed routes (`/cpf`, `/cnep`, `/ceis`) the aggregate can exceed
+  that ceiling, so the per-route limiter protects this server but not the shared upstream token — Portal may `429` the
+  token first under load. Deliberate for the visitor-only demo; tighten to a combined cross-route Portal bucket under
+  90/min if real traffic trips it

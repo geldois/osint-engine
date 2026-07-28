@@ -148,21 +148,37 @@ Returns a `GraphSchema` containing the root company, all connected entities, and
 to both `ADMIN` and `VIEWER` tokens. The current data source is [BrasilAPI](https://brasilapi.com.br) (see
 [ADR-0005](docs/adr/0005-brasilapi-as-mvp-cnpj-data-source.md)).
 
+### Health
+
+```http
+GET /health
+```
+
+Liveness — always `200 {"status": "ok"}` while the process is up, touching no dependency. Both health endpoints are
+unauthenticated and unthrottled so a hosting platform (Render) can poll them freely.
+
+```http
+GET /health/ready
+```
+
+Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503 {"status": "not_ready"}` otherwise.
+
 ### Rate limiting
 
 | Endpoint | Limit | Keyed by |
 | --- | --- | --- |
 | `POST /auth/token` | 5 / 15 min | Client IP |
 | `POST /auth/viewer-token` | 20 / min | Client IP |
-| `GET /cnpj/{cnpj}` (`ADMIN`) | 60 / min | Shared `ADMIN` bucket |
-| `GET /cnpj/{cnpj}` (`VIEWER`) | 5 / min | Shared `VIEWER` bucket |
-| `GET /cnpj/{cnpj}` (combined) | 30 / min | Shared global bucket |
+| `GET /cnpj/{cnpj}` | 100 / min | Shared per-route bucket |
+| `GET /cpf/{cpf}` | 100 / min | Shared per-route bucket |
+| `GET /cnep/{cpf_or_cnpj}` | 100 / min | Shared per-route bucket |
+| `GET /ceis/{cpf_or_cnpj}` | 100 / min | Shared per-route bucket |
 
 A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
-`Access-Control-Expose-Headers`. See [ADR-0021](docs/adr/0021-fastapi-throttle-over-slowapi-for-rate-limiting.md). The
-combined `GET /cnpj/{cnpj}` bucket caps total outbound BrasilAPI traffic regardless of role split, since every
-request proxies through this deployment's own IP against BrasilAPI's undocumented per-minute quota (see
-[ADR-0005](docs/adr/0005-brasilapi-as-mvp-cnpj-data-source.md)).
+`Access-Control-Expose-Headers`. See [ADR-0021](docs/adr/0021-fastapi-throttle-over-slowapi-for-rate-limiting.md). Each
+expansion route has one global bucket shared across all callers — a fixed key, not per-IP or per-role — so the combined
+outbound traffic every visitor generates together is capped against the upstream API's per-minute quota, since every
+request proxies through this deployment's own IP/token. The health endpoints are unthrottled.
 
 ### Errors
 
@@ -279,6 +295,10 @@ uv run osint-engine wait-db
 uv run osint-engine migrate up
 uv run osint-engine serve
 ```
+
+The production image runs this sequence: its entrypoint chains `wait-db`, `migrate up`, then `serve`, so a
+container deploy (Render) needs no manual migration step — the commands above are only for running against a local
+Postgres outside the container.
 
 ### Test
 

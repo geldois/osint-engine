@@ -42,6 +42,9 @@ class FakePgPool:
         ]
 
     async def execute(self, query: str, *args: object) -> str:
+        if query == "SELECT 1":
+            return "SELECT 1"
+
         assert "INSERT INTO external_credentials" in query
         assert len(args) == 3
 
