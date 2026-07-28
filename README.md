@@ -37,16 +37,23 @@ flowchart LR
     FastAPI --> ErrorHandler("Error Handler")
     FastAPI --> AuthRouter("Auth Router")
     FastAPI --> CNPJRouter("CNPJ Router")
+    FastAPI --> ExpansionRouters("CPF / CNEP / CEIS Routers")
     FastAPI --> CredentialsRouter("Credentials Router")
+    FastAPI --> HealthRouter("Health Router")
 
     AuthRouter --> PostToken("POST /auth/token")
     AuthRouter --> PostViewerToken("POST /auth/viewer-token")
     CNPJRouter --> RoleGuard("Role Guard")
-    CNPJRouter --> CnpjRateLimit("CNPJ Rate Limit")
+    CNPJRouter --> ExpansionRateLimit("Expansion Rate Limit · 100 per min per route, shared")
     CNPJRouter --> GetCNPJ("GET /cnpj/{cnpj}")
+    ExpansionRouters --> JwtGuard("JWT Guard")
+    ExpansionRouters --> ExpansionRateLimit
+    ExpansionRouters --> GetExpansion("GET /cpf · /cnep · /ceis")
     CredentialsRouter --> RoleGuard
     CredentialsRouter --> PostCredential("POST /credentials")
     CredentialsRouter --> GetCredentials("GET /credentials")
+    HealthRouter --> Liveness("GET /health")
+    HealthRouter --> Readiness("GET /health/ready")
 
     Bootstrap("build_container") --> Container("Container")
     Container --> Fetchers("Fetchers")
@@ -54,17 +61,25 @@ flowchart LR
     Container --> Services("Services")
     Container --> UoWFactory("UoWFactory")
     Container --> UseCases("UseCases")
+    Container --> ReadinessProbe("readiness_probe")
 
     UseCases --> AuthenticateUser("AuthenticateUser")
     UseCases --> ExpandByCNPJ("ExpandByCNPJ")
+    UseCases --> ExpandByPortal("ExpandBy CPF / CNEP / CEIS")
+    UseCases --> CredentialUseCases("List / Save ExternalCredential")
     Services --> PyJWTService("PyJWTService")
     Fetchers --> CNPJFetcher("BrasilAPICNPJv1Fetcher")
+    Fetchers --> PortalFetchers("Portal da Transparência Fetchers")
 
     PostToken --> AuthenticateUser
     PostViewerToken --> PyJWTService
     GetCNPJ --> ExpandByCNPJ
+    GetExpansion --> ExpandByPortal
+    PostCredential --> CredentialUseCases
+    GetCredentials --> CredentialUseCases
+    Readiness --> ReadinessProbe
     RoleGuard --> PyJWTService
-    CnpjRateLimit --> PyJWTService
+    JwtGuard --> PyJWTService
 
     AuthenticateUser --> UoWFactory
     AuthenticateUser --> Argon2("Argon2PasswordHasher")
@@ -72,12 +87,21 @@ flowchart LR
 
     ExpandByCNPJ --> UoWFactory
     ExpandByCNPJ --> CNPJFetcher
+    ExpandByPortal --> UoWFactory
+    ExpandByPortal --> PortalFetchers
     CNPJFetcher --> BrasilAPI("BrasilAPI")
+    PortalFetchers --> PortalAPI("Portal da Transparência")
     CNPJFetcher --> Mapper("cnpj_v1_mapper")
     Mapper --> EntityRevision("EntityRevision")
     EntityRevision --> Graph
 
-    UoWFactory --> MemUoW("MemUoW")
+    UoWFactory --> HybridUoW("HybridUoW")
+    HybridUoW --> MemUoW("MemUoW")
+    HybridUoW --> PgCredentials("PgExternalCredentialRepository")
+    CredentialUseCases --> HybridUoW
+    PgCredentials --> Fernet("Fernet encryption")
+    PgCredentials --> Postgres("PostgreSQL")
+    ReadinessProbe --> Postgres
     MemUoW --> Snapshot("MemStorageSnapshot")
     MemUoW --> NodeRepo("MemNodeRepository")
     MemUoW --> EdgeRepo("MemEdgeRepository")
