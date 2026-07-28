@@ -21,6 +21,7 @@ from osint_engine.application.use_cases.credentials.save_credential import (
 from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandByCEIS
 from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
+from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
 from osint_engine.config.container import (
     Container,
     Fetchers,
@@ -44,6 +45,9 @@ from osint_engine.infrastructure.sources.portal_transparencia.endpoints.ceis_fet
 from osint_engine.infrastructure.sources.portal_transparencia.endpoints.cnep_fetcher import (  # noqa: E501
     PortalTransparenciaCNEPFetcher,
 )
+from osint_engine.infrastructure.sources.portal_transparencia.endpoints.cpf_fetcher import (  # noqa: E501
+    PortalTransparenciaCPFFetcher,
+)
 
 if TYPE_CHECKING:
     from asyncpg import Pool
@@ -65,6 +69,7 @@ def build_container(  # noqa: PLR0913
         ceis_fetcher=PortalTransparenciaCEISFetcher(http_client=http_client),
         cnep_fetcher=PortalTransparenciaCNEPFetcher(http_client=http_client),
         cnpj_fetcher=BrasilAPICNPJv1Fetcher(http_client=http_client),
+        cpf_fetcher=PortalTransparenciaCPFFetcher(http_client=http_client),
     )
 
     pyjwt_service = PyJWTService(settings=settings)
@@ -113,6 +118,9 @@ def build_container(  # noqa: PLR0913
         ),
         expand_by_cnpj=partial(
             ExpandByCNPJ, uow_factory=uow_factory, cnpj_fetcher=fetchers.cnpj_fetcher
+        ),
+        expand_by_cpf=partial(
+            ExpandByCPF, uow_factory=uow_factory, cpf_fetcher=fetchers.cpf_fetcher
         ),
         list_external_credentials=partial(
             ListExternalCredentials, uow_factory=uow_factory

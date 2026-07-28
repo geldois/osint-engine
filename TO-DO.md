@@ -17,6 +17,19 @@ for actions, uv, and pre-commit hooks
 
 - `BrasilAPICEPv2Fetcher`/`cep_v2_mapper` are built and fully tested but unwired — no use case calls `CEPFetcher.fetch(cep, number)` yet; the intended consumer is roadmap step 3 (text ingestion), which supplies `number` from regex extraction and uses this fetcher to fill in city/state/neighborhood/street around it; do not chain it from `cnpj_v1`, whose `_map_address` already returns a complete `Address`
 
+## feat(cpf)
+
+- `GET /cpf/{cpf}` is fully implemented, tested, and wired (mirrors CNPJ's
+  architecture exactly), but the Portal da Transparência `/pf` endpoint
+  currently rejects our API key with a bare `403` at the CloudFront edge
+  (confirmed via direct `curl` against `api.portaldatransparencia.gov.br`,
+  bypassing osint-engine entirely — same key works fine for `/cnep`/`/ceis`).
+  Not a code defect: `ExternalCredentialRejectedError` classifies it
+  correctly. Account already holds gov.br selo Ouro, so it isn't a trust-seal
+  gap; root cause is still unconfirmed (undocumented restricted-API tier?
+  per-endpoint scope grant?). Next step is external, via Fala.BR — revisit
+  once the Portal da Transparência responds
+
 ## feat(persistence)
 
 - make commits atomic across PostgreSQL credentials and the in-memory graph/user

@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.fetchers.ceis_fetcher import CEISFetcher
     from osint_engine.application.contracts.fetchers.cnep_fetcher import CNEPFetcher
     from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
+    from osint_engine.application.contracts.fetchers.cpf_fetcher import CPFFetcher
     from osint_engine.application.contracts.services.jwt_service import JWTService
     from osint_engine.application.contracts.uow import UoW
     from osint_engine.application.revision.policies.revision_merge_policy import (
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandByCEIS
     from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
     from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
+    from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
     from osint_engine.config.settings import Settings
 
 
@@ -48,6 +50,7 @@ class Fetchers:
     ceis_fetcher: CEISFetcher
     cnep_fetcher: CNEPFetcher
     cnpj_fetcher: CNPJFetcher
+    cpf_fetcher: CPFFetcher
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -67,5 +70,6 @@ class UseCases:
     expand_by_ceis: partial[ExpandByCEIS]
     expand_by_cnep: partial[ExpandByCNEP]
     expand_by_cnpj: partial[ExpandByCNPJ]
+    expand_by_cpf: partial[ExpandByCPF]
     list_external_credentials: partial[ListExternalCredentials]
     save_external_credential: partial[SaveExternalCredential]

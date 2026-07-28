@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import re
-from os import environ
+from os import getenv
 from pathlib import Path
 
 from httpx2 import URL, Client, Timeout
@@ -20,6 +20,21 @@ from httpx2 import URL, Client, Timeout
 from osint_engine.config.dotenv import load_dotenv
 
 SOURCES_DIR = Path("tests/test_infrastructure/test_sources")
+
+
+def _require_env(key: str, /) -> str:
+    value = getenv(key)
+
+    if value is None:
+        message = (
+            f"{key} is not set. This script (unlike the app itself, which never "
+            f"reads it) needs it to record real API fixtures — request a key at "
+            f"https://api.portaldatransparencia.gov.br/ and set it in .env."
+        )
+
+        raise RuntimeError(message)
+
+    return value
 
 
 class _BrasilAPI:
@@ -47,10 +62,14 @@ class _PortalTransparencia:
         "cnep/": [(f"{API_NAME}_cnep.json", "359510")],
         "ceis/": [(f"{API_NAME}_ceis.json", "314300")],
     }
+    # "/pf" is deliberately excluded from this refresh script: unlike CNPJ
+    # (a business registration number) a CPF identifies an individual, and
+    # this script's cases are meant to be shareable/re-runnable without
+    # pinning a real person's document number in source control.
 
     @staticmethod
     def headers() -> dict[str, str]:
-        return {"chave-api-dados": environ["PORTAL_TRANSPARENCIA_API_KEY"]}
+        return {"chave-api-dados": _require_env("PORTAL_TRANSPARENCIA_API_KEY")}
 
 
 def _digits_only(value: str) -> str:

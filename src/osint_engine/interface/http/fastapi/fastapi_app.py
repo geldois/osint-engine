@@ -20,6 +20,7 @@ from osint_engine.interface.http.fastapi.routers.auth_router import build_auth_r
 from osint_engine.interface.http.fastapi.routers.ceis_router import build_ceis_router
 from osint_engine.interface.http.fastapi.routers.cnep_router import build_cnep_router
 from osint_engine.interface.http.fastapi.routers.cnpj_router import build_cnpj_router
+from osint_engine.interface.http.fastapi.routers.cpf_router import build_cpf_router
 from osint_engine.interface.http.fastapi.routers.credentials_router import (
     build_credentials_router,
 )
@@ -50,6 +51,7 @@ def build_fastapi_app(*, container: Container) -> FastAPI:
     fastapi_app.include_router(router=build_ceis_router(container=container))
     fastapi_app.include_router(router=build_cnep_router(container=container))
     fastapi_app.include_router(router=build_cnpj_router(container=container))
+    fastapi_app.include_router(router=build_cpf_router(container=container))
     fastapi_app.include_router(router=build_credentials_router(container=container))
 
     error_handler = build_error_handler(container=container)

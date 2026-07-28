@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, override
 from osint_engine.application.contracts.fetchers.ceis_fetcher import CEISFetcher
 from osint_engine.application.contracts.fetchers.cnep_fetcher import CNEPFetcher
 from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
+from osint_engine.application.contracts.fetchers.cpf_fetcher import CPFFetcher
 
 if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import ExternalCredential
@@ -18,6 +19,17 @@ class FakeCNPJFetcher(CNPJFetcher):
 
     @override
     async def fetch(self, *, cnpj: str) -> EntityRevision[Graph]:
+        return self.revision
+
+
+class FakeCPFFetcher(CPFFetcher):
+    def __init__(self, *, revision: EntityRevision[Graph]) -> None:
+        self.revision = revision
+
+    @override
+    async def fetch(
+        self, *, cpf: str, credential: ExternalCredential
+    ) -> EntityRevision[Graph]:
         return self.revision
 
 

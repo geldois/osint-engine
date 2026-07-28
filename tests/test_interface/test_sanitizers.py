@@ -4,9 +4,14 @@ import pytest
 
 from osint_engine.interface.errors.sanitization_error import (
     InvalidCNPJError,
+    InvalidCPFError,
     InvalidCPFOrCNPJError,
 )
-from osint_engine.interface.sanitizers import sanitize_cnpj, sanitize_cpf_or_cnpj
+from osint_engine.interface.sanitizers import (
+    sanitize_cnpj,
+    sanitize_cpf,
+    sanitize_cpf_or_cnpj,
+)
 
 
 class TestCNPJSanitization:
@@ -31,6 +36,30 @@ class TestCNPJSanitization:
         assert "11.222.333/0001" in str(error)
 
         assert "14 digits" in str(error)
+
+
+class TestCPFSanitization:
+    def test_sanitize_cpf_returns_only_digits_from_valid_input(self) -> None:
+        cpf = "111.222.333-81"
+        result = sanitize_cpf(cpf)
+
+        assert result == "11122233381"
+
+    def test_sanitize_cpf_raises_when_digit_count_is_invalid(self) -> None:
+        cpf = "111.222.333"
+
+        with pytest.raises(InvalidCPFError) as exception:
+            sanitize_cpf(cpf)
+
+        error = exception.value
+
+        assert error.input_value == cpf
+
+        assert error.digit_count == 9
+
+        assert "111.222.333" in str(error)
+
+        assert "11 digits" in str(error)
 
 
 class TestCPFOrCNPJSanitization:
