@@ -2,6 +2,111 @@
 
 <!-- version list -->
 
+## v1.7.0 (2026-07-28)
+
+### Bug Fixes
+
+- **brasilapi**: Document Payload require/optional contract and mark nullable fields optional
+  ([`3e927a3`](https://github.com/geldois/osint-engine/commit/3e927a31d488a5a352b3f883f38bda3075062a86))
+
+- **brasilapi**: Require cep and numero fields in address payload
+  ([`b5901f4`](https://github.com/geldois/osint-engine/commit/b5901f4f1c99996dbce357f56b72b7de44dd3c78))
+
+- **brasilapi**: Skip Address node when cep or numero is blank
+  ([`14d56bc`](https://github.com/geldois/osint-engine/commit/14d56bc2c0508bc769689cb57f4103514f606ec3))
+
+- **brasilapi**: Treat registration_status_date and size_category as nullable in CNPJ mapper
+  ([`b7f90e6`](https://github.com/geldois/osint-engine/commit/b7f90e6280c1bc56ebba96093c5aae60754fc27c))
+
+- **cli**: Install golang-migrate locally and disable SSL for local Postgres
+  ([`7c38f2a`](https://github.com/geldois/osint-engine/commit/7c38f2a46dfe92d5ca9a8b161dd09c9bbe85613f))
+
+- **config**: Restore PORTAL_TRANSPARENCIA_API_KEY as dev-tooling-only env var
+  ([`f6fec3c`](https://github.com/geldois/osint-engine/commit/f6fec3c3b274bf7d6548c1b4b49acbb7044bef54))
+
+- **security**: Cap combined CNPJ rate limit to protect shared BrasilAPI quota
+  ([`52167d4`](https://github.com/geldois/osint-engine/commit/52167d4ea3cde1fb59b3aac3a6d261a2a46a7643))
+
+### Chores
+
+- Remove .gitattributes
+  ([`f08fb1f`](https://github.com/geldois/osint-engine/commit/f08fb1f646d9448699fd8617d704ce9027f1b0bb))
+
+- **config**: Remove unused PORTAL_TRANSPARENCIA_API_KEY from .env.example
+  ([`ae656cc`](https://github.com/geldois/osint-engine/commit/ae656cca878528d7b5638ad0e694489052f17bb3))
+
+- **deps**: Adopt code-review-graph for knowledge-graph tooling
+  ([`d60fbdf`](https://github.com/geldois/osint-engine/commit/d60fbdf324c271d1f45fb2f4894ae2fc33ac541e))
+
+- **deps**: Sync lockfile version with pyproject
+  ([`b544895`](https://github.com/geldois/osint-engine/commit/b5448956d097da0421a172113e1205cfcc74cc97))
+
+- **tests**: Stop tracking recorded live-API fixtures under tests/**/responses/
+  ([`9abe7af`](https://github.com/geldois/osint-engine/commit/9abe7afdac94537d38b048fcbf45a1989fae243a))
+
+### Continuous Integration
+
+- Drop mutation-testing job and mutmut config
+  ([`2be91e3`](https://github.com/geldois/osint-engine/commit/2be91e327ff17f11b381dbd152645f1d2d294d6c))
+
+- Refresh test fixtures before running the suite
+  ([`19c55e5`](https://github.com/geldois/osint-engine/commit/19c55e532f4ad456b36a4579e38c5c3baa99e752))
+
+- **test**: Authenticate Docker Hub pulls for testcontainers images
+  ([`d83796f`](https://github.com/geldois/osint-engine/commit/d83796f588379f3fdd73480b2b758f26c7d9e817))
+
+### Documentation
+
+- Add live deploy link to README
+  ([`48c24b4`](https://github.com/geldois/osint-engine/commit/48c24b4a6a4d2b1249427961f043f4a1144aafb1))
+
+- Record ADRs and catch up README/TO-DO for Postgres persistence work
+  ([`65f6eae`](https://github.com/geldois/osint-engine/commit/65f6eae952f3d539c05be243a34ad08b012b2541))
+
+- Reflect CNEP wiring and split out CEIS as its own TO-DO item
+  ([`e7e60bf`](https://github.com/geldois/osint-engine/commit/e7e60bf6d9f308638fba716d7c8d4128978c4d47))
+
+- **readme**: Move refresh-fixtures step ahead of the test command
+  ([`e4338a5`](https://github.com/geldois/osint-engine/commit/e4338a54e860d815c76fbc8beebf61e471d78b1a))
+
+### Features
+
+- **ceis**: Add ExpandByCEIS and fix CNEP/CEIS Portal da Transparência fetcher contract
+  ([`d58d658`](https://github.com/geldois/osint-engine/commit/d58d6587e9b5c3ca06f414725dae4f59c902ba59))
+
+- **cli**: Add docker-compose Postgres and a wait-db command for local dev
+  ([`42b9f26`](https://github.com/geldois/osint-engine/commit/42b9f26d3580bfb482047fa79f87c13bf00592cf))
+
+- **cli**: Add Typer-based serve/migrate CLI, mirroring fastapi.py wiring
+  ([`db58fa1`](https://github.com/geldois/osint-engine/commit/db58fa18009803803d18b07de22c9f9bcfcec065))
+
+- **cpf**: Add GET /cpf/{cpf} pessoa-fisica lookup via Portal da Transparencia
+  ([`623d2fa`](https://github.com/geldois/osint-engine/commit/623d2fa6a0cb4fd7b35401fecd5ab3e149a6a60d))
+
+- **credentials**: Add GET /credentials endpoint listing configured providers
+  ([`0779b7a`](https://github.com/geldois/osint-engine/commit/0779b7a6006b0dfd2491acb91d668a24d63226e2))
+
+- **credentials**: Raise ExternalCredentialRejectedError on upstream 401/403
+  ([`71b0817`](https://github.com/geldois/osint-engine/commit/71b0817e087e417d8e23a84bdde2ef2f6568ec0c))
+
+- **persistence**: Back ExternalCredential with encrypted PostgreSQL storage
+  ([`be0cb39`](https://github.com/geldois/osint-engine/commit/be0cb3959231c255c87249cbe1773033d348a1ce))
+
+### Refactoring
+
+- **config**: Default external_credential_encryption_key from Settings in build_container
+  ([`509e897`](https://github.com/geldois/osint-engine/commit/509e8970bb29c92aae41c28e768c7c06fed0e592))
+
+- **domain**: Add Graph.merge to union partial graphs from one subject
+  ([`581f632`](https://github.com/geldois/osint-engine/commit/581f63287cc9f0803a77f7825135dc9f4d512a05))
+
+- **domain**: Mark Address non-identity fields as optional
+  ([`8452a06`](https://github.com/geldois/osint-engine/commit/8452a06d5b44f65905bc18dd27a840abcb12a9e2))
+
+- **interface**: Rename cli.py/fastapi.py to typer_app.py/fastapi_app.py
+  ([`8c77fe5`](https://github.com/geldois/osint-engine/commit/8c77fe514adb8133b4cfd9b5a14389417af7d8ce))
+
+
 ## v1.6.0 (2026-07-22)
 
 ### Bug Fixes
