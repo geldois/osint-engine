@@ -28,7 +28,8 @@ USER appuser
 COPY --from=build --chown=appuser:appuser /app/.venv /app/.venv
 COPY --from=build --chown=appuser:appuser /app/src /app/src
 COPY --chown=appuser:appuser migrations /app/migrations
+COPY --chown=appuser:appuser docker-entrypoint.sh /app/docker-entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["osint-engine", "serve"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
