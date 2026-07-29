@@ -1,11 +1,11 @@
 ---
 name: explore-codebase
-description: Navigate and understand codebase structure using the knowledge graph
+description: Navigate and understand codebase structure using the knowledge graph — a tactical graph-data source for exploration, not a substitute for the global harness's own exploration workflow (Explore agent, `ship-code`)
 ---
 
 ## Explore Codebase
 
-Use the code-review-graph MCP tools to explore and understand the codebase.
+Use the code-review-graph MCP tools to explore and understand the codebase. If the global harness is present, this feeds it graph data rather than replacing its exploration step.
 
 ### Steps
 

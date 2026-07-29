@@ -223,5 +223,8 @@ mutants/
 # Claude Code local overrides
 .claude/settings.local.json
 
+# machine-local absolute path (cwd), never portable across clones
+.mcp.json
+
 # Recorded live-API fixtures — regenerate with `uv run osint-engine refresh-fixtures`
 tests/**/responses/

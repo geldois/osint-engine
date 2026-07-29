@@ -1,11 +1,11 @@
 ---
 name: debug-issue
-description: Systematically debug issues using graph-powered code navigation
+description: Systematically debug issues using graph-powered code navigation — a tactical graph-data source for root-causing, not a full debugging pipeline
 ---
 
 ## Debug Issue
 
-Use the knowledge graph to systematically trace and debug issues.
+Use the knowledge graph to systematically trace and debug issues. This is a data source feeding whatever debugging/implementation workflow is active, not a standalone fix-it pipeline.
 
 ### Steps
 
