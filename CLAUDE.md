@@ -30,6 +30,8 @@ config was clobbered, `git restore` it — everything crg can overwrite is versi
 
 One façade: `uv run python -m scripts check` (fast) or `check --full` (adds pytest + branch coverage). A `PreToolUse`
 hook blocks raw full-suite runs (`pytest`, `ruff`, `basedpyright`, `lint-imports`, `sqruff`, `cosmic-ray`) and redirects
-here; a targeted single-file or single-test run is allowed. Committing runs the full gate on a materialized snapshot, so
-it needs Docker (testcontainers) and a local `.env` with the Portal key (the runner loads it — no manual sourcing).
-Mutation: `uv run python -m scripts mutation`.
+here; a targeted single-file or single-test run is allowed. The same hook also blocks the agent from invoking
+`check --full` directly — `pre-commit` already runs it on a materialized snapshot and reports failure inline, so just
+commit; a failed commit is the fix-and-retry signal, not a reason to pre-run the gate by hand. Committing runs the full
+gate on a materialized snapshot, so it needs Docker (testcontainers) and a local `.env` with the Portal key (the runner
+loads it — no manual sourcing). Mutation: `uv run python -m scripts mutation`.
