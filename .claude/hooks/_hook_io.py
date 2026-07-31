@@ -12,6 +12,7 @@ import json
 import sys
 import tempfile
 from pathlib import Path
+from typing import cast
 
 
 def read_event() -> dict[str, object]:
@@ -20,7 +21,9 @@ def read_event() -> dict[str, object]:
         raw: object = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
         return {}
-    return raw if isinstance(raw, dict) else {}
+    # ``isinstance`` narrows only to ``dict[Unknown, Unknown]``; the cast pins the
+    # JSON-object shape so the value stays fully typed even under strict-plus modes.
+    return cast("dict[str, object]", raw) if isinstance(raw, dict) else {}
 
 
 def field(event: dict[str, object], key: str) -> str:
@@ -34,7 +37,7 @@ def tool_input(event: dict[str, object], key: str) -> str:
     raw = event.get("tool_input")
     if not isinstance(raw, dict):
         return ""
-    value: object = raw.get(key)
+    value: object = cast("dict[str, object]", raw).get(key)
     return value if isinstance(value, str) else ""
 
 

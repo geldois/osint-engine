@@ -69,6 +69,9 @@ reportMissingTypeStubs = "none"
 
 # The Claude Code hooks run as standalone scripts (their own directory on
 # sys.path at runtime), so `import _hook_io` resolves from the hooks root.
+# (typeCheckingMode cannot be set per-executionEnvironment; the hooks inherit
+# the top-level `strict`, and _hook_io.py is cast-typed to stay clean even
+# under the editor's stricter `all` default.)
 [[tool.basedpyright.executionEnvironments]]
 root = ".claude/hooks"
 
