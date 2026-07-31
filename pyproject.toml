@@ -67,6 +67,9 @@ include = ["src", "tests", "scripts", ".claude/hooks"]
 typeCheckingMode = "strict"
 pythonPlatform = "All"
 reportMissingTypeStubs = "none"
+# Lets tests/ import the hooks' top-level modules (e.g. `_comment_stripper`)
+# the same way pytest's own `pythonpath` already does.
+extraPaths = [".claude/hooks"]
 
 # The Claude Code hooks run as standalone scripts (their own directory on
 # sys.path at runtime), so `import _hook_io` resolves from the hooks root.
@@ -80,7 +83,7 @@ root = ".claude/hooks"
 packages = ["src/osint_engine"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src", "tests", "."]
+pythonpath = ["src", "tests", ".", ".claude/hooks"]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "session"
 

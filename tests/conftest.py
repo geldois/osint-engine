@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from collections import defaultdict
 from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
@@ -34,6 +35,8 @@ from tests.fakes.domain import FakeEdge, FakeMergeableNode, FakeNode
 from tests.fakes.persistence import FakePgPool
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from asyncpg import Pool
 
     from osint_engine.application.revision.policies.revision_merge_policy import (
@@ -84,21 +87,18 @@ def _entity_store[Entity_: Entity[UUID]](
 
 @pytest.fixture(scope="session")
 def argon2_password_hasher() -> Argon2PasswordHasher:
-    """An Argon2id password hasher."""
 
     return Argon2PasswordHasher()
 
 
 @pytest.fixture(scope="session")
 def pyjwt_service(settings: Settings) -> PyJWTService:
-    """A JWT service bound to the canonical test settings."""
 
     return PyJWTService(settings=settings)
 
 
 @pytest.fixture(scope="session")
 def settings() -> Settings:
-    """The canonical application settings shared across the test dependency graph."""
 
     return Settings(
         access_token_expire_minutes=60,
@@ -153,12 +153,6 @@ def make_entity_revision() -> MakeEntityRevision:
 
 @pytest.fixture
 def make_fake_edge() -> MakeFakeEdge:
-    """
-    *,
-    source_id: UUID | None = None,
-    target_id: UUID | None = None,
-    content: str | None = None
-    """
 
     def fake_edge(
         *,
@@ -177,10 +171,6 @@ def make_fake_edge() -> MakeFakeEdge:
 
 @pytest.fixture
 def make_fake_node() -> MakeFakeNode:
-    """
-    *,
-    content: str | None = None
-    """
 
     def fake_node(*, content: str | None = None) -> FakeNode:
         return FakeNode(content=content if content is not None else str(uuid4()))
@@ -190,11 +180,6 @@ def make_fake_node() -> MakeFakeNode:
 
 @pytest.fixture
 def make_fake_mergeable_node() -> MakeFakeMergeableNode:
-    """
-    *,
-    key: str | None = None,
-    label: str | None = None
-    """
 
     def fake_mergeable_node(
         *, key: str | None = None, label: str | None = None
@@ -208,12 +193,6 @@ def make_fake_mergeable_node() -> MakeFakeMergeableNode:
 
 @pytest.fixture
 def make_graph(make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode) -> MakeGraph:
-    """
-    *,
-    edges: Iterable[Edge[UUID, UUID, UUID]] | None = None,
-    nodes: Iterable[Node[UUID]] | None = None,
-    root_id: UUID | None = None
-    """
 
     def graph(
         *,
@@ -238,14 +217,6 @@ def make_graph(make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode) -> Ma
 
 @pytest.fixture
 def make_mem_storage() -> MakeMemStorage:
-    """
-    *,
-    edges: Iterable[EntityRevision[Edge[UUID, UUID, UUID]]] | None = None,
-    external_credentials: Iterable[ExternalCredential] | None = None,
-    graphs: Iterable[EntityRevision[Graph]] | None = None,
-    nodes: Iterable[EntityRevision[Node[UUID]]] | None = None,
-    users: Iterable[User] | None = None
-    """
 
     def mem_storage(
         *,
@@ -275,11 +246,6 @@ def make_mem_storage() -> MakeMemStorage:
 
 @pytest.fixture
 def make_mem_uow(make_mem_storage: MakeMemStorage, policies: Policies) -> MakeMemUoW:
-    """
-    *,
-    mem_storage: MemStorage | None = None,
-    policies: Policies | None = None
-    """
 
     default_policies = policies
 
@@ -300,11 +266,6 @@ def make_mem_uow(make_mem_storage: MakeMemStorage, policies: Policies) -> MakeMe
 
 @pytest.fixture
 def make_policies() -> MakePolicies:
-    """
-    *,
-    revision_merge_policy: RevisionMergePolicy,
-    revision_selection_policy: RevisionSelectionPolicy
-    """
 
     def policies(
         *,
@@ -321,12 +282,6 @@ def make_policies() -> MakePolicies:
 
 @pytest.fixture
 def make_external_credential() -> MakeExternalCredential:
-    """
-    *,
-    api_key: str | None = None,
-    provider: Provider = Provider.PORTAL_TRANSPARENCIA,
-    username: str | None = None
-    """
 
     def external_credential(
         *,
@@ -345,12 +300,6 @@ def make_external_credential() -> MakeExternalCredential:
 
 @pytest.fixture
 def make_user() -> MakeUser:
-    """
-    *,
-    username: str | None = None,
-    hashed_password: str | None = None,
-    role: Role = Role.VIEWER
-    """
 
     def user(
         *,
@@ -371,11 +320,26 @@ def make_user() -> MakeUser:
 
 @pytest.fixture
 def policies(make_policies: MakePolicies) -> Policies:
-    """
-    Canonical revision policies: merge by filled fields and select by newest fetched.
-    """
 
     return make_policies(
         revision_merge_policy=merge_by_filled_fields_policy,
         revision_selection_policy=select_current_by_newest_fetched,
     )
+
+
+def _git(*args: str, cwd: Path) -> None:
+    subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True)
+
+
+@pytest.fixture
+def git_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    _git("init", cwd=tmp_path)
+    _git("config", "user.email", "test@example.com", cwd=tmp_path)
+    _git("config", "user.name", "Test", cwd=tmp_path)
+    _git("config", "commit.gpgsign", "false", cwd=tmp_path)
+    (tmp_path / "seed.txt").write_text("seed\n", encoding="utf-8")
+    _git("add", "seed.txt", cwd=tmp_path)
+    _git("commit", "-m", "seed", cwd=tmp_path)
+
+    monkeypatch.chdir(tmp_path)
+    return tmp_path

@@ -33,13 +33,23 @@
         "hooks": [
           {
             "type": "command",
+            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/autofix_edited_file.py\"",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/strip_agent_comments.py\"",
+            "timeout": 30
+          },
+          {
+            "type": "command",
             "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/update_graph.py\"",
             "timeout": 30
           },
           {
             "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/autofix_edited_file.py\"",
-            "timeout": 60
+            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/mark_architecture_area_touched.py\"",
+            "timeout": 10
           }
         ]
       },
@@ -77,6 +87,11 @@
           {
             "type": "command",
             "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/reset_graph_gate.py\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/nudge_architecture_docs.py\"",
             "timeout": 10
           }
         ]
