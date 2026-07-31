@@ -26,6 +26,7 @@ class EntityNAMESPACE(Enum):
     PERSON_PHONE = "PERSON_PHONE"
     PERSON_SANCTION = "PERSON_SANCTION"
     PHONE = "PHONE"
+    POSSIBLY_MATCHES = "POSSIBLY_MATCHES"
     SANCTION = "SANCTION"
 
     def __init__(self, value: str, /) -> None:
