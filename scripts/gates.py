@@ -18,6 +18,8 @@ import subprocess
 import time
 from pathlib import Path
 
+from dotenv import dotenv_values
+
 from scripts._isolation import materialized_snapshot
 from scripts._report import (
     Gate,
@@ -60,17 +62,32 @@ def run_check(*, full: bool, staged: bool) -> int:
     """Run the gate sequence, write the report, print the verdict, return exit code."""
     mode = f"{'full' if full else 'fast'}{'/staged' if staged else ''}"
 
+    # Read the local .env from the real project root before entering any snapshot,
+    # so the full suite self-provisions its secrets (Portal key, DB URL) with no
+    # manual sourcing. Local-only: the materialised snapshot excludes the
+    # gitignored .env, and CI has no .env (it uses repo secrets), so this is a
+    # no-op there. Never committed, never printed.
+    overlay = _dotenv_overlay(Path.cwd())
+
     with running_ticker():
         if staged:
             with materialized_snapshot() as workdir:
-                outcomes = _run_sequence(workdir, full=full)
+                outcomes = _run_sequence(workdir, full=full, overlay=overlay)
         else:
-            outcomes = _run_sequence(Path.cwd(), full=full)
+            outcomes = _run_sequence(Path.cwd(), full=full, overlay=overlay)
 
     report_path = write_report(outcomes, mode=mode)
     print_verdict(outcomes, report_path)
 
     return 0 if all(o.passed for o in outcomes) else 1
+
+
+def _dotenv_overlay(project_root: Path) -> dict[str, str]:
+    """Local ``.env`` values as an env overlay, or empty when the file is absent."""
+    env_file = project_root / ".env"
+    if not env_file.is_file():
+        return {}
+    return {key: value for key, value in dotenv_values(env_file).items() if value}
 
 
 def _run_gate(gate: Gate, cwd: Path, env: dict[str, str]) -> GateOutcome:
@@ -105,7 +122,9 @@ def _run_gate(gate: Gate, cwd: Path, env: dict[str, str]) -> GateOutcome:
     )
 
 
-def _run_sequence(workdir: Path, *, full: bool) -> list[GateOutcome]:
+def _run_sequence(
+    workdir: Path, *, full: bool, overlay: dict[str, str]
+) -> list[GateOutcome]:
     # Scrub git's hook-injected env (GIT_DIR, GIT_INDEX_FILE, GIT_WORK_TREE, …):
     # when the gates run from inside the pre-commit hook these point at the real
     # repo and leak into every gate subprocess, breaking any test that shells out
@@ -114,6 +133,9 @@ def _run_sequence(workdir: Path, *, full: bool) -> list[GateOutcome]:
     env = {
         key: value for key, value in os.environ.items() if not key.startswith("GIT_")
     }
+    # Overlay the local .env last so it fills secrets the snapshot lacks without
+    # clobbering an already-exported value (an explicit shell export still wins).
+    env = {**overlay, **env}
     outcomes = [_run_gate(gate, workdir, env) for gate in _PRE_SYNC]
 
     sync = _run_gate(_ENV_SYNC, workdir, env)
