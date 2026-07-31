@@ -4,8 +4,6 @@ import pytest
 
 from osint_engine.interface.errors.interface_error import InterfaceError
 
-# TEST DOUBLES
-
 
 class FakeInterfaceError(InterfaceError, error_code="TEST"):
     def __init__(self, **kwargs: object) -> None:
@@ -13,9 +11,6 @@ class FakeInterfaceError(InterfaceError, error_code="TEST"):
 
     def _build_message(self) -> str:
         return "test"
-
-
-# TESTS
 
 
 class TestInterfaceErrorSubclassContract:
@@ -39,9 +34,6 @@ class TestInterfaceErrorSubclassContract:
         class FakeAbstractInterfaceError(  # pyright: ignore[reportUnusedClass]
             InterfaceError, error_code=None
         ): ...
-
-        # no TypeError raised above: an abstract subclass (no __init__/
-        # _build_message override) is allowed to leave error_code unset.
 
     def test_concrete_subclass_with_error_code_exposes_it_as_class_attribute(
         self,

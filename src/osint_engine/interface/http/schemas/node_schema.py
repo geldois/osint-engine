@@ -23,8 +23,6 @@ from osint_engine.interface.http.errors.schema_error import (
     UnmappedTypeSchemaError,
 )
 
-# SCHEMAS
-
 
 class NodeSchema[NodeType_co: Node[UUID]](ABC, BaseModel):
     @classmethod
@@ -170,9 +168,6 @@ class TextSourceSchema(NodeSchema[TextSource]):
         return TextSource
 
 
-# UNION
-
-
 NodeSchemaUnion = (
     AddressSchema
     | CnaeSchema
@@ -185,9 +180,6 @@ NodeSchemaUnion = (
 )
 
 NodeUnion = Annotated[NodeSchemaUnion, Field(discriminator="type")]
-
-
-# REGISTRIES
 
 
 class NodeSchemaRegistry:

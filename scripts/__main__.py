@@ -1,9 +1,3 @@
-"""Typer entrypoint for the dev runner (ADR 0025).
-
-Single source of truth for every quality gate, called identically by the git
-hooks and CI. Invoke as ``uv run python -m scripts <command>``.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -23,7 +17,6 @@ hooks_app = typer.Typer(no_args_is_help=True, add_completion=False)
 app.add_typer(fixtures_app, name="fixtures")
 app.add_typer(hooks_app, name="hooks")
 
-# Survival-rate ceiling as a percentage; floor unpinned pending baseline (ADR 0025).
 _DEFAULT_MAX_SURVIVAL = 100.0
 
 

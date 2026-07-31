@@ -4,8 +4,6 @@ import pytest
 
 from osint_engine.application.errors.application_error import ApplicationError
 
-# TEST DOUBLES
-
 
 class FakeApplicationError(ApplicationError, error_code="TEST"):
     def __init__(self, **kwargs: object) -> None:
@@ -13,9 +11,6 @@ class FakeApplicationError(ApplicationError, error_code="TEST"):
 
     def _build_message(self) -> str:
         return "test"
-
-
-# TESTS
 
 
 class TestApplicationErrorSubclassContract:
@@ -41,9 +36,6 @@ class TestApplicationErrorSubclassContract:
         class FakeAbstractApplicationError(  # pyright: ignore[reportUnusedClass]
             ApplicationError, error_code=None
         ): ...
-
-        # no TypeError raised above: an abstract subclass (no __init__/
-        # _build_message override) is allowed to leave error_code unset.
 
     def test_concrete_subclass_with_error_code_exposes_it_as_class_attribute(
         self,

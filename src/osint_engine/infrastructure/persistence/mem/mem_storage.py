@@ -64,13 +64,6 @@ class MemStorage:
 
 
 class MemStorageSnapshot(MemStorage):
-    """
-    Temporary working storage for a UoW transaction.
-    Inherits MemStorage contracts (frozen, typed dicts).
-    Changes are committed to the original storage on commit,
-    or discarded on rollback.
-    """
-
     _mem_storage: MemStorage
 
     @override

@@ -21,8 +21,6 @@ from tests.fakes.domain import TEST, TEST_DIFF, FakeEntity, FakeEntityID
 
 OtherEntityID = NewType("OtherEntityID", UUID)
 
-# TEST DOUBLES
-
 
 class FakeEntityWithDiffNAMESPACE(
     Entity[FakeEntityID], id_fields=frozenset({"content"}), namespace=TEST_DIFF
@@ -69,23 +67,15 @@ class FakeFakeEntity:
 
 
 class NonGenericMixin:
-    """A plain, non-generic co-base mixed alongside an Entity[...] base."""
+    pass
 
 
 class BadNewType:
-    """
-    A NewType-shaped object (has `__supertype__`) whose call does not
-    actually produce a UUID, exercising the id_type probe's failure path.
-    """
-
     __supertype__ = UUID
     __name__ = "BadNewType"
 
     def __call__(self, _value: object) -> object:
         return "not-a-uuid"
-
-
-# TESTS
 
 
 class TestEntityIdentity:
@@ -327,7 +317,7 @@ class TestEntitySubclassContract:
             id_fields=None,
             namespace=TEST,
         ):
-            """Abstract intermediate base: no __init__ override, no generic bind."""
+            pass
 
         assert not hasattr(FakeAbstractEntity, "id_type")
 
@@ -611,9 +601,6 @@ class TestOwnInitKwargs:
 
 
 class TestEntityCalculateIdOverride:
-    # Mechanism behind Company/Person/Graph:
-    # _calculate_id normalizes, __init__ stores raw.
-
     def test_id_is_same_for_equivalent_but_differently_raw_content(self) -> None:
         padded = FakeEntityWithNormalizingIdentity(content="  ALICE  ")
         clean = FakeEntityWithNormalizingIdentity(content="alice")

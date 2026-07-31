@@ -1,20 +1,3 @@
-"""Safe, idempotent auto-fixers, and the pre-commit orchestration (ADR 0025).
-
-``fix`` runs every safe formatter/auto-fixer over the working tree (or explicit
-paths), routed by extension: ruff (format + safe lint fixes) for ``.py``, dprint
-for json/toml/yaml/markdown, sqruff for ``.sql``. All are idempotent and only
-apply changes a tool can make deterministically, so running ``fix`` twice is a
-no-op the second time.
-
-``precommit`` is what the pre-commit hook runs: it auto-fixes only the files that
-are *fully* staged (no unstaged changes), re-stages those fixes, then runs the
-full gate against the materialised snapshot. A partially-staged file is never
-touched — fixing it would drag its unstaged half into the commit — so no commit
-can ever be left in a partial or corrupted state by this path. The set of fixed
-extensions mirrors the per-edit autofix hook exactly, so nothing a safe fixer
-could resolve silently is left to fail the gate.
-"""
-
 from __future__ import annotations
 
 import subprocess
@@ -27,19 +10,13 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 _UV_RUN = ("uv", "run", "--no-sync")
-# dprint owns json/toml/yaml/markdown; sqruff owns sql; ruff owns python. The
-# pre-commit auto-fixer must cover exactly what the per-edit autofix hook covers,
-# or a fully-staged file of a type it misses fails the gate on something a safe
-# fixer could have silently resolved.
 _DPRINT_EXTENSIONS = (".md", ".json", ".jsonc", ".toml", ".yaml", ".yml")
 _FIX_EXTENSIONS = (".py", ".sql", *_DPRINT_EXTENSIONS)
 _SQL_DIRS = ("migrations", "src")
 
 
 def run_fix(paths: tuple[str, ...] = ()) -> int:
-    """Apply every safe, idempotent fixer to ``paths`` (or the whole tree)."""
     if not paths:
-        # Whole-tree: each fixer over its own configured scope.
         subprocess.run([*_UV_RUN, "ruff", "format", "."], check=False)
         subprocess.run([*_UV_RUN, "ruff", "check", "--fix", "."], check=False)
         subprocess.run(["mise", "exec", "--", "dprint", "fmt"], check=False)
@@ -72,7 +49,6 @@ def _sqruff(targets: list[str]) -> None:
 
 
 def run_precommit() -> int:
-    """Fix fully-staged files, re-stage them, then run the full gate."""
     fixable = _fully_staged_files()
     if fixable:
         run_fix(tuple(fixable))

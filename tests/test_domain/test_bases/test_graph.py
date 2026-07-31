@@ -22,8 +22,6 @@ if TYPE_CHECKING:
 
     from tests.conftest import MakeFakeEdge, MakeFakeNode
 
-# TEST DOUBLES
-
 
 class FakeNodeWithContentIdentity(
     Node[FakeNodeID], id_fields=frozenset({"content"}), namespace=TEST_NODE

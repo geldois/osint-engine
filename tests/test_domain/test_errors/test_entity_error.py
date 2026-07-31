@@ -3,8 +3,6 @@ from __future__ import annotations
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
 
-# TESTS
-
 
 class TestEntityInvalidIdentifierError:
     def test_stores_all_reported_fields(self) -> None:

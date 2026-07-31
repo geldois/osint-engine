@@ -125,22 +125,11 @@ class TestNormalizeAddressNumberNoNumberCanonicalization:
     def test_stripping_the_ordinal_indicator_does_not_swallow_adjacent_letters(
         self,
     ) -> None:
-        """
-        Regression: only 'º'/'°' are ordinal indicators to be trimmed before
-        the no-number check; a value that merely ends adjacent to one (e.g.
-        'Xº') must not be misclassified as S/N.
-        """
 
         assert normalize_address_number(value="Xº") != "S/N"
 
 
 class TestNormalizeAddressNumberIdentityRegression:
-    """
-    normalize_str_to_digits_only(value="S/N") == "" (see TestDigitsOnly above),
-    which collapses every unnumbered address to the same empty identity
-    fragment. normalize_address_number exists specifically to close that hole.
-    """
-
     def test_no_number_marker_is_not_the_empty_string(self) -> None:
         assert normalize_address_number(value="S/N") != ""
 

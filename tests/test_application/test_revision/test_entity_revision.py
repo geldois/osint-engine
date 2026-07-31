@@ -23,9 +23,6 @@ _OFFSET = datetime(2026, 1, 1, tzinfo=timezone(timedelta(hours=-3)))
 _ZONEINFO_UTC = datetime(2026, 1, 1, tzinfo=ZoneInfo("UTC"))
 
 
-# TESTS
-
-
 class TestEntityRevisionFetchedAtUTCInvariant:
     def test_accepts_the_utc_singleton(self) -> None:
         revision = EntityRevision(

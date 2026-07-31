@@ -6,8 +6,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
-# Exception composition root — see http_status_mapper.py for the rationale
-# behind referencing infrastructure error types directly from interface.
 from osint_engine.domain.errors.osint_error import OsintError
 from osint_engine.interface.http.fastapi.error_handler import build_error_handler
 from osint_engine.interface.http.fastapi.middlewares.logging_handler import (
@@ -32,8 +30,6 @@ if TYPE_CHECKING:
     from osint_engine.config.container import Container
 
 _HANDLED_EXCEPTIONS: tuple[type[Exception], ...] = (
-    # OsintError catches every first-party error as a normal response; Exception
-    # is the last resort for truly-unexpected failures (a real 500).
     OsintError,
     Exception,
 )

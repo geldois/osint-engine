@@ -119,11 +119,6 @@ def build_container(  # noqa: PLR0913
         )
 
     async def readiness_probe() -> None:
-        """
-        Prove the Postgres pool can actually round-trip a query; entering the
-        HybridUoW alone doesn't (it only constructs the credential repository and
-        acquires no connection until a query runs).
-        """
 
         await pg_pool.execute("SELECT 1")  # pyright: ignore[reportUnknownMemberType]
 

@@ -28,17 +28,13 @@ def _map_sanction(*, payload: Payload) -> Sanction:
         data=payload.require(key="orgaoSancionador", expected_type=dict[str, object])
     )
 
-    # The real API sends "fundamentacao": null for some sanctions.
     fundamentacao = (
         payload.optional(key="fundamentacao", expected_type=list[dict[str, object]])
         or []
     )
 
     return Sanction(
-        # An ongoing sanction legitimately has no end date yet.
         end_date=payload.optional(key="dataFimSancao", expected_type=str),
-        # CeisDTO doesn't declare valorMulta at all — CEIS sanctions never
-        # carry a fine amount.
         fine_amount=None,
         legal_basis=tuple(
             payload.scope(data=item).require(key="descricao", expected_type=str)
@@ -66,7 +62,6 @@ def _map_company_stub(*, payload: Payload) -> Company:
         registration_status_reason=None,
         share_capital=None,
         size_category=None,
-        # Nome fantasia is optional in the Brazilian business registry itself.
         trade_name=payload.optional(key="nomeFantasiaReceita", expected_type=str),
     )
 
@@ -90,8 +85,6 @@ def map_graph(*, payload: Payload) -> Graph:
     sancionado: Company | Person
     edge: Edge[UUID, UUID, UUID]
 
-    # The real API reports "cnpjFormatado" as an empty string (not null or
-    # absent) when the sancionado is a person, not a company.
     if sancionado_payload.optional(key="cnpjFormatado", expected_type=str):
         sancionado = _map_company_stub(payload=sancionado_payload)
         edge = CompanyReceivedSanction(source_id=sancionado.id, target_id=sanction.id)

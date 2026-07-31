@@ -4,8 +4,6 @@ from decimal import Decimal
 
 from osint_engine.domain.entities.nodes.sanction import Sanction
 
-# TEST DOUBLES
-
 
 def _make_sanction(
     *,
@@ -25,9 +23,6 @@ def _make_sanction(
         sanctioning_body="CGU",
         start_date="2024-01-01",
     )
-
-
-# TESTS
 
 
 class TestSanctionIdentityComposition:

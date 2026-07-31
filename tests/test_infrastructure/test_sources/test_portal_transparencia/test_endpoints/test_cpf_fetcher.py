@@ -18,8 +18,6 @@ if TYPE_CHECKING:
         MakePortalTransparenciaCPFFetcher,
     )
 
-# TEST DOUBLES
-
 
 _PF_RESPONSE_DATA: dict[str, object] = {
     "cpf": "128.734.***-**",
@@ -28,9 +26,6 @@ _PF_RESPONSE_DATA: dict[str, object] = {
     "sancionadoCNEP": False,
     "servidor": True,
 }
-
-
-# TESTS
 
 
 class TestPortalTransparenciaCPFFetcherOnHTTPStatusError:

@@ -53,14 +53,10 @@ def captured_request_url() -> dict[str, str]:
 async def portal_transparencia_http_client(
     captured_request_url: dict[str, str],
 ) -> AsyncGenerator[AsyncClient, None]:
-    """An HTTP client whose transport serves a valid CEIS payload."""
 
     def handler(request: Request) -> Response:
         captured_request_url["url"] = str(request.url)
 
-        # No query string means the request targets the by-id endpoint
-        # (a single record); a query string means the collection endpoint
-        # (an array of records).
         if request.url.query:
             return Response(200, json=[_CEIS_RECORD_DATA])
 

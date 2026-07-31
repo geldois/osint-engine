@@ -27,7 +27,6 @@ type MakeSettings = Callable[..., Settings]
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def http_client(settings: Settings) -> AsyncGenerator[AsyncClient, None]:
-    """The shared HTTP client that outbound fetchers are built on."""
 
     timeout = Timeout(
         timeout=None,
@@ -41,23 +40,6 @@ async def http_client(settings: Settings) -> AsyncGenerator[AsyncClient, None]:
 
 @pytest.fixture
 def make_settings(settings: Settings) -> MakeSettings:
-    """
-    *,
-    access_token_expire_minutes: int | None = None,
-    admin_password: str | None = None,
-    cors_origins: list[str] | None = None,
-    database_url: str | None = None,
-    debug: bool | None = None,
-    docs_redirect_root: bool | None = None,
-    external_credential_encryption_key: str | None = None,
-    fetcher_connect_timeout: float | None = None,
-    fetcher_read_timeout: float | None = None,
-    host: str | None = None,
-    log_level: str | None = None,
-    port: int | None = None,
-    secret_key: str | None = None,
-    viewer_token_expire_minutes: int | None = None
-    """
 
     def settings_(
         *,
@@ -122,13 +104,6 @@ def make_container(
     make_mem_storage: MakeMemStorage,
     policies: Policies,
 ) -> MakeContainer:
-    """
-    *,
-    settings: Settings | None = None,
-    http_client: AsyncClient | None = None,
-    mem_storage: MemStorage | None = None,
-    policies: Policies | None = None
-    """
 
     settings_ = settings
     http_client_ = http_client
@@ -161,14 +136,12 @@ def make_container(
 
 @pytest.fixture
 def container(make_container: MakeContainer) -> Container:
-    """The canonical container over seeded in-memory storage."""
 
     return make_container()
 
 
 @pytest.fixture
 def fastapi_app(make_container: MakeContainer) -> FastAPI:
-    """The application under test."""
 
     return build_fastapi_app(container=make_container())
 
@@ -177,7 +150,6 @@ def fastapi_app(make_container: MakeContainer) -> FastAPI:
 async def fastapi_app_client(
     fastapi_app: FastAPI,
 ) -> AsyncGenerator[AsyncClient, None]:
-    """An HTTP client bound to the application under test."""
 
     async with AsyncClient(
         transport=ASGITransport(app=fastapi_app), base_url="http://test"

@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 
 @pytest_asyncio.fixture(loop_scope="session")
 async def brasilapi_http_client() -> AsyncGenerator[AsyncClient, None]:
-    """An HTTP client whose transport serves a valid BrasilAPI CNPJ payload."""
 
     def handler(request: Request) -> Response:  # noqa: ARG001
         return Response(200, json=COMPLETE_PAYLOAD_DATA)
@@ -52,9 +51,6 @@ def viewer_token(pyjwt_service: PyJWTService) -> str:
     return pyjwt_service.create_access_token(username="visitor", role=Role.VIEWER)
 
 
-# TESTS
-
-
 class TestGetCnpjAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
@@ -84,8 +80,6 @@ class TestCnpjRouterScope:
     async def test_unrelated_path_is_not_routed_to_cnpj_handler(
         self, client: AsyncClient
     ) -> None:
-        """The router is mounted under /cnpj; without that prefix a
-        `{cnpj:path}` route would swallow every unrelated path."""
 
         response = await client.get("/some/unrelated/path")
 
@@ -139,9 +133,6 @@ class TestCnpjRateLimit:
     async def test_shared_bucket_returns_429_past_100_requests(
         self, client: AsyncClient, viewer_token: str
     ) -> None:
-        """The expansion limiter is a single per-route bucket shared across all
-        callers (fixed key_func), regardless of role — 100 requests/min caps the
-        combined outbound rate to the upstream API. The 101st is rejected."""
 
         headers = {"Authorization": f"Bearer {viewer_token}"}
 

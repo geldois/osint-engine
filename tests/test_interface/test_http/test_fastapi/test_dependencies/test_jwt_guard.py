@@ -17,9 +17,6 @@ if TYPE_CHECKING:
     from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 
 
-# TESTS
-
-
 class TestJwtGuardWithValidToken:
     @pytest.mark.asyncio
     async def test_valid_token_passes_without_error(

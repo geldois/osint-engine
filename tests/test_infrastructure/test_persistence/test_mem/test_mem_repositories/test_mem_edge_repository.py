@@ -19,9 +19,6 @@ _EARLY = datetime(2026, 1, 1, tzinfo=UTC)
 _LATE = datetime(2026, 6, 1, tzinfo=UTC)
 
 
-# TESTS
-
-
 class TestMemEdgeRepositoryFind:
     @pytest.mark.asyncio
     async def test_returns_none_when_absent(

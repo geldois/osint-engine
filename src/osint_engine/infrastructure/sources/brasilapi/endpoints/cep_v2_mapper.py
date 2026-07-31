@@ -13,7 +13,6 @@ def map_address(*, payload: Payload, number: str) -> Address:
         cep=payload.require(key="cep", expected_type=str),
         city=payload.require(key="city", expected_type=str),
         complement=None,
-        # BrasilAPI's AddressV2 schema marks both `nullable: true`.
         neighborhood=payload.optional(key="neighborhood", expected_type=str),
         number=number,
         state=payload.require(key="state", expected_type=str),

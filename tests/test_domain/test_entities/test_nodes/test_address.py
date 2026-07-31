@@ -5,8 +5,6 @@ import pytest
 from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
 
-# TEST DOUBLES
-
 
 def _make_address(*, cep: str, number: str = "100") -> Address:
     return Address(
@@ -18,9 +16,6 @@ def _make_address(*, cep: str, number: str = "100") -> Address:
         state="DF",
         street="SAUN QUADRA 5 BLOCO B",
     )
-
-
-# TESTS
 
 
 class TestAddressIdentityNormalization:

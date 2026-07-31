@@ -27,8 +27,6 @@ if TYPE_CHECKING:
         MakeSettings,
     )
 
-# TEST DOUBLES
-
 
 class _FakeDomainError(DomainError, error_code="TEST_DOMAIN_ERROR"):
     @override
@@ -90,9 +88,6 @@ def _body(response: JSONResponse) -> dict[str, object]:
     return json.loads(bytes(response.body))
 
 
-# TESTS
-
-
 @pytest.fixture(autouse=True)
 def _reset_correlation_id() -> Generator[None, None, None]:  # pyright: ignore[reportUnusedFunction]
     token = correlation_id.set(None)
@@ -106,10 +101,6 @@ def _reset_correlation_id() -> Generator[None, None, None]:  # pyright: ignore[r
 def make_handle_error(
     make_container: MakeContainer, make_settings: MakeSettings
 ) -> _MakeHandleError:
-    """
-    *,
-    debug: bool = False
-    """
 
     def handle_error(*, debug: bool = False) -> _HandleError:
         settings = make_settings(debug=debug)
@@ -218,8 +209,6 @@ class TestErrorHandlerLogSeverity:
         make_handle_error: _MakeHandleError,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """HTTP_SERVER_ERROR (500) is the boundary: status < 500 logs info,
-        status >= 500 (inclusive) must log error, not info."""
 
         calls: list[str] = []
         logger = error_handler_module._logger  # pyright: ignore[reportPrivateUsage]

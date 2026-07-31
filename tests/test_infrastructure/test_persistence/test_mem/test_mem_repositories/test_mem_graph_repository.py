@@ -19,9 +19,6 @@ _EARLY = datetime(2026, 1, 1, tzinfo=UTC)
 _LATE = datetime(2026, 6, 1, tzinfo=UTC)
 
 
-# TESTS
-
-
 class TestMemGraphRepositoryFind:
     @pytest.mark.asyncio
     async def test_returns_none_when_absent(
@@ -178,13 +175,6 @@ class TestMemGraphRepositoryMerge:
 
 
 class TestMemGraphRepositoryMergeCascade:
-    """
-    Regression coverage for the GraphRepository.merge contract: every node
-    and edge a merged graph carries must become individually addressable in
-    the node/edge repositories too, never only reachable through the
-    graph's own opaque blob. See graph_repository.py's docstring.
-    """
-
     @pytest.mark.asyncio
     async def test_every_node_becomes_individually_findable(
         self,
@@ -251,11 +241,6 @@ class TestMemGraphRepositoryMergeCascade:
         make_mem_storage: MakeMemStorage,
         make_mem_graph_repository: MakeMemGraphRepository,
     ) -> None:
-        """
-        Re-fetching an already-known subject must not silently overwrite the
-        true original fetched_at/source of entities whose content hasn't
-        actually changed — see graph_repository.py's docstring.
-        """
 
         graph = make_graph()
         first = make_entity_revision(

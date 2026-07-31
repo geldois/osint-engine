@@ -41,7 +41,6 @@ CPF_OR_CNPJ = "33754482000124"
 
 @pytest_asyncio.fixture(loop_scope="session")
 async def portal_transparencia_http_client() -> AsyncGenerator[AsyncClient, None]:
-    """An HTTP client whose transport serves a valid CNEP payload."""
 
     def handler(request: Request) -> Response:  # noqa: ARG001
         return Response(200, json=[_CNEP_RECORD_DATA])
@@ -81,9 +80,6 @@ async def client(
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
     return pyjwt_service.create_access_token(username="admin", role="admin")
-
-
-# TESTS
 
 
 class TestGetCnepAuthentication:

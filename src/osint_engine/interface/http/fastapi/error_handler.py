@@ -48,10 +48,6 @@ def build_error_handler(
             if container.settings.debug
             else None
         )
-        # Every first-party error declares an ``error_code`` class attribute;
-        # a stdlib/third-party exception has none. Reading it structurally keeps
-        # the handler from importing each layer's error base (interface must not
-        # import infrastructure) — the semantic status already came from category.
         error_code: str | None = getattr(exception, "error_code", None)
         error_schema = ErrorSchema(
             correlation_id=correlation_id.get(),

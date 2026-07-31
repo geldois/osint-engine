@@ -18,11 +18,6 @@ _EXPANSION_REQUESTS_PER_MINUTE = 100
 def _translate_rate_limit_error(
     limiter: RateLimiter,
 ) -> Callable[[Request, Response], Awaitable[None]]:
-    """
-    fastapi-throttle raises a bare HTTPException; wrapping it keeps every
-    error response on the app's own ErrorSchema/correlation_id shape
-    instead of the library's own untagged {"detail": ...} body.
-    """
 
     async def guarded(request: Request, response: Response) -> None:
         try:
@@ -51,14 +46,6 @@ def build_viewer_token_rate_limit() -> Callable[[Request, Response], Awaitable[N
 def build_expansion_rate_limit(
     *, scope: str
 ) -> Callable[[Request, Response], Awaitable[None]]:
-    """
-    Every expansion route proxies to an upstream API — BrasilAPI for CNPJ,
-    Portal da Transparência for CPF/CNEP/CEIS — whose per-minute quota is shared
-    across all callers of this deployment (they all originate from this server's
-    single IP/token). A fixed key_func makes the bucket global per route rather
-    than per-caller, so the combined outbound rate every visitor generates
-    together is capped, protecting the shared upstream quota.
-    """
 
     return _translate_rate_limit_error(
         RateLimiter(

@@ -37,7 +37,6 @@ CPF = "10000000000"
 
 @pytest_asyncio.fixture
 async def portal_transparencia_http_client() -> AsyncGenerator[AsyncClient, None]:
-    """An HTTP client whose transport serves a valid "/pf" payload."""
 
     def handler(request: Request) -> Response:  # noqa: ARG001
         return Response(200, json=_PF_RESPONSE_DATA)

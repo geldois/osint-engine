@@ -1,14 +1,3 @@
-"""Isolation primitives for maximum-integrity gate runs (ADR 0025, Option 2).
-
-The staged snapshot is the exact tree ``git write-tree`` produces, extracted
-into a throwaway directory and synced into its own ``.venv`` so the editable
-install points at the *snapshot* source — import-linter, basedpyright and
-pytest see precisely what would be committed, never the working tree. The real
-repository, its untracked files, and its staged index are never modified: the
-snapshot is read out of the object database, and verify-history replays commits
-in a detached worktree. Both are disposable and cleaned up unconditionally.
-"""
-
 from __future__ import annotations
 
 import io
@@ -36,7 +25,6 @@ def git_output(*args: str) -> str:
 
 
 def sync(workdir: Path) -> None:
-    """Build ``workdir/.venv`` from its own pyproject/lock, editable on its src."""
     subprocess.run(
         ["uv", "sync", "--quiet"],
         cwd=workdir,
@@ -46,7 +34,6 @@ def sync(workdir: Path) -> None:
 
 @contextmanager
 def materialized_snapshot() -> Generator[Path]:
-    """Extract the staged index into a disposable directory (no sync yet)."""
     tree = git_output("write-tree")
     archive = subprocess.run(
         ["git", "archive", "--format=tar", tree],
@@ -65,7 +52,6 @@ def materialized_snapshot() -> Generator[Path]:
 
 @contextmanager
 def detached_worktree(commit: str) -> Generator[Path]:
-    """Add a detached worktree at ``commit``; remove it unconditionally."""
     tmp = Path(tempfile.mkdtemp(prefix="oe-history-"))
     worktree = tmp / "tree"
     subprocess.run(

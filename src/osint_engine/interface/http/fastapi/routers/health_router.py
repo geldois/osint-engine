@@ -16,11 +16,6 @@ def build_health_router(*, container: Container) -> APIRouter:
     router = APIRouter(prefix="/health", tags=["health"])
 
     async def liveness() -> dict[str, str]:
-        """
-        Liveness: the process is up and serving. Deliberately touches no
-        dependency, so it stays green while a downstream (Postgres) is down —
-        that distinction is what /health/ready reports.
-        """
 
         return {"status": "ok"}
 

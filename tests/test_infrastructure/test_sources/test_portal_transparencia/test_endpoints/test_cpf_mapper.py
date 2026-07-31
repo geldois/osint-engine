@@ -11,8 +11,6 @@ from osint_engine.infrastructure.sources.portal_transparencia.endpoints.cpf_mapp
 if TYPE_CHECKING:
     from tests.test_infrastructure.test_sources.conftest import MakePayload
 
-# TEST DOUBLES
-
 
 _PF_DATA: dict[str, object] = {
     "cpf": "128.734.***-**",
@@ -21,9 +19,6 @@ _PF_DATA: dict[str, object] = {
     "sancionadoCNEP": False,
     "servidor": True,
 }
-
-
-# TESTS
 
 
 class TestMapPerson:
@@ -59,9 +54,6 @@ class TestMapGraph:
     def test_ignores_the_categorical_flag_fields(
         self, make_payload: MakePayload
     ) -> None:
-        # The real API's boolean flags (sancionadoCEIS, servidor, ...) are
-        # not read by the mapper — this asserts the extra fields don't break
-        # it, since Payload.require only inspects the keys it's told to.
         graph = map_graph(
             payload=make_payload(source="portal_transparencia", data=_PF_DATA)
         )

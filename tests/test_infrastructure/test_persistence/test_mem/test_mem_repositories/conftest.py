@@ -27,11 +27,6 @@ type MakeMemGraphRepository = Callable[..., MemGraphRepository]
 
 @pytest.fixture
 def make_mem_node_repository(policies: Policies) -> MakeMemNodeRepository:
-    """
-    *,
-    mem_storage: MemStorage,
-    policies: Policies | None = None
-    """
 
     def mem_node_repository(
         *, mem_storage: MemStorage, policies_override: Policies | None = None
@@ -49,11 +44,6 @@ def make_mem_node_repository(policies: Policies) -> MakeMemNodeRepository:
 
 @pytest.fixture
 def make_mem_edge_repository(policies: Policies) -> MakeMemEdgeRepository:
-    """
-    *,
-    mem_storage: MemStorage,
-    policies: Policies | None = None
-    """
 
     def mem_edge_repository(
         *, mem_storage: MemStorage, policies_override: Policies | None = None
@@ -71,11 +61,6 @@ def make_mem_edge_repository(policies: Policies) -> MakeMemEdgeRepository:
 
 @pytest.fixture
 def make_mem_graph_repository(policies: Policies) -> MakeMemGraphRepository:
-    """
-    *,
-    mem_storage: MemStorage,
-    policies: Policies | None = None
-    """
 
     def mem_graph_repository(
         *, mem_storage: MemStorage, policies_override: Policies | None = None

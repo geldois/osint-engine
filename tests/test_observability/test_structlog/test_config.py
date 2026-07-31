@@ -37,9 +37,6 @@ def log_capture() -> LogCapture:
     return capture
 
 
-# TESTS
-
-
 class TestConfigureLoggingRendererSelection:
     def test_debug_mode_uses_console_renderer(self) -> None:
         configure_logging(debug=True)

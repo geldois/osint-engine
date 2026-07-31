@@ -43,7 +43,6 @@ def _map_address(*, payload: Payload) -> Address | None:
 
     return Address(
         cep=cep,
-        # BrasilAPI's OpenAPI schema marks `municipio` `nullable: true`.
         city=payload.optional(key="municipio", expected_type=str),
         complement=payload.require(key="complemento", expected_type=str),
         neighborhood=payload.require(key="bairro", expected_type=str),
@@ -90,10 +89,6 @@ def _map_company(*, payload: Payload) -> Company:
         registration_status=payload.require(
             key="descricao_situacao_cadastral", expected_type=str
         ),
-        # BrasilAPI's OpenAPI schema declares this field non-nullable, but
-        # production traffic has returned `null` for it (legacy Receita
-        # Federal records with no recorded status date), and the endpoint
-        # is an unvalidated passthrough proxy — so the doc is wrong here.
         registration_status_date=payload.optional(
             key="data_situacao_cadastral", expected_type=str
         ),

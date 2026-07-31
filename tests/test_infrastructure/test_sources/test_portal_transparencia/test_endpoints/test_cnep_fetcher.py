@@ -18,8 +18,6 @@ if TYPE_CHECKING:
         MakePortalTransparenciaCNEPFetcher,
     )
 
-# TEST DOUBLES
-
 
 _CNEP_RECORD_DATA = {
     "dataFimSancao": "2026-01-01",
@@ -39,9 +37,6 @@ _CNEP_RECORD_DATA = {
 }
 
 _CNEP_RESPONSE_DATA = [_CNEP_RECORD_DATA]
-
-
-# TESTS
 
 
 class TestPortalTransparenciaCNEPFetcherOnHTTPStatusError:

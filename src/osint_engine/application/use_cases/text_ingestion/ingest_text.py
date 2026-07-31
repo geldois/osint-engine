@@ -78,11 +78,6 @@ def _build_address_stub(*, field_values: dict[str, str]) -> Address:
     )
 
 
-# Every node type a pattern set may target must be registered here AND in
-# `_MENTION_EDGE_BUILDERS` — `FieldPattern` itself accepts any `Node`
-# subtype (it only checks regex-group/id_fields parity), so this pair of
-# registries is what actually bounds which node types text ingestion can
-# resolve into a stub and a mention edge.
 _STUB_BUILDERS: dict[type[Node[UUID]], Callable[..., Node[UUID]]] = {
     Address: _build_address_stub,
     Company: _build_company_stub,
@@ -131,13 +126,6 @@ def _build_mention_edge(
 
 
 async def _resolve_node(*, uow: UoW, match: ExtractedMatch) -> Node[UUID]:
-    """
-    Look up only — never persists. The returned node is added to the
-    ingestion's Graph either way; `IngestText.execute`'s single
-    `uow.graphs.merge` call is what actually persists it (cascading to
-    `uow.nodes`/`uow.edges` for whatever wasn't already known), so this
-    never double-writes an entity that also gets cascaded moments later.
-    """
 
     field_values = dict(match.field_values)
     stub = _build_stub(node_type=match.node_type, field_values=field_values)

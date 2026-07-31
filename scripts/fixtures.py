@@ -1,12 +1,3 @@
-"""
-Refreshes API response fixtures used by infrastructure tests.
-
-Run with: uv run python -m scripts fixtures refresh
-
-Portal da Transparência's endpoints require PORTAL_TRANSPARENCIA_API_KEY set in
-the environment — request a key at https://api.portaldatransparencia.gov.br/.
-"""
-
 from __future__ import annotations
 
 import json
@@ -52,19 +43,10 @@ class _BrasilAPI:
 class _PortalTransparencia:
     API_NAME: str = "portal_transparencia"
     BASE_URL: URL = URL("https://api.portaldatransparencia.gov.br/api-de-dados/")
-    # The real API only returns a single object (matching map_graph's
-    # contract) from the by-id endpoint (GET .../cnep/{id}); the collection
-    # endpoint (GET .../cnep?codigoSancionado=...) returns an array instead.
-    # These ids must belong to a record that still exists — swap them if the
-    # source record is ever delisted.
     CASES: dict[str, list[tuple[str, str]]] = {
         "cnep/": [(f"{API_NAME}_cnep.json", "359510")],
         "ceis/": [(f"{API_NAME}_ceis.json", "314300")],
     }
-    # "/pf" is deliberately excluded from this refresh script: unlike CNPJ
-    # (a business registration number) a CPF identifies an individual, and
-    # this script's cases are meant to be shareable/re-runnable without
-    # pinning a real person's document number in source control.
 
     @staticmethod
     def headers() -> dict[str, str]:

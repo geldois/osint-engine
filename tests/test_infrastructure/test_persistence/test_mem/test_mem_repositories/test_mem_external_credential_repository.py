@@ -11,17 +11,11 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_external_crede
     MemExternalCredentialRepository,
 )
 
-# TEST DOUBLES
-
-
 _CREDENTIAL = ExternalCredential(
     api_key="secret-key",
     provider=Provider.PORTAL_TRANSPARENCIA,
     username="analyst",
 )
-
-
-# TESTS
 
 
 class TestMemExternalCredentialRepositoryFind:

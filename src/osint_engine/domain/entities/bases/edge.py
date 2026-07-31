@@ -29,10 +29,6 @@ class Edge(
         namespace: EntityNAMESPACE,
         **kwargs: object,
     ) -> None:
-        """
-        source_id and target_id are always included in identity calculation,
-        regardless of id_fields.
-        """
 
         if id_fields is not None:
             cls.id_fields |= id_fields

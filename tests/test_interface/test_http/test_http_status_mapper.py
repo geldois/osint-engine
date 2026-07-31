@@ -38,8 +38,6 @@ from osint_engine.interface.errors.sanitization_error import InvalidCNPJError
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
 from osint_engine.interface.http.mappers.http_status_mapper import map_status_from_error
 
-# TEST DOUBLES
-
 
 class _ConcreteTokenError(TokenError, error_code="TEST_TOKEN_ERROR"):
     @override
@@ -69,9 +67,6 @@ class _ConcreteUoWError(UoWError, error_code="TEST_UOW_ERROR"):
     @override
     def _build_message(self) -> str:
         return "uow error"
-
-
-# TESTS
 
 
 class TestStatusMapping:

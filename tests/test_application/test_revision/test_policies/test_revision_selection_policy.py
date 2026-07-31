@@ -19,9 +19,6 @@ _LATE = datetime(2026, 6, 1, tzinfo=UTC)
 _LATER = datetime(2026, 9, 1, tzinfo=UTC)
 
 
-# TESTS
-
-
 class TestSelectionByFetchedAt:
     def test_highest_fetched_at_wins(
         self,

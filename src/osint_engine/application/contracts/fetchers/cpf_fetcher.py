@@ -10,10 +10,6 @@ if TYPE_CHECKING:
 
 
 class CPFFetcher(ABC):
-    """Assumes the source treats an unknown CPF as a fetch failure (e.g. 404),
-    not a 200 with an empty/absent body — unlike CEISFetcher/CNEPFetcher,
-    which return `EntityRevision | None` for exactly that empty-result case."""
-
     @abstractmethod
     async def fetch(
         self, *, cpf: str, credential: ExternalCredential

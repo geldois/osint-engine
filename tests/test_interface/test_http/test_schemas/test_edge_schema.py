@@ -38,9 +38,6 @@ def _concrete_edge_schemas() -> list[type[EdgeSchema[Edge[UUID, UUID, UUID]]]]:
     return result
 
 
-# TEST DOUBLES
-
-
 class ValidFakeEdgeSchema(EdgeSchema[FakeEdge]):
     type: Literal["fake_edge"] = "fake_edge"
 
@@ -48,9 +45,6 @@ class ValidFakeEdgeSchema(EdgeSchema[FakeEdge]):
     @override
     def domain(cls) -> type[FakeEdge]:
         return FakeEdge
-
-
-# TESTS
 
 
 class TestEdgeSchemaContractEnforcement:

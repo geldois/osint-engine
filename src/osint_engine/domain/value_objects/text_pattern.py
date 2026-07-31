@@ -17,12 +17,6 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, kw_only=True)
 class FieldPattern:
-    """
-    `regex`'s named groups must exactly match `node_type.id_fields` — the
-    mapping from a text pattern to which entity field it fills is always
-    explicit, never auto-discovered.
-    """
-
     node_type: type[Node[UUID]]
     regex: re.Pattern[str]
     checksum_validators: Mapping[str, Callable[[str], bool]] = field(

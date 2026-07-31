@@ -5,14 +5,9 @@ import pytest
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
 
-# TEST DOUBLES
-
 
 def _make_person(*, cpf: str, name: str = "TARCIANA PAULA GOMES MEDEIROS") -> Person:
     return Person(age_range="Entre 41 a 50 anos", birthdate=None, cpf=cpf, name=name)
-
-
-# TESTS
 
 
 class TestPersonIdentityNormalization:

@@ -63,7 +63,6 @@ class TestPgExternalCredentialRepository:
         )
         row_count = cast(
             "int",
-            # asyncpg ships no py.typed marker; its API is unknown to the type checker.
             await postgres_pool.fetchval(  # pyright: ignore[reportUnknownMemberType]
                 """
                 SELECT count(*)

@@ -4,8 +4,6 @@ from decimal import Decimal
 
 from osint_engine.domain.entities.nodes.company import Company
 
-# TEST DOUBLES
-
 
 def _make_company(*, cnpj: str, trade_name: str = "DIRECAO GERAL") -> Company:
     return Company(
@@ -21,9 +19,6 @@ def _make_company(*, cnpj: str, trade_name: str = "DIRECAO GERAL") -> Company:
         size_category="DEMAIS",
         trade_name=trade_name,
     )
-
-
-# TESTS
 
 
 class TestCompanyIdentityNormalization:

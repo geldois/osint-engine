@@ -1,7 +1,3 @@
-# Translates an exception into an HTTP status by reading its semantic
-# ``ErrorCategory`` (a domain concept) rather than matching concrete error
-# types. This keeps the dependency rule intact: the interface classifies errors
-# from every layer without importing any outer layer's error classes.
 from osint_engine.domain.errors.error_category import ErrorCategory
 
 _CATEGORY_STATUS: dict[ErrorCategory, int] = {

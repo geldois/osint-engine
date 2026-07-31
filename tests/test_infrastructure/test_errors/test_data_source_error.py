@@ -4,8 +4,6 @@ from osint_engine.infrastructure.errors.data_source_error import (
     UnexpectedFieldFormatError,
 )
 
-# TESTS
-
 
 class TestUnexpectedFieldFormatError:
     def test_stores_all_reported_fields(self) -> None:

@@ -9,13 +9,8 @@ if TYPE_CHECKING:
 
     from osint_engine.config.settings import Settings
 
-# TESTS
-
 
 class TestFastAPICORSConfiguration:
-    """CORS preflight behavior wired in build_fastapi_app: allow_origins comes
-    from settings, credentials/methods/headers are permissive by design."""
-
     @pytest.mark.asyncio
     async def test_preflight_reflects_configured_origin(
         self, fastapi_app_client: AsyncClient, settings: Settings
@@ -96,8 +91,6 @@ class TestFastAPICORSConfiguration:
     async def test_actual_response_exposes_retry_after_header(
         self, fastapi_app_client: AsyncClient, settings: Settings
     ) -> None:
-        """Retry-After must be exposed, otherwise browser JS can't read it to
-        build a rate-limit countdown — a bare CORS default hides it."""
 
         response = await fastapi_app_client.post(
             "/auth/token",

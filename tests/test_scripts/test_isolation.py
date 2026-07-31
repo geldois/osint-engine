@@ -18,7 +18,6 @@ def test_snapshot_reflects_the_staged_index_not_the_working_tree(
 ) -> None:
     (git_repo / "a.txt").write_text("staged\n", encoding="utf-8")
     _git("add", "a.txt", cwd=git_repo)
-    # Diverge the working tree *after* staging: the snapshot must ignore this.
     (git_repo / "a.txt").write_text("working\n", encoding="utf-8")
 
     with materialized_snapshot() as snapshot:
@@ -48,7 +47,6 @@ def test_detached_worktree_checks_out_the_commit_and_cleans_up(
         path = worktree
 
     assert not path.exists()
-    # The real repository is untouched: still on its branch, no leftover worktree.
     listed = subprocess.run(
         ["git", "worktree", "list"],
         cwd=git_repo,

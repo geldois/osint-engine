@@ -21,10 +21,6 @@ class RevisionSelectionPolicy(Protocol):
 def select_current_by_newest_fetched[Entity_: Entity[UUID]](
     entity_revisions: Iterable[EntityRevision[Entity_]], /
 ) -> EntityRevision[Entity_]:
-    """
-    Picks the revision with the highest fetched_at; merged_at only breaks ties
-    where fetched_at is equal, favoring a merge-derived revision over a raw fetch.
-    """
 
     current = max(
         entity_revisions,

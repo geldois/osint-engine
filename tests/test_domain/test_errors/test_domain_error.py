@@ -5,8 +5,6 @@ from osint_engine.domain.errors.domain_error import (
     MissingErrorIdentityContractError,
 )
 
-# TEST DOUBLES
-
 
 class FakeDomainError(DomainError, error_code="TEST"):
     def __init__(self, **kwargs: object) -> None:
@@ -14,9 +12,6 @@ class FakeDomainError(DomainError, error_code="TEST"):
 
     def _build_message(self) -> str:
         return "test"
-
-
-# TESTS
 
 
 class TestDomainErrorSubclassContract:
@@ -45,6 +40,6 @@ class TestDomainErrorSubclassContract:
         class FakeAbstractDomainError(  # pyright: ignore[reportUnusedClass]
             DomainError, error_code=None
         ):
-            """Abstract intermediate base: no __init__/_build_message override."""
+            pass
 
         assert FakeAbstractDomainError.error_code is None

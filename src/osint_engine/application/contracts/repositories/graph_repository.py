@@ -7,10 +7,4 @@ from osint_engine.domain.entities.bases.graph import Graph
 
 
 class GraphRepository(EntityRepository[Graph]):
-    """
-    `merge`/`merge_many` must also cascade-merge every node and edge the
-    graph carries into their own `NodeRepository`/`EdgeRepository`, so they
-    stay individually addressable by id — never only reachable as part of
-    the graph's own opaque blob. Every implementation of this contract must
-    uphold this, not just the current in-memory one.
-    """
+    pass

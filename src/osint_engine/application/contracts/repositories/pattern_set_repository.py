@@ -9,12 +9,6 @@ if TYPE_CHECKING:
 
 
 class PatternSetRepository(ABC):
-    """
-    Read-only by design: pattern sets are a seeded reference catalog for this
-    iteration, not a user-managed resource. No `save`/`delete` here — add
-    them only when a real write-path consumer exists.
-    """
-
     @abstractmethod
     async def list(self) -> tuple[TextPatternSet, ...]:
         raise NotImplementedError

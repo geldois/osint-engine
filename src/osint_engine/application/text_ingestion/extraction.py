@@ -20,13 +20,6 @@ class ExtractedMatch:
 def extract_matches(
     *, text: str, pattern_set: TextPatternSet
 ) -> frozenset[ExtractedMatch]:
-    """
-    Each pattern in the set is evaluated independently against the whole
-    text: every match found becomes an extraction, regardless of whether any
-    other pattern in the set matched anything. There is no all-or-nothing
-    requirement across the set — that is `IngestText`'s job, which raises
-    when the returned frozenset is empty.
-    """
 
     matches: set[ExtractedMatch] = set()
 

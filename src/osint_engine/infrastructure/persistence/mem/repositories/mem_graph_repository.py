@@ -92,11 +92,6 @@ class MemGraphRepository(GraphRepository):
 
         graph = merged.entity
 
-        # Cascade only entities whose content actually changed (or is brand
-        # new) — re-stamping an unchanged node/edge with this graph's own
-        # fetched_at/source would make revision_merge_policy's content_id
-        # short-circuit discard that entity's true original provenance for
-        # no reason, on every single re-fetch of an already-known subject.
         new_node_revisions: set[EntityRevision[Node[UUID]]] = set()
 
         for node in graph.nodes:

@@ -119,6 +119,4 @@ class MemUoW(UoW):
 
     @override
     async def rollback(self) -> None:
-        """
-        All operations against an isolated snapshot; rollback is implicit.
-        """
+        pass

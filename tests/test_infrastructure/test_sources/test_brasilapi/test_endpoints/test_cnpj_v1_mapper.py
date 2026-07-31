@@ -43,9 +43,6 @@ if TYPE_CHECKING:
     from tests.test_infrastructure.test_sources.conftest import MakePayload
 
 
-# TEST DOUBLES
-
-
 _COMPANY_ID = Company(
     activity_start_date="1966-08-01",
     cnpj="00000000000191",
@@ -59,9 +56,6 @@ _COMPANY_ID = Company(
     size_category="DEMAIS",
     trade_name="DIRECAO GERAL",
 ).id
-
-
-# TESTS
 
 
 class TestMapAddress:

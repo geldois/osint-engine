@@ -27,10 +27,6 @@ type MakeMemUoWFactory = Callable[..., MakeMemUoW]
 
 @pytest.fixture
 def make_mem_uow_factory(make_mem_uow: MakeMemUoW) -> MakeMemUoWFactory:
-    """
-    *,
-    mem_uow: MemUoW | None = None
-    """
 
     def mem_uow_factory(mem_uow: MemUoW | None = None) -> MakeMemUoW:
         mem_uow = mem_uow if mem_uow is not None else make_mem_uow()
@@ -44,10 +40,6 @@ def make_mem_uow_factory(make_mem_uow: MakeMemUoW) -> MakeMemUoWFactory:
 def make_fake_cnpj_fetcher(
     make_entity_revision: MakeEntityRevision, make_graph: MakeGraph
 ) -> MakeFakeCNPJFetcher:
-    """
-    *,
-    revision: EntityRevision[Graph] | None = None
-    """
 
     def fake_cnpj_fetcher(
         *, revision: EntityRevision[Graph] | None = None
@@ -65,10 +57,6 @@ def make_fake_cnpj_fetcher(
 def make_fake_cpf_fetcher(
     make_entity_revision: MakeEntityRevision, make_graph: MakeGraph
 ) -> MakeFakeCPFFetcher:
-    """
-    *,
-    revision: EntityRevision[Graph] | None = None
-    """
 
     def fake_cpf_fetcher(
         *, revision: EntityRevision[Graph] | None = None
@@ -86,10 +74,6 @@ def make_fake_cpf_fetcher(
 def make_fake_ceis_fetcher(
     make_entity_revision: MakeEntityRevision, make_graph: MakeGraph
 ) -> MakeFakeCEISFetcher:
-    """
-    *,
-    revision: EntityRevision[Graph] | None = None
-    """
 
     def fake_ceis_fetcher(
         *, revision: EntityRevision[Graph] | None = None
@@ -107,10 +91,6 @@ def make_fake_ceis_fetcher(
 def make_fake_cnep_fetcher(
     make_entity_revision: MakeEntityRevision, make_graph: MakeGraph
 ) -> MakeFakeCNEPFetcher:
-    """
-    *,
-    revision: EntityRevision[Graph] | None = None
-    """
 
     def fake_cnep_fetcher(
         *, revision: EntityRevision[Graph] | None = None

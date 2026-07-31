@@ -85,10 +85,6 @@ class TestExtractMatchesDeterministicIdentifiers:
         assert match.matched_field == "cep,number"
 
     def test_one_matching_pattern_is_enough_even_if_others_find_nothing(self) -> None:
-        """
-        Extraction is never all-or-nothing across the pattern set: each
-        pattern is evaluated independently.
-        """
 
         matches = extract_matches(
             text=f"CPF: {_VALID_CPF}",

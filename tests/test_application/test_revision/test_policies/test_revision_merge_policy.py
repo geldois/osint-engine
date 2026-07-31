@@ -24,9 +24,6 @@ _EARLY = datetime(2026, 1, 1, tzinfo=UTC)
 _LATE = datetime(2026, 6, 1, tzinfo=UTC)
 
 
-# TESTS
-
-
 class TestMergeIdentityGuard:
     def test_rejects_revisions_of_distinct_entities(
         self,

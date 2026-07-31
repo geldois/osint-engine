@@ -25,10 +25,6 @@ if TYPE_CHECKING:
 class PortalTransparenciaCPFFetcher(
     PortalTransparenciaFetcher, CPFFetcher, url_suffix="pf"
 ):
-    # No trailing slash, unlike "cnep/"/"ceis/": this endpoint is always
-    # query-param based (never joined with a further path segment), and the
-    # real API 403s on a trailing slash before "?" — see cnep_fetcher.py's
-    # `.removesuffix("/")` workaround for that same failure mode.
     @override
     def __init__(self, *, http_client: AsyncClient) -> None:
         super().__init__(http_client=http_client)

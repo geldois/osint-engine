@@ -47,8 +47,6 @@ async def postgres_pool(postgres_url: str) -> AsyncIterator[asyncpg.Pool]:
             / "000001_create_external_credentials.up.sql"
         )
 
-        # Applying the checked-in SQL directly avoids requiring the Go binary on
-        # developer and CI hosts while still exercising the production migration.
         await pool.execute(  # pyright: ignore[reportUnknownMemberType]
             migration_path.read_text(encoding="utf-8")
         )

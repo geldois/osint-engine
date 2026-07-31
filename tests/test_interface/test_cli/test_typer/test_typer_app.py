@@ -12,11 +12,6 @@ def cli_runner() -> CliRunner:
 
 
 class TestCLIWiring:
-    """
-    typer_app.py only wires commands onto typer_app; per-command behavior is
-    covered in test_commands/.
-    """
-
     def test_serve_command_is_registered(self, cli_runner: CliRunner) -> None:
         result = cli_runner.invoke(typer_app.typer_app, ["serve", "--help"])
 

@@ -39,8 +39,6 @@ from osint_engine.interface.http.errors.schema_error import (
     UnmappedTypeSchemaError,
 )
 
-# SCHEMAS
-
 
 class EdgeSchema[EdgeType_co: Edge[UUID, UUID, UUID]](ABC, BaseModel):
     id: UUID
@@ -215,9 +213,6 @@ class PersonResideAtSchema(EdgeSchema[PersonResideAt]):
         return PersonResideAt
 
 
-# UNION
-
-
 EdgeSchemaUnion = (
     AddressMentionedInTextSchema
     | CompanyHasCnaeSchema
@@ -237,9 +232,6 @@ EdgeSchemaUnion = (
 )
 
 EdgeUnion = Annotated[EdgeSchemaUnion, Field(discriminator="type")]
-
-
-# REGISTRIES
 
 
 class EdgeSchemaRegistry:

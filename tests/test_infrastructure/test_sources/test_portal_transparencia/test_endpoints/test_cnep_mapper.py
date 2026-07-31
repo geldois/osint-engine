@@ -29,8 +29,6 @@ if TYPE_CHECKING:
     from osint_engine.infrastructure.sources.payload import Payload
     from tests.test_infrastructure.test_sources.conftest import MakePayload
 
-# TEST DOUBLES
-
 
 _SANCTION_DATA: dict[str, object] = {
     "dataFimSancao": "2026-01-01",
@@ -58,9 +56,6 @@ _PERSON_SANCIONADO_DATA: dict[str, object] = {
 
 def _cnep_payload_data(*, pessoa: dict[str, object]) -> dict[str, object]:
     return {**_SANCTION_DATA, "pessoa": pessoa}
-
-
-# TESTS
 
 
 class TestParseFineAmount:
@@ -193,8 +188,6 @@ class TestMapGraphDiscriminator:
     def test_builds_a_person_stub_when_cnpj_is_an_empty_string(
         self, make_payload: MakePayload
     ) -> None:
-        # The real API reports "cnpjFormatado" as "" (not null/absent) for a
-        # person sancionado.
         pessoa = {**_PERSON_SANCIONADO_DATA, "cnpjFormatado": ""}
 
         graph = map_graph(

@@ -40,8 +40,6 @@ class PortalTransparenciaCNEPFetcher(
             headers = self._build_headers(credential=credential)
 
             if cnep_id is None:
-                # The real API filters by CPF/CNPJ via query params on the
-                # collection endpoint and 403s on a trailing slash before "?".
                 url = URL(str(self._BASE_URL).removesuffix("/"))
                 params = {"codigoSancionado": cpf_or_cnpj, "pagina": "1"}
             else:

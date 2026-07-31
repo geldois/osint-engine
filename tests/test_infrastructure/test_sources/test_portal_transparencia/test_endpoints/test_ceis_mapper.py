@@ -146,8 +146,6 @@ class TestMapGraphDiscriminator:
     def test_builds_a_person_stub_when_cnpj_is_an_empty_string(
         self, make_payload: MakePayload
     ) -> None:
-        # The real API reports "cnpjFormatado" as "" (not null/absent) for a
-        # person sancionado.
         pessoa = {**_PERSON_SANCIONADO_DATA, "cnpjFormatado": ""}
 
         graph = map_graph(

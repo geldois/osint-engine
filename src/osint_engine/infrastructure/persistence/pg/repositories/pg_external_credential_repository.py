@@ -46,8 +46,6 @@ class _ExternalCredentialQueries(Protocol):
 
 _QUERIES_PATH = Path(__file__).parent.parent / "queries" / "external_credentials.sql"
 
-# aiosql builds this object's attributes dynamically from the .sql file, so its
-# return type is inherently unknown to the type checker.
 _queries = cast(
     "_ExternalCredentialQueries",
     aiosql.from_path(  # pyright: ignore[reportUnknownMemberType]

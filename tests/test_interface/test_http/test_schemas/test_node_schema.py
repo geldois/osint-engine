@@ -38,9 +38,6 @@ def _concrete_node_schemas() -> list[type[NodeSchema[Node[UUID]]]]:
     return result
 
 
-# TEST DOUBLES
-
-
 class ValidFakeNodeSchema(NodeSchema[FakeNode]):
     type: Literal["fake_node"] = "fake_node"
 
@@ -48,9 +45,6 @@ class ValidFakeNodeSchema(NodeSchema[FakeNode]):
     @override
     def domain(cls) -> type[FakeNode]:
         return FakeNode
-
-
-# TESTS
 
 
 class TestNodeSchemaContractEnforcement:

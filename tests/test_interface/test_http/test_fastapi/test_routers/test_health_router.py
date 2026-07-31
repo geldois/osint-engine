@@ -14,16 +14,10 @@ if TYPE_CHECKING:
 
 
 class _UnavailablePgPool:
-    """A pool whose every query raises, standing in for an unreachable Postgres
-    so the readiness probe's failure path can be exercised."""
-
     async def execute(self, query: str, *args: object) -> str:  # noqa: ARG002
         message = "connection refused"
 
         raise OSError(message)
-
-
-# TESTS
 
 
 class TestLiveness:

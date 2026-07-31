@@ -14,8 +14,6 @@ from osint_engine.infrastructure.sources.payload import (
     _runtime_type,  # pyright: ignore[reportPrivateUsage]
 )
 
-# TESTS
-
 
 class TestRuntimeType:
     def test_returns_origin_for_generic_container_types(self) -> None:
@@ -34,10 +32,6 @@ class TestRuntimeType:
         assert not isinstance("3", union_type)
 
     def test_returns_typing_union_unchanged_so_isinstance_still_works(self) -> None:
-        # typing.Union's get_origin() is `typing.Union` itself, distinct from
-        # types.UnionType (which is what `int | float` produces) — both
-        # branches of the `origin is Union or origin is UnionType` check
-        # must independently short-circuit to true.
         typing_union = Union[int, str]  # noqa: UP007
 
         runtime_type = _runtime_type(typing_union)

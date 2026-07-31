@@ -33,8 +33,6 @@ if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.node import Node
     from tests.conftest import MakeFakeNode
 
-# TEST DOUBLES
-
 
 _ADDRESS = Address(
     cep="01310-100",
@@ -87,9 +85,6 @@ _SANCTION = Sanction(
 )
 
 _TEXT_SOURCE = TextSource(text="CPF 123.456.789-09 mencionado no documento.")
-
-
-# TESTS
 
 
 class TestNodePresenterDispatch:

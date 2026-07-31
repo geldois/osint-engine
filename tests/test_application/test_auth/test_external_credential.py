@@ -7,8 +7,6 @@ from osint_engine.application.auth.external_credential import (
     Provider,
 )
 
-# TESTS
-
 
 class TestExternalCredentialEquality:
     def test_credentials_with_the_same_fields_are_equal(self) -> None:

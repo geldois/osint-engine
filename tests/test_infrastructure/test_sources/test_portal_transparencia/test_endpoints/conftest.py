@@ -41,10 +41,6 @@ def portal_transparencia_credential() -> ExternalCredential:
 
 @pytest.fixture
 def make_portal_transparencia_ceis_fetcher() -> MakePortalTransparenciaCEISFetcher:
-    """
-    *,
-    handler: Callable[[Request], Response]
-    """
 
     def ceis_fetcher(
         *, handler: Callable[[Request], Response]
@@ -58,10 +54,6 @@ def make_portal_transparencia_ceis_fetcher() -> MakePortalTransparenciaCEISFetch
 
 @pytest.fixture
 def make_portal_transparencia_cnep_fetcher() -> MakePortalTransparenciaCNEPFetcher:
-    """
-    *,
-    handler: Callable[[Request], Response]
-    """
 
     def cnep_fetcher(
         *, handler: Callable[[Request], Response]
@@ -75,10 +67,6 @@ def make_portal_transparencia_cnep_fetcher() -> MakePortalTransparenciaCNEPFetch
 
 @pytest.fixture
 def make_portal_transparencia_cpf_fetcher() -> MakePortalTransparenciaCPFFetcher:
-    """
-    *,
-    handler: Callable[[Request], Response]
-    """
 
     def cpf_fetcher(
         *, handler: Callable[[Request], Response]
@@ -92,7 +80,6 @@ def make_portal_transparencia_cpf_fetcher() -> MakePortalTransparenciaCPFFetcher
 
 @pytest.fixture
 def portal_transparencia_cnep_valid_path() -> Path:
-    """The path to the canonical valid Portal da Transparência CNEP response file."""
 
     return Path(__file__).parent / "responses" / "portal_transparencia_cnep.json"
 
@@ -101,7 +88,6 @@ def portal_transparencia_cnep_valid_path() -> Path:
 def portal_transparencia_cnep_valid_payload(
     make_payload: MakePayload, portal_transparencia_cnep_valid_path: Path
 ) -> Payload:
-    """The canonical valid Portal da Transparência CNEP payload."""
 
     return make_payload(
         source="portal_transparencia", data=portal_transparencia_cnep_valid_path
@@ -110,7 +96,6 @@ def portal_transparencia_cnep_valid_payload(
 
 @pytest.fixture
 def portal_transparencia_ceis_valid_path() -> Path:
-    """The path to the canonical valid Portal da Transparência CEIS response file."""
 
     return Path(__file__).parent / "responses" / "portal_transparencia_ceis.json"
 
@@ -119,7 +104,6 @@ def portal_transparencia_ceis_valid_path() -> Path:
 def portal_transparencia_ceis_valid_payload(
     make_payload: MakePayload, portal_transparencia_ceis_valid_path: Path
 ) -> Payload:
-    """The canonical valid Portal da Transparência CEIS payload."""
 
     return make_payload(
         source="portal_transparencia", data=portal_transparencia_ceis_valid_path

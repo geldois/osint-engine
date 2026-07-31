@@ -31,13 +31,9 @@ _NOOP_MERGE_POLICY_CALLED_MESSAGE = "_noop_merge_policy should not be called"
 _NOOP_SELECTION_POLICY_CALLED_MESSAGE = "_noop_selection_policy should not be called"
 
 
-# TEST DOUBLES
-
-
 def _noop_merge_policy[Entity_: Entity[UUID]](
     _left: EntityRevision[Entity_], _right: EntityRevision[Entity_], /
 ) -> EntityRevision[Entity_]:
-    """A distinct merge-policy identity marker; never invoked by these tests."""
 
     raise AssertionError(_NOOP_MERGE_POLICY_CALLED_MESSAGE)
 
@@ -45,19 +41,14 @@ def _noop_merge_policy[Entity_: Entity[UUID]](
 def _noop_selection_policy[Entity_: Entity[UUID]](
     _entity_revisions: Iterable[EntityRevision[Entity_]], /
 ) -> EntityRevision[Entity_]:
-    """A distinct selection-policy identity marker; never invoked by these tests."""
 
     raise AssertionError(_NOOP_SELECTION_POLICY_CALLED_MESSAGE)
 
 
 @pytest_asyncio.fixture
 async def http_client() -> AsyncClient:
-    """A bare HTTP client; build_container never issues requests through it."""
 
     return AsyncClient()
-
-
-# TESTS
 
 
 class TestBuildContainerMemStorage:

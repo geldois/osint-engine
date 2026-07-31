@@ -18,11 +18,6 @@ class RevisionMergePolicy(Protocol):
 def merge_by_filled_fields_policy[Entity_: Entity[UUID]](
     left: EntityRevision[Entity_], right: EntityRevision[Entity_], /
 ) -> EntityRevision[Entity_]:
-    """
-    Reconciles two revisions of the same entity: the most recent (by fetched_at)
-    wins on every non-null field; the older revision only fills fields left null
-    by the newer one. Identical content_id short-circuits to the newer revision.
-    """
 
     if left.entity.id != right.entity.id:
         raise EntityIDMismatchError(left_id=left.entity.id, right_id=right.entity.id)
@@ -40,12 +35,6 @@ def merge_by_filled_fields_policy[Entity_: Entity[UUID]](
         if value is None
     }
 
-    # `newest` contributed nothing of its own (every non-identity field it
-    # carries was null and got backfilled from `oldest`) — attribute the
-    # merged result to where its actual content came from, not to whichever
-    # side merely happened to be fetched more recently. Identity fields are
-    # excluded since they're never null and would otherwise always block
-    # this from ever being true.
     non_identity_fields = newest_kwargs.keys() - newest.entity.id_fields
     newest_contributed_nothing = bool(non_identity_fields) and non_identity_fields <= (
         fills.keys()
