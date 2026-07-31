@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
+from osint_engine.domain.errors.error_category import ErrorCategory
 from osint_engine.infrastructure.errors.infrastructure_error import InfrastructureError
 
 if TYPE_CHECKING:
@@ -9,7 +10,9 @@ if TYPE_CHECKING:
 
 
 class ExternalCredentialRejectedError(
-    InfrastructureError, error_code="EXTERNAL_CREDENTIAL_REJECTED"
+    InfrastructureError,
+    error_code="EXTERNAL_CREDENTIAL_REJECTED",
+    category=ErrorCategory.UNAUTHORIZED,
 ):
     username: str
     provider: Provider

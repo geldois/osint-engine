@@ -112,9 +112,7 @@ class TestMemExternalCredentialRepositoryListConfiguredProviders:
         )
         repo = MemExternalCredentialRepository(mem_storage=mem_storage)
 
-        providers = await repo.list_configured_providers(
-            username=_CREDENTIAL.username
-        )
+        providers = await repo.list_configured_providers(username=_CREDENTIAL.username)
 
         assert providers == frozenset({Provider.PORTAL_TRANSPARENCIA})
 
@@ -125,9 +123,7 @@ class TestMemExternalCredentialRepositoryListConfiguredProviders:
         mem_storage = MemStorage()
         repo = MemExternalCredentialRepository(mem_storage=mem_storage)
 
-        providers = await repo.list_configured_providers(
-            username=_CREDENTIAL.username
-        )
+        providers = await repo.list_configured_providers(username=_CREDENTIAL.username)
 
         assert providers == frozenset()
 
@@ -148,8 +144,6 @@ class TestMemExternalCredentialRepositoryListConfiguredProviders:
         )
         repo = MemExternalCredentialRepository(mem_storage=mem_storage)
 
-        providers = await repo.list_configured_providers(
-            username=_CREDENTIAL.username
-        )
+        providers = await repo.list_configured_providers(username=_CREDENTIAL.username)
 
         assert providers == frozenset({Provider.PORTAL_TRANSPARENCIA})

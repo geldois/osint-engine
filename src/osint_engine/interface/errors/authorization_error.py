@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from typing import override
 
+from osint_engine.domain.errors.error_category import ErrorCategory
 from osint_engine.interface.errors.interface_error import InterfaceError
 
 
-class AuthorizationError(InterfaceError, error_code=None): ...
+class AuthorizationError(
+    InterfaceError, error_code=None, category=ErrorCategory.FORBIDDEN
+): ...
 
 
 class InsufficientRoleError(

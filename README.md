@@ -135,8 +135,8 @@ flowchart LR
 
 ## API
 
-Every endpoint except `/auth/token` and `/auth/viewer-token` requires a Bearer token. Obtain one first, then use it
-on every subsequent request.
+Every endpoint except `/auth/token` and `/auth/viewer-token` requires a Bearer token. Obtain one first, then use it on
+every subsequent request.
 
 ### Authentication
 
@@ -168,8 +168,8 @@ GET /cnpj/{cnpj}
 Authorization: Bearer <token>
 ```
 
-Returns a `GraphSchema` containing the root company, all connected entities, and all typed relationships. Available
-to both `ADMIN` and `VIEWER` tokens. The current data source is [BrasilAPI](https://brasilapi.com.br) (see
+Returns a `GraphSchema` containing the root company, all connected entities, and all typed relationships. Available to
+both `ADMIN` and `VIEWER` tokens. The current data source is [BrasilAPI](https://brasilapi.com.br) (see
 [ADR-0005](docs/adr/0005-brasilapi-as-mvp-cnpj-data-source.md)).
 
 ### Health
@@ -189,14 +189,14 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 
 ### Rate limiting
 
-| Endpoint | Limit | Keyed by |
-| --- | --- | --- |
-| `POST /auth/token` | 5 / 15 min | Client IP |
-| `POST /auth/viewer-token` | 20 / min | Client IP |
-| `GET /cnpj/{cnpj}` | 100 / min | Shared per-route bucket |
-| `GET /cpf/{cpf}` | 100 / min | Shared per-route bucket |
-| `GET /cnep/{cpf_or_cnpj}` | 100 / min | Shared per-route bucket |
-| `GET /ceis/{cpf_or_cnpj}` | 100 / min | Shared per-route bucket |
+| Endpoint                  | Limit      | Keyed by                |
+| ------------------------- | ---------- | ----------------------- |
+| `POST /auth/token`        | 5 / 15 min | Client IP               |
+| `POST /auth/viewer-token` | 20 / min   | Client IP               |
+| `GET /cnpj/{cnpj}`        | 100 / min  | Shared per-route bucket |
+| `GET /cpf/{cpf}`          | 100 / min  | Shared per-route bucket |
+| `GET /cnep/{cpf_or_cnpj}` | 100 / min  | Shared per-route bucket |
+| `GET /ceis/{cpf_or_cnpj}` | 100 / min  | Shared per-route bucket |
 
 A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
 `Access-Control-Expose-Headers`. See [ADR-0021](docs/adr/0021-fastapi-throttle-over-slowapi-for-rate-limiting.md). Each
@@ -208,22 +208,22 @@ request proxies through this deployment's own IP/token. The health endpoints are
 
 Every response includes an `X-Correlation-ID` header for end-to-end request tracing. Error responses carry the same
 correlation ID in the body alongside a machine-readable `type` field derived from the domain error hierarchy. A `401`
-response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `403` means a valid token lacks the required role;
-a `429` means a rate limit was exceeded.
+response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `403` means a valid token lacks the required role; a
+`429` means a rate limit was exceeded.
 
 ## Stack
 
 - **Runtime:** Python 3.12, FastAPI, Uvicorn
 - **CLI:** Typer (`osint-engine serve` / `osint-engine migrate up|down`)
 - **Auth:** PyJWT (HS256 access tokens), argon2-cffi (Argon2id password hashing)
-- **Persistence:** PostgreSQL via asyncpg + aiosql (external credentials), golang-migrate
-  (schema migrations), in-memory snapshot store (graph/user data)
+- **Persistence:** PostgreSQL via asyncpg + aiosql (external credentials), golang-migrate (schema migrations), in-memory
+  snapshot store (graph/user data)
 - **Encryption:** cryptography (Fernet, application-layer encryption of stored API keys)
 - **Rate limiting:** fastapi-throttle (in-memory)
 - **HTTP client:** httpx2 (async)
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
-- **Tooling:** uv, Ruff, basedpyright (strict), Commitizen
+- **Tooling:** uv, Ruff, basedpyright (strict), import-linter, cosmic-ray
 - **Testing:** pytest, pytest-asyncio, testcontainers
 
 ## Design
@@ -239,12 +239,12 @@ See [ADR-0003](docs/adr/0003-uuid5-over-uuid4-for-entity-identity.md).
 
 ### Fail-fast entity contracts
 
-The entity base class uses `__init_subclass__` to validate every subclass at import time, not at instantiation.
-A concrete entity missing a namespace or declaring an incompatible ID type raises immediately when the module is
-loaded — before any test runs, before any instance is created. The domain is self-defending.
+The entity base class uses `__init_subclass__` to validate every subclass at import time, not at instantiation. A
+concrete entity missing a namespace or declaring an incompatible ID type raises immediately when the module is loaded —
+before any test runs, before any instance is created. The domain is self-defending.
 
-`__setattr__` and `__delattr__` raise `FrozenInstanceError` on every entity. Immutability is structural, not enforced
-by convention.
+`__setattr__` and `__delattr__` raise `FrozenInstanceError` on every entity. Immutability is structural, not enforced by
+convention.
 
 See [ADR-0002](docs/adr/0002-manual-entity-base-class.md).
 
@@ -264,8 +264,8 @@ An entity captures *what* something is; *when* it was observed and how repeated 
 concerns that must never leak into the content-addressable identity. Every fetched entity is wrapped in an immutable
 `EntityRevision` that stamps `fetched_at` at the I/O boundary — the fetcher owns provenance, the mapper stays a pure
 payload-to-graph function, and the `id` never absorbs a timestamp. When a re-fetch arrives for an entity already stored
-under the same `id`, a pluggable `RevisionMergePolicy` reconciles the two by filled fields — the newest observation wins,
-the older one fills nulls — and a `RevisionSelectionPolicy` chooses the current revision by newest `fetched_at`.
+under the same `id`, a pluggable `RevisionMergePolicy` reconciles the two by filled fields — the newest observation
+wins, the older one fills nulls — and a `RevisionSelectionPolicy` chooses the current revision by newest `fetched_at`.
 Repositories retain every revision keyed by `content_id`, so a leaner re-fetch can never silently overwrite a richer
 prior observation.
 
@@ -281,37 +281,45 @@ cd osint-engine
 ### Linux
 
 1. Install [Docker Engine](https://docs.docker.com/engine/install/) and start the daemon.
-2. Install [mise](https://mise.jdx.dev) and activate it in your shell (see [getting started](https://mise.jdx.dev/getting-started.html)).
+2. Install [mise](https://mise.jdx.dev) and activate it in your shell (see
+   [getting started](https://mise.jdx.dev/getting-started.html)).
 3. Install the project toolchain and git hooks:
 
 ```bash
 mise install
-uv run pre-commit install
+uv run python -m scripts hooks install
 cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
 ```
 
 ### Windows
 
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend enabled.
-2. Install [mise](https://mise.jdx.dev) via PowerShell and activate it in your shell (see [getting started](https://mise.jdx.dev/getting-started.html)).
+2. Install [mise](https://mise.jdx.dev) via PowerShell and activate it in your shell (see
+   [getting started](https://mise.jdx.dev/getting-started.html)).
 3. Install the project toolchain and git hooks:
 
 ```powershell
 mise install
-uv run pre-commit install
+uv run python -m scripts hooks install
 copy .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
 ```
 
-> `--network host` in `.actrc` is Linux-only and has no effect on Docker Desktop. Internet access works via
-Docker Desktop's default networking — the first run downloads dependencies from PyPI, subsequent runs use the uv cache.
+> The git hooks and the `uv run python -m scripts …` dev runner call `uv` directly, so `mise` must be active on the
+> `PATH` of the shell you commit from — `mise` provides the pinned `uv`, `dprint`, `shellcheck` and `shfmt`. If `uv`
+> isn't found, the hook prints how to fix it (activate mise, or `git commit --no-verify` to bypass once). No editor or
+> Claude Code is required: the quality gates run entirely from these git hooks and CI, identically for every
+> contributor, and there is no `pre-push` — pushing is never blocked.
+
+> `--network host` in `.actrc` is Linux-only and has no effect on Docker Desktop. Internet access works via Docker
+> Desktop's default networking — the first run downloads dependencies from PyPI, subsequent runs use the uv cache.
 
 ### Run
 
-`osint-engine migrate` needs the `migrate` CLI on `PATH` (installed by `mise install`, pinned to the same version
-the Dockerfile uses) and a running Postgres reachable at `DATABASE_URL` — unlike the test suite, `serve`/`migrate`
-don't spin one up for you. `docker-compose.yml` starts a persistent local Postgres matching `.env.example`'s
-credentials, and `osint-engine wait-db` blocks until it actually accepts connections (Postgres reports the
-container as "started" well before it's ready to accept connections — polling avoids a race against it):
+`osint-engine migrate` needs the `migrate` CLI on `PATH` (installed by `mise install`, pinned to the same version the
+Dockerfile uses) and a running Postgres reachable at `DATABASE_URL` — unlike the test suite, `serve`/`migrate` don't
+spin one up for you. `docker-compose.yml` starts a persistent local Postgres matching `.env.example`'s credentials, and
+`osint-engine wait-db` blocks until it actually accepts connections (Postgres reports the container as "started" well
+before it's ready to accept connections — polling avoids a race against it):
 
 ```bash
 docker compose up -d
@@ -320,32 +328,30 @@ uv run osint-engine migrate up
 uv run osint-engine serve
 ```
 
-The production image runs this sequence: its entrypoint chains `wait-db`, `migrate up`, then `serve`, so a
-container deploy (Render) needs no manual migration step — the commands above are only for running against a local
-Postgres outside the container.
+The production image runs this sequence: its entrypoint chains `wait-db`, `migrate up`, then `serve`, so a container
+deploy (Render) needs no manual migration step — the commands above are only for running against a local Postgres
+outside the container.
 
 ### Test
 
-`tests/**/responses/` (golden HTTP fixtures for the BrasilAPI/Portal da Transparência
-source tests) is untracked and regenerated on demand, not committed — run this once
-before testing, and again whenever the fixtures need refreshing:
+`tests/**/responses/` (golden HTTP fixtures for the BrasilAPI/Portal da Transparência source tests) is untracked and
+regenerated on demand, not committed — run this once before testing, and again whenever the fixtures need refreshing:
 
 ```bash
-uv run osint-engine refresh-fixtures
+uv run python -m scripts fixtures refresh
 ```
 
-Portal da Transparência's fixtures require a real, working `PORTAL_TRANSPARENCIA_API_KEY`
-in `.env` — request one at <https://api.portaldatransparencia.gov.br/>.
+Portal da Transparência's fixtures require a real, working `PORTAL_TRANSPARENCIA_API_KEY` in `.env` — request one at
+<https://api.portaldatransparencia.gov.br/>.
 
 ```bash
 uv run pytest --cov --cov-branch
 ```
 
-`tests/test_infrastructure/test_persistence/test_pg/` spins up a real Postgres via
-`testcontainers`, pulling the `postgres:18` and `testcontainers/ryuk:0.8.1` images from
-Docker Hub on first run (cached locally afterward). If pulls hang or time out, your
-DNS resolver may not be resolving Docker Hub reliably — point the Docker daemon at a
-known-good resolver in `/etc/docker/daemon.json`:
+`tests/test_infrastructure/test_persistence/test_pg/` spins up a real Postgres via `testcontainers`, pulling the
+`postgres:18` and `testcontainers/ryuk:0.8.1` images from Docker Hub on first run (cached locally afterward). If pulls
+hang or time out, your DNS resolver may not be resolving Docker Hub reliably — point the Docker daemon at a known-good
+resolver in `/etc/docker/daemon.json`:
 
 ```json
 { "dns": ["1.1.1.1", "8.8.8.8"] }

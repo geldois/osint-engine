@@ -19,10 +19,10 @@ actually broke.
 ## Decision
 
 `ExpandByCNPJ.execute` mints `EntityRevision(entity=graph, fetched_at=datetime.now(tz=UTC), merged_at=None)` right after
-awaiting the fetch and passes it to `graphs.merge`, leaving the fetcher contract returning a bare `Graph` and the
-use case returning a bare `Graph`. The revision wrapper is treated as a persistence concern of the orchestrating
-use case rather than a fetching concern, which bounds this refactor to completing what the diff already touched without
-widening scope into the fetcher layer.
+awaiting the fetch and passes it to `graphs.merge`, leaving the fetcher contract returning a bare `Graph` and the use
+case returning a bare `Graph`. The revision wrapper is treated as a persistence concern of the orchestrating use case
+rather than a fetching concern, which bounds this refactor to completing what the diff already touched without widening
+scope into the fetcher layer.
 
 ## Consequences
 

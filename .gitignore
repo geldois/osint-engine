@@ -214,6 +214,7 @@ __marimo__/
 .env.dev
 .env.prod
 .env.test
+.import_linter_cache
 .remember
 mutants/
 
@@ -226,5 +227,5 @@ mutants/
 # machine-local absolute path (cwd), never portable across clones
 .mcp.json
 
-# Recorded live-API fixtures — regenerate with `uv run osint-engine refresh-fixtures`
+# Recorded live-API fixtures — regenerate with `uv run python -m scripts fixtures refresh`
 tests/**/responses/

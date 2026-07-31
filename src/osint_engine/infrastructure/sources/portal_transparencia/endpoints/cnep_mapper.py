@@ -69,9 +69,7 @@ def _map_sanction(*, payload: Payload) -> Sanction:
         ),
         organ="CNEP",
         process_number=payload.require(key="numeroProcesso", expected_type=str),
-        publication_date=payload.require(
-            key="dataPublicacaoSancao", expected_type=str
-        ),
+        publication_date=payload.require(key="dataPublicacaoSancao", expected_type=str),
         publication_link=payload.require(key="linkPublicacao", expected_type=str),
         sanction_type=tipo_sancao.require(key="descricaoResumida", expected_type=str),
         sanctioning_body=orgao_sancionador.require(key="nome", expected_type=str),

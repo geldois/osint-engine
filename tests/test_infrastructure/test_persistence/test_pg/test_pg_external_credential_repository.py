@@ -136,8 +136,6 @@ class TestPgExternalCredentialRepository:
     async def test_list_configured_providers_returns_empty_for_unknown_username(
         self, repository: PgExternalCredentialRepository
     ) -> None:
-        providers = await repository.list_configured_providers(
-            username="unknown-user"
-        )
+        providers = await repository.list_configured_providers(username="unknown-user")
 
         assert providers == frozenset()

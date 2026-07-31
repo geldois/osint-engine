@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from typing import override
 
+from osint_engine.domain.errors.error_category import ErrorCategory
 from osint_engine.interface.errors.interface_error import InterfaceError
 
 
-class RateLimitError(InterfaceError, error_code=None): ...
+class RateLimitError(
+    InterfaceError, error_code=None, category=ErrorCategory.RATE_LIMITED
+): ...
 
 
 class RateLimitExceededError(RateLimitError, error_code="RATE_LIMIT_EXCEEDED"):

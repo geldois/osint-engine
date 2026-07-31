@@ -22,9 +22,9 @@ couple a pure transform to I/O provenance.
 the mapper's `Graph` in `EntityRevision(entity=…, fetched_at=…, merged_at=None)`. The mapper stays pure.
 `ExpandByCNPJ.execute` receives the revision, passes it straight to `graphs.merge`, and returns `revision.entity`, so it
 keeps its `Query[Graph]` return contract and holds no timestamping logic. A dedicated narrower "observation" type
-(entity plus `fetched_at`, without `merged_at`) was deliberately not introduced: `merged_at=None` is the legitimate
-"raw fetch, not yet merged" state of a revision, not an illegal state, so splitting the type would add a second type
-and a repository-contract ripple for no invariant gain while a single fetcher exists.
+(entity plus `fetched_at`, without `merged_at`) was deliberately not introduced: `merged_at=None` is the legitimate "raw
+fetch, not yet merged" state of a revision, not an illegal state, so splitting the type would add a second type and a
+repository-contract ripple for no invariant gain while a single fetcher exists.
 
 ## Consequences
 
@@ -32,6 +32,6 @@ and a repository-contract ripple for no invariant gain while a single fetcher ex
 orchestration again, and use-case tests are deterministic because the fake fetcher returns a fixed revision rather than
 relying on wall-clock time — the fetcher's own test asserts only that `fetched_at.tzinfo is UTC`. The cost is that the
 `CNPJFetcher` contract, its BrasilAPI implementation, and the `FakeCNPJFetcher` test double all changed shape, and every
-future fetcher must now construct the revision itself; should that construction ever repeat across fetchers, a
-shared `EntityRevision.fetched(entity)` constructor helper is the natural next step. The HTTP presentation layer is
-unaffected because the use case still returns a bare `Graph`.
+future fetcher must now construct the revision itself; should that construction ever repeat across fetchers, a shared
+`EntityRevision.fetched(entity)` constructor helper is the natural next step. The HTTP presentation layer is unaffected
+because the use case still returns a bare `Graph`.

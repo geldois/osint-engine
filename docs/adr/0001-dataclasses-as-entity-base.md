@@ -10,8 +10,8 @@ During the initial modeling of the domain layer, Python dataclasses (`@dataclass
 foundation for entity definitions. The intent was to leverage auto-generated `__init__`, `__eq__`, `__hash__`, and
 immutability enforcement without writing boilerplate.
 
-All entity types — nodes, edges, and graphs — extended a common frozen dataclass base, with identity derived from a
-UUID field populated at construction time.
+All entity types — nodes, edges, and graphs — extended a common frozen dataclass base, with identity derived from a UUID
+field populated at construction time.
 
 ## Decision
 

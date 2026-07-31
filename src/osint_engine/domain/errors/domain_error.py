@@ -4,20 +4,33 @@ from abc import ABC, abstractmethod
 from inspect import isabstract
 from typing import ClassVar, final, override
 
+from osint_engine.domain.errors.error_category import ErrorCategory
+from osint_engine.domain.errors.osint_error import OsintError
+
 
 def _verify_error_code(*, subject: type[DomainError]) -> None:
     if subject.error_code is None and not isabstract(subject):
         raise MissingErrorIdentityContractError(subject=subject)
 
 
-class DomainError(ABC, Exception):
+class DomainError(ABC, OsintError):
     error_code: ClassVar[str | None]
+    category: ClassVar[ErrorCategory] = ErrorCategory.INVALID_INPUT
 
     @final
-    def __init_subclass__(cls, *, error_code: str | None, **kwargs: object) -> None:
+    def __init_subclass__(
+        cls,
+        *,
+        error_code: str | None,
+        category: ErrorCategory | None = None,
+        **kwargs: object,
+    ) -> None:
         super().__init_subclass__(**kwargs)
 
         cls.error_code = error_code
+
+        if category is not None:
+            cls.category = category
 
         _verify_error_code(subject=cls)
 

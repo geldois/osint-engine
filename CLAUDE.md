@@ -1,30 +1,36 @@
-<!-- code-review-graph MCP tools -->
-## MCP Tools: code-review-graph
+# osint-engine — Claude Code guidance
 
-This project has a knowledge graph. The global harness (`~/.claude/CLAUDE.md`,
-Code Review Graph section) owns the "graph before Grep/Glob/Explore" mandate
-and its enforcing hook — this section exists only for portability to clones
-without that global config, and only wraps the graph's own tool table.
+This file holds only what no other source does. Everything else is owned elsewhere — go there, never restate it here.
 
-Fall back to Grep/Glob **only** when the graph doesn't cover what you need
-(`Read` is never gated).
+## Sources of truth
 
-### Key Tools
+| Question                                                   | Source (use it, don't re-derive)                                        |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Structure, callers/callees, impact, tests-for, dead code   | the code-review-graph (query it — never grep/read-around to rebuild it) |
+| A decision and its rationale ("why is it done this way?")  | `docs/adr/` (numbered ADRs)                                             |
+| Setup, run, endpoints, API auth, stack, architecture prose | `README.md`                                                             |
+| Known deferrals / accepted tech debt                       | `TO-DO.md`                                                              |
 
-| Tool | Use when |
-| ------ | ---------- |
-| `detect_changes_tool` | Reviewing code changes — gives risk-scored analysis |
-| `get_review_context_tool` | Need source snippets for review — token-efficient |
-| `get_impact_radius_tool` | Understanding blast radius of a change |
-| `get_affected_flows_tool` | Finding which execution paths are impacted |
-| `query_graph_tool` | Tracing callers, callees, imports, tests, dependencies |
-| `semantic_search_nodes_tool` | Finding functions/classes by name or keyword |
-| `get_architecture_overview_tool` | Understanding high-level codebase structure |
-| `refactor_tool` | Planning renames, finding dead code |
+If an answer is in one of those, read it there. Only the operational rules below live here.
 
-### Workflow
+## Code-review-graph
 
-1. The graph auto-updates on file changes (via hooks).
-2. Use `detect_changes_tool` for code review.
-3. Use `get_affected_flows_tool` to understand impact.
-4. Use `query_graph_tool` pattern="tests_for" to check coverage.
+Graph-first: consult it before `Grep`/`Glob`/`Explore` (a `PreToolUse` hook enforces this until the graph is queried
+once this turn; `Read` is never gated). Key tools: `query_graph_tool` (callers/callees/imports/`tests_for`),
+`semantic_search_nodes_tool`, `get_impact_radius_tool`, `detect_changes_tool`, `get_architecture_overview_tool`,
+`refactor_tool` (renames, dead code). If it is stale or missing something, repair it (`code-review-graph update` /
+`build`) — never fall back to grep for something the graph should model.
+
+Never run `code-review-graph install`, `init`, or `uninstall`: they overwrite the committed, hand-tuned harness
+(`.claude/`, `.mcp.json`, this file, the git hooks) and litter per-tool configs. A `PreToolUse` hook blocks them. Only
+data commands are allowed — `build` (first build after clone), `update`, `serve` (what `.mcp.json` runs), `status`. If a
+config was clobbered, `git restore` it — everything crg can overwrite is version-controlled.
+
+## Quality gates
+
+One façade: `uv run python -m scripts check` (fast) or `check --full` (adds pytest + branch coverage). A `PreToolUse`
+hook blocks raw full-suite runs (`pytest`, `ruff`, `basedpyright`, `lint-imports`, `cosmic-ray`) and redirects here; a
+targeted single-file or single-test run is allowed. Every commit is born-full-green — the git `pre-commit` runs
+`check --full` on a materialized snapshot, so committing needs Docker (testcontainers) and the Portal key in `.env`.
+Mutation is periodic (`uv run python -m scripts mutation`), never a hook. Per-edit autofix + residual report is
+automatic.

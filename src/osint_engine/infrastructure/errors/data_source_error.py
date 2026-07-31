@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
+from osint_engine.domain.errors.error_category import ErrorCategory
 from osint_engine.infrastructure.errors.infrastructure_error import InfrastructureError
 
 if TYPE_CHECKING:
@@ -12,7 +13,9 @@ def _type_name(subject: type | UnionType) -> str:
     return subject.__name__ if isinstance(subject, type) else str(subject)
 
 
-class DataSourceError(InfrastructureError, error_code=None): ...
+class DataSourceError(
+    InfrastructureError, error_code=None, category=ErrorCategory.UPSTREAM_FAILURE
+): ...
 
 
 class DataSourceRequestError(DataSourceError, error_code="DATA_SOURCE_REQUEST_FAILED"):
@@ -35,7 +38,9 @@ class DataSourceRequestError(DataSourceError, error_code="DATA_SOURCE_REQUEST_FA
 
 
 class UnexpectedFieldTypeError(
-    DataSourceError, error_code="DATA_SOURCE_UNEXPECTED_FIELD_TYPE"
+    DataSourceError,
+    error_code="DATA_SOURCE_UNEXPECTED_FIELD_TYPE",
+    category=ErrorCategory.INTERNAL,
 ):
     source: str
     key: str
@@ -65,7 +70,9 @@ class UnexpectedFieldTypeError(
 
 
 class UnexpectedPayloadError(
-    DataSourceError, error_code="DATA_SOURCE_UNEXPECTED_PAYLOAD"
+    DataSourceError,
+    error_code="DATA_SOURCE_UNEXPECTED_PAYLOAD",
+    category=ErrorCategory.INTERNAL,
 ):
     source: str
     missing_field: str
@@ -83,7 +90,9 @@ class UnexpectedPayloadError(
 
 
 class UnexpectedFieldFormatError(
-    DataSourceError, error_code="DATA_SOURCE_UNEXPECTED_FIELD_FORMAT"
+    DataSourceError,
+    error_code="DATA_SOURCE_UNEXPECTED_FIELD_FORMAT",
+    category=ErrorCategory.INTERNAL,
 ):
     source: str
     key: str

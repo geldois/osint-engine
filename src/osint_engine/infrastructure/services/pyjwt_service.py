@@ -46,5 +46,8 @@ class PyJWTService(JWTService):
             return decode(
                 jwt=token, key=self.secret_key, algorithms=[self._JWT_ALGORITHM]
             )
-        except PyJWTError as exception:
+        except (PyJWTError, ValueError) as exception:
+            # A malformed token can make PyJWT raise a bare ValueError
+            # (e.g. UnicodeDecodeError while base64-decoding the header) rather
+            # than a PyJWTError — still an invalid token, so map it to 401.
             raise InvalidTokenError(detail=str(exception)) from exception

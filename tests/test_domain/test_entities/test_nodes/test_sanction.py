@@ -17,7 +17,7 @@ def _make_sanction(
         end_date="2025-01-01",
         fine_amount=fine_amount,
         legal_basis=("Lei 8.666/1993, art. 87",),
-        organ=organ, # pyright: ignore[reportArgumentType]
+        organ=organ,  # pyright: ignore[reportArgumentType]
         process_number=process_number,
         publication_date="2024-01-01",
         publication_link="https://portaldatransparencia.gov.br/sancoes/cnep/123",

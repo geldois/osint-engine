@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 from osint_engine.domain.errors.entity_error import EntityError
+from osint_engine.domain.errors.error_category import ErrorCategory
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -11,7 +12,9 @@ if TYPE_CHECKING:
 class EdgeError(EntityError, error_code=None): ...
 
 
-class EdgeSelfLoopError(EdgeError, error_code="EDGE_SELF_LOOP"):
+class EdgeSelfLoopError(
+    EdgeError, error_code="EDGE_SELF_LOOP", category=ErrorCategory.INVALID_INPUT
+):
     node_id: UUID
 
     @override

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from typing import override
 
+from osint_engine.domain.errors.error_category import ErrorCategory
 from osint_engine.interface.errors.interface_error import InterfaceError
 
 
-class SanitizationError(InterfaceError, error_code=None): ...
+class SanitizationError(
+    InterfaceError, error_code=None, category=ErrorCategory.INVALID_INPUT
+): ...
 
 
 class InvalidCNPJError(SanitizationError, error_code="SANITIZATION_INVALID_CNPJ"):

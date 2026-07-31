@@ -4,15 +4,28 @@ from abc import ABC, abstractmethod
 from inspect import isabstract
 from typing import ClassVar, final
 
+from osint_engine.domain.errors.error_category import ErrorCategory
+from osint_engine.domain.errors.osint_error import OsintError
 
-class InterfaceError(ABC, Exception):
+
+class InterfaceError(ABC, OsintError):
     error_code: ClassVar[str | None]
+    category: ClassVar[ErrorCategory] = ErrorCategory.INTERNAL
 
     @final
-    def __init_subclass__(cls, *, error_code: str | None, **kwargs: object) -> None:
+    def __init_subclass__(
+        cls,
+        *,
+        error_code: str | None,
+        category: ErrorCategory | None = None,
+        **kwargs: object,
+    ) -> None:
         super().__init_subclass__(**kwargs)
 
         cls.error_code = error_code
+
+        if category is not None:
+            cls.category = category
 
         if error_code is None and not isabstract(cls):
             message = (

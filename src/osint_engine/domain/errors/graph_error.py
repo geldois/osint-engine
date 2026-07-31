@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 from osint_engine.domain.errors.entity_error import EntityError
+from osint_engine.domain.errors.error_category import ErrorCategory
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -11,7 +12,9 @@ if TYPE_CHECKING:
 class GraphError(EntityError, error_code=None): ...
 
 
-class GraphHasNoNodesError(GraphError, error_code="GRAPH_HAS_NO_NODES"):
+class GraphHasNoNodesError(
+    GraphError, error_code="GRAPH_HAS_NO_NODES", category=ErrorCategory.INVALID_INPUT
+):
     @override
     def __init__(self) -> None:
         super().__init__()
@@ -21,7 +24,11 @@ class GraphHasNoNodesError(GraphError, error_code="GRAPH_HAS_NO_NODES"):
         return "A graph must have at least one node."
 
 
-class GraphRootNotInNodesError(GraphError, error_code="GRAPH_ROOT_NOT_IN_NODES"):
+class GraphRootNotInNodesError(
+    GraphError,
+    error_code="GRAPH_ROOT_NOT_IN_NODES",
+    category=ErrorCategory.INVALID_INPUT,
+):
     root_id: UUID
 
     @override

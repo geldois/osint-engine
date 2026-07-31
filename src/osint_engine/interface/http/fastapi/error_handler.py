@@ -4,15 +4,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from structlog.stdlib import get_logger
 
-# Exception composition root — see http_status_mapper.py for the rationale
-# behind referencing infrastructure error types directly from interface.
-from osint_engine.application.errors.application_error import ApplicationError
 from osint_engine.config.container import Container
-from osint_engine.domain.errors.domain_error import DomainError
-from osint_engine.infrastructure.errors.infrastructure_error import (
-    InfrastructureError,
-)
-from osint_engine.interface.errors.interface_error import InterfaceError
 from osint_engine.interface.errors.rate_limit_error import RateLimitExceededError
 from osint_engine.interface.http.mappers.http_status_mapper import (
     HTTP_SERVER_ERROR,
@@ -56,14 +48,11 @@ def build_error_handler(
             if container.settings.debug
             else None
         )
-        error_code = (
-            exception.error_code
-            if isinstance(
-                exception,
-                (DomainError, ApplicationError, InfrastructureError, InterfaceError),
-            )
-            else None
-        )
+        # Every first-party error declares an ``error_code`` class attribute;
+        # a stdlib/third-party exception has none. Reading it structurally keeps
+        # the handler from importing each layer's error base (interface must not
+        # import infrastructure) — the semantic status already came from category.
+        error_code: str | None = getattr(exception, "error_code", None)
         error_schema = ErrorSchema(
             correlation_id=correlation_id.get(),
             debug=error_debug,

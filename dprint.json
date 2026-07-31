@@ -1,0 +1,50 @@
+{
+  "lineWidth": 120,
+  "indentWidth": 2,
+  "newLineKind": "lf",
+  "json": {
+    "indentWidth": 2
+  },
+  "toml": {
+    "indentWidth": 2
+  },
+  "yaml": {
+    "printWidth": 120,
+    "indentWidth": 2,
+    "lineBreak": "lf"
+  },
+  "markdown": {
+    "textWrap": "always",
+    "emphasisKind": "asterisks",
+    "strongKind": "asterisks",
+    "unorderedListKind": "dashes",
+    "headingKind": "atx"
+  },
+  "includes": [
+    "**/*.md",
+    "**/*.json",
+    "**/*.jsonc",
+    "**/*.toml",
+    "**/*.yaml",
+    "**/*.yml"
+  ],
+  "excludes": [
+    "CHANGELOG.md",
+    "uv.lock",
+    "build/",
+    "coverage/",
+    "node_modules/",
+    ".venv/",
+    ".git/",
+    ".code-review-graph/",
+    ".ruff_cache/",
+    ".pytest_cache/",
+    "**/__pycache__/"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/json-0.23.0.wasm",
+    "https://plugins.dprint.dev/toml-0.7.0.wasm",
+    "https://plugins.dprint.dev/markdown-0.22.1.wasm",
+    "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm"
+  ]
+}

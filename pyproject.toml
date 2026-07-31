@@ -42,9 +42,10 @@ Repository = "https://github.com/geldois/osint-engine"
 dev = [
   "basedpyright>=1.39",
   "code-review-graph>=2.3.7",
+  "cosmic-ray==8.4.6",
   "hypothesis>=6.156.1",
   "igraph>=1.0.0",
-  "pre-commit>=4.6",
+  "import-linter==2.13",
   "pytest>=9.0",
   "pytest-asyncio>=1.4",
   "pytest-cov>=7.1.0",
@@ -61,21 +62,53 @@ build-backend = "hatchling.build"
 [tool.basedpyright]
 venvPath = "."
 venv = ".venv"
-include = ["src", "tests"]
+include = ["src", "tests", "scripts", ".claude/hooks"]
 typeCheckingMode = "strict"
 pythonPlatform = "All"
 reportMissingTypeStubs = "none"
+
+# The Claude Code hooks run as standalone scripts (their own directory on
+# sys.path at runtime), so `import _hook_io` resolves from the hooks root.
+[[tool.basedpyright.executionEnvironments]]
+root = ".claude/hooks"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/osint_engine"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src", "tests"]
+pythonpath = ["src", "tests", "."]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "session"
 
 [tool.pytest-language-server]
 exclude = ["build/**", "dist/**", ".tox/**"]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+# Ratchet-only floor: set to the measured baseline, never lower it (ADR 0025).
+fail_under = 90
+show_missing = true
+
+[tool.importlinter]
+root_package = "osint_engine"
+
+[[tool.importlinter.contracts]]
+name = "Clean Architecture layers"
+type = "layers"
+layers = [
+  "osint_engine.interface | osint_engine.infrastructure",
+  "osint_engine.application",
+  "osint_engine.domain",
+]
+# The composition root (config.*) is Clean Architecture's Main component: it is
+# exempt from the dependency rule because a DI container must import the concrete
+# implementations it wires. Ignoring its edge into infrastructure keeps the
+# legitimate interface -> config -> infrastructure assembly path from reading as
+# an interface -> infrastructure violation.
+ignore_imports = ["osint_engine.config.** -> osint_engine.infrastructure.**"]
 
 [tool.ruff]
 line-length = 88
@@ -97,12 +130,13 @@ ignore = [
   "D212",
   "FURB157",
   "ISC001",
-  "RUF012"
+  "RUF012",
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]
-"tests/**/*.py" = ["PLR0913", "PLR2004", "S101", "S105", "S106", "SLF001"]
-"scripts/*.py" = ["INP001", "T201"]
+"tests/**/*.py" = ["PLR0913", "PLR2004", "S101", "S105", "S106", "S603", "S607", "SLF001"]
+"scripts/**/*.py" = ["S603", "S607", "T201"]
+".claude/hooks/*.py" = ["S603", "S607", "INP001"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

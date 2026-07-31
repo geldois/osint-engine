@@ -18,9 +18,7 @@ if TYPE_CHECKING:
 
 def build_get_credentials_handler(
     *, container: Container
-) -> Callable[
-    [dict[str, object]], Awaitable[list[ExternalCredentialStatusSchema]]
-]:
+) -> Callable[[dict[str, object]], Awaitable[list[ExternalCredentialStatusSchema]]]:
     jwt_guard = build_jwt_guard(container=container)
 
     async def get_credentials(

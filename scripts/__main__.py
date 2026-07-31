@@ -1,27 +1,71 @@
-"""
-Runs all maintenance scripts.
+"""Typer entrypoint for the dev runner (ADR 0025).
 
-Usage: uv run python scripts/
+Single source of truth for every quality gate, called identically by the git
+hooks and CI. Invoke as ``uv run python -m scripts <command>``.
 """
 
 from __future__ import annotations
 
-import subprocess
 import sys
-from pathlib import Path
+from typing import Annotated
+
+import typer
+
+from scripts import fixtures, hooks
+from scripts.fix import run_fix, run_precommit
+from scripts.gates import run_check
+from scripts.hooks import NotAGitRepositoryError
+from scripts.mutation import run_mutation
+
+app = typer.Typer(no_args_is_help=True, add_completion=False)
+fixtures_app = typer.Typer(no_args_is_help=True, add_completion=False)
+hooks_app = typer.Typer(no_args_is_help=True, add_completion=False)
+app.add_typer(fixtures_app, name="fixtures")
+app.add_typer(hooks_app, name="hooks")
+
+# Survival-rate ceiling as a percentage; floor unpinned pending baseline (ADR 0025).
+_DEFAULT_MAX_SURVIVAL = 100.0
 
 
-def main() -> None:
-    scripts_dir = Path(__file__).parent
+@app.command()
+def check(*, full: bool = False, staged: bool = False) -> None:
+    """Run the deterministic gate sequence."""
+    raise typer.Exit(run_check(full=full, staged=staged))
 
-    for script in sorted(scripts_dir.glob("*.py")):
-        if script.name.startswith("_"):
-            continue
 
-        print(f"\n── {script.name} ──")
+@app.command()
+def fix(paths: Annotated[list[str] | None, typer.Argument()] = None) -> None:
+    """Apply every safe, idempotent auto-fixer (run before check)."""
+    raise typer.Exit(run_fix(tuple(paths or ())))
 
-        subprocess.run([sys.executable, script], check=True)  # noqa: S603
+
+@app.command()
+def precommit() -> None:
+    """Fix fully-staged files, re-stage them, then run the full gate."""
+    raise typer.Exit(run_precommit())
+
+
+@app.command()
+def mutation(*, max_survival: float = _DEFAULT_MAX_SURVIVAL) -> None:
+    """Run the cosmic-ray mutation gate (periodic; never a hook)."""
+    raise typer.Exit(run_mutation(max_survival=max_survival))
+
+
+@fixtures_app.command("refresh")
+def fixtures_refresh() -> None:
+    """Regenerate live-API golden snapshots."""
+    fixtures.main()
+
+
+@hooks_app.command("install")
+def hooks_install() -> None:
+    """Install the managed git hooks."""
+    try:
+        raise typer.Exit(hooks.install())
+    except NotAGitRepositoryError as exc:
+        sys.stderr.write(f"{exc}\n")
+        raise typer.Exit(1) from exc
 
 
 if __name__ == "__main__":
-    main()
+    app()

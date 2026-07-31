@@ -1,8 +1,7 @@
 """
 Refreshes API response fixtures used by infrastructure tests.
 
-Run with: uv run osint-engine refresh-fixtures
-(or directly: uv run python scripts/refresh_test_source_responses.py)
+Run with: uv run python -m scripts fixtures refresh
 
 Portal da Transparência's endpoints require PORTAL_TRANSPARENCIA_API_KEY set in
 the environment — request a key at https://api.portaldatransparencia.gov.br/.
@@ -42,7 +41,7 @@ class _BrasilAPI:
     BASE_URL: URL = URL("https://brasilapi.com.br/api/")
     CASES: dict[str, list[tuple[str, str]]] = {
         "cnpj/v1/": [(f"{API_NAME}_cnpj_v1.json", "00.000.000/0001-91")],
-        "cep/v2/": [(f"{API_NAME}_cep_v2.json", "70040912")]
+        "cep/v2/": [(f"{API_NAME}_cep_v2.json", "70040912")],
     }
 
     @staticmethod

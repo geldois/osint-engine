@@ -3,12 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal, override
 
 from osint_engine.application.errors.application_error import ApplicationError
+from osint_engine.domain.errors.error_category import ErrorCategory
 
 if TYPE_CHECKING:
     from uuid import UUID
 
 
-class RevisionError(ApplicationError, error_code=None): ...
+class RevisionError(
+    ApplicationError, error_code=None, category=ErrorCategory.INVALID_INPUT
+): ...
 
 
 class EntityIDMismatchError(RevisionError, error_code="REVISION_ENTITY_ID_MISMATCH"):

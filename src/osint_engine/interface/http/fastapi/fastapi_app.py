@@ -8,10 +8,7 @@ from fastapi.responses import RedirectResponse
 
 # Exception composition root — see http_status_mapper.py for the rationale
 # behind referencing infrastructure error types directly from interface.
-from osint_engine.application.errors.application_error import ApplicationError
-from osint_engine.domain.errors.domain_error import DomainError
-from osint_engine.infrastructure.errors.infrastructure_error import InfrastructureError
-from osint_engine.interface.errors.interface_error import InterfaceError
+from osint_engine.domain.errors.osint_error import OsintError
 from osint_engine.interface.http.fastapi.error_handler import build_error_handler
 from osint_engine.interface.http.fastapi.middlewares.logging_handler import (
     handle_logging,
@@ -32,10 +29,9 @@ if TYPE_CHECKING:
     from osint_engine.config.container import Container
 
 _HANDLED_EXCEPTIONS: tuple[type[Exception], ...] = (
-    DomainError,
-    ApplicationError,
-    InfrastructureError,
-    InterfaceError,
+    # OsintError catches every first-party error as a normal response; Exception
+    # is the last resort for truly-unexpected failures (a real 500).
+    OsintError,
     Exception,
 )
 

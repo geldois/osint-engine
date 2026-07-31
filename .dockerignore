@@ -11,10 +11,16 @@ __pycache__
 tests/
 docs/
 .github/
+.claude/
+.code-review-graph/
+build/
+coverage.xml
 CHANGELOG.md
 TO-DO.md
 .actrc
-.pre-commit-config.yaml
 .editorconfig
 .gitignore
+.dockerignore
+.mcp.json
 .mise.toml
+dprint.json

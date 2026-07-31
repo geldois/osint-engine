@@ -17,9 +17,7 @@ if TYPE_CHECKING:
 
 def build_get_ceis_handler(
     *, container: Container
-) -> Callable[
-    [str, dict[str, object], int | None], Awaitable[GraphSchema | Response]
-]:
+) -> Callable[[str, dict[str, object], int | None], Awaitable[GraphSchema | Response]]:
     jwt_guard = build_jwt_guard(container=container)
 
     async def get_ceis(

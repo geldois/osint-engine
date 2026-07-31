@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from typing import override
 
+from osint_engine.domain.errors.error_category import ErrorCategory
 from osint_engine.infrastructure.errors.infrastructure_error import InfrastructureError
 
 
-class TokenError(InfrastructureError, error_code=None): ...
+class TokenError(
+    InfrastructureError, error_code=None, category=ErrorCategory.UNAUTHORIZED
+): ...
 
 
 class InvalidTokenError(TokenError, error_code="TOKEN_INVALID"):

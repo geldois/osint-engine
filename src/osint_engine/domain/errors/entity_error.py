@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 from osint_engine.domain.errors.domain_error import DomainError
+from osint_engine.domain.errors.error_category import ErrorCategory
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.entity import Entity
 
 
-class EntityError(DomainError, error_code=None): ...
+class EntityError(DomainError, error_code=None, category=ErrorCategory.INTERNAL): ...
 
 
 class EntityInvalidIDTypeError(EntityError, error_code="ENTITY_INVALID_ID_TYPE"):
@@ -142,7 +143,11 @@ class EntityEmptyIDFieldNameError(EntityError, error_code="ENTITY_EMPTY_ID_FIELD
         )
 
 
-class EntityInvalidIdentifierError(EntityError, error_code="ENTITY_INVALID_IDENTIFIER"):
+class EntityInvalidIdentifierError(
+    EntityError,
+    error_code="ENTITY_INVALID_IDENTIFIER",
+    category=ErrorCategory.INVALID_INPUT,
+):
     subject: type[Entity[UUID]]
     field: str
     raw_value: str
@@ -176,7 +181,9 @@ class EntityInvalidIdentifierError(EntityError, error_code="ENTITY_INVALID_IDENT
         )
 
 
-class EntityNotFoundError(EntityError, error_code="ENTITY_NOT_FOUND"):
+class EntityNotFoundError(
+    EntityError, error_code="ENTITY_NOT_FOUND", category=ErrorCategory.NOT_FOUND
+):
     entity_id: UUID
     subject: type[Entity[UUID]]
 

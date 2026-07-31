@@ -1,13 +1,14 @@
 ---
 name: explore-codebase
-description: Navigate and understand codebase structure using the knowledge graph — a tactical graph-data source for exploration, not a substitute for the global harness's own exploration workflow (Explore agent, `ship-code`)
+description: Navigate and understand codebase structure using the knowledge graph — a tactical graph-data source for exploration, not a substitute for the global harness's own exploration workflow
 ---
 
-## Explore Codebase
+# Explore Codebase
 
-Use the code-review-graph MCP tools to explore and understand the codebase. If the global harness is present, this feeds it graph data rather than replacing its exploration step.
+Use the code-review-graph MCP tools to explore and understand the codebase. If the global harness is present, this feeds
+it graph data rather than replacing its exploration step.
 
-### Steps
+## Steps
 
 1. Run `list_graph_stats` to see overall codebase metrics.
 2. Run `get_architecture_overview_tool` for high-level community structure.
@@ -16,13 +17,14 @@ Use the code-review-graph MCP tools to explore and understand the codebase. If t
 5. Use `query_graph_tool` with patterns like `callers_of`, `callees_of`, `imports_of` to trace relationships.
 6. Use `list_flows` and `get_flow` to understand execution paths.
 
-### Tips
+## Tips
 
 - Start broad (stats, architecture) then narrow down to specific areas.
 - Use `children_of` on a file to see all its functions and classes.
 - Use `find_large_functions` to identify complex code.
 
 ## Token Efficiency Rules
+
 - ALWAYS start with `get_minimal_context(task="<your task>")` before any other graph tool.
 - Use `detail_level="minimal"` on all calls. Only escalate to "standard" when minimal is insufficient.
 - Target: complete any review/debug/refactor task in ≤5 tool calls and ≤800 total output tokens.

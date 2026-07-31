@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 from osint_engine.application.errors.application_error import ApplicationError
+from osint_engine.domain.errors.error_category import ErrorCategory
 
 if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import Provider
@@ -12,7 +13,9 @@ class ExternalCredentialError(ApplicationError, error_code=None): ...
 
 
 class ExternalCredentialNotFoundError(
-    ExternalCredentialError, error_code="EXTERNAL_CREDENTIAL_NOT_FOUND"
+    ExternalCredentialError,
+    error_code="EXTERNAL_CREDENTIAL_NOT_FOUND",
+    category=ErrorCategory.NOT_FOUND,
 ):
     username: str
     provider: Provider
