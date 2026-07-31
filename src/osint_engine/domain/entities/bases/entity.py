@@ -50,6 +50,12 @@ _DETERMINISTIC_TYPES: tuple[type, ...] = (
 )
 
 
+def own_init_kwargs(**kwargs: object) -> dict[str, object]:
+    return {
+        key: value for key, value in kwargs.items() if key not in {"__class__", "self"}
+    }
+
+
 def _is_tuple(*, value: object) -> TypeGuard[tuple[object, ...]]:
     return isinstance(value, tuple)
 

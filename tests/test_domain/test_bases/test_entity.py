@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from osint_engine.domain.entities.bases.entity import Entity
+from osint_engine.domain.entities.bases.entity import Entity, own_init_kwargs
 from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.errors.entity_error import (
     EntityEmptyIDFieldNameError,
@@ -573,6 +573,41 @@ class TestEntityEvolve:
         evolved = entity.evolve(content="Bob")
 
         assert evolved.id != entity.id
+
+
+class TestOwnInitKwargs:
+    def test_drops_self_and_class(self) -> None:
+        result = own_init_kwargs(self="whatever", __class__=FakeEntity, content="test")
+
+        assert result == {"content": "test"}
+
+    def test_preserves_every_other_key_and_value(self) -> None:
+        result = own_init_kwargs(content="test", role="admin", extra=None)
+
+        assert result == {"content": "test", "role": "admin", "extra": None}
+
+    def test_returns_empty_dict_when_only_self_and_class_are_given(self) -> None:
+        assert own_init_kwargs(self="whatever", __class__=FakeEntity) == {}
+
+    def test_returns_empty_dict_for_no_kwargs(self) -> None:
+        assert own_init_kwargs() == {}
+
+    def test_matches_locals_filtering_inside_a_real_init(self) -> None:
+        class FakeEntityUsingOwnInitKwargs(
+            Entity[FakeEntityID], id_fields=frozenset({"content"}), namespace=TEST
+        ):
+            content: str
+
+            def __init__(self, *, content: str) -> None:
+                super().__init__(**own_init_kwargs(**locals()))
+
+        entity = FakeEntityUsingOwnInitKwargs(content="test")
+
+        assert entity.content == "test"
+
+        assert not hasattr(entity, "self")
+
+        assert not hasattr(entity, "__class__2")
 
 
 class TestEntityCalculateIdOverride:

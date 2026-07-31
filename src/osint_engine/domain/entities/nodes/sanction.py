@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal, NewType, override
 from uuid import UUID
 
+from osint_engine.domain.entities.bases.entity import own_init_kwargs
 from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 
@@ -43,10 +44,4 @@ class Sanction(
         sanctioning_body: str,
         start_date: str | None,
     ) -> None:
-        super().__init__(
-            **{
-                key: value
-                for key, value in locals().items()
-                if key not in {"__class__", "self"}
-            }
-        )
+        super().__init__(**own_init_kwargs(**locals()))

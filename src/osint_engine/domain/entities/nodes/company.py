@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, NewType, override
 from uuid import UUID
 
+from osint_engine.domain.entities.bases.entity import own_init_kwargs
 from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
@@ -47,13 +48,7 @@ class Company(
         size_category: str | None,
         trade_name: str | None,
     ) -> None:
-        super().__init__(
-            **{
-                key: value
-                for key, value in locals().items()
-                if key not in {"__class__", "self"}
-            }
-        )
+        super().__init__(**own_init_kwargs(**locals()))
 
     @classmethod
     @override
