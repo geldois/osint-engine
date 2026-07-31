@@ -22,6 +22,10 @@ from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandBy
 from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
+from osint_engine.application.use_cases.text_ingestion.ingest_text import IngestText
+from osint_engine.application.use_cases.text_ingestion.list_text_pattern_sets import (
+    ListTextPatternSets,
+)
 from osint_engine.config.container import (
     Container,
     Fetchers,
@@ -33,8 +37,14 @@ from osint_engine.infrastructure.hashers.argon2_password_hasher import (
     Argon2PasswordHasher,
 )
 from osint_engine.infrastructure.persistence.hybrid_uow import HybridUoW
+from osint_engine.infrastructure.persistence.mem.default_pattern_sets import (
+    BRAZILIAN_DOCUMENT_PATTERNS,
+)
 from osint_engine.infrastructure.persistence.mem.mem_seeder import seed_mem_storage
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
+from osint_engine.infrastructure.persistence.mem.repositories.mem_pattern_set_repository import (  # noqa: E501
+    MemPatternSetRepository,
+)
 from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 from osint_engine.infrastructure.sources.brasilapi.endpoints.cnpj_v1_fetcher import (
     BrasilAPICNPJv1Fetcher,
@@ -81,6 +91,8 @@ def build_container(  # noqa: PLR0913
     seed_mem_storage(
         settings=settings, mem_storage=mem_storage, password_hasher=password_hasher
     )
+
+    pattern_sets = MemPatternSetRepository(pattern_sets=(BRAZILIAN_DOCUMENT_PATTERNS,))
 
     external_credential_encryption_key = (
         external_credential_encryption_key
@@ -131,8 +143,14 @@ def build_container(  # noqa: PLR0913
         expand_by_cpf=partial(
             ExpandByCPF, uow_factory=uow_factory, cpf_fetcher=fetchers.cpf_fetcher
         ),
+        ingest_text=partial(
+            IngestText, uow_factory=uow_factory, pattern_set_repository=pattern_sets
+        ),
         list_external_credentials=partial(
             ListExternalCredentials, uow_factory=uow_factory
+        ),
+        list_text_pattern_sets=partial(
+            ListTextPatternSets, pattern_set_repository=pattern_sets
         ),
         save_external_credential=partial(
             SaveExternalCredential, uow_factory=uow_factory
@@ -142,6 +160,7 @@ def build_container(  # noqa: PLR0913
     return Container(
         settings=settings,
         fetchers=fetchers,
+        pattern_sets=pattern_sets,
         policies=policies,
         readiness_probe=readiness_probe,
         services=services,

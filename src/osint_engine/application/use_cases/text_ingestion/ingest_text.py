@@ -1,0 +1,220 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, override
+
+from structlog.stdlib import get_logger
+
+from osint_engine.application.contracts.use_case import Query
+from osint_engine.application.errors.text_ingestion_error import (
+    NoPatternMatchedError,
+    UnsupportedPatternNodeTypeError,
+)
+from osint_engine.application.revision.entity_revision import EntityRevision
+from osint_engine.application.text_ingestion.extraction import extract_matches
+from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.edges.address_mentioned_in_text import (
+    AddressMentionedInText,
+)
+from osint_engine.domain.entities.edges.company_mentioned_in_text import (
+    CompanyMentionedInText,
+)
+from osint_engine.domain.entities.edges.person_mentioned_in_text import (
+    PersonMentionedInText,
+)
+from osint_engine.domain.entities.nodes.address import Address
+from osint_engine.domain.entities.nodes.company import Company
+from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes.text_source import TextSource
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from uuid import UUID
+
+    from osint_engine.application.contracts.repositories.pattern_set_repository import (
+        PatternSetRepository,
+    )
+    from osint_engine.application.contracts.uow import UoW
+    from osint_engine.application.text_ingestion.extraction import ExtractedMatch
+    from osint_engine.domain.entities.bases.edge import Edge
+    from osint_engine.domain.entities.bases.node import Node
+    from osint_engine.domain.entities.nodes.text_source import TextSourceID
+    from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
+
+_logger = get_logger()
+
+_SOURCE = "text_pattern"
+
+
+def _build_person_stub(*, field_values: dict[str, str]) -> Person:
+    return Person(age_range=None, birthdate=None, cpf=field_values["cpf"], name=None)
+
+
+def _build_company_stub(*, field_values: dict[str, str]) -> Company:
+    return Company(
+        activity_start_date=None,
+        cnpj=field_values["cnpj"],
+        is_headquarters=None,
+        legal_name=None,
+        legal_nature=None,
+        registration_status=None,
+        registration_status_date=None,
+        registration_status_reason=None,
+        share_capital=None,
+        size_category=None,
+        trade_name=None,
+    )
+
+
+def _build_address_stub(*, field_values: dict[str, str]) -> Address:
+    return Address(
+        cep=field_values["cep"],
+        city=None,
+        complement=None,
+        neighborhood=None,
+        number=field_values["number"],
+        state=None,
+        street=None,
+    )
+
+
+# Every node type a pattern set may target must be registered here AND in
+# `_MENTION_EDGE_BUILDERS` — `FieldPattern` itself accepts any `Node`
+# subtype (it only checks regex-group/id_fields parity), so this pair of
+# registries is what actually bounds which node types text ingestion can
+# resolve into a stub and a mention edge.
+_STUB_BUILDERS: dict[type[Node[UUID]], Callable[..., Node[UUID]]] = {
+    Address: _build_address_stub,
+    Company: _build_company_stub,
+    Person: _build_person_stub,
+}
+
+
+def _build_stub(
+    *, node_type: type[Node[UUID]], field_values: dict[str, str]
+) -> Node[UUID]:
+    builder = _STUB_BUILDERS.get(node_type)
+
+    if builder is None:
+        raise UnsupportedPatternNodeTypeError(node_type=node_type)
+
+    return builder(field_values=field_values)
+
+
+_MENTION_EDGE_BUILDERS: dict[
+    type[Node[UUID]], Callable[..., Edge[UUID, UUID, UUID]]
+] = {
+    Address: AddressMentionedInText,
+    Company: CompanyMentionedInText,
+    Person: PersonMentionedInText,
+}
+
+
+def _build_mention_edge(
+    *,
+    node: Node[UUID],
+    text_source_id: TextSourceID,
+    matched_field: str,
+    pattern_id: PatternSetID,
+) -> Edge[UUID, UUID, UUID]:
+    builder = _MENTION_EDGE_BUILDERS.get(type(node))
+
+    if builder is None:
+        raise UnsupportedPatternNodeTypeError(node_type=type(node))
+
+    return builder(
+        source_id=node.id,
+        target_id=text_source_id,
+        matched_field=matched_field,
+        pattern_id=pattern_id,
+    )
+
+
+async def _resolve_node(*, uow: UoW, match: ExtractedMatch) -> Node[UUID]:
+    """
+    Look up only — never persists. The returned node is added to the
+    ingestion's Graph either way; `IngestText.execute`'s single
+    `uow.graphs.merge` call is what actually persists it (cascading to
+    `uow.nodes`/`uow.edges` for whatever wasn't already known), so this
+    never double-writes an entity that also gets cascaded moments later.
+    """
+
+    field_values = dict(match.field_values)
+    stub = _build_stub(node_type=match.node_type, field_values=field_values)
+
+    existing = await uow.nodes.find(id_=stub.id)
+
+    return existing.entity if existing is not None else stub
+
+
+class IngestText(Query[Graph]):
+    uow_factory: Callable[[], UoW]
+    pattern_set_repository: PatternSetRepository
+    pattern_set_id: PatternSetID
+    text: str
+
+    @override
+    def __init__(
+        self,
+        *,
+        uow_factory: Callable[[], UoW],
+        pattern_set_repository: PatternSetRepository,
+        pattern_set_id: PatternSetID,
+        text: str,
+    ) -> None:
+        super().__init__(
+            uow_factory=uow_factory,
+            pattern_set_repository=pattern_set_repository,
+            pattern_set_id=pattern_set_id,
+            text=text,
+        )
+
+    @override
+    async def execute(self) -> Graph:
+        _logger.info("text_ingestion.start", pattern_set_id=self.pattern_set_id)
+
+        pattern_set = await self.pattern_set_repository.get(id_=self.pattern_set_id)
+        matches = extract_matches(text=self.text, pattern_set=pattern_set)
+
+        if not matches:
+            raise NoPatternMatchedError(pattern_set_id=self.pattern_set_id)
+
+        fetched_at = datetime.now(tz=UTC)
+        text_source = TextSource(text=self.text)
+
+        nodes: set[Node[UUID]] = {text_source}
+        edges: set[Edge[UUID, UUID, UUID]] = set()
+
+        async with self.uow_factory() as uow:
+            for match in matches:
+                node = await _resolve_node(uow=uow, match=match)
+                edge = _build_mention_edge(
+                    node=node,
+                    text_source_id=text_source.id,
+                    matched_field=match.matched_field,
+                    pattern_id=self.pattern_set_id,
+                )
+
+                nodes.add(node)
+                edges.add(edge)
+
+            graph = Graph(
+                edges=frozenset(edges), nodes=frozenset(nodes), root_id=text_source.id
+            )
+
+            await uow.graphs.merge(
+                revision=EntityRevision(
+                    entity=graph,
+                    fetched_at=fetched_at,
+                    merged_at=None,
+                    source=_SOURCE,
+                )
+            )
+
+        _logger.info(
+            "text_ingestion.success",
+            pattern_set_id=self.pattern_set_id,
+            match_count=len(matches),
+        )
+
+        return graph

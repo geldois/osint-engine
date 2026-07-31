@@ -40,6 +40,7 @@ flowchart LR
     FastAPI --> ExpansionRouters("CPF / CNEP / CEIS Routers")
     FastAPI --> CredentialsRouter("Credentials Router")
     FastAPI --> HealthRouter("Health Router")
+    FastAPI --> TextIngestionRouter("Text Ingestion Router")
 
     AuthRouter --> PostToken("POST /auth/token")
     AuthRouter --> PostViewerToken("POST /auth/viewer-token")
@@ -54,9 +55,14 @@ flowchart LR
     CredentialsRouter --> GetCredentials("GET /credentials")
     HealthRouter --> Liveness("GET /health")
     HealthRouter --> Readiness("GET /health/ready")
+    TextIngestionRouter --> JwtGuard
+    TextIngestionRouter --> ExpansionRateLimit
+    TextIngestionRouter --> GetPatterns("GET /text-ingestion/patterns")
+    TextIngestionRouter --> PostIngestion("POST /text-ingestion")
 
     Bootstrap("build_container") --> Container("Container")
     Container --> Fetchers("Fetchers")
+    Container --> PatternSets("PatternSetRepository")
     Container --> Policies("Policies")
     Container --> Services("Services")
     Container --> UoWFactory("UoWFactory")
@@ -67,9 +73,13 @@ flowchart LR
     UseCases --> ExpandByCNPJ("ExpandByCNPJ")
     UseCases --> ExpandByPortal("ExpandBy CPF / CNEP / CEIS")
     UseCases --> CredentialUseCases("List / Save ExternalCredential")
+    UseCases --> IngestText("IngestText")
+    UseCases --> ListPatternSets("ListTextPatternSets")
     Services --> PyJWTService("PyJWTService")
     Fetchers --> CNPJFetcher("BrasilAPICNPJv1Fetcher")
     Fetchers --> PortalFetchers("Portal da Transparência Fetchers")
+    PatternSets --> MemPatternSets("MemPatternSetRepository")
+    MemPatternSets --> DefaultPatterns("BRAZILIAN_DOCUMENT_PATTERNS")
 
     PostToken --> AuthenticateUser
     PostViewerToken --> PyJWTService
@@ -77,9 +87,19 @@ flowchart LR
     GetExpansion --> ExpandByPortal
     PostCredential --> CredentialUseCases
     GetCredentials --> CredentialUseCases
+    GetPatterns --> ListPatternSets
+    PostIngestion --> IngestText
     Readiness --> ReadinessProbe
     RoleGuard --> PyJWTService
     JwtGuard --> PyJWTService
+
+    IngestText --> UoWFactory
+    IngestText --> PatternSets
+    IngestText --> ExtractMatches("extract_matches · regex + mod-11 checksum")
+    ExtractMatches --> DefaultPatterns
+    IngestText --> TextSourceNode("TextSource")
+    IngestText --> MentionEdges("Person/Company/AddressMentionedInText")
+    ListPatternSets --> PatternSets
 
     AuthenticateUser --> UoWFactory
     AuthenticateUser --> Argon2("Argon2PasswordHasher")
@@ -127,6 +147,8 @@ flowchart LR
     EdgeRepo --> Edge
     GraphRepo --> Graph
     UserRepo --> User
+    GraphRepo -.cascades new content only.-> NodeRepo
+    GraphRepo -.cascades new content only.-> EdgeRepo
 
     GetCNPJ --> GraphPresenter("Graph Presenter")
     GraphPresenter --> GraphSchema("GraphSchema")
@@ -172,6 +194,31 @@ Returns a `GraphSchema` containing the root company, all connected entities, and
 both `ADMIN` and `VIEWER` tokens. The current data source is [BrasilAPI](https://brasilapi.com.br) (see
 [ADR-0005](docs/adr/0005-brasilapi-as-mvp-cnpj-data-source.md)).
 
+### Text ingestion
+
+```http
+GET /text-ingestion/patterns
+Authorization: Bearer <token>
+```
+
+Lists the available pattern sets and which fields each one covers, without exposing the underlying compiled regex.
+
+```http
+POST /text-ingestion
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "text": "...", "pattern_set_id": "brazilian_documents_v1" }
+```
+
+Extracts CPF/CNPJ/CEP-and-number from free text via regex plus a mod-11 checksum, never calling any external API. Every
+match is checked against what the graph already knows by deterministic id: an existing entity is only linked, a new one
+becomes a minimal stub (identity field only, nothing invented). The response is a `GraphSchema` rooted at a `TextSource`
+node, with a `PersonMentionedInText`/`CompanyMentionedInText`/`AddressMentionedInText` edge per match. Returns `422` if
+no pattern in the set matched anything, `404` for an unknown `pattern_set_id`. See
+[ADR-0029](docs/adr/0029-stub-and-link-text-ingestion-over-external-refetch.md) and
+[ADR-0030](docs/adr/0030-per-request-pattern-set-injection.md).
+
 ### Health
 
 ```http
@@ -189,14 +236,16 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 
 ### Rate limiting
 
-| Endpoint                  | Limit      | Keyed by                |
-| ------------------------- | ---------- | ----------------------- |
-| `POST /auth/token`        | 5 / 15 min | Client IP               |
-| `POST /auth/viewer-token` | 20 / min   | Client IP               |
-| `GET /cnpj/{cnpj}`        | 100 / min  | Shared per-route bucket |
-| `GET /cpf/{cpf}`          | 100 / min  | Shared per-route bucket |
-| `GET /cnep/{cpf_or_cnpj}` | 100 / min  | Shared per-route bucket |
-| `GET /ceis/{cpf_or_cnpj}` | 100 / min  | Shared per-route bucket |
+| Endpoint                       | Limit      | Keyed by                |
+| ------------------------------ | ---------- | ----------------------- |
+| `POST /auth/token`             | 5 / 15 min | Client IP               |
+| `POST /auth/viewer-token`      | 20 / min   | Client IP               |
+| `GET /cnpj/{cnpj}`             | 100 / min  | Shared per-route bucket |
+| `GET /cpf/{cpf}`               | 100 / min  | Shared per-route bucket |
+| `GET /cnep/{cpf_or_cnpj}`      | 100 / min  | Shared per-route bucket |
+| `GET /ceis/{cpf_or_cnpj}`      | 100 / min  | Shared per-route bucket |
+| `GET /text-ingestion/patterns` | 100 / min  | Shared per-route bucket |
+| `POST /text-ingestion`         | 100 / min  | Shared per-route bucket |
 
 A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
 `Access-Control-Expose-Headers`. See [ADR-0021](docs/adr/0021-fastapi-throttle-over-slowapi-for-rate-limiting.md). Each

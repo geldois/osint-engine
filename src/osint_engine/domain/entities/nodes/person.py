@@ -21,11 +21,19 @@ class Person(
     Node[PersonID], id_fields=frozenset({"cpf"}), namespace=EntityNAMESPACE.PERSON
 ):
     age_range: str | None
+    birthdate: str | None
     cpf: str
-    name: str
+    name: str | None
 
     @override
-    def __init__(self, *, age_range: str | None, cpf: str, name: str) -> None:
+    def __init__(
+        self,
+        *,
+        age_range: str | None,
+        birthdate: str | None,
+        cpf: str,
+        name: str | None,
+    ) -> None:
         super().__init__(**own_init_kwargs(**locals()))
 
     @classmethod

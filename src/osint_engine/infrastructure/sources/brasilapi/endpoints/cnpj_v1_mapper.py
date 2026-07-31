@@ -133,6 +133,7 @@ def _map_phones(*, payload: Payload) -> set[Phone]:
 def _map_person(*, payload: Payload) -> Person:
     return Person(
         age_range=payload.require(key="faixa_etaria", expected_type=str),
+        birthdate=None,
         cpf=payload.require(key="cnpj_cpf_do_socio", expected_type=str),
         name=payload.require(key="nome_socio", expected_type=str),
     )

@@ -8,17 +8,26 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from osint_engine.domain.entities.bases.edge import Edge
+from osint_engine.domain.entities.edges.address_mentioned_in_text import (
+    AddressMentionedInText,
+)
 from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
 from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
 from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
 from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
 from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
+from osint_engine.domain.entities.edges.company_mentioned_in_text import (
+    CompanyMentionedInText,
+)
 from osint_engine.domain.entities.edges.company_owns_company import CompanyOwnsCompany
 from osint_engine.domain.entities.edges.company_received_sanction import (
     CompanyReceivedSanction,
 )
 from osint_engine.domain.entities.edges.person_has_email import PersonHasEmail
 from osint_engine.domain.entities.edges.person_has_phone import PersonHasPhone
+from osint_engine.domain.entities.edges.person_mentioned_in_text import (
+    PersonMentionedInText,
+)
 from osint_engine.domain.entities.edges.person_owns_company import PersonOwnsCompany
 from osint_engine.domain.entities.edges.person_received_sanction import (
     PersonReceivedSanction,
@@ -54,6 +63,18 @@ class EdgeSchema[EdgeType_co: Edge[UUID, UUID, UUID]](ABC, BaseModel):
     @classmethod
     @abstractmethod
     def domain(cls) -> type[EdgeType_co]: ...
+
+
+class AddressMentionedInTextSchema(EdgeSchema[AddressMentionedInText]):
+    type: Literal["address_mentioned_in_text"] = "address_mentioned_in_text"
+
+    matched_field: str
+    pattern_id: str
+
+    @classmethod
+    @override
+    def domain(cls) -> type[AddressMentionedInText]:
+        return AddressMentionedInText
 
 
 class CompanyHasCnaeSchema(EdgeSchema[CompanyHasCnae]):
@@ -101,6 +122,18 @@ class CompanyLocatedAtSchema(EdgeSchema[CompanyLocatedAt]):
         return CompanyLocatedAt
 
 
+class CompanyMentionedInTextSchema(EdgeSchema[CompanyMentionedInText]):
+    type: Literal["company_mentioned_in_text"] = "company_mentioned_in_text"
+
+    matched_field: str
+    pattern_id: str
+
+    @classmethod
+    @override
+    def domain(cls) -> type[CompanyMentionedInText]:
+        return CompanyMentionedInText
+
+
 class CompanyOwnsCompanySchema(EdgeSchema[CompanyOwnsCompany]):
     type: Literal["company_owns_company"] = "company_owns_company"
 
@@ -140,6 +173,18 @@ class PersonHasPhoneSchema(EdgeSchema[PersonHasPhone]):
         return PersonHasPhone
 
 
+class PersonMentionedInTextSchema(EdgeSchema[PersonMentionedInText]):
+    type: Literal["person_mentioned_in_text"] = "person_mentioned_in_text"
+
+    matched_field: str
+    pattern_id: str
+
+    @classmethod
+    @override
+    def domain(cls) -> type[PersonMentionedInText]:
+        return PersonMentionedInText
+
+
 class PersonOwnsCompanySchema(EdgeSchema[PersonOwnsCompany]):
     type: Literal["person_owns_company"] = "person_owns_company"
 
@@ -174,15 +219,18 @@ class PersonResideAtSchema(EdgeSchema[PersonResideAt]):
 
 
 EdgeSchemaUnion = (
-    CompanyHasCnaeSchema
+    AddressMentionedInTextSchema
+    | CompanyHasCnaeSchema
     | CompanyHasEmailSchema
     | CompanyHasMemberSchema
     | CompanyHasPhoneSchema
     | CompanyLocatedAtSchema
+    | CompanyMentionedInTextSchema
     | CompanyOwnsCompanySchema
     | CompanyReceivedSanctionSchema
     | PersonHasEmailSchema
     | PersonHasPhoneSchema
+    | PersonMentionedInTextSchema
     | PersonOwnsCompanySchema
     | PersonReceivedSanctionSchema
     | PersonResideAtSchema
@@ -220,15 +268,18 @@ class EdgeSchemaRegistry:
         cls._REGISTRY[key] = schema
 
 
+EdgeSchemaRegistry.register(AddressMentionedInTextSchema)
 EdgeSchemaRegistry.register(CompanyHasCnaeSchema)
 EdgeSchemaRegistry.register(CompanyHasEmailSchema)
 EdgeSchemaRegistry.register(CompanyHasMemberSchema)
 EdgeSchemaRegistry.register(CompanyHasPhoneSchema)
 EdgeSchemaRegistry.register(CompanyLocatedAtSchema)
+EdgeSchemaRegistry.register(CompanyMentionedInTextSchema)
 EdgeSchemaRegistry.register(CompanyOwnsCompanySchema)
 EdgeSchemaRegistry.register(CompanyReceivedSanctionSchema)
 EdgeSchemaRegistry.register(PersonHasEmailSchema)
 EdgeSchemaRegistry.register(PersonHasPhoneSchema)
+EdgeSchemaRegistry.register(PersonMentionedInTextSchema)
 EdgeSchemaRegistry.register(PersonOwnsCompanySchema)
 EdgeSchemaRegistry.register(PersonReceivedSanctionSchema)
 EdgeSchemaRegistry.register(PersonResideAtSchema)

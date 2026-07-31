@@ -9,6 +9,7 @@ from osint_engine.domain.entities.nodes.email import Email
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.domain.entities.nodes.phone import Phone
 from osint_engine.domain.entities.nodes.sanction import Sanction
+from osint_engine.domain.entities.nodes.text_source import TextSource
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
 from osint_engine.interface.http.schemas.node_schema import (
     AddressSchema,
@@ -19,6 +20,7 @@ from osint_engine.interface.http.schemas.node_schema import (
     PersonSchema,
     PhoneSchema,
     SanctionSchema,
+    TextSourceSchema,
 )
 
 if TYPE_CHECKING:
@@ -68,7 +70,11 @@ def email_to_schema(*, node: Email) -> EmailSchema:
 
 def person_to_schema(*, node: Person) -> PersonSchema:
     return PersonSchema(
-        id=node.id, age_range=node.age_range, cpf=node.cpf, name=node.name
+        id=node.id,
+        age_range=node.age_range,
+        birthdate=node.birthdate,
+        cpf=node.cpf,
+        name=node.name,
     )
 
 
@@ -92,6 +98,10 @@ def sanction_to_schema(*, node: Sanction) -> SanctionSchema:
     )
 
 
+def text_source_to_schema(*, node: TextSource) -> TextSourceSchema:
+    return TextSourceSchema(id=node.id, text=node.text)
+
+
 _NODE_MAP: dict[type[Node[UUID]], Callable[..., NodeSchemaUnion]] = {
     Address: address_to_schema,
     Cnae: cnae_to_schema,
@@ -100,6 +110,7 @@ _NODE_MAP: dict[type[Node[UUID]], Callable[..., NodeSchemaUnion]] = {
     Person: person_to_schema,
     Phone: phone_to_schema,
     Sanction: sanction_to_schema,
+    TextSource: text_source_to_schema,
 }
 
 

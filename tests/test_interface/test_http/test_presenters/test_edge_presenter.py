@@ -5,16 +5,25 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from osint_engine.domain.entities.edges.address_mentioned_in_text import (
+    AddressMentionedInText,
+)
 from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
 from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
 from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
 from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
 from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
+from osint_engine.domain.entities.edges.company_mentioned_in_text import (
+    CompanyMentionedInText,
+)
 from osint_engine.domain.entities.edges.company_received_sanction import (
     CompanyReceivedSanction,
 )
 from osint_engine.domain.entities.edges.person_has_email import PersonHasEmail
 from osint_engine.domain.entities.edges.person_has_phone import PersonHasPhone
+from osint_engine.domain.entities.edges.person_mentioned_in_text import (
+    PersonMentionedInText,
+)
 from osint_engine.domain.entities.edges.person_owns_company import PersonOwnsCompany
 from osint_engine.domain.entities.edges.person_received_sanction import (
     PersonReceivedSanction,
@@ -27,18 +36,23 @@ from osint_engine.domain.entities.nodes.email import EmailID
 from osint_engine.domain.entities.nodes.person import PersonID
 from osint_engine.domain.entities.nodes.phone import PhoneID
 from osint_engine.domain.entities.nodes.sanction import SanctionID
+from osint_engine.domain.entities.nodes.text_source import TextSourceID
+from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
 from osint_engine.interface.http.presenters.edge_presenter import edge_to_schema
 from osint_engine.interface.http.schemas.edge_schema import (
+    AddressMentionedInTextSchema,
     CompanyHasCnaeSchema,
     CompanyHasEmailSchema,
     CompanyHasMemberSchema,
     CompanyHasPhoneSchema,
     CompanyLocatedAtSchema,
+    CompanyMentionedInTextSchema,
     CompanyReceivedSanctionSchema,
     EdgeSchema,
     PersonHasEmailSchema,
     PersonHasPhoneSchema,
+    PersonMentionedInTextSchema,
     PersonOwnsCompanySchema,
     PersonReceivedSanctionSchema,
     PersonResideAtSchema,
@@ -56,6 +70,8 @@ _email_id = EmailID(uuid4())
 _person_id = PersonID(uuid4())
 _phone_id = PhoneID(uuid4())
 _sanction_id = SanctionID(uuid4())
+_text_source_id = TextSourceID(uuid4())
+_pattern_id = PatternSetID("brazilian_documents_v1")
 
 _COMPANY_HAS_CNAE = CompanyHasCnae(source_id=_company_id, target_id=_cnae_id)
 
@@ -88,11 +104,37 @@ _PERSON_RECEIVED_SANCTION = PersonReceivedSanction(
 
 _PERSON_RESIDE_AT = PersonResideAt(source_id=_person_id, target_id=_address_id)
 
+_ADDRESS_MENTIONED_IN_TEXT = AddressMentionedInText(
+    source_id=_address_id,
+    target_id=_text_source_id,
+    matched_field="cep,number",
+    pattern_id=_pattern_id,
+)
+
+_COMPANY_MENTIONED_IN_TEXT = CompanyMentionedInText(
+    source_id=_company_id,
+    target_id=_text_source_id,
+    matched_field="cnpj",
+    pattern_id=_pattern_id,
+)
+
+_PERSON_MENTIONED_IN_TEXT = PersonMentionedInText(
+    source_id=_person_id,
+    target_id=_text_source_id,
+    matched_field="cpf",
+    pattern_id=_pattern_id,
+)
+
 
 class TestEdgePresenterDispatch:
     @pytest.mark.parametrize(
         ("edge", "expected_schema_class"),
         [
+            pytest.param(
+                _ADDRESS_MENTIONED_IN_TEXT,
+                AddressMentionedInTextSchema,
+                id="address_mentioned_in_text",
+            ),
             pytest.param(
                 _COMPANY_HAS_CNAE, CompanyHasCnaeSchema, id="company_has_cnae"
             ),
@@ -109,6 +151,11 @@ class TestEdgePresenterDispatch:
                 _COMPANY_LOCATED_AT, CompanyLocatedAtSchema, id="company_located_at"
             ),
             pytest.param(
+                _COMPANY_MENTIONED_IN_TEXT,
+                CompanyMentionedInTextSchema,
+                id="company_mentioned_in_text",
+            ),
+            pytest.param(
                 _COMPANY_RECEIVED_SANCTION,
                 CompanyReceivedSanctionSchema,
                 id="company_received_sanction",
@@ -118,6 +165,11 @@ class TestEdgePresenterDispatch:
             ),
             pytest.param(
                 _PERSON_HAS_PHONE, PersonHasPhoneSchema, id="person_has_phone"
+            ),
+            pytest.param(
+                _PERSON_MENTIONED_IN_TEXT,
+                PersonMentionedInTextSchema,
+                id="person_mentioned_in_text",
             ),
             pytest.param(
                 _PERSON_OWNS_COMPANY, PersonOwnsCompanySchema, id="person_owns_company"
@@ -166,6 +218,21 @@ class TestEdgePresenterFieldMapping:
         assert result.entry_date == _PERSON_OWNS_COMPANY.entry_date
 
         assert result.role == _PERSON_OWNS_COMPANY.role
+
+    def test_person_mentioned_in_text_extra_fields_are_correctly_mapped(self) -> None:
+        result = edge_to_schema(_PERSON_MENTIONED_IN_TEXT)
+
+        assert isinstance(result, PersonMentionedInTextSchema)
+
+        assert result.id == _PERSON_MENTIONED_IN_TEXT.id
+
+        assert result.source_id == _PERSON_MENTIONED_IN_TEXT.source_id
+
+        assert result.target_id == _PERSON_MENTIONED_IN_TEXT.target_id
+
+        assert result.matched_field == _PERSON_MENTIONED_IN_TEXT.matched_field
+
+        assert result.pattern_id == _PERSON_MENTIONED_IN_TEXT.pattern_id
 
 
 class TestEdgePresenterErrors:

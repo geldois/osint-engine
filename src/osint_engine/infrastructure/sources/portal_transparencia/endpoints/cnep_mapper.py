@@ -97,6 +97,7 @@ def _map_company_stub(*, payload: Payload) -> Company:
 def _map_person_stub(*, payload: Payload) -> Person:
     return Person(
         age_range=None,
+        birthdate=None,
         cpf=payload.require(key="cpfFormatado", expected_type=str),
         name=payload.require(key="nome", expected_type=str),
     )

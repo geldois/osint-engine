@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 def _map_person(*, payload: Payload) -> Person:
     return Person(
         age_range=None,
+        birthdate=None,
         cpf=payload.require(key="cpf", expected_type=str),
         name=payload.require(key="nome", expected_type=str),
     )

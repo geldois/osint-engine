@@ -24,6 +24,9 @@ from osint_engine.interface.http.fastapi.routers.credentials_router import (
 from osint_engine.interface.http.fastapi.routers.health_router import (
     build_health_router,
 )
+from osint_engine.interface.http.fastapi.routers.text_ingestion_router import (
+    build_text_ingestion_router,
+)
 
 if TYPE_CHECKING:
     from osint_engine.config.container import Container
@@ -53,6 +56,7 @@ def build_fastapi_app(*, container: Container) -> FastAPI:
     fastapi_app.include_router(router=build_cpf_router(container=container))
     fastapi_app.include_router(router=build_credentials_router(container=container))
     fastapi_app.include_router(router=build_health_router(container=container))
+    fastapi_app.include_router(router=build_text_ingestion_router(container=container))
 
     error_handler = build_error_handler(container=container)
 

@@ -16,6 +16,7 @@ from osint_engine.domain.entities.nodes.email import Email
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.domain.entities.nodes.phone import Phone
 from osint_engine.domain.entities.nodes.sanction import Sanction
+from osint_engine.domain.entities.nodes.text_source import TextSource
 from osint_engine.interface.http.errors.schema_error import (
     DuplicateSchemaRegistrationError,
     MissingDiscriminatorFieldError,
@@ -113,9 +114,10 @@ class PersonSchema(NodeSchema[Person]):
     type: Literal["person"] = "person"
 
     age_range: str | None
+    birthdate: str | None
     cpf: str
     id: UUID
-    name: str
+    name: str | None
 
     @classmethod
     @override
@@ -156,6 +158,18 @@ class SanctionSchema(NodeSchema[Sanction]):
         return Sanction
 
 
+class TextSourceSchema(NodeSchema[TextSource]):
+    type: Literal["text_source"] = "text_source"
+
+    id: UUID
+    text: str
+
+    @classmethod
+    @override
+    def domain(cls) -> type[TextSource]:
+        return TextSource
+
+
 # UNION
 
 
@@ -167,6 +181,7 @@ NodeSchemaUnion = (
     | PersonSchema
     | PhoneSchema
     | SanctionSchema
+    | TextSourceSchema
 )
 
 NodeUnion = Annotated[NodeSchemaUnion, Field(discriminator="type")]
@@ -206,3 +221,4 @@ NodeSchemaRegistry.register(EmailSchema)
 NodeSchemaRegistry.register(PersonSchema)
 NodeSchemaRegistry.register(PhoneSchema)
 NodeSchemaRegistry.register(SanctionSchema)
+NodeSchemaRegistry.register(TextSourceSchema)

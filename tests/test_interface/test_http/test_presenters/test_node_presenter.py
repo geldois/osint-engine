@@ -12,6 +12,7 @@ from osint_engine.domain.entities.nodes.email import Email
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.domain.entities.nodes.phone import Phone
 from osint_engine.domain.entities.nodes.sanction import Sanction
+from osint_engine.domain.entities.nodes.text_source import TextSource
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
 from osint_engine.interface.http.presenters.node_presenter import node_to_schema
 from osint_engine.interface.http.schemas.node_schema import (
@@ -23,6 +24,7 @@ from osint_engine.interface.http.schemas.node_schema import (
     PersonSchema,
     PhoneSchema,
     SanctionSchema,
+    TextSourceSchema,
 )
 
 if TYPE_CHECKING:
@@ -62,7 +64,12 @@ _COMPANY = Company(
 
 _EMAIL = Email(address="user@example.com")
 
-_PERSON = Person(age_range="31 a 40 anos", cpf="123.456.789-09", name="João Silva")
+_PERSON = Person(
+    age_range="31 a 40 anos",
+    birthdate="1990-01-01",
+    cpf="123.456.789-09",
+    name="João Silva",
+)
 
 _PHONE = Phone(number="+5511999999999")
 
@@ -79,6 +86,8 @@ _SANCTION = Sanction(
     start_date="2024-01-01",
 )
 
+_TEXT_SOURCE = TextSource(text="CPF 123.456.789-09 mencionado no documento.")
+
 
 # TESTS
 
@@ -94,6 +103,7 @@ class TestNodePresenterDispatch:
             pytest.param(_PERSON, PersonSchema, id="person"),
             pytest.param(_PHONE, PhoneSchema, id="phone"),
             pytest.param(_SANCTION, SanctionSchema, id="sanction"),
+            pytest.param(_TEXT_SOURCE, TextSourceSchema, id="text_source"),
         ],
     )
     def test_dispatches_to_correct_schema_type(
@@ -164,6 +174,8 @@ class TestNodePresenterFieldMapping:
 
         assert result.age_range == _PERSON.age_range
 
+        assert result.birthdate == _PERSON.birthdate
+
         assert result.cpf == _PERSON.cpf
 
         assert result.name == _PERSON.name
@@ -194,6 +206,15 @@ class TestNodePresenterFieldMapping:
         assert result.sanctioning_body == _SANCTION.sanctioning_body
 
         assert result.start_date == _SANCTION.start_date
+
+    def test_text_source_fields_are_correctly_mapped(self) -> None:
+        result = node_to_schema(_TEXT_SOURCE)
+
+        assert isinstance(result, TextSourceSchema)
+
+        assert result.id == _TEXT_SOURCE.id
+
+        assert result.text == _TEXT_SOURCE.text
 
 
 class TestNodePresenterErrors:

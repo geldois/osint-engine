@@ -9,7 +9,7 @@ from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
 
 
 def _make_person(*, cpf: str, name: str = "TARCIANA PAULA GOMES MEDEIROS") -> Person:
-    return Person(age_range="Entre 41 a 50 anos", cpf=cpf, name=name)
+    return Person(age_range="Entre 41 a 50 anos", birthdate=None, cpf=cpf, name=name)
 
 
 # TESTS
