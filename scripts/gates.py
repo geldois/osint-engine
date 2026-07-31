@@ -54,7 +54,20 @@ _POST_SYNC: tuple[Gate, ...] = (
 )
 _SUITE = Gate(
     "pytest",
-    (*_UV_RUN, "pytest", "--cov", "--cov-branch", "--cov-report=xml"),
+    # -q --no-header --tb=short keep the captured output lean so a failure surfaces
+    # the FAILURES block (file:line, assertion, values) without the verbose
+    # per-test chatter — gate-scoped, so a dev's manual `pytest path::test` still
+    # gets full tracebacks. Runner discards this entirely on success.
+    (
+        *_UV_RUN,
+        "pytest",
+        "-q",
+        "--no-header",
+        "--tb=short",
+        "--cov",
+        "--cov-branch",
+        "--cov-report=xml",
+    ),
 )
 
 

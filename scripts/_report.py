@@ -11,6 +11,7 @@ still carries the complete untrimmed per-gate record for programmatic use.
 from __future__ import annotations
 
 import json
+import re
 import sys
 import threading
 import time
@@ -26,9 +27,14 @@ if TYPE_CHECKING:
 REPORT_PATH = Path("build/reports/gates.json")
 
 _TICK_S = 0.5
-# Cap each failing gate's inline output so a long pytest traceback can't flood the
-# committer's context; the untrimmed record is always in the JSON report.
+# Safety-net cap on each failing gate's inline output so a pathological failure
+# (dozens of broken tests) can't flood the committer's context; the pytest gate
+# is already run with -q --tb=short so this is rarely the active trimmer. The
+# untrimmed record is always in the JSON report.
 _MAX_INLINE_LINES = 60
+# pytest progress rows (`… [ 85%]`) and bare status-dot lines (`....F..`) carry no
+# failure signal — the FAILURES block and summary do.
+_PYTEST_PROGRESS = re.compile(r"\[\s*\d+%\]\s*$|^\s*[.sFExXpP]+\s*$")
 
 
 @dataclass(frozen=True)
@@ -104,13 +110,16 @@ def print_verdict(outcomes: Sequence[GateOutcome], report_path: Path) -> None:
         )
 
 
+def _is_noise(line: str) -> bool:
+    """True for a line carrying no failure signal — runner warnings, pytest chatter."""
+    return line.lstrip().startswith("warning: `VIRTUAL_ENV") or bool(
+        _PYTEST_PROGRESS.search(line)
+    )
+
+
 def _actionable(output: str) -> str:
-    """Strip runner noise and blank edges, tail-cap, so only the signal is shown."""
-    lines = [
-        line
-        for line in output.splitlines()
-        if not line.lstrip().startswith("warning: `VIRTUAL_ENV")
-    ]
+    """Strip runner/pytest noise and blank edges, tail-cap, so only the signal shows."""
+    lines = [line for line in output.splitlines() if not _is_noise(line)]
     while lines and not lines[0].strip():
         lines.pop(0)
     while lines and not lines[-1].strip():
