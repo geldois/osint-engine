@@ -2,7 +2,7 @@
 
 Each hook reads the event JSON on stdin and, when it must act, writes a single
 Claude Code hook-output object on stdout. Stdlib-only so the hooks run under
-``uv run --no-sync python`` with no project imports, and OS-portable (the marker
+``uv run --no-project python`` with no project env, and OS-portable (the marker
 directory comes from ``tempfile``, never a hardcoded ``/tmp``).
 """
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 import sys
 
-from _hook_io import deny, field, read_event, tool_input
+from _hook_io import deny, read_event, tool_input
 
 # Strip every leading runner/flag token (uv run, uv run --no-sync, python -m,
 # uvx, npx, mise exec --, stray -q/--flags) so wrapping the call cannot bypass
@@ -37,13 +37,7 @@ _REASON = (
 
 def main() -> int:
     """Deny a bypassing full-suite run; allow targeted runs and non-matches."""
-    event = read_event()
-    # The gate runner itself shells out to these tools inside its snapshot —
-    # never block the runner's own children.
-    if field(event, "agent_type") == "checks-triager":
-        return 0
-
-    command = tool_input(event, "command")
+    command = tool_input(read_event(), "command")
     if not command:
         return 0
 

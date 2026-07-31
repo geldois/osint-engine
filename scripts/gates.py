@@ -5,10 +5,10 @@ branch coverage. ``--staged`` materialises the git index into an isolated,
 freshly-synced snapshot and runs the gates there (the pre-commit / pre-merge
 path); without it the gates run in the current directory (CI, manual runs).
 
-Ordering is fixed: gates that need no virtualenv (``lock-check``, ``markdownlint``)
-run against the pristine snapshot *before* ``env-sync`` can rewrite its lockfile
-or add a ``.venv``, then the environment is built, then the import/type/test
-gates run against it.
+Ordering is fixed: gates that need no virtualenv (``lock-check``, ``dprint``,
+``sqruff``) run against the pristine snapshot *before* ``env-sync`` can rewrite
+its lockfile or add a ``.venv``, then the environment is built, then the
+import/type/test gates run against it.
 """
 
 from __future__ import annotations

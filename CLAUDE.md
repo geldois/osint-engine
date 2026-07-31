@@ -29,8 +29,7 @@ config was clobbered, `git restore` it — everything crg can overwrite is versi
 ## Quality gates
 
 One façade: `uv run python -m scripts check` (fast) or `check --full` (adds pytest + branch coverage). A `PreToolUse`
-hook blocks raw full-suite runs (`pytest`, `ruff`, `basedpyright`, `lint-imports`, `cosmic-ray`) and redirects here; a
-targeted single-file or single-test run is allowed. Every commit is born-full-green — the git `pre-commit` runs
-`check --full` on a materialized snapshot, so committing needs Docker (testcontainers) and a local `.env` holding the
-Portal key, which the runner loads itself (no manual sourcing). Mutation is periodic
-(`uv run python -m scripts mutation`), never a hook. Per-edit autofix + residual report is automatic.
+hook blocks raw full-suite runs (`pytest`, `ruff`, `basedpyright`, `lint-imports`, `sqruff`, `cosmic-ray`) and redirects
+here; a targeted single-file or single-test run is allowed. Committing runs the full gate on a materialized snapshot, so
+it needs Docker (testcontainers) and a local `.env` with the Portal key (the runner loads it — no manual sourcing).
+Mutation: `uv run python -m scripts mutation`.
