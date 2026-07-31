@@ -19,9 +19,10 @@ from _hook_io import add_context, read_event, tool_input
 _RUFF = ("uv", "run", "--no-sync", "ruff")
 _BASEDPYRIGHT = ("uv", "run", "--no-sync", "basedpyright")
 _DPRINT = ("mise", "exec", "--", "dprint", "fmt")
+_SQRUFF = ("mise", "exec", "--", "sqruff")
 
 # The extensions dprint owns (json/toml/yaml/markdown) — reflowed in place, no
-# residual. Python is handled by ruff + basedpyright below.
+# residual. Python is handled by ruff + basedpyright below; .sql by sqruff.
 _DPRINT_EXTENSIONS = frozenset({".md", ".json", ".jsonc", ".toml", ".yaml", ".yml"})
 
 
@@ -39,7 +40,7 @@ def main() -> int:
         return 0
 
     suffix = path.suffix
-    if suffix != ".py" and suffix not in _DPRINT_EXTENSIONS:
+    if suffix not in {".py", ".sql"} and suffix not in _DPRINT_EXTENSIONS:
         return 0
 
     root = _git_root(path.parent)
@@ -52,6 +53,9 @@ def main() -> int:
         _run([*_RUFF, "check", "--fix", str(path)], root)
         _collect(sections, "ruff", [*_RUFF, "check", str(path)], root)
         _collect(sections, "basedpyright", [*_BASEDPYRIGHT, str(path)], root)
+    elif suffix == ".sql":
+        _run([*_SQRUFF, "fix", str(path)], root)
+        _collect(sections, "sqruff", [*_SQRUFF, "lint", str(path)], root)
     else:
         relative = path.relative_to(root)
         _collect(sections, "dprint", [*_DPRINT, str(relative)], root)

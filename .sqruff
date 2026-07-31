@@ -1,0 +1,11 @@
+[sqruff]
+dialect = postgres
+templater = placeholder
+max_line_length = 120
+
+[sqruff:indentation]
+tab_space_size = 4
+indent_unit = space
+
+[sqruff:templater:placeholder]
+param_style = colon

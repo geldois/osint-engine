@@ -36,6 +36,11 @@ _PRE_SYNC: tuple[Gate, ...] = (
     # canonical doc is not in its canonical 120-col form. Scope/config in
     # dprint.json; the per-edit hook runs `dprint fmt` so this is born green.
     Gate("dprint", ("mise", "exec", "--", "dprint", "check")),
+    # Deterministic SQL linter/formatter (Rust, sqlfluff-compatible). Postgres
+    # dialect with the colon-placeholder templater so `:name` bind params are
+    # not misread as operators; config in .sqruff. The per-edit hook runs
+    # `sqruff fix` so committed migrations/queries are born green.
+    Gate("sqruff", ("mise", "exec", "--", "sqruff", "lint", "migrations", "src")),
 )
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
 # Need the snapshot's own venv (editable on the snapshot source).

@@ -20,9 +20,9 @@ from _hook_io import deny, field, read_event, tool_input
 _LEADING = re.compile(r"^(?:uv|uvx|run|python3?|npx|mise|exec|--?\S+)\s+")
 _TOOL = re.compile(
     r"^(?:pytest|ruff check|ruff format|basedpyright"
-    r"|cosmic-ray|cr-rate|lint-imports)\b",
+    r"|cosmic-ray|cr-rate|lint-imports|sqruff)\b",
 )
-_TARGETED_FILE = re.compile(r"\s\S+\.py(?:\s|$)")
+_TARGETED_FILE = re.compile(r"\s\S+\.(?:py|sql)(?:\s|$)")
 
 _REASON = (
     "Full lint/type/test/mutation runs go through the gate facade, not raw "
