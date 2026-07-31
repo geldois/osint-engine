@@ -1,11 +1,3 @@
-"""Self-owned git hook installation (ADR 0025) — no pre-commit framework.
-
-Both managed hooks run the full gate suite against the materialised staged
-snapshot, so every commit (and every local merge commit) is born full-green.
-That makes a separate pre-push replay redundant, so none is installed. Install
-fails outside a git repository, is idempotent, and never clobbers a foreign hook.
-"""
-
 from __future__ import annotations
 
 import stat
@@ -16,20 +8,17 @@ from pathlib import Path
 _SENTINEL = "# managed by osint-engine scripts.hooks (ADR 0025)"
 
 _HOOKS: dict[str, str] = {
-    # pre-commit auto-fixes fully-staged files and re-stages them before the
-    # full gate, so a trivially-fixable issue never blocks the commit. A merge
-    # commit keeps the pure verifier — no auto-fix while resolving a merge.
     "pre-commit": "uv run python -m scripts precommit",
     "pre-merge-commit": "uv run python -m scripts check --staged --full",
+    "post-commit": "uv run --no-sync code-review-graph update",
 }
 
 
 class NotAGitRepositoryError(RuntimeError):
-    """Raised when hook installation runs outside a git working tree."""
+    pass
 
 
 def install() -> int:
-    """Install/refresh the managed hooks; return process exit code."""
     hooks_dir = _hooks_dir()
     hooks_dir.mkdir(parents=True, exist_ok=True)
 
@@ -62,8 +51,6 @@ _PREFLIGHT = (
 
 
 def _install_one(path: Path, command: str) -> None:
-    # A friendly preflight: if uv is missing the shim explains how to fix PATH (or
-    # bypass) instead of failing with a cryptic "uv: not found" from the shell.
     content = f"#!/bin/sh\n{_SENTINEL}\n{_PREFLIGHT}\nexec {command}\n"
 
     if path.exists() and _SENTINEL not in path.read_text(encoding="utf-8"):

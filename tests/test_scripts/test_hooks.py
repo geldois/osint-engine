@@ -10,7 +10,12 @@ from scripts import hooks
 if TYPE_CHECKING:
     from pathlib import Path
 
-_MANAGED = ("pre-commit", "pre-merge-commit")
+_MANAGED = ("pre-commit", "pre-merge-commit", "post-commit")
+_COMMANDS = {
+    "pre-commit": "python -m scripts",
+    "pre-merge-commit": "python -m scripts",
+    "post-commit": "code-review-graph update",
+}
 
 
 def _hooks_dir(git_repo: Path) -> Path:
@@ -24,7 +29,7 @@ def test_install_writes_the_three_managed_hooks_executable(git_repo: Path) -> No
         hook = _hooks_dir(git_repo) / name
         assert hook.exists()
         assert os.access(hook, os.X_OK)
-        assert "python -m scripts" in hook.read_text(encoding="utf-8")
+        assert _COMMANDS[name] in hook.read_text(encoding="utf-8")
 
 
 def test_install_is_idempotent(git_repo: Path) -> None:
@@ -41,13 +46,14 @@ def test_install_is_idempotent(git_repo: Path) -> None:
     assert first == second
 
 
-def test_install_does_not_clobber_a_foreign_hook(git_repo: Path) -> None:
+@pytest.mark.parametrize("name", _MANAGED)
+def test_install_does_not_clobber_a_foreign_hook(git_repo: Path, name: str) -> None:
     foreign = "#!/bin/sh\necho mine\n"
-    (_hooks_dir(git_repo) / "pre-commit").write_text(foreign, encoding="utf-8")
+    (_hooks_dir(git_repo) / name).write_text(foreign, encoding="utf-8")
 
     hooks.install()
 
-    assert (_hooks_dir(git_repo) / "pre-commit").read_text(encoding="utf-8") == foreign
+    assert (_hooks_dir(git_repo) / name).read_text(encoding="utf-8") == foreign
 
 
 def test_install_outside_a_git_repository_raises(
