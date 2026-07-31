@@ -78,5 +78,8 @@ class PortalTransparenciaCPFFetcher(
         payload = Payload(source=self._SOURCE, data=data)
 
         return EntityRevision(
-            entity=map_graph(payload=payload), fetched_at=fetched_at, merged_at=None
+            entity=map_graph(payload=payload),
+            fetched_at=fetched_at,
+            merged_at=None,
+            source=self._SOURCE,
         )

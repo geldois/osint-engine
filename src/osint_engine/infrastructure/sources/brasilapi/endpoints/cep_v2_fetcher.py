@@ -66,4 +66,5 @@ class BrasilAPICEPv2Fetcher(BrasilAPIFetcher, CEPFetcher, url_suffix="cep/v2/"):
             entity=map_address(payload=payload, number=number),
             fetched_at=fetched_at,
             merged_at=None,
+            source=self._SOURCE,
         )

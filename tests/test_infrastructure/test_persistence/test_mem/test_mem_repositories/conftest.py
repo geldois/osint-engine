@@ -86,6 +86,16 @@ def make_mem_graph_repository(policies: Policies) -> MakeMemGraphRepository:
             mem_storage=mem_storage,
             revision_merge_policy=resolved.revision_merge_policy,
             revision_selection_policy=resolved.revision_selection_policy,
+            node_repository=MemNodeRepository(
+                mem_storage=mem_storage,
+                revision_merge_policy=resolved.revision_merge_policy,
+                revision_selection_policy=resolved.revision_selection_policy,
+            ),
+            edge_repository=MemEdgeRepository(
+                mem_storage=mem_storage,
+                revision_merge_policy=resolved.revision_merge_policy,
+                revision_selection_policy=resolved.revision_selection_policy,
+            ),
         )
 
     return mem_graph_repository

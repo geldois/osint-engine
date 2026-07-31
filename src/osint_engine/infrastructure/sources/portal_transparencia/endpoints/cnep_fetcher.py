@@ -104,4 +104,9 @@ class PortalTransparenciaCNEPFetcher(
                 lambda merged, next_graph: merged.merge(other=next_graph), graphs
             )
 
-        return EntityRevision(entity=graph, fetched_at=fetched_at, merged_at=None)
+        return EntityRevision(
+            entity=graph,
+            fetched_at=fetched_at,
+            merged_at=None,
+            source=self._SOURCE,
+        )

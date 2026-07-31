@@ -5,19 +5,27 @@ from typing import TYPE_CHECKING, override
 from osint_engine.application.contracts.repositories.graph_repository import (
     GraphRepository,
 )
+from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.errors.entity_error import EntityNotFoundError
 
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from osint_engine.application.revision.entity_revision import EntityRevision
+    from osint_engine.application.contracts.repositories.edge_repository import (
+        EdgeRepository,
+    )
+    from osint_engine.application.contracts.repositories.node_repository import (
+        NodeRepository,
+    )
     from osint_engine.application.revision.policies.revision_merge_policy import (
         RevisionMergePolicy,
     )
     from osint_engine.application.revision.policies.revision_selection_policy import (
         RevisionSelectionPolicy,
     )
+    from osint_engine.domain.entities.bases.edge import Edge
+    from osint_engine.domain.entities.bases.node import Node
     from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 
 
@@ -32,10 +40,14 @@ class MemGraphRepository(GraphRepository):
         mem_storage: MemStorage,
         revision_merge_policy: RevisionMergePolicy,
         revision_selection_policy: RevisionSelectionPolicy,
+        node_repository: NodeRepository,
+        edge_repository: EdgeRepository,
     ) -> None:
         self.graphs = mem_storage.graphs
         self.revision_merge_policy = revision_merge_policy
         self.revision_selection_policy = revision_selection_policy
+        self._node_repository = node_repository
+        self._edge_repository = edge_repository
 
     @override
     async def _save(self, *, revision: GraphRevision) -> GraphRevision:
@@ -77,6 +89,57 @@ class MemGraphRepository(GraphRepository):
             if found is not None
             else revision
         )
+
+        graph = merged.entity
+
+        # Cascade only entities whose content actually changed (or is brand
+        # new) — re-stamping an unchanged node/edge with this graph's own
+        # fetched_at/source would make revision_merge_policy's content_id
+        # short-circuit discard that entity's true original provenance for
+        # no reason, on every single re-fetch of an already-known subject.
+        new_node_revisions: set[EntityRevision[Node[UUID]]] = set()
+
+        for node in graph.nodes:
+            existing = await self._node_repository.find(
+                id_=node.id, content_id=node.content_id
+            )
+
+            if existing is None:
+                new_node_revisions.add(
+                    EntityRevision(
+                        entity=node,
+                        fetched_at=merged.fetched_at,
+                        merged_at=merged.merged_at,
+                        source=merged.source,
+                    )
+                )
+
+        if new_node_revisions:
+            await self._node_repository.merge_many(
+                revisions=frozenset(new_node_revisions)
+            )
+
+        new_edge_revisions: set[EntityRevision[Edge[UUID, UUID, UUID]]] = set()
+
+        for edge in graph.edges:
+            existing = await self._edge_repository.find(
+                id_=edge.id, content_id=edge.content_id
+            )
+
+            if existing is None:
+                new_edge_revisions.add(
+                    EntityRevision(
+                        entity=edge,
+                        fetched_at=merged.fetched_at,
+                        merged_at=merged.merged_at,
+                        source=merged.source,
+                    )
+                )
+
+        if new_edge_revisions:
+            await self._edge_repository.merge_many(
+                revisions=frozenset(new_edge_revisions)
+            )
 
         return await self._save(revision=merged)
 

@@ -77,15 +77,17 @@ class MemUoW(UoW):
         self.external_credentials = MemExternalCredentialRepository(
             mem_storage=self._snapshot
         )
-        self.graphs = MemGraphRepository(
-            mem_storage=self._snapshot,
-            revision_merge_policy=self.revision_merge_policy,
-            revision_selection_policy=self.revision_selection_policy,
-        )
         self.nodes = MemNodeRepository(
             mem_storage=self._snapshot,
             revision_merge_policy=self.revision_merge_policy,
             revision_selection_policy=self.revision_selection_policy,
+        )
+        self.graphs = MemGraphRepository(
+            mem_storage=self._snapshot,
+            revision_merge_policy=self.revision_merge_policy,
+            revision_selection_policy=self.revision_selection_policy,
+            node_repository=self.nodes,
+            edge_repository=self.edges,
         )
         self.users = MemUserRepository(mem_storage=self._snapshot)
 

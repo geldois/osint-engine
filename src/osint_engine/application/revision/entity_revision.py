@@ -5,7 +5,10 @@ from datetime import UTC
 from typing import TYPE_CHECKING, Generic, TypeVar
 from uuid import UUID
 
-from osint_engine.application.errors.revision_error import NonUTCAttributeError
+from osint_engine.application.errors.revision_error import (
+    EmptySourceError,
+    NonUTCAttributeError,
+)
 from osint_engine.domain.entities.bases.entity import Entity
 
 if TYPE_CHECKING:
@@ -19,6 +22,7 @@ class EntityRevision(Generic[Entity_co]):  # noqa: UP046
     entity: Entity_co
     fetched_at: datetime
     merged_at: datetime | None
+    source: str
 
     def __post_init__(self) -> None:
         if self.fetched_at.tzinfo is not UTC:
@@ -30,3 +34,6 @@ class EntityRevision(Generic[Entity_co]):  # noqa: UP046
             raise NonUTCAttributeError(
                 attribute="merged_at", tzinfo=str(self.merged_at.tzinfo)
             )
+
+        if not self.source.strip():
+            raise EmptySourceError

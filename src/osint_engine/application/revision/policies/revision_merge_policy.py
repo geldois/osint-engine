@@ -33,14 +33,28 @@ def merge_by_filled_fields_policy[Entity_: Entity[UUID]](
     if left.entity.content_id == right.entity.content_id:
         return newest
 
+    newest_kwargs = newest.entity.reconstruct_kwargs()
     fills: dict[str, object] = {
         field: getattr(oldest.entity, field)
-        for field, value in newest.entity.reconstruct_kwargs().items()
+        for field, value in newest_kwargs.items()
         if value is None
     }
+
+    # `newest` contributed nothing of its own (every non-identity field it
+    # carries was null and got backfilled from `oldest`) — attribute the
+    # merged result to where its actual content came from, not to whichever
+    # side merely happened to be fetched more recently. Identity fields are
+    # excluded since they're never null and would otherwise always block
+    # this from ever being true.
+    non_identity_fields = newest_kwargs.keys() - newest.entity.id_fields
+    newest_contributed_nothing = bool(non_identity_fields) and non_identity_fields <= (
+        fills.keys()
+    )
+    source = oldest.source if newest_contributed_nothing else newest.source
 
     return EntityRevision(
         entity=newest.entity.evolve(**fills),
         fetched_at=newest.fetched_at,
         merged_at=datetime.now(tz=UTC),
+        source=source,
     )
