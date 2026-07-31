@@ -39,7 +39,9 @@
     ".code-review-graph/",
     ".ruff_cache/",
     ".pytest_cache/",
-    "**/__pycache__/"
+    "**/__pycache__/",
+    ".hypothesis/",
+    ".import_linter_cache/"
   ],
   "plugins": [
     "https://plugins.dprint.dev/json-0.23.0.wasm",
