@@ -1,9 +1,11 @@
-"""Gate model, the JSON report, and minimal terminal output (ADR 0025).
+"""Gate model, the JSON report, and minimal terminal output (ADR 0025, 0028).
 
 Terminal: a single ``running quality gates… Ns`` ticker while gates run, then a
-one-line verdict — on failure it names the failing gate(s) and points at the
-report, never the raw tool output. ``build/reports/gates.json`` (always written)
-carries the complete structured per-gate record read by tooling.
+one-line verdict. On failure the verdict is followed by each failing gate's own
+actionable output (trimmed of noise, tail-capped) on every channel — TTY or pipe
+— so whoever triggered the commit sees what broke without opening the JSON; a
+green run stays one quiet line. ``build/reports/gates.json`` (always written)
+still carries the complete untrimmed per-gate record for programmatic use.
 """
 
 from __future__ import annotations
@@ -24,6 +26,9 @@ if TYPE_CHECKING:
 REPORT_PATH = Path("build/reports/gates.json")
 
 _TICK_S = 0.5
+# Cap each failing gate's inline output so a long pytest traceback can't flood the
+# committer's context; the untrimmed record is always in the JSON report.
+_MAX_INLINE_LINES = 60
 
 
 @dataclass(frozen=True)
@@ -84,19 +89,35 @@ def print_verdict(outcomes: Sequence[GateOutcome], report_path: Path) -> None:
         sys.stderr.write(
             f"quality gates FAILED — {names} · {total_s:.1f}s · see {report_path}\n",
         )
-        # Two-channel, adapted for humans: a real TTY (a dev running the gate by
-        # hand) gets the failing gate's own output inline, so no one has to open
-        # the JSON to see what broke. A pipe (CI, a subagent, captured logs) still
-        # gets just the one-line verdict above — the machine reads the report.
-        if sys.stderr.isatty():
-            for outcome in failed:
-                body = outcome.output.strip()
-                if body:
-                    sys.stderr.write(f"\n── {outcome.name} ──\n{body}\n")
+        # Surface each failing gate's own output inline on every channel (TTY or
+        # pipe), so whoever triggered the commit — a dev, or an agent driving it
+        # through a captured shell — sees what broke without opening the JSON.
+        # Trimmed and tail-capped for token economy; the full record is in the
+        # report. A green run never reaches here, so CI stays quiet on success.
+        for outcome in failed:
+            body = _actionable(outcome.output)
+            if body:
+                sys.stderr.write(f"\n── {outcome.name} ──\n{body}\n")
     else:
         sys.stderr.write(
             f"quality gates passed · {len(outcomes)} gates · {total_s:.1f}s\n",
         )
+
+
+def _actionable(output: str) -> str:
+    """Strip runner noise and blank edges, tail-cap, so only the signal is shown."""
+    lines = [
+        line
+        for line in output.splitlines()
+        if not line.lstrip().startswith("warning: `VIRTUAL_ENV")
+    ]
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    if len(lines) > _MAX_INLINE_LINES:
+        lines = ["…(trimmed; full output in the report)", *lines[-_MAX_INLINE_LINES:]]
+    return "\n".join(lines)
 
 
 def write_report(outcomes: Sequence[GateOutcome], *, mode: str) -> Path:
