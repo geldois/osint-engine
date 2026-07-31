@@ -181,7 +181,7 @@ POST /auth/viewer-token
 
 Issues a `VIEWER`-role token with no credential — 20-minute TTL by default (`VIEWER_TOKEN_EXPIRE_MINUTES`), same
 response shape as above. Intended for public demo access: it can read `/cnpj/{cnpj}` but is rejected with `403` on
-`/credentials`. See [ADR-0020](docs/adr/0020-role-guard-for-per-route-authorization.md).
+`/credentials`. See `docs/architecture/interface.md`.
 
 ### Graph expansion
 
@@ -192,7 +192,7 @@ Authorization: Bearer <token>
 
 Returns a `GraphSchema` containing the root company, all connected entities, and all typed relationships. Available to
 both `ADMIN` and `VIEWER` tokens. The current data source is [BrasilAPI](https://brasilapi.com.br) (see
-[ADR-0005](docs/adr/0005-brasilapi-as-mvp-cnpj-data-source.md)).
+`docs/architecture/infrastructure.md`).
 
 ### Text ingestion
 
@@ -215,9 +215,7 @@ Extracts CPF/CNPJ/CEP-and-number from free text via regex plus a mod-11 checksum
 match is checked against what the graph already knows by deterministic id: an existing entity is only linked, a new one
 becomes a minimal stub (identity field only, nothing invented). The response is a `GraphSchema` rooted at a `TextSource`
 node, with a `PersonMentionedInText`/`CompanyMentionedInText`/`AddressMentionedInText` edge per match. Returns `422` if
-no pattern in the set matched anything, `404` for an unknown `pattern_set_id`. See
-[ADR-0029](docs/adr/0029-stub-and-link-text-ingestion-over-external-refetch.md) and
-[ADR-0030](docs/adr/0030-per-request-pattern-set-injection.md).
+no pattern in the set matched anything, `404` for an unknown `pattern_set_id`. See `docs/architecture/application.md`.
 
 ### Health
 
@@ -248,10 +246,10 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 | `POST /text-ingestion`         | 100 / min  | Shared per-route bucket |
 
 A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
-`Access-Control-Expose-Headers`. See [ADR-0021](docs/adr/0021-fastapi-throttle-over-slowapi-for-rate-limiting.md). Each
-expansion route has one global bucket shared across all callers — a fixed key, not per-IP or per-role — so the combined
-outbound traffic every visitor generates together is capped against the upstream API's per-minute quota, since every
-request proxies through this deployment's own IP/token. The health endpoints are unthrottled.
+`Access-Control-Expose-Headers`. See `docs/architecture/interface.md`. Each expansion route has one global bucket shared
+across all callers — a fixed key, not per-IP or per-role — so the combined outbound traffic every visitor generates
+together is capped against the upstream API's per-minute quota, since every request proxies through this deployment's
+own IP/token. The health endpoints are unthrottled.
 
 ### Errors
 
@@ -284,7 +282,7 @@ same identifier, on any machine, at any time. Deduplication, idempotent upserts,
 structural consequences, not implementation choices. Each entity type occupies its own UUID namespace so that a
 `CompanyID` and a `PersonID` derived from identical payloads can never collide.
 
-See [ADR-0003](docs/adr/0003-uuid5-over-uuid4-for-entity-identity.md).
+See `docs/architecture/domain.md`.
 
 ### Fail-fast entity contracts
 
@@ -295,7 +293,7 @@ before any test runs, before any instance is created. The domain is self-defendi
 `__setattr__` and `__delattr__` raise `FrozenInstanceError` on every entity. Immutability is structural, not enforced by
 convention.
 
-See [ADR-0002](docs/adr/0002-manual-entity-base-class.md).
+See `docs/architecture/domain.md`.
 
 ### Zero-cost type hierarchy
 
@@ -305,7 +303,7 @@ Each concrete entity declares its own `NewType` ID (`CompanyID`, `PersonID`, `Gr
 declared constraints — with no runtime representation whatsoever. `NewType` is the identity function at runtime; the
 distinction exists only in the type-checker's world.
 
-See [ADR-0004](docs/adr/0004-idtype-co-typevar-for-covariant-id-typing.md).
+See `docs/architecture/domain.md`.
 
 ### Temporal reconciliation via revisions
 
@@ -318,7 +316,7 @@ wins, the older one fills nulls — and a `RevisionSelectionPolicy` chooses the 
 Repositories retain every revision keyed by `content_id`, so a leaner re-fetch can never silently overwrite a richer
 prior observation.
 
-See [ADR-0015](docs/adr/0015-fetcher-returns-entity-revision.md).
+See `docs/architecture/application.md`.
 
 ## Setup
 

@@ -16,10 +16,9 @@
 
 - `BrasilAPICEPv2Fetcher`/`cep_v2_mapper` are built and fully tested but unwired — no use case calls
   `CEPFetcher.fetch(cep, number)` yet. Text ingestion (roadmap step 3, shipped) deliberately does *not* consume this —
-  see [ADR-0029](docs/adr/0029-stub-and-link-text-ingestion-over-external-refetch.md), it never calls external APIs,
-  only stubs-and-links by deterministic id. This fetcher's actual consumer is still undecided: a manual "enrich this
-  Address stub" endpoint is the likely shape, not automatic chaining from `cnpj_v1` (whose `_map_address` already
-  returns a complete `Address`)
+  see `docs/architecture/application.md`, it never calls external APIs, only stubs-and-links by deterministic id. This
+  fetcher's actual consumer is still undecided: a manual "enrich this Address stub" endpoint is the likely shape, not
+  automatic chaining from `cnpj_v1` (whose `_map_address` already returns a complete `Address`)
 
 ## feat(cpf)
 
@@ -67,5 +66,5 @@
 - `fail_under` in `[tool.coverage.report]` is a placeholder `90`, not a measured value; run
   `python -m scripts check
   --full` (needs Docker + `PORTAL_TRANSPARENCIA_API_KEY`) and `python -m scripts mutation`
-  once, then pin the coverage floor and mutation `--max-survival` ceiling to the measured baseline, ratcheting only
-  (ADR 0025)
+  once, then pin the coverage floor and mutation `--max-survival` ceiling to the measured baseline, ratcheting only (see
+  the Quality gates section in this project's `CLAUDE.md`)

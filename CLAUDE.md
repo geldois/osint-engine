@@ -4,14 +4,16 @@ This file holds only what no other source does. Everything else is owned elsewhe
 
 ## Sources of truth
 
-| Question                                                   | Source (use it, don't re-derive)                                        |
-| ---------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Structure, callers/callees, impact, tests-for, dead code   | the code-review-graph (query it — never grep/read-around to rebuild it) |
-| A decision and its rationale ("why is it done this way?")  | `docs/adr/` (numbered ADRs)                                             |
-| Setup, run, endpoints, API auth, stack, architecture prose | `README.md`                                                             |
-| Known deferrals / accepted tech debt                       | `TO-DO.md`                                                              |
+| Question                                                       | Source (use it, don't re-derive)                                                                                                   |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Structure, callers/callees, impact, tests-for, dead code       | the code-review-graph (query it — never grep/read-around to rebuild it)                                                            |
+| Macro business-flow/why per top-level area, current-state only | `docs/architecture/` (one file per area — read before multi-file exploration for a macro/flow question, never for exact structure) |
+| Setup, run, endpoints, API auth, stack, architecture prose     | `README.md`                                                                                                                        |
+| Known deferrals / accepted tech debt                           | `TO-DO.md`                                                                                                                         |
 
-If an answer is in one of those, read it there. Only the operational rules below live here.
+If an answer is in one of those, read it there. Only the operational rules below live here. There are no ADRs in this
+project — a design decision's rationale lives in the relevant `docs/architecture/<area>.md`'s own Decisions section,
+current-state only, in natural language; git log is the historical record for anything superseded.
 
 ## Code-review-graph
 
