@@ -5,17 +5,17 @@ from typing import TYPE_CHECKING, override
 from structlog.stdlib import get_logger
 
 from osint_engine.application.contracts.use_case import Query
+from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
 if TYPE_CHECKING:
     from osint_engine.application.contracts.repositories.pattern_set_repository import (
         PatternSetRepository,
     )
-    from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
 _logger = get_logger()
 
 
-class ListTextPatternSets(Query[tuple["TextPatternSet", ...]]):
+class ListTextPatternSets(Query[tuple[TextPatternSet, ...]]):
     pattern_set_repository: PatternSetRepository
 
     @override
