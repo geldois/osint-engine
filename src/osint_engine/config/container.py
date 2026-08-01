@@ -35,6 +35,9 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
     from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
     from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
+    from osint_engine.application.use_cases.matching.find_possibly_matches import (
+        FindPossiblyMatches,
+    )
     from osint_engine.application.use_cases.text_ingestion.ingest_text import IngestText
     from osint_engine.application.use_cases.text_ingestion.list_text_pattern_sets import (  # noqa: E501
         ListTextPatternSets,
@@ -80,6 +83,7 @@ class UseCases:
     expand_by_cnep: partial[ExpandByCNEP]
     expand_by_cnpj: partial[ExpandByCNPJ]
     expand_by_cpf: partial[ExpandByCPF]
+    find_possibly_matches: partial[FindPossiblyMatches]
     ingest_text: partial[IngestText]
     list_external_credentials: partial[ListExternalCredentials]
     list_text_pattern_sets: partial[ListTextPatternSets]

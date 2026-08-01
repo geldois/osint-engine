@@ -27,6 +27,7 @@ from osint_engine.domain.entities.edges.person_received_sanction import (
     PersonReceivedSanction,
 )
 from osint_engine.domain.entities.edges.person_reside_at import PersonResideAt
+from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
 from osint_engine.interface.http.schemas.edge_schema import (
     AddressMentionedInTextSchema,
@@ -45,6 +46,7 @@ from osint_engine.interface.http.schemas.edge_schema import (
     PersonOwnsCompanySchema,
     PersonReceivedSanctionSchema,
     PersonResideAtSchema,
+    PossiblyMatchesSchema,
 )
 
 if TYPE_CHECKING:
@@ -178,6 +180,15 @@ def person_reside_at_to_schema(*, edge: PersonResideAt) -> PersonResideAtSchema:
     )
 
 
+def possibly_matches_to_schema(*, edge: PossiblyMatches[UUID]) -> PossiblyMatchesSchema:
+    return PossiblyMatchesSchema(
+        id=edge.id,
+        confidence=edge.confidence,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
+    )
+
+
 _EDGE_MAP: dict[type[Edge[UUID, UUID, UUID]], Callable[..., EdgeSchemaUnion]] = {
     AddressMentionedInText: address_mentioned_in_text_to_schema,
     CompanyHasCnae: company_has_cnae_to_schema,
@@ -194,6 +205,7 @@ _EDGE_MAP: dict[type[Edge[UUID, UUID, UUID]], Callable[..., EdgeSchemaUnion]] = 
     PersonOwnsCompany: person_owns_company_to_schema,
     PersonReceivedSanction: person_received_sanction_to_schema,
     PersonResideAt: person_reside_at_to_schema,
+    PossiblyMatches: possibly_matches_to_schema,
 }
 
 

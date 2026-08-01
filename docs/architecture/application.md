@@ -29,6 +29,17 @@ applies isn't fixed once at startup — a caller picks a pattern set per request
 same kind of identifier differently in free text, and locking one set in globally would mean a redeploy every time a new
 source needs recognizing.
 
+A separate, best-effort workflow runs after any expansion or ingestion produces a fresh batch of people or companies: it
+compares each newly seen one's name against every person or company of the same kind already known, and where two carry
+a distinct identity but a strongly similar name, it records a loose "might be the same real-world subject" relationship
+alongside a similarity score — without ever touching, merging, or re-identifying either record. This is deliberately
+separate from text ingestion's own resolution rule above, which stays exact-identifier-only; the two solve different
+problems. An official identifier can itself be inconsistent across sources — one source may reveal only a partial,
+masked form of the same identifier that another source knows in full — so the same real person or company can end up
+recorded under two different identities with no shared identifier to resolve them by. Comparing names is the only signal
+left in that situation, so it's kept explicitly probabilistic and advisory rather than folded into the identifier-based
+resolution that everything else relies on.
+
 ## Decisions
 
 Whether the component that receives freshly fetched data, or the workflow orchestrating the fetch, should be the one
@@ -50,3 +61,10 @@ changed to still get re-stamped with the new retrieval's timestamp, which made t
 current" policy wrongly treat a stale re-fetch as the freshest version and silently discard the entity's true original
 provenance. Checking each entity against what's already stored, and only touching what's genuinely new or changed, fixed
 that.
+
+The name-similarity workflow deliberately never merges or auto-resolves the two records it flags as possibly the same
+subject; it only ever adds a new, clearly-marked "possible match" relationship carrying its similarity score, leaving
+the actual judgment call to whoever reviews the graph afterward. Auto-merging on a name match alone was rejected
+outright: name matching produces false positives by nature, and merging two records that turn out to be different real
+people or companies is a much more damaging, harder-to-undo mistake than surfacing a match that a human has to
+double-check.

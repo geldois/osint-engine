@@ -37,6 +37,13 @@ def build_get_ceis_handler(
         if graph is None:
             return Response(status_code=204)
 
+        matches_graph = await container.use_cases.find_possibly_matches(
+            graph=graph
+        ).execute()
+
+        if matches_graph is not None:
+            graph = graph.merge(other=matches_graph)
+
         return graph_to_schema(graph)
 
     return get_ceis

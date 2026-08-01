@@ -30,6 +30,12 @@ def build_get_cpf_handler(
         use_case = container.use_cases.expand_by_cpf(cpf=cpf, username=username)
 
         graph = await use_case.execute()
+        matches_graph = await container.use_cases.find_possibly_matches(
+            graph=graph
+        ).execute()
+
+        if matches_graph is not None:
+            graph = graph.merge(other=matches_graph)
 
         return graph_to_schema(graph)
 

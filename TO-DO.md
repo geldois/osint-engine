@@ -34,15 +34,6 @@
 - make commits atomic across PostgreSQL credentials and the in-memory graph/user snapshot; `HybridUoW` intentionally
   persists credentials during repository `save()` and only coordinates the in-memory snapshot during `commit()`
 
-## feat(text-ingestion)
-
-- `PossiblyMatches` (fuzzy cross-entity similarity edge) has no Pydantic schema, no `EdgeSchemaRegistry` entry, and no
-  `_EDGE_MAP` entry — unlike the three `*MentionedInText` edges shipped alongside it, which are fully wired. It's dead
-  code today (zero constructors outside its own definition), so this is a landmine, not a live bug: the moment a future
-  fuzzy-matching feature (spec 2, see the open thread in `~/.brain/RESUME.md`) starts emitting `PossiblyMatches` edges
-  into a graph that reaches the HTTP layer, `edge_to_schema` 500s instead of returning 200. Wire it up as part of that
-  spec, not speculatively now — the confidence-scoring/registry-dispatch shape it needs isn't designed yet
-
 ## fix(rate-limit)
 
 - expansion buckets are a flat 100/min per route, but Portal da Transparência's token ceiling is 90/min from 06:00–23:59
@@ -60,6 +51,19 @@
   it would mean giving `_resolve_node` a path to update an *existing* entity's own field from a new deterministic match,
   which the current design deliberately doesn't do for anything, cosmetic or not — revisit only if this formatting
   inconsistency actually surfaces as a real complaint
+
+## test(matching)
+
+- `FindPossiblyMatches` (fuzzy cross-entity matching, `application/use_cases/matching/find_possibly_matches.py`),
+  `NodeRepository.list_by_type`, the `PossiblyMatchesSchema`/`possibly_matches_to_schema` wiring, and the 5 handlers
+  that now merge matches into their `Graph` response (`get_cnpj`, `get_cpf`, `get_ceis`, `get_cnep`,
+  `post_text_ingestion`) shipped with zero pytest coverage, by explicit user instruction to ship fast and validate
+  empirically instead. Empirical validation so far: a standalone script seeding two `Person` nodes (full CPF vs a
+  masked-CPF QSA-style id, equivalent names) confirmed a `PossiblyMatches` edge is created, scored, and persisted, and
+  that an unrelated name produces no match; `python -m scripts check` (lint + type) passes. Needs proper unit tests
+  (including Unicode/accented-name edge cases) and handler-level integration tests before this is production-ready. The
+  confidence threshold (`_MIN_CONFIDENCE_SCORE = 92` in `find_possibly_matches.py`) is an untuned guess — validate
+  against real masked-QSA data once available
 
 ## test(gates)
 

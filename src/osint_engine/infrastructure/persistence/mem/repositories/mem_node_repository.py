@@ -84,3 +84,18 @@ class MemNodeRepository(NodeRepository):
     async def merge_many(self, *, revisions: frozenset[NodeRevision]) -> None:
         for revision in revisions:
             await self.merge(revision=revision)
+
+    @override
+    async def list_by_type(
+        self, *, node_type: type[Node[UUID]]
+    ) -> tuple[EntityRevision[Node[UUID]], ...]:
+        return tuple(
+            current
+            for node_revisions in self.nodes.values()
+            if isinstance(
+                (
+                    current := self.revision_selection_policy(node_revisions.values())
+                ).entity,
+                node_type,
+            )
+        )

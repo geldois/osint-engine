@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from decimal import Decimal  # noqa: TC003
 from inspect import isabstract
 from typing import Annotated, ClassVar, Literal, get_origin, override
 from uuid import UUID
@@ -33,6 +34,7 @@ from osint_engine.domain.entities.edges.person_received_sanction import (
     PersonReceivedSanction,
 )
 from osint_engine.domain.entities.edges.person_reside_at import PersonResideAt
+from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
 from osint_engine.interface.http.errors.schema_error import (
     DuplicateSchemaRegistrationError,
     MissingDiscriminatorFieldError,
@@ -213,6 +215,17 @@ class PersonResideAtSchema(EdgeSchema[PersonResideAt]):
         return PersonResideAt
 
 
+class PossiblyMatchesSchema(EdgeSchema[PossiblyMatches[UUID]]):
+    type: Literal["possibly_matches"] = "possibly_matches"
+
+    confidence: Decimal
+
+    @classmethod
+    @override
+    def domain(cls) -> type[PossiblyMatches[UUID]]:
+        return PossiblyMatches
+
+
 EdgeSchemaUnion = (
     AddressMentionedInTextSchema
     | CompanyHasCnaeSchema
@@ -229,6 +242,7 @@ EdgeSchemaUnion = (
     | PersonOwnsCompanySchema
     | PersonReceivedSanctionSchema
     | PersonResideAtSchema
+    | PossiblyMatchesSchema
 )
 
 EdgeUnion = Annotated[EdgeSchemaUnion, Field(discriminator="type")]
@@ -275,3 +289,4 @@ EdgeSchemaRegistry.register(PersonMentionedInTextSchema)
 EdgeSchemaRegistry.register(PersonOwnsCompanySchema)
 EdgeSchemaRegistry.register(PersonReceivedSanctionSchema)
 EdgeSchemaRegistry.register(PersonResideAtSchema)
+EdgeSchemaRegistry.register(PossiblyMatchesSchema)

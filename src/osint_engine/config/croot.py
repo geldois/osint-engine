@@ -22,6 +22,9 @@ from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandBy
 from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
+from osint_engine.application.use_cases.matching.find_possibly_matches import (
+    FindPossiblyMatches,
+)
 from osint_engine.application.use_cases.text_ingestion.ingest_text import IngestText
 from osint_engine.application.use_cases.text_ingestion.list_text_pattern_sets import (
     ListTextPatternSets,
@@ -138,6 +141,7 @@ def build_container(  # noqa: PLR0913
         expand_by_cpf=partial(
             ExpandByCPF, uow_factory=uow_factory, cpf_fetcher=fetchers.cpf_fetcher
         ),
+        find_possibly_matches=partial(FindPossiblyMatches, uow_factory=uow_factory),
         ingest_text=partial(
             IngestText, uow_factory=uow_factory, pattern_set_repository=pattern_sets
         ),
