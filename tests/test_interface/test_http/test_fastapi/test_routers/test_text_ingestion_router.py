@@ -6,6 +6,7 @@ import pytest
 import pytest_asyncio
 from httpx2 import ASGITransport, AsyncClient
 
+from osint_engine.application.auth.user import Role
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 from osint_engine.interface.http.schemas.graph_schema import GraphSchema
 
@@ -31,7 +32,12 @@ async def client(make_container: MakeContainer) -> AsyncGenerator[AsyncClient, N
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role="admin")
+    return pyjwt_service.create_access_token(username="admin", role=Role.ADMIN)
+
+
+@pytest.fixture
+def viewer_token(pyjwt_service: PyJWTService) -> str:
+    return pyjwt_service.create_access_token(username="visitor", role=Role.VIEWER)
 
 
 class TestPostTextIngestionAuthentication:
@@ -43,6 +49,20 @@ class TestPostTextIngestionAuthentication:
         )
 
         assert response.status_code == 401
+
+
+class TestPostTextIngestionAuthorization:
+    @pytest.mark.asyncio
+    async def test_viewer_token_returns_403(
+        self, client: AsyncClient, viewer_token: str
+    ) -> None:
+        response = await client.post(
+            "/text-ingestion",
+            json={"text": _VALID_CPF_TEXT, "pattern_set_id": _PATTERN_SET_ID},
+            headers={"Authorization": f"Bearer {viewer_token}"},
+        )
+
+        assert response.status_code == 403
 
 
 class TestPostTextIngestion:
@@ -91,6 +111,21 @@ class TestGetTextPatterns:
 
         assert response.status_code == 401
 
+
+class TestGetTextPatternsAuthorization:
+    @pytest.mark.asyncio
+    async def test_viewer_token_returns_403(
+        self, client: AsyncClient, viewer_token: str
+    ) -> None:
+        response = await client.get(
+            "/text-ingestion/patterns",
+            headers={"Authorization": f"Bearer {viewer_token}"},
+        )
+
+        assert response.status_code == 403
+
+
+class TestGetTextPatternsSuccess:
     @pytest.mark.asyncio
     async def test_returns_200_with_default_pattern_set(
         self, client: AsyncClient, valid_token: str
