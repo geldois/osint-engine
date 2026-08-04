@@ -1,0 +1,4 @@
+# Version-controlled repo config. Activate once per clone:
+#   git config --local include.path ../.gitconfig
+[core]
+	hooksPath = .githooks

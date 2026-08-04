@@ -218,8 +218,6 @@ __marimo__/
 .remember
 mutants/
 
-# code-review-graph
-.code-review-graph/
 
 # Claude Code local overrides
 .claude/settings.local.json
@@ -228,4 +226,3 @@ mutants/
 .mcp.json
 
 # Recorded live-API fixtures — regenerate with `uv run python -m scripts fixtures refresh`
-tests/**/responses/

@@ -330,11 +330,11 @@ cd osint-engine
 1. Install [Docker Engine](https://docs.docker.com/engine/install/) and start the daemon.
 2. Install [mise](https://mise.jdx.dev) and activate it in your shell (see
    [getting started](https://mise.jdx.dev/getting-started.html)).
-3. Install the project toolchain and git hooks:
+3. Install the project toolchain and activate the versioned git config:
 
 ```bash
 mise install
-uv run python -m scripts hooks install
+git config --local include.path ../.gitconfig
 cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
 ```
 
@@ -343,19 +343,20 @@ cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EX
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend enabled.
 2. Install [mise](https://mise.jdx.dev) via PowerShell and activate it in your shell (see
    [getting started](https://mise.jdx.dev/getting-started.html)).
-3. Install the project toolchain and git hooks:
+3. Install the project toolchain and activate the versioned git config:
 
 ```powershell
 mise install
-uv run python -m scripts hooks install
+git config --local include.path ../.gitconfig
 copy .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
 ```
 
-> The git hooks and the `uv run python -m scripts …` dev runner call `uv` directly, so `mise` must be active on the
-> `PATH` of the shell you commit from — `mise` provides the pinned `uv`, `dprint`, `shellcheck` and `shfmt`. If `uv`
-> isn't found, the hook prints how to fix it (activate mise, or `git commit --no-verify` to bypass once). No editor or
-> Claude Code is required: the quality gates run entirely from these git hooks and CI, identically for every
-> contributor, and there is no `pre-push` — pushing is never blocked.
+> `.gitconfig` points `core.hooksPath` at the versioned `.githooks/`, so the hooks are whatever is committed — nothing
+> is generated into `.git/`. The hooks and the `uv run python -m scripts …` dev runner call `uv` directly, so `mise`
+> must be active on the `PATH` of the shell you commit from — `mise` provides the pinned `uv`, `dprint`, `shellcheck`
+> and `shfmt`. If `uv` isn't found, the hook prints how to fix it (activate mise, or `git commit --no-verify` to bypass
+> once). No editor or Claude Code is required: the quality gates run entirely from these git hooks and CI, identically
+> for every contributor, and there is no `pre-push` — pushing is never blocked.
 
 > `--network host` in `.actrc` is Linux-only and has no effect on Docker Desktop. Internet access works via Docker
 > Desktop's default networking — the first run downloads dependencies from PyPI, subsequent runs use the uv cache.

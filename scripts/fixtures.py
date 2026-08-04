@@ -9,7 +9,7 @@ from httpx2 import URL, Client, Timeout
 
 from osint_engine.config.dotenv import load_dotenv
 
-SOURCES_DIR = Path("tests/test_infrastructure/test_sources")
+SOURCES_DIR = Path("tests/test_src/test_infrastructure/test_sources")
 
 
 def _require_env(key: str, /) -> str:

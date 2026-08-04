@@ -12,7 +12,6 @@ tests/
 docs/
 .github/
 .claude/
-.code-review-graph/
 build/
 coverage.xml
 CHANGELOG.md

@@ -18,10 +18,17 @@ from scripts._report import (
 
 _UV_RUN = ("uv", "run", "--no-sync")
 
+_SHELL_FILES = (
+    ".githooks/pre-commit",
+    ".githooks/pre-merge-commit",
+    "docker-entrypoint.sh",
+)
 _PRE_SYNC: tuple[Gate, ...] = (
     Gate("lock-check", ("uv", "lock", "--check")),
     Gate("dprint", ("mise", "exec", "--", "dprint", "check")),
     Gate("sqruff", ("mise", "exec", "--", "sqruff", "lint", "migrations", "src")),
+    Gate("shellcheck", ("mise", "exec", "--", "shellcheck", *_SHELL_FILES)),
+    Gate("shfmt", ("mise", "exec", "--", "shfmt", "-d", *_SHELL_FILES)),
 )
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
 _POST_SYNC: tuple[Gate, ...] = (
@@ -114,7 +121,10 @@ def _run_sequence(
     if not sync.passed:
         return outcomes
 
-    post = (*_POST_SYNC, _SUITE) if full else _POST_SYNC
-    outcomes.extend(_run_gate(gate, workdir, env) for gate in post)
+    outcomes.extend(_run_gate(gate, workdir, env) for gate in _POST_SYNC)
+    if not full:
+        return outcomes
+
+    outcomes.append(_run_gate(_SUITE, workdir, env))
 
     return outcomes

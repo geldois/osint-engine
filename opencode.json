@@ -1,0 +1,21 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "read": {
+      "*": "allow",
+      ".env": "deny",
+      ".env.*": "deny",
+      "uv.lock": "deny",
+      "coverage.xml": "deny",
+      ".coverage": "deny",
+      "CHANGELOG.md": "deny",
+      "build/**": "deny",
+      ".venv/**": "deny",
+      "tests/data/**": "deny",
+      ".hypothesis/**": "deny",
+      ".ruff_cache/**": "deny",
+      ".pytest_cache/**": "deny",
+      ".import_linter_cache/**": "deny"
+    }
+  }
+}

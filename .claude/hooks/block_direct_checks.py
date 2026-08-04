@@ -1,4 +1,4 @@
-"""Direct-run enforcement (ADR 0025) — ``PreToolUse(Bash)``.
+"""Direct-run enforcement — ``PreToolUse(Bash)``.
 
 A bare full-suite lint/type/test run bypasses the gate façade
 (``uv run python -m scripts check [--full]``) that materialises the staged

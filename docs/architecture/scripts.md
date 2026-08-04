@@ -1,12 +1,11 @@
 # Scripts — what it does
 
-This is the project's own developer-facing tooling — the quality gate runner, the git hook installer, and one-off
-maintenance commands — kept entirely separate from the product itself so none of it ships in the deployed application.
-One command runs the fast set of checks (formatting, linting, import-direction, static typing); a slower variant adds
-the full automated test suite with coverage measurement. A completely separate, periodic command deliberately introduces
-small mutations into the codebase and confirms the test suite actually catches them, as a check on the tests' own
-effectiveness rather than just their pass/fail status — this one is never run as part of an ordinary commit, only on
-demand.
+This is the project's own developer-facing tooling — the quality gate runner and one-off maintenance commands — kept
+entirely separate from the product itself so none of it ships in the deployed application. One command runs the fast set
+of checks (formatting, linting, import-direction, static typing); a slower variant adds the full automated test suite
+with coverage measurement. A completely separate, periodic command deliberately introduces small mutations into the
+codebase and confirms the test suite actually catches them, as a check on the tests' own effectiveness rather than just
+their pass/fail status — this one is never run as part of an ordinary commit, only on demand.
 
 Every commit and every local merge is validated in full, automatically, against an isolated copy of exactly what's
 staged — never against whatever else happens to be sitting unstaged in the working copy — so nothing merges or lands
@@ -17,6 +16,16 @@ directly, on every channel, rather than requiring anyone to go dig through a sep
 complete underlying record is still always written out for anything that does want to consume it programmatically.
 
 ## Decisions
+
+The git hooks are version-controlled files the repository points at directly, rather than generated into the
+repository's private directory by an install command. What runs on every commit is therefore reviewable in history like
+any other source file, and setting up a fresh clone is one configuration line instead of a command that could silently
+never be run — which is exactly how this project spent a period with no hooks installed at all.
+
+Formatters and comment strippers deliberately never run while an assistant is editing. Rewriting a file immediately
+after it was written leaves the editor's own understanding of that file silently wrong and forces it to re-read the
+whole thing before the next change. Everything mechanical is therefore applied exactly once, at commit time, and the
+only thing surfaced while writing is what no tool can fix on its own.
 
 Running every check against a snapshot deliberately isolated from the real working copy — materialized fresh at commit
 time — replaced an off-the-shelf pre-commit framework entirely; the only thing that framework was actually providing

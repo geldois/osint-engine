@@ -1,0 +1,45 @@
+{
+  "id": 314300,
+  "dataReferencia": "04/08/2026",
+  "dataInicioSancao": "20/03/2024",
+  "dataFimSancao": "20/03/2032",
+  "dataPublicacaoSancao": "Sem informação",
+  "dataTransitadoJulgado": "20/03/2024",
+  "dataOrigemInformacao": "13/08/2024",
+  "tipoSancao": {
+    "descricaoResumida": "Impedimento/proibição de contratar com prazo determinado",
+    "descricaoPortal": "Impedimento/proibição de contratar com prazo determinado"
+  },
+  "fonteSancao": {
+    "nomeExibicao": "Conselho Nacional de Justiça (CNJ-DF)",
+    "telefoneContato": ".(61) 2326-4925",
+    "enderecoContato": "SAF Sul Quadra 2 - Lote5/6 - Bloco E - Sala 303 - CEP: 70070-600  Brasília/DF"
+  },
+  "fundamentacao": null,
+  "orgaoSancionador": {
+    "nome": "Tribunal de Justiça do Estado de São Paulo / 1º Grau - TJSP / GARCA / 01 CUMULATIVA DE GARCA",
+    "siglaUf": "SP",
+    "poder": "Judiciário",
+    "esfera": "ESTADUAL"
+  },
+  "sancionado": {
+    "nome": "ANEZIO KEMP",
+    "codigoFormatado": "487.611.338-68"
+  },
+  "pessoa": {
+    "id": 605821936,
+    "cpfFormatado": "***.611.338-**",
+    "cnpjFormatado": "",
+    "numeroInscricaoSocial": "",
+    "nome": "ANEZIO KEMP",
+    "razaoSocialReceita": "",
+    "nomeFantasiaReceita": "",
+    "tipo": "Pessoa Física"
+  },
+  "textoPublicacao": "Sem Informação",
+  "linkPublicacao": "",
+  "detalhamentoPublicacao": "",
+  "numeroProcesso": "10035185720238260201",
+  "abrangenciaDefinidaDecisaoJudicial": "Sem Informação",
+  "informacoesAdicionaisDoOrgaoSancionador": ""
+}

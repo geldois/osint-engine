@@ -1,21 +1,17 @@
 from __future__ import annotations
 
-import sys
 from typing import Annotated
 
 import typer
 
-from scripts import fixtures, hooks
+from scripts import fixtures
 from scripts.fix import run_fix, run_precommit
 from scripts.gates import run_check
-from scripts.hooks import NotAGitRepositoryError
 from scripts.mutation import run_mutation
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 fixtures_app = typer.Typer(no_args_is_help=True, add_completion=False)
-hooks_app = typer.Typer(no_args_is_help=True, add_completion=False)
 app.add_typer(fixtures_app, name="fixtures")
-app.add_typer(hooks_app, name="hooks")
 
 _DEFAULT_MAX_SURVIVAL = 100.0
 
@@ -48,16 +44,6 @@ def mutation(*, max_survival: float = _DEFAULT_MAX_SURVIVAL) -> None:
 def fixtures_refresh() -> None:
     """Regenerate live-API golden snapshots."""
     fixtures.main()
-
-
-@hooks_app.command("install")
-def hooks_install() -> None:
-    """Install the managed git hooks."""
-    try:
-        raise typer.Exit(hooks.install())
-    except NotAGitRepositoryError as exc:
-        sys.stderr.write(f"{exc}\n")
-        raise typer.Exit(1) from exc
 
 
 if __name__ == "__main__":

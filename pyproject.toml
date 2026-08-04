@@ -43,10 +43,8 @@ Repository = "https://github.com/geldois/osint-engine"
 [dependency-groups]
 dev = [
   "basedpyright>=1.39",
-  "code-review-graph>=2.3.7",
   "cosmic-ray==8.4.6",
   "hypothesis>=6.156.1",
-  "igraph>=1.0.0",
   "import-linter==2.13",
   "pytest>=9.0",
   "pytest-asyncio>=1.4",
@@ -68,9 +66,6 @@ include = ["src", "tests", "scripts", ".claude/hooks"]
 typeCheckingMode = "strict"
 pythonPlatform = "All"
 reportMissingTypeStubs = "none"
-# Lets tests/ import the hooks' top-level modules (e.g. `_comment_stripper`)
-# the same way pytest's own `pythonpath` already does.
-extraPaths = [".claude/hooks"]
 
 # The Claude Code hooks run as standalone scripts (their own directory on
 # sys.path at runtime), so `import _hook_io` resolves from the hooks root.
@@ -84,7 +79,7 @@ root = ".claude/hooks"
 packages = ["src/osint_engine"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src", "tests", ".", ".claude/hooks"]
+pythonpath = ["src", "tests", "."]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "session"
 
@@ -96,7 +91,7 @@ branch = true
 source = ["src"]
 
 [tool.coverage.report]
-# Ratchet-only floor: set to the measured baseline, never lower it (ADR 0025).
+# Ratchet-only floor: set to the measured baseline, never lower it.
 fail_under = 90
 show_missing = true
 
@@ -131,6 +126,7 @@ docstring-code-format = true
 select = ["ALL"]
 ignore = [
   "COM812",
+  "CPY001",
   "D",
   "D100",
   "D101",

@@ -1,4 +1,22 @@
 {
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./uv.lock)",
+      "Read(./coverage.xml)",
+      "Read(./.coverage)",
+      "Read(./CHANGELOG.md)",
+      "Read(./build/**)",
+      "Read(./.venv/**)",
+      "Read(./migrations/**/*.sql.bak)",
+      "Read(./tests/data/**)",
+      "Read(./.hypothesis/**)",
+      "Read(./.ruff_cache/**)",
+      "Read(./.pytest_cache/**)",
+      "Read(./.import_linter_cache/**)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -6,22 +24,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_direct_checks.py\"",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/block_crg_reinstall.py\"",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Grep|Glob|Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/require_graph_before_explore.py\"",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/block_direct_checks.py"
+            ],
             "timeout": 10
           }
         ]
@@ -33,49 +39,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/autofix_edited_file.py\"",
-            "timeout": 60
-          },
-          {
-            "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/strip_agent_comments.py\"",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_lint.py"
+            ],
             "timeout": 30
-          },
-          {
-            "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/update_graph.py\"",
-            "timeout": 30
-          },
-          {
-            "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/mark_architecture_area_touched.py\"",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__code-review-graph.*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/mark_graph_used.py\"",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "command -v uv >/dev/null 2>&1 || echo 'uv is NOT on PATH — every quality-gate hook runs via `uv run` and is SILENTLY DISABLED right now. Fixing uv on PATH (activate mise / install uv) is absolute priority before any other work.'"
-          },
-          {
-            "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/graph_status.py\"",
-            "timeout": 10
           }
         ]
       }
@@ -86,13 +54,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/reset_graph_gate.py\"",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "uv run --no-project python \"$CLAUDE_PROJECT_DIR/.claude/hooks/nudge_architecture_docs.py\"",
-            "timeout": 10
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/after_turn.py"
+            ],
+            "timeout": 60
           }
         ]
       }

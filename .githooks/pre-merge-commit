@@ -1,0 +1,6 @@
+#!/bin/sh
+command -v uv >/dev/null 2>&1 || {
+    echo "osint-engine: 'uv' not found on PATH — activate mise (see README: Setup), or bypass once with 'git merge --no-verify'." >&2
+    exit 1
+}
+exec uv run python -m scripts check --staged --full

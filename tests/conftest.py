@@ -35,6 +35,7 @@ from tests.fakes.domain import FakeEdge, FakeMergeableNode, FakeNode
 from tests.fakes.persistence import FakePgPool
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
     from pathlib import Path
 
     from asyncpg import Pool
@@ -325,6 +326,24 @@ def policies(make_policies: MakePolicies) -> Policies:
         revision_merge_policy=merge_by_filled_fields_policy,
         revision_selection_policy=select_current_by_newest_fetched,
     )
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_makereport(
+    item: pytest.Item,  # noqa: ARG001
+    call: pytest.CallInfo[None],  # noqa: ARG001
+) -> Generator[None, pytest.TestReport, pytest.TestReport]:
+    report = yield
+
+    if report.skipped and isinstance(report.longrepr, tuple):
+        _, _, reason = report.longrepr
+        report.outcome = "failed"
+        report.longrepr = (
+            f"{reason} — this suite allows no skips. Fix the environment (see "
+            f"README: Setup), or commit with --no-verify and say why."
+        )
+
+    return report
 
 
 def _git(*args: str, cwd: Path) -> None:

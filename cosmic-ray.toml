@@ -1,4 +1,4 @@
-# Mutation testing config (ADR 0025). Periodic job, never a git hook.
+# Mutation testing config. Periodic job, never a git hook.
 # Run via: uv run python -m scripts mutation --max-survival <ceiling>
 
 [cosmic-ray]
