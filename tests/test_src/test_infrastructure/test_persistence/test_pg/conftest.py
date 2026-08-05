@@ -28,7 +28,7 @@ def _ensure_docker_host() -> None:
     unavailable" and silently skips every integration test. Real Docker and an
     explicit DOCKER_HOST are both left untouched.
     """
-    if environ.get("DOCKER_HOST") or Path("/var/run/docker.sock").exists():
+    if environ.get("DOCKER_HOST") or Path("/var/run/docker.sock").is_socket():
         return
 
     runtime = environ.get("XDG_RUNTIME_DIR")
@@ -36,7 +36,7 @@ def _ensure_docker_host() -> None:
         return
 
     socket = Path(runtime) / "podman" / "podman.sock"
-    if socket.exists():
+    if socket.is_socket():
         environ["DOCKER_HOST"] = f"unix://{socket}"
 
 
