@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import keyword
 import tokenize
 from io import StringIO
 
@@ -9,7 +10,9 @@ from hypothesis import strategies as st
 
 from scripts._comments import is_pragma_comment, strip_python
 
-_IDENTIFIER = st.from_regex(r"[a-z][a-z0-9_]{0,8}", fullmatch=True)
+_IDENTIFIER = st.from_regex(r"[a-z][a-z0-9_]{0,8}", fullmatch=True).filter(
+    lambda name: not keyword.iskeyword(name) and not keyword.issoftkeyword(name)
+)
 _COMMENT_TEXT = st.from_regex(r"[a-zA-Z0-9 _.,!?-]{0,20}", fullmatch=True)
 _DOC_TEXT = st.from_regex(r"[a-zA-Z0-9 _.,!?-]{0,20}", fullmatch=True)
 
