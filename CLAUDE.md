@@ -4,6 +4,7 @@ Only what no other source holds. Everything else is owned elsewhere — go there
 
 | Question                            | Source                   |
 | ----------------------------------- | ------------------------ |
+| What a domain term means            | `CONTEXT.md`             |
 | Macro business flow / why, per area | `docs/architecture/*.md` |
 | Setup, run, endpoints, auth, stack  | `README.md`              |
 | Known deferrals, accepted debt      | `TO-DO.md`               |
