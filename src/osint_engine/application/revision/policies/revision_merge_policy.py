@@ -39,11 +39,11 @@ def merge_by_filled_fields_policy[Entity_: Entity[UUID]](
     newest_contributed_nothing = bool(non_identity_fields) and non_identity_fields <= (
         fills.keys()
     )
-    source = oldest.source if newest_contributed_nothing else newest.source
+    provider = oldest.provider if newest_contributed_nothing else newest.provider
 
     return EntityRevision(
         entity=newest.entity.evolve(**fills),
         fetched_at=newest.fetched_at,
         merged_at=datetime.now(tz=UTC),
-        source=source,
+        provider=provider,
     )

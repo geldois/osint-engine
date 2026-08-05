@@ -105,7 +105,7 @@ class MemGraphRepository(GraphRepository):
                         entity=node,
                         fetched_at=merged.fetched_at,
                         merged_at=merged.merged_at,
-                        source=merged.source,
+                        provider=merged.provider,
                     )
                 )
 
@@ -127,7 +127,7 @@ class MemGraphRepository(GraphRepository):
                         entity=edge,
                         fetched_at=merged.fetched_at,
                         merged_at=merged.merged_at,
-                        source=merged.source,
+                        provider=merged.provider,
                     )
                 )
 

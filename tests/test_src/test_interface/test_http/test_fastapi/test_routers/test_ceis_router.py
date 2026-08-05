@@ -11,7 +11,7 @@ from osint_engine.application.auth.external_credential import (
     Provider,
 )
 from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandByCEIS
-from osint_engine.infrastructure.sources.portal_transparencia.endpoints.ceis_fetcher import (  # noqa: E501
+from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceis_fetcher import (  # noqa: E501
     PortalTransparenciaCEISFetcher,
 )
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app

@@ -1,0 +1,692 @@
+from __future__ import annotations
+
+from decimal import Decimal
+from typing import TYPE_CHECKING
+
+import pytest
+
+from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
+from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
+from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
+from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
+from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
+from osint_engine.domain.entities.edges.company_owns_company import CompanyOwnsCompany
+from osint_engine.domain.entities.edges.person_owns_company import PersonOwnsCompany
+from osint_engine.domain.entities.nodes.address import Address
+from osint_engine.domain.entities.nodes.company import Company
+from osint_engine.domain.entities.nodes.email import Email
+from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.infrastructure.errors.provider_error import (
+    UnexpectedFieldTypeError,
+)
+from osint_engine.infrastructure.providers.brasilapi.endpoints.cnpj_v1_mapper import (
+    _map_address,  # pyright: ignore[reportPrivateUsage]
+    _map_cnaes,  # pyright: ignore[reportPrivateUsage]
+    _map_company,  # pyright: ignore[reportPrivateUsage]
+    _map_company_partners_and_ownerships,  # pyright: ignore[reportPrivateUsage]
+    _map_email,  # pyright: ignore[reportPrivateUsage]
+    _map_persons_and_ownerships,  # pyright: ignore[reportPrivateUsage]
+    _map_phones,  # pyright: ignore[reportPrivateUsage]
+    map_graph,
+)
+from tests.data.brasilapi import (
+    ADDRESS_DATA,
+    CNAE_DATA,
+    COMPANY_DATA,
+    COMPLETE_PAYLOAD_DATA,
+    PARTNER_LEGAL_ENTITY,
+    PARTNER_PERSON,
+)
+
+if TYPE_CHECKING:
+    from osint_engine.infrastructure.providers.payload import Payload
+    from tests.test_src.test_infrastructure.test_providers.conftest import MakePayload
+
+
+_COMPANY_ID = Company(
+    activity_start_date="1966-08-01",
+    cnpj="00000000000191",
+    is_headquarters=True,
+    legal_name="BANCO DO BRASIL SA",
+    legal_nature="Sociedade de Economia Mista",
+    registration_status="ATIVA",
+    registration_status_date="2005-11-03",
+    registration_status_reason="SEM MOTIVO",
+    share_capital=Decimal("120000000000"),
+    size_category="DEMAIS",
+    trade_name="DIRECAO GERAL",
+).id
+
+
+class TestMapAddress:
+    def test_maps_field_values_from_payload(self, make_payload: MakePayload) -> None:
+        address = _map_address(
+            payload=make_payload(provider="brasilapi", data=ADDRESS_DATA)
+        )
+
+        assert isinstance(address, Address)
+
+        assert address.cep == "70040912"
+
+        assert address.city == "BRASILIA"
+
+        assert address.street == "SAUN QUADRA 5 BLOCO B"
+
+        assert address.complement == "ANDAR T I"
+
+        assert address.neighborhood == "ASA NORTE"
+
+        assert address.number == "SN"
+
+        assert address.state == "DF"
+
+    def test_returns_none_when_cep_is_empty(self, make_payload: MakePayload) -> None:
+        data = {**ADDRESS_DATA, "cep": ""}
+
+        address = _map_address(payload=make_payload(provider="brasilapi", data=data))
+
+        assert address is None
+
+    def test_returns_none_when_numero_is_empty(self, make_payload: MakePayload) -> None:
+        data = {**ADDRESS_DATA, "numero": ""}
+
+        address = _map_address(payload=make_payload(provider="brasilapi", data=data))
+
+        assert address is None
+
+
+class TestMapCnaes:
+    def test_primary_cnae_code_is_int_converted_to_string(
+        self, make_payload: MakePayload
+    ) -> None:
+        cnaes = _map_cnaes(payload=make_payload(provider="brasilapi", data=CNAE_DATA))
+
+        codes = {cnae.code for cnae in cnaes}
+
+        assert "6422100" in codes
+
+    def test_primary_cnae_description_is_mapped(
+        self, make_payload: MakePayload
+    ) -> None:
+        cnaes = _map_cnaes(payload=make_payload(provider="brasilapi", data=CNAE_DATA))
+
+        primary = next(c for c in cnaes if c.code == "6422100")
+
+        assert primary.description == "Bancos múltiplos, com carteira comercial"
+
+    def test_includes_secondary_cnaes(self, make_payload: MakePayload) -> None:
+        cnaes = _map_cnaes(payload=make_payload(provider="brasilapi", data=CNAE_DATA))
+
+        codes = {cnae.code for cnae in cnaes}
+
+        assert "6499999" in codes
+
+    def test_count_is_primary_plus_secondary(self, make_payload: MakePayload) -> None:
+        cnaes = _map_cnaes(payload=make_payload(provider="brasilapi", data=CNAE_DATA))
+
+        assert len(cnaes) == 2
+
+    def test_returns_only_primary_when_secondary_list_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        data: dict[str, object] = {**CNAE_DATA, "cnaes_secundarios": []}
+
+        cnaes = _map_cnaes(payload=make_payload(provider="brasilapi", data=data))
+
+        assert len(cnaes) == 1
+
+        assert next(iter(cnaes)).code == "6422100"
+
+    def test_skips_falsy_entries_in_secondary_cnaes(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {
+            **CNAE_DATA,
+            "cnaes_secundarios": [{}, {"codigo": 6499999, "descricao": "Other"}],
+        }
+
+        cnaes = _map_cnaes(payload=make_payload(provider="brasilapi", data=data))
+
+        assert len(cnaes) == 2
+
+
+class TestMapCompany:
+    def test_maps_field_values_from_payload(self, make_payload: MakePayload) -> None:
+        company = _map_company(
+            payload=make_payload(provider="brasilapi", data=COMPANY_DATA)
+        )
+
+        assert isinstance(company, Company)
+
+        assert company.activity_start_date == "1966-08-01"
+
+        assert company.cnpj == "00000000000191"
+
+        assert company.legal_name == "BANCO DO BRASIL SA"
+
+        assert company.legal_nature == "Sociedade de Economia Mista"
+
+        assert company.registration_status == "ATIVA"
+
+        assert company.registration_status_date == "2005-11-03"
+
+        assert company.registration_status_reason == "SEM MOTIVO"
+
+        assert company.size_category == "DEMAIS"
+
+        assert company.trade_name == "DIRECAO GERAL"
+
+    def test_is_headquarters_true_when_indicator_is_1(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPANY_DATA, "identificador_matriz_filial": 1}
+
+        company = _map_company(payload=make_payload(provider="brasilapi", data=data))
+
+        assert company.is_headquarters is True
+
+    def test_is_headquarters_false_when_indicator_is_not_1(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPANY_DATA, "identificador_matriz_filial": 2}
+
+        company = _map_company(payload=make_payload(provider="brasilapi", data=data))
+
+        assert company.is_headquarters is False
+
+    def test_share_capital_as_int_converts_to_decimal(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPANY_DATA, "capital_social": 120000000000}
+
+        company = _map_company(payload=make_payload(provider="brasilapi", data=data))
+
+        assert company.share_capital == Decimal("120000000000")
+
+    def test_share_capital_as_float_converts_to_decimal(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPANY_DATA, "capital_social": 1.5}
+
+        company = _map_company(payload=make_payload(provider="brasilapi", data=data))
+
+        assert company.share_capital == Decimal("1.5")
+
+    def test_share_capital_with_unexpected_type_raises(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPANY_DATA, "capital_social": "not a number"}
+
+        with pytest.raises(UnexpectedFieldTypeError) as exception:
+            _map_company(payload=make_payload(provider="brasilapi", data=data))
+
+        assert "int | float" in str(exception.value)
+
+        assert "str" in str(exception.value)
+
+    def test_registration_status_date_is_none_when_payload_has_null(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPANY_DATA, "data_situacao_cadastral": None}
+
+        company = _map_company(payload=make_payload(provider="brasilapi", data=data))
+
+        assert company.registration_status_date is None
+
+    def test_size_category_is_none_when_payload_has_null(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPANY_DATA, "porte": None}
+
+        company = _map_company(payload=make_payload(provider="brasilapi", data=data))
+
+        assert company.size_category is None
+
+
+class TestMapEmail:
+    def test_returns_email_when_address_is_present(
+        self, make_payload: MakePayload
+    ) -> None:
+        result = _map_email(
+            payload=make_payload(
+                provider="brasilapi", data={"email": "contato@bb.com.br"}
+            )
+        )
+
+        assert isinstance(result, Email)
+
+        assert result.address == "contato@bb.com.br"
+
+    def test_raises_when_email_has_unexpected_type(
+        self, make_payload: MakePayload
+    ) -> None:
+        with pytest.raises(UnexpectedFieldTypeError):
+            _map_email(payload=make_payload(provider="brasilapi", data={"email": 123}))
+
+
+class TestMapPhones:
+    def test_returns_both_phones_when_both_present(
+        self, make_payload: MakePayload
+    ) -> None:
+        data: dict[str, object] = {
+            "ddd_telefone_1": "6134939002",
+            "ddd_telefone_2": "6134931040",
+        }
+
+        phones = _map_phones(payload=make_payload(provider="brasilapi", data=data))
+
+        assert len(phones) == 2
+
+        numbers = {phone.number for phone in phones}
+
+        assert "6134939002" in numbers
+
+        assert "6134931040" in numbers
+
+    def test_filters_empty_second_phone(self, make_payload: MakePayload) -> None:
+        data: dict[str, object] = {"ddd_telefone_1": "6134939002", "ddd_telefone_2": ""}
+
+        phones = _map_phones(payload=make_payload(provider="brasilapi", data=data))
+
+        assert len(phones) == 1
+
+        assert next(iter(phones)).number == "6134939002"
+
+    def test_returns_only_second_phone_when_first_is_absent(
+        self, make_payload: MakePayload
+    ) -> None:
+        data: dict[str, object] = {"ddd_telefone_2": "6134931040"}
+
+        phones = _map_phones(payload=make_payload(provider="brasilapi", data=data))
+
+        assert len(phones) == 1
+
+        assert next(iter(phones)).number == "6134931040"
+
+    def test_returns_empty_set_when_no_phones_present(
+        self, make_payload: MakePayload
+    ) -> None:
+        phones = _map_phones(payload=make_payload(provider="brasilapi", data={}))
+
+        assert phones == set()
+
+    def test_raises_when_phone_has_unexpected_type(
+        self, make_payload: MakePayload
+    ) -> None:
+        data: dict[str, object] = {"ddd_telefone_1": 6134939002}
+
+        with pytest.raises(UnexpectedFieldTypeError):
+            _map_phones(payload=make_payload(provider="brasilapi", data=data))
+
+
+class TestMapPersonsAndOwnerships:
+    def test_maps_person_fields(self, make_payload: MakePayload) -> None:
+        persons, _ = _map_persons_and_ownerships(
+            payload=make_payload(provider="brasilapi", data={"qsa": [PARTNER_PERSON]}),
+            company_id=_COMPANY_ID,
+        )
+
+        person = next(iter(persons))
+
+        assert person.name == "TARCIANA PAULA GOMES MEDEIROS"
+
+        assert person.cpf == "***128734**"
+
+        assert person.age_range == "Entre 41 a 50 anos"
+
+    def test_maps_ownership_fields(self, make_payload: MakePayload) -> None:
+        _, ownerships = _map_persons_and_ownerships(
+            payload=make_payload(provider="brasilapi", data={"qsa": [PARTNER_PERSON]}),
+            company_id=_COMPANY_ID,
+        )
+
+        ownership = next(iter(ownerships))
+
+        assert ownership.entry_date == "2023-01-26"
+
+        assert ownership.role == "Presidente"
+
+        assert ownership.target_id == _COMPANY_ID
+
+    def test_ownership_provider_id_matches_person_id(
+        self, make_payload: MakePayload
+    ) -> None:
+        persons, ownerships = _map_persons_and_ownerships(
+            payload=make_payload(provider="brasilapi", data={"qsa": [PARTNER_PERSON]}),
+            company_id=_COMPANY_ID,
+        )
+
+        person = next(iter(persons))
+        ownership = next(iter(ownerships))
+
+        assert ownership.source_id == person.id
+
+    def test_skips_partner_with_non_person_identifier(
+        self, make_payload: MakePayload
+    ) -> None:
+        legal_entity: dict[str, object] = {
+            **PARTNER_PERSON,
+            "identificador_de_socio": 3,
+        }
+
+        persons, ownerships = _map_persons_and_ownerships(
+            payload=make_payload(provider="brasilapi", data={"qsa": [legal_entity]}),
+            company_id=_COMPANY_ID,
+        )
+
+        assert persons == set()
+
+        assert ownerships == set()
+
+    def test_skips_empty_partner_dict(self, make_payload: MakePayload) -> None:
+        persons, ownerships = _map_persons_and_ownerships(
+            payload=make_payload(provider="brasilapi", data={"qsa": [{}]}),
+            company_id=_COMPANY_ID,
+        )
+
+        assert persons == set()
+
+        assert ownerships == set()
+
+    def test_returns_empty_sets_when_qsa_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        persons, ownerships = _map_persons_and_ownerships(
+            payload=make_payload(provider="brasilapi", data={"qsa": []}),
+            company_id=_COMPANY_ID,
+        )
+
+        assert persons == set()
+
+        assert ownerships == set()
+
+    def test_keeps_scanning_after_skipping_a_non_person_partner(
+        self, make_payload: MakePayload
+    ) -> None:
+        persons, ownerships = _map_persons_and_ownerships(
+            payload=make_payload(
+                provider="brasilapi",
+                data={"qsa": [PARTNER_LEGAL_ENTITY, PARTNER_PERSON]},
+            ),
+            company_id=_COMPANY_ID,
+        )
+
+        assert len(persons) == 1
+
+        assert len(ownerships) == 1
+
+
+class TestMapCompanyPartnersAndOwnerships:
+    def test_maps_company_stub_fields(self, make_payload: MakePayload) -> None:
+        companies, _ = _map_company_partners_and_ownerships(
+            payload=make_payload(
+                provider="brasilapi", data={"qsa": [PARTNER_LEGAL_ENTITY]}
+            ),
+            company_id=_COMPANY_ID,
+        )
+
+        partner_company = next(iter(companies))
+
+        assert partner_company.cnpj == "33754482000124"
+
+        assert partner_company.legal_name == (
+            "PREVI - CAIXA DE PREVIDENCIA DOS FUNCIONARIOS DO BANCO DO BRASIL"
+        )
+
+    def test_company_stub_has_no_enrichment_fields(
+        self, make_payload: MakePayload
+    ) -> None:
+        companies, _ = _map_company_partners_and_ownerships(
+            payload=make_payload(
+                provider="brasilapi", data={"qsa": [PARTNER_LEGAL_ENTITY]}
+            ),
+            company_id=_COMPANY_ID,
+        )
+
+        partner_company = next(iter(companies))
+
+        assert partner_company.activity_start_date is None
+
+        assert partner_company.is_headquarters is None
+
+        assert partner_company.legal_nature is None
+
+        assert partner_company.registration_status is None
+
+        assert partner_company.registration_status_date is None
+
+        assert partner_company.registration_status_reason is None
+
+        assert partner_company.share_capital is None
+
+        assert partner_company.size_category is None
+
+        assert partner_company.trade_name is None
+
+    def test_maps_ownership_fields(self, make_payload: MakePayload) -> None:
+        _, ownerships = _map_company_partners_and_ownerships(
+            payload=make_payload(
+                provider="brasilapi", data={"qsa": [PARTNER_LEGAL_ENTITY]}
+            ),
+            company_id=_COMPANY_ID,
+        )
+
+        ownership = next(iter(ownerships))
+
+        assert ownership.entry_date == "1988-03-01"
+
+        assert ownership.role == "Acionista Controlador"
+
+        assert ownership.target_id == _COMPANY_ID
+
+    def test_ownership_provider_id_matches_company_stub_id(
+        self, make_payload: MakePayload
+    ) -> None:
+        companies, ownerships = _map_company_partners_and_ownerships(
+            payload=make_payload(
+                provider="brasilapi", data={"qsa": [PARTNER_LEGAL_ENTITY]}
+            ),
+            company_id=_COMPANY_ID,
+        )
+
+        partner_company = next(iter(companies))
+        ownership = next(iter(ownerships))
+
+        assert ownership.source_id == partner_company.id
+
+    def test_skips_partner_with_non_legal_entity_identifier(
+        self, make_payload: MakePayload
+    ) -> None:
+        companies, ownerships = _map_company_partners_and_ownerships(
+            payload=make_payload(provider="brasilapi", data={"qsa": [PARTNER_PERSON]}),
+            company_id=_COMPANY_ID,
+        )
+
+        assert companies == set()
+
+        assert ownerships == set()
+
+    def test_skips_empty_partner_dict(self, make_payload: MakePayload) -> None:
+        companies, ownerships = _map_company_partners_and_ownerships(
+            payload=make_payload(provider="brasilapi", data={"qsa": [{}]}),
+            company_id=_COMPANY_ID,
+        )
+
+        assert companies == set()
+
+        assert ownerships == set()
+
+    def test_returns_empty_sets_when_qsa_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        companies, ownerships = _map_company_partners_and_ownerships(
+            payload=make_payload(provider="brasilapi", data={"qsa": []}),
+            company_id=_COMPANY_ID,
+        )
+
+        assert companies == set()
+
+        assert ownerships == set()
+
+
+class TestMapGraph:
+    def test_root_id_is_company_node(self, make_payload: MakePayload) -> None:
+        graph = map_graph(
+            payload=make_payload(provider="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        company_ids = {node.id for node in graph.nodes if isinstance(node, Company)}
+
+        assert graph.root_id in company_ids
+
+    def test_address_node_is_present(self, make_payload: MakePayload) -> None:
+        graph = map_graph(
+            payload=make_payload(provider="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        assert any(isinstance(node, Address) for node in graph.nodes)
+
+    def test_no_address_node_when_cep_is_empty(self, make_payload: MakePayload) -> None:
+        data = {**COMPLETE_PAYLOAD_DATA, "cep": ""}
+
+        graph = map_graph(payload=make_payload(provider="brasilapi", data=data))
+
+        assert not any(isinstance(node, Address) for node in graph.nodes)
+
+    def test_no_address_node_when_numero_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPLETE_PAYLOAD_DATA, "numero": ""}
+
+        graph = map_graph(payload=make_payload(provider="brasilapi", data=data))
+
+        assert not any(isinstance(node, Address) for node in graph.nodes)
+
+    def test_no_address_edge_when_cep_is_empty(self, make_payload: MakePayload) -> None:
+        data = {**COMPLETE_PAYLOAD_DATA, "cep": ""}
+
+        graph = map_graph(payload=make_payload(provider="brasilapi", data=data))
+
+        assert not any(isinstance(edge, CompanyLocatedAt) for edge in graph.edges)
+
+    def test_no_address_edge_when_numero_is_empty(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {**COMPLETE_PAYLOAD_DATA, "numero": ""}
+
+        graph = map_graph(payload=make_payload(provider="brasilapi", data=data))
+
+        assert not any(isinstance(edge, CompanyLocatedAt) for edge in graph.edges)
+
+    def test_email_node_present_when_payload_has_email(
+        self, make_payload: MakePayload
+    ) -> None:
+        graph = map_graph(
+            payload=make_payload(provider="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        assert any(isinstance(node, Email) for node in graph.nodes)
+
+    def test_no_email_node_when_payload_has_no_email(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {
+            key: value for key, value in COMPLETE_PAYLOAD_DATA.items() if key != "email"
+        }
+
+        graph = map_graph(payload=make_payload(provider="brasilapi", data=data))
+
+        assert not any(isinstance(node, Email) for node in graph.nodes)
+
+    def test_email_edge_present_when_payload_has_email(
+        self, make_payload: MakePayload
+    ) -> None:
+        graph = map_graph(
+            payload=make_payload(provider="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        assert any(isinstance(e, CompanyHasEmail) for e in graph.edges)
+
+    def test_no_email_edge_when_payload_has_no_email(
+        self, make_payload: MakePayload
+    ) -> None:
+        data = {
+            key: value for key, value in COMPLETE_PAYLOAD_DATA.items() if key != "email"
+        }
+
+        graph = map_graph(payload=make_payload(provider="brasilapi", data=data))
+
+        assert not any(isinstance(edge, CompanyHasEmail) for edge in graph.edges)
+
+    def test_all_edge_endpoints_are_in_node_set(
+        self, make_payload: MakePayload
+    ) -> None:
+        graph = map_graph(
+            payload=make_payload(provider="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        node_ids = {node.id for node in graph.nodes}
+
+        for edge in graph.edges:
+            assert edge.source_id in node_ids, (
+                f"edge provider {edge.source_id} not in nodes"
+            )
+
+            assert edge.target_id in node_ids, (
+                f"edge target {edge.target_id} not in nodes"
+            )
+
+    def test_person_node_count_matches_qsa_person_entries(
+        self, make_payload: MakePayload
+    ) -> None:
+        graph = map_graph(
+            payload=make_payload(provider="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        person_nodes = {node for node in graph.nodes if isinstance(node, Person)}
+
+        assert len(person_nodes) == 1
+
+    def test_company_node_count_matches_qsa_legal_entity_entries_plus_root(
+        self, make_payload: MakePayload
+    ) -> None:
+        graph = map_graph(
+            payload=make_payload(provider="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        company_nodes = {node for node in graph.nodes if isinstance(node, Company)}
+
+        assert len(company_nodes) == 2
+
+    def test_company_owns_company_edge_present_for_legal_entity_partner(
+        self, make_payload: MakePayload
+    ) -> None:
+        graph = map_graph(
+            payload=make_payload(provider="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        assert any(isinstance(edge, CompanyOwnsCompany) for edge in graph.edges)
+
+    def test_all_edge_kinds_coexist_in_the_same_union(
+        self, make_payload: MakePayload
+    ) -> None:
+        graph = map_graph(
+            payload=make_payload(provider="brasilapi", data=COMPLETE_PAYLOAD_DATA)
+        )
+
+        assert any(isinstance(edge, CompanyHasCnae) for edge in graph.edges)
+
+        assert any(isinstance(edge, CompanyHasMember) for edge in graph.edges)
+
+        assert any(isinstance(edge, CompanyHasPhone) for edge in graph.edges)
+
+        assert any(isinstance(edge, PersonOwnsCompany) for edge in graph.edges)
+
+        assert any(isinstance(edge, CompanyOwnsCompany) for edge in graph.edges)
+
+
+class TestMapGraphWithRealAPISnapshot:
+    def test_does_not_raise_with_real_api_snapshot(
+        self, brasilapi_cnpj_v1_valid_payload: Payload
+    ) -> None:
+        map_graph(payload=brasilapi_cnpj_v1_valid_payload)

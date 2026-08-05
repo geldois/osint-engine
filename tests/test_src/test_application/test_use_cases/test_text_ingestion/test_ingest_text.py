@@ -46,7 +46,7 @@ def _pattern_set_repository() -> MemPatternSetRepository:
 
 class TestIngestTextCompanyAndAddressStubs:
     @pytest.mark.asyncio
-    async def test_creates_a_stub_company_and_links_it_to_the_text_source(
+    async def test_creates_a_stub_company_and_links_it_to_the_text_provider(
         self, make_mem_uow_factory: MakeMemUoWFactory
     ) -> None:
         use_case = IngestText(
@@ -70,7 +70,7 @@ class TestIngestTextCompanyAndAddressStubs:
         assert mention_edges[0].source_id == companies[0].id
 
     @pytest.mark.asyncio
-    async def test_creates_a_stub_address_and_links_it_to_the_text_source(
+    async def test_creates_a_stub_address_and_links_it_to_the_text_provider(
         self, make_mem_uow_factory: MakeMemUoWFactory
     ) -> None:
         use_case = IngestText(
@@ -98,7 +98,7 @@ class TestIngestTextCompanyAndAddressStubs:
 
 class TestIngestTextNewStub:
     @pytest.mark.asyncio
-    async def test_creates_a_stub_person_and_links_it_to_the_text_source(
+    async def test_creates_a_stub_person_and_links_it_to_the_text_provider(
         self, make_mem_uow_factory: MakeMemUoWFactory
     ) -> None:
         use_case = IngestText(
@@ -129,7 +129,7 @@ class TestIngestTextNewStub:
         assert mention_edges[0].pattern_id == BRAZILIAN_DOCUMENT_PATTERNS.id
 
     @pytest.mark.asyncio
-    async def test_persists_the_stub_and_text_source_individually(
+    async def test_persists_the_stub_and_text_provider_individually(
         self,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,

@@ -57,7 +57,7 @@ class MakeEntityRevision(Protocol):
         entity: Entity_,
         fetched_at: datetime | None = None,
         merged_at: datetime | None = None,
-        source: str = "test_source",
+        provider: str = "test_provider",
     ) -> EntityRevision[Entity_]: ...
 
 
@@ -140,13 +140,13 @@ def make_entity_revision() -> MakeEntityRevision:
         entity: Entity_,
         fetched_at: datetime | None = None,
         merged_at: datetime | None = None,
-        source: str = "test_source",
+        provider: str = "test_provider",
     ) -> EntityRevision[Entity_]:
         return EntityRevision(
             entity=entity,
             fetched_at=fetched_at if fetched_at is not None else datetime_,
             merged_at=merged_at,
-            source=source,
+            provider=provider,
         )
 
     return entity_revision

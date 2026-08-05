@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 
 _logger = get_logger()
 
-_SOURCE = "text_pattern"
+_PROVIDER = "text_pattern"
 
 
 def _build_person_stub(*, field_values: dict[str, str]) -> Person:
@@ -195,7 +195,7 @@ class IngestText(Query[Graph]):
                     entity=graph,
                     fetched_at=fetched_at,
                     merged_at=None,
-                    source=_SOURCE,
+                    provider=_PROVIDER,
                 )
             )
 

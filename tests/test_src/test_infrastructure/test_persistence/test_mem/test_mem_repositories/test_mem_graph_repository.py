@@ -214,7 +214,7 @@ class TestMemGraphRepositoryMergeCascade:
             assert edge.content_id in mem_storage.edges[edge.id]
 
     @pytest.mark.asyncio
-    async def test_cascaded_node_revision_carries_the_graph_revisions_source(
+    async def test_cascaded_node_revision_carries_the_graph_revisions_provider(
         self,
         make_entity_revision: MakeEntityRevision,
         make_graph: MakeGraph,
@@ -222,7 +222,7 @@ class TestMemGraphRepositoryMergeCascade:
         make_mem_graph_repository: MakeMemGraphRepository,
     ) -> None:
         graph = make_graph()
-        revision = make_entity_revision(entity=graph, source="a_specific_source")
+        revision = make_entity_revision(entity=graph, provider="a_specific_source")
         mem_storage = make_mem_storage()
         repo = make_mem_graph_repository(mem_storage=mem_storage)
 
@@ -231,7 +231,7 @@ class TestMemGraphRepositoryMergeCascade:
         any_node = next(iter(graph.nodes))
         cascaded = mem_storage.nodes[any_node.id][any_node.content_id]
 
-        assert cascaded.source == "a_specific_source"
+        assert cascaded.provider == "a_specific_source"
 
     @pytest.mark.asyncio
     async def test_re_merging_an_unchanged_graph_does_not_re_stamp_its_nodes(
@@ -244,7 +244,7 @@ class TestMemGraphRepositoryMergeCascade:
 
         graph = make_graph()
         first = make_entity_revision(
-            entity=graph, fetched_at=_EARLY, source="original_source"
+            entity=graph, fetched_at=_EARLY, provider="original_source"
         )
         mem_storage = make_mem_storage()
         repo = make_mem_graph_repository(mem_storage=mem_storage)
@@ -252,7 +252,7 @@ class TestMemGraphRepositoryMergeCascade:
         await repo.merge(revision=first)
 
         second = make_entity_revision(
-            entity=graph, fetched_at=_LATE, source="rediscovered_source"
+            entity=graph, fetched_at=_LATE, provider="rediscovered_source"
         )
 
         await repo.merge(revision=second)
@@ -261,4 +261,4 @@ class TestMemGraphRepositoryMergeCascade:
         cascaded = mem_storage.nodes[any_node.id][any_node.content_id]
 
         assert cascaded.fetched_at == _EARLY
-        assert cascaded.source == "original_source"
+        assert cascaded.provider == "original_source"

@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 _logger = get_logger()
 
-_SOURCE = "fuzzy_match"
+_PROVIDER = "fuzzy_match"
 _MIN_CONFIDENCE_SCORE = 92
 
 _NAME_FIELDS: dict[type[Node[UUID]], tuple[str, ...]] = {
@@ -114,7 +114,7 @@ class FindPossiblyMatches(Query[Graph | None]):
                         entity=match,
                         fetched_at=fetched_at,
                         merged_at=None,
-                        source=_SOURCE,
+                        provider=_PROVIDER,
                     )
                     for match in matches
                 )

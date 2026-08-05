@@ -55,11 +55,11 @@ class EmptyRevisionSelectionError(RevisionError, error_code="REVISION_EMPTY_SELE
         return "Cannot select a current revision from an empty set of revisions."
 
 
-class EmptySourceError(RevisionError, error_code="REVISION_EMPTY_SOURCE"):
+class EmptyProviderError(RevisionError, error_code="REVISION_EMPTY_PROVIDER"):
     @override
     def __init__(self) -> None:
         super().__init__()
 
     @override
     def _build_message(self) -> str:
-        return "Revision.source must not be empty or whitespace-only."
+        return "Revision.provider must not be empty or whitespace-only."

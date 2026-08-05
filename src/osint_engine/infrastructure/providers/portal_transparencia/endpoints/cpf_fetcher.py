@@ -1,0 +1,81 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime
+from json import JSONDecodeError
+from typing import TYPE_CHECKING, override
+
+from httpx2 import URL, AsyncClient, HTTPStatusError, RequestError
+
+from osint_engine.application.contracts.fetchers.cpf_fetcher import CPFFetcher
+from osint_engine.application.revision.entity_revision import EntityRevision
+from osint_engine.infrastructure.errors.provider_error import ProviderRequestError
+from osint_engine.infrastructure.providers.payload import Payload
+from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cpf_mapper import (  # noqa: E501
+    map_graph,
+)
+from osint_engine.infrastructure.providers.portal_transparencia.portal_transparencia_fetcher import (  # noqa: E501
+    PortalTransparenciaFetcher,
+)
+
+if TYPE_CHECKING:
+    from osint_engine.application.auth.external_credential import ExternalCredential
+    from osint_engine.domain.entities.bases.graph import Graph
+
+
+class PortalTransparenciaCPFFetcher(
+    PortalTransparenciaFetcher, CPFFetcher, url_suffix="pf"
+):
+    @override
+    def __init__(self, *, http_client: AsyncClient) -> None:
+        super().__init__(http_client=http_client)
+
+    @override
+    async def fetch(
+        self, *, cpf: str, credential: ExternalCredential
+    ) -> EntityRevision[Graph]:
+        self._logger.info("cpf.fetch.start", cpf=cpf)
+
+        try:
+            headers = self._build_headers(credential=credential)
+            url = URL(str(self._BASE_URL))
+            params = {"cpf": cpf}
+
+            response = await self._http_client.get(
+                url=url, params=params, headers=headers
+            )
+            response.raise_for_status()
+
+            data: dict[str, object] = response.json()
+
+            fetched_at = datetime.now(tz=UTC)
+
+            self._logger.info("cpf.fetch.success", cpf=cpf)
+        except HTTPStatusError as exception:
+            self._logger.warning(
+                "cpf.fetch.error", cpf=cpf, status_code=exception.response.status_code
+            )
+
+            self._raise_for_credential_rejection(
+                exception=exception, credential=credential
+            )
+
+            raise ProviderRequestError(
+                provider=self._PROVIDER, status_code=exception.response.status_code
+            ) from exception
+        except (RequestError, JSONDecodeError) as exception:
+            self._logger.exception(
+                "cpf.fetch.error", cpf=cpf, exc_type=type(exception).__name__
+            )
+
+            raise ProviderRequestError(
+                provider=self._PROVIDER, status_code=None
+            ) from exception
+
+        payload = Payload(provider=self._PROVIDER, data=data)
+
+        return EntityRevision(
+            entity=map_graph(payload=payload),
+            fetched_at=fetched_at,
+            merged_at=None,
+            provider=self._PROVIDER,
+        )

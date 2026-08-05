@@ -202,7 +202,7 @@ class TestNodePresenterFieldMapping:
 
         assert result.start_date == _SANCTION.start_date
 
-    def test_text_source_fields_are_correctly_mapped(self) -> None:
+    def test_text_provider_fields_are_correctly_mapped(self) -> None:
         result = node_to_schema(_TEXT_SOURCE)
 
         assert isinstance(result, TextSourceSchema)

@@ -190,17 +190,17 @@ class TestMergeSourceAttribution:
         older = make_entity_revision(
             entity=make_fake_mergeable_node(key="k", label="real-data"),
             fetched_at=_EARLY,
-            source="verified_source",
+            provider="verified_source",
         )
         newer = make_entity_revision(
             entity=make_fake_mergeable_node(key="k", label=None),
             fetched_at=_LATE,
-            source="stub_source",
+            provider="stub_source",
         )
 
         merged = merge_by_filled_fields_policy(older, newer)
 
-        assert merged.source == "verified_source"
+        assert merged.provider == "verified_source"
 
     def test_source_follows_newest_when_it_contributes_its_own_field(
         self,
@@ -210,17 +210,17 @@ class TestMergeSourceAttribution:
         older = make_entity_revision(
             entity=make_fake_mergeable_node(key="k", label="old"),
             fetched_at=_EARLY,
-            source="old_source",
+            provider="old_source",
         )
         newer = make_entity_revision(
             entity=make_fake_mergeable_node(key="k", label="new"),
             fetched_at=_LATE,
-            source="new_source",
+            provider="new_source",
         )
 
         merged = merge_by_filled_fields_policy(older, newer)
 
-        assert merged.source == "new_source"
+        assert merged.provider == "new_source"
 
 
 class TestMergeEqualFetchedAtTiebreak:

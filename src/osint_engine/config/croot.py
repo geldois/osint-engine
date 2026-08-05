@@ -48,19 +48,19 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.repositories.mem_pattern_set_repository import (  # noqa: E501
     MemPatternSetRepository,
 )
-from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
-from osint_engine.infrastructure.sources.brasilapi.endpoints.cnpj_v1_fetcher import (
+from osint_engine.infrastructure.providers.brasilapi.endpoints.cnpj_v1_fetcher import (
     BrasilAPICNPJv1Fetcher,
 )
-from osint_engine.infrastructure.sources.portal_transparencia.endpoints.ceis_fetcher import (  # noqa: E501
+from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceis_fetcher import (  # noqa: E501
     PortalTransparenciaCEISFetcher,
 )
-from osint_engine.infrastructure.sources.portal_transparencia.endpoints.cnep_fetcher import (  # noqa: E501
+from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cnep_fetcher import (  # noqa: E501
     PortalTransparenciaCNEPFetcher,
 )
-from osint_engine.infrastructure.sources.portal_transparencia.endpoints.cpf_fetcher import (  # noqa: E501
+from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cpf_fetcher import (  # noqa: E501
     PortalTransparenciaCPFFetcher,
 )
+from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 
 if TYPE_CHECKING:
     from asyncpg import Pool

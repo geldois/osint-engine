@@ -23,14 +23,14 @@ from osint_engine.domain.errors.graph_error import (
     GraphInconsistentError,
     GraphRootNotInNodesError,
 )
-from osint_engine.infrastructure.errors.data_source_error import (
-    DataSourceError,
+from osint_engine.infrastructure.errors.external_credential_error import (
+    ExternalCredentialRejectedError,
+)
+from osint_engine.infrastructure.errors.provider_error import (
+    ProviderError,
     UnexpectedFieldFormatError,
     UnexpectedFieldTypeError,
     UnexpectedPayloadError,
-)
-from osint_engine.infrastructure.errors.external_credential_error import (
-    ExternalCredentialRejectedError,
 )
 from osint_engine.infrastructure.errors.token_error import InvalidTokenError, TokenError
 from osint_engine.infrastructure.errors.uow_error import UoWError
@@ -49,14 +49,14 @@ class _ConcreteTokenError(TokenError, error_code="TEST_TOKEN_ERROR"):
         return "token error"
 
 
-class _ConcreteDataSourceError(DataSourceError, error_code="TEST_DATA_SOURCE_ERROR"):
+class _ConcreteProviderError(ProviderError, error_code="TEST_PROVIDER_ERROR"):
     @override
     def __init__(self) -> None:
         super().__init__()
 
     @override
     def _build_message(self) -> str:
-        return "data source error"
+        return "data provider error"
 
 
 class _ConcreteUoWError(UoWError, error_code="TEST_UOW_ERROR"):
@@ -114,19 +114,19 @@ class TestStatusMapping:
             ),
             pytest.param(
                 UnexpectedFieldTypeError(
-                    source="api", key="cnpj", expected_type=str, field_type=int
+                    provider="api", key="cnpj", expected_type=str, field_type=int
                 ),
                 500,
                 id="UnexpectedFieldTypeError→500",
             ),
             pytest.param(
-                UnexpectedPayloadError(source="api", missing_field="cnpj"),
+                UnexpectedPayloadError(provider="api", missing_field="cnpj"),
                 500,
                 id="UnexpectedPayloadError→500",
             ),
             pytest.param(
                 UnexpectedFieldFormatError(
-                    source="api",
+                    provider="api",
                     key="valorMulta",
                     raw_value="not-a-number",
                     reason="not a valid pt-BR monetary amount",
@@ -154,7 +154,7 @@ class TestStatusMapping:
                 id="RevisionError(catch-all)→422",
             ),
             pytest.param(
-                _ConcreteDataSourceError(), 502, id="DataSourceError(catch-all)→502"
+                _ConcreteProviderError(), 502, id="ProviderError(catch-all)→502"
             ),
             pytest.param(
                 GraphInconsistentError(), 500, id="EntityError(catch-all)→500"
