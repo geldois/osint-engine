@@ -115,7 +115,7 @@ def run_precommit() -> int:
 
 
 def _fully_staged_files() -> list[str]:
-    staged = _git_lines("diff", "--cached", "--name-only", "--diff-filter=ACM")
+    staged = _git_lines("diff", "--cached", "--name-only", "--diff-filter=ACMR")
     unstaged = set(_git_lines("diff", "--name-only"))
 
     return [
