@@ -191,7 +191,7 @@ Authorization: Bearer <token>
 ```
 
 Returns a `GraphSchema` containing the root company, all connected entities, and all typed relationships. Available to
-both `ADMIN` and `VIEWER` tokens. The current data source is [BrasilAPI](https://brasilapi.com.br) (see
+both `ADMIN` and `VIEWER` tokens. The current provider is [BrasilAPI](https://brasilapi.com.br) (see
 `docs/architecture/infrastructure.md`).
 
 ### Text ingestion
@@ -382,7 +382,7 @@ outside the container.
 
 ### Test
 
-`tests/**/responses/` (golden HTTP fixtures for the BrasilAPI/Portal da Transparência source tests) is untracked and
+`tests/**/responses/` (golden HTTP fixtures for the BrasilAPI/Portal da Transparência provider tests) is untracked and
 regenerated on demand, not committed — run this once before testing, and again whenever the fixtures need refreshing:
 
 ```bash

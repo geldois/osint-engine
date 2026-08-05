@@ -17,7 +17,7 @@ Identity is computed from only the fields that make an entity the entity it is, 
 carry. That separation matters because entities grow richer over time — new descriptive fields get added — without ever
 changing what identity means for an already-existing kind of entity. A few identifying fields (a tax ID, a national ID
 number) are normalized before identity is computed, so the same real-world subject is recognized as one thing even when
-different upstream sources format that field differently, while the original, unnormalized value the caller supplied is
+different providers format that field differently, while the original, unnormalized value the caller supplied is
 preserved untouched for display.
 
 Relationships between entities are modeled as their own first-class, strongly typed concept — one dedicated type per

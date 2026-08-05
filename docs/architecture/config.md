@@ -2,11 +2,11 @@
 
 This is the composition root — the one place, assembled once when the process starts, that decides which concrete
 implementation satisfies each contract the layers above depend on: which persistence backend, which password hasher,
-which token service, which external data-source adapters. Everything is wired together by hand into a single, frozen,
-explicit structure passed down to whatever needs it; there is no automatic discovery and no hidden resolution order to
-reason about — every wiring decision is visible in one place. Runtime configuration values (which secrets, which
-external endpoints, which timeouts) are read once from the environment at startup and validated into a typed structure
-before anything else in the process touches them.
+which token service, which provider adapters. Everything is wired together by hand into a single, frozen, explicit
+structure passed down to whatever needs it; there is no automatic discovery and no hidden resolution order to reason
+about — every wiring decision is visible in one place. Runtime configuration values (which secrets, which external
+endpoints, which timeouts) are read once from the environment at startup and validated into a typed structure before
+anything else in the process touches them.
 
 ## Decisions
 
