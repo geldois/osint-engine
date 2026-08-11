@@ -12,6 +12,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+_UNTRACKED_FIXTURES_GLOB = (
+    "tests/test_src/test_infrastructure/test_providers/"
+    "*/test_endpoints/responses/*.json"
+)
+
 
 def git_output(*args: str) -> str:
     result = subprocess.run(
@@ -45,9 +50,17 @@ def materialized_snapshot() -> Generator[Path]:
     try:
         with tarfile.open(fileobj=io.BytesIO(archive.stdout)) as tar:
             tar.extractall(tmp, filter="data")
+        _copy_untracked_fixtures(Path.cwd(), tmp)
         yield tmp
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _copy_untracked_fixtures(source_root: Path, snapshot_root: Path) -> None:
+    for fixture in source_root.glob(_UNTRACKED_FIXTURES_GLOB):
+        destination = snapshot_root / fixture.relative_to(source_root)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(fixture, destination)
 
 
 @contextmanager
