@@ -21,6 +21,13 @@ import sys
 
 from _hook_io import deny, read_event, tool_input
 
+# A Bash tool call is routinely a whole shell script (leading `cd`, chained
+# `&&`/`;`/`|`, subshell parens), not one bare invocation — every check below
+# must run per statement, never against the raw string's start, or a leading
+# `cd project && uv run ...` (or a plain `cd project\n...`) walks straight
+# past every anchor.
+_STATEMENT_SPLIT = re.compile(r"&&|[;\n]|\|+|[()]")
+
 # Strip every leading runner/flag token (uv run, uv run --no-sync, python -m,
 # uvx, npx, mise exec --, stray -q/--flags) so wrapping the call cannot bypass
 # the tool-name match below.
@@ -67,21 +74,24 @@ def main() -> int:
     if not command:
         return 0
 
-    normalized = command
-    while match := _LEADING.match(normalized):
-        normalized = normalized[match.end() :]
+    for statement in _STATEMENT_SPLIT.split(command):
+        normalized = statement.strip()
+        while match := _LEADING.match(normalized):
+            normalized = normalized[match.end() :]
 
-    if _is_full_facade_run(normalized):
-        deny(_FULL_REASON)
+        if _is_full_facade_run(normalized):
+            deny(_FULL_REASON)
+            return 0
+
+        if not _TOOL.match(normalized):
+            continue
+        # A specific test node ("::") or a single source file is a targeted run.
+        if "::" in normalized or _TARGETED_FILE.search(normalized):
+            continue
+
+        deny(_REASON)
         return 0
 
-    if not _TOOL.match(normalized):
-        return 0
-    # A specific test node ("::") or a single source file is a targeted run.
-    if "::" in normalized or _TARGETED_FILE.search(normalized):
-        return 0
-
-    deny(_REASON)
     return 0
 
 
