@@ -6,7 +6,7 @@ from osint_engine.application.text_ingestion.extraction import extract_matches
 from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.domain.value_objects.document_checksum import (
+from osint_engine.domain.services.document_checksum import (
     is_valid_cnpj_checksum,
     is_valid_cpf_checksum,
 )

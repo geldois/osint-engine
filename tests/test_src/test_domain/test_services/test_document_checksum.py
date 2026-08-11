@@ -3,7 +3,7 @@ from __future__ import annotations
 from hypothesis import given
 from hypothesis import strategies as st
 
-from osint_engine.domain.value_objects.document_checksum import (
+from osint_engine.domain.services.document_checksum import (
     is_valid_cnpj_checksum,
     is_valid_cpf_checksum,
 )

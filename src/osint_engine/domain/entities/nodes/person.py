@@ -6,11 +6,11 @@ from uuid import UUID
 from osint_engine.domain.entities.bases.entity import own_init_kwargs
 from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
-from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
-from osint_engine.domain.value_objects.normalization import (
+from osint_engine.domain.services.normalization import (
     normalize_masked_document,
     normalize_str_to_digits_only,
 )
+from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 
 PersonID = NewType("PersonID", UUID)
 

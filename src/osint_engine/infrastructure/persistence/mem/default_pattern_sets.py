@@ -5,11 +5,11 @@ import re
 from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.domain.value_objects.document_checksum import (
+from osint_engine.domain.services.document_checksum import (
     is_valid_cnpj_checksum,
     is_valid_cpf_checksum,
 )
-from osint_engine.domain.value_objects.normalization import (
+from osint_engine.domain.services.normalization import (
     normalize_str_to_digits_only,
 )
 from osint_engine.domain.value_objects.pattern_set_id import PatternSetID

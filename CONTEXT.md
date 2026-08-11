@@ -11,6 +11,9 @@ described the same way, always yields the same id. Nodes and edges are both enti
 **ID fields**: The subset of an entity's fields that determine its identity. Everything else is descriptive and can grow
 without changing what the entity is. *Avoid*: key fields, identity attributes, primary key
 
+**Value Object**: An immutable type with no identity of its own, defined entirely by the values it carries and compared
+by structural equality — `EntityNAMESPACE`, `FieldPattern`, `TextPatternSet`, `PatternSetID`. *Avoid*: DTO, model
+
 **Namespace**: The per-kind UUID5 namespace an entity's id is computed under (`EntityNAMESPACE`). Two different kinds
 carrying the same value never collide. *Avoid*: type tag
 
@@ -50,6 +53,11 @@ orchestrating workflow. *Avoid*: envelope
 **Possible match**: An advisory edge (`PossiblyMatches`) between two nodes with distinct identities but strongly similar
 names, carrying a similarity score. It never merges, re-identifies, or touches either node — the judgment stays with
 whoever reviews the graph. *Avoid*: duplicate, alias, fuzzy match, candidate merge
+
+**Domain Service**: Stateless domain logic that operates on primitive or Value Object inputs but doesn't naturally
+belong to any Entity or Value Object — `document_checksum`, `normalization`. Distinct from the application layer's own
+use of "Service" (`JWTService`, an injectable port for a technical capability): a Domain Service has no interface and
+nothing to inject, and lives in `domain/`, never `application/contracts/`. *Avoid*: helper, util
 
 **Fetcher**: The application-layer contract for one external endpoint (`CPFFetcher`, `CNPJFetcher`, `CEISFetcher`,
 `CNEPFetcher`, `CEPFetcher`). The concrete client lives in infrastructure and this layer never names it. *Avoid*:

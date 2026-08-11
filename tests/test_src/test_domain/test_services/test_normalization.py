@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from osint_engine.domain.value_objects.normalization import (
+from osint_engine.domain.services.normalization import (
     normalize_address_number,
     normalize_masked_document,
     normalize_str_to_digits_only,
