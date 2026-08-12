@@ -1,15 +1,14 @@
 """Direct-run enforcement — ``PreToolUse(Bash)``.
 
-A bare full-suite lint/type/test run bypasses the gate façade
-(``uv run python -m scripts check [--full]``) that materialises the staged
-snapshot, orders the gates, and writes the report. Block those and redirect;
-still allow a targeted single-file or single-test run for fast local feedback.
-
-Also blocks the agent from invoking the façade's own ``check --full`` directly
-via Bash: ``pre-commit`` already runs ``check --staged --full`` on every
-commit and reports failures inline, so pre-running it first is pure
-duplication (manage-harness/SKILL.md, "born-full-green git hooks"). Plain
-``check`` (fast) stays allowed for quick iteration.
+``pre-commit`` already runs the full gate (``scripts precommit``, itself
+``scripts check --full`` after fixing and re-staging) on every commit and
+reports any failure inline — every commit is born green by construction.
+Running the gate facade yourself (``scripts check``, ``scripts check
+--full``, ``scripts precommit``) or a bare full-suite lint/type/test tool is
+pure duplication of a guarantee ``pre-commit`` already gives; block those and
+redirect to just committing. A targeted single-file or single-test run stays
+allowed, for fast local feedback while writing code — ``scripts fix`` and the
+periodic ``scripts mutation`` gate are unaffected.
 
 Language-specific (this project's tools), so it lives local.
 """
@@ -37,39 +36,32 @@ _TOOL = re.compile(
     r"|cosmic-ray|cr-rate|lint-imports|sqruff)\b",
 )
 _TARGETED_FILE = re.compile(r"\s\S+\.(?:py|sql)(?:\s|$)")
-_FACADE_PREFIX_LEN = 2  # "scripts check"
+_FACADE_PREFIX_LEN = 2  # "scripts check" / "scripts precommit"
+_FACADE_SUBCOMMANDS = frozenset({"check", "precommit"})
 
 _REASON = (
-    "Full lint/type/test/mutation runs go through the gate facade, not raw "
-    "tools: `uv run python -m scripts check` (fast) or `check --full`. It "
-    "materialises the staged snapshot, orders every gate, fails on a missing "
-    "tool, and writes build/reports/gates.json. Targeted single-file/single-test "
-    "runs (e.g. pytest path/to/test.py::test_name, ruff check path/to/file.py) "
-    "are not blocked. This applies regardless of runner prefix (uv run, uv run "
-    "--no-sync, python -m, etc)."
-)
-
-_FULL_REASON = (
-    "Don't pre-run `check --full` yourself — `pre-commit` already runs "
-    "`check --staged --full` on a materialised snapshot for every commit and "
-    "surfaces any failure inline. Just commit: if it fails, fix what's "
-    "reported and commit again. Plain `check` (fast) and targeted single-"
-    "file/single-test runs are still allowed."
+    "Don't self-verify — `pre-commit` already runs the full gate (`scripts "
+    "precommit`) on every commit and reports any failure inline. Just "
+    "commit: if it fails, fix what's reported and commit again. Targeted "
+    "single-file/single-test runs (e.g. pytest path/to/test.py::test_name, "
+    "ruff check path/to/file.py) are still fine for quick iteration while "
+    "writing code. `scripts fix` and `scripts mutation` (periodic, never a "
+    "hook) are unaffected. This applies regardless of runner prefix (uv "
+    "run, uv run --no-sync, python -m, etc)."
 )
 
 
-def _is_full_facade_run(normalized: str) -> bool:
+def _is_facade_run(normalized: str) -> bool:
     tokens = normalized.split()
     return (
         len(tokens) >= _FACADE_PREFIX_LEN
         and tokens[0] == "scripts"
-        and tokens[1] == "check"
-        and "--full" in tokens[_FACADE_PREFIX_LEN:]
+        and tokens[1] in _FACADE_SUBCOMMANDS
     )
 
 
 def main() -> int:
-    """Deny a bypassing full-suite run; allow targeted runs and non-matches."""
+    """Deny a self-verifying full-gate or full-suite run; allow the rest."""
     command = tool_input(read_event(), "command")
     if not command:
         return 0
@@ -79,8 +71,8 @@ def main() -> int:
         while match := _LEADING.match(normalized):
             normalized = normalized[match.end() :]
 
-        if _is_full_facade_run(normalized):
-            deny(_FULL_REASON)
+        if _is_facade_run(normalized):
+            deny(_REASON)
             return 0
 
         if not _TOOL.match(normalized):
