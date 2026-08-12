@@ -16,9 +16,11 @@ touch the bad data.
 Identity is computed from only the fields that make an entity the entity it is, not from every attribute it happens to
 carry. That separation matters because entities grow richer over time — new descriptive fields get added — without ever
 changing what identity means for an already-existing kind of entity. A few identifying fields (a tax ID, a national ID
-number) are normalized before identity is computed, so the same real-world subject is recognized as one thing even when
-different providers format that field differently, while the original, unnormalized value the caller supplied is
-preserved untouched for display.
+number) are normalized before identity is computed, so punctuation and formatting differences never split one real-world
+subject into two identities. When such a field arrives partially hidden, the position of the hidden portion is part of
+that identity, not just which digits are visible — two partially hidden values that happen to reveal the same digits in
+different positions are treated as two different subjects, because nothing yet confirms they're the same one. The
+original, unnormalized value the caller supplied is preserved untouched for display regardless.
 
 Relationships between entities are modeled as their own first-class, strongly typed concept — one dedicated type per
 kind of relationship (ownership, residency, membership, mention-in-text, sanction, and so on) rather than a single
@@ -43,3 +45,9 @@ Normalizing an identifying field is decided individually, case by case, right wh
 computed, deliberately not centralized into one universal rule — at least one identifying-looking field genuinely cannot
 be normalized the same way, since it can legitimately hold non-numeric content that a universal rule would silently
 corrupt.
+
+Collapsing a partially hidden identifying field down to just its visible digits, discarding where they sit, was
+considered and rejected: two different real-world subjects can reveal the same digits by coincidence in different
+positions, and merging their identities on that basis has no real grounding. The accepted cost is that two genuinely
+identical subjects, hidden differently by different sources, are no longer recognized as the same one automatically —
+relinking them is a deliberate, separate concern, not folded into identity.
