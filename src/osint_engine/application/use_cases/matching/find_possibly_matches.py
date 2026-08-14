@@ -4,15 +4,18 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, override
 
-from rapidfuzz import fuzz
 from structlog.stdlib import get_logger
 
 from osint_engine.application.contracts.use_case import Query
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
-from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.errors.document_error import InvalidMaskedDocumentError
+from osint_engine.domain.services.masked_document_matching import (
+    masked_document_overlap,
+)
+from osint_engine.domain.services.normalization import normalize_masked_document
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -23,28 +26,28 @@ if TYPE_CHECKING:
 
 _logger = get_logger()
 
-_PROVIDER = "fuzzy_match"
-_MIN_CONFIDENCE_SCORE = 92
+_PROVIDER = "masked_document_overlap"
 
-_NAME_FIELDS: dict[type[Node[UUID]], tuple[str, ...]] = {
-    Company: ("legal_name", "trade_name"),
-    Person: ("name",),
+_DOCUMENT_FIELDS: dict[type[Node[UUID]], str] = {
+    Person: "cpf",
 }
 
 
-def _extract_name(*, node: Node[UUID]) -> str | None:
-    fields = _NAME_FIELDS.get(type(node))
+def _extract_document(*, node: Node[UUID]) -> str | None:
+    field = _DOCUMENT_FIELDS.get(type(node))
 
-    if fields is None:
+    if field is None:
         return None
 
-    for field in fields:
-        value = getattr(node, field)
+    value = getattr(node, field)
 
-        if value:
-            return str(value).strip().upper()
+    if not value:
+        return None
 
-    return None
+    try:
+        return normalize_masked_document(value=str(value))
+    except InvalidMaskedDocumentError:
+        return None
 
 
 class FindPossiblyMatches(Query[Graph | None]):
@@ -65,9 +68,9 @@ class FindPossiblyMatches(Query[Graph | None]):
 
         async with self.uow_factory() as uow:
             for node in self.graph.nodes:
-                name = _extract_name(node=node)
+                document = _extract_document(node=node)
 
-                if name is None:
+                if document is None:
                     continue
 
                 node_type = type(node)
@@ -83,21 +86,23 @@ class FindPossiblyMatches(Query[Graph | None]):
                     if candidate.id == node.id:
                         continue
 
-                    candidate_name = _extract_name(node=candidate)
+                    candidate_document = _extract_document(node=candidate)
 
-                    if candidate_name is None:
+                    if candidate_document is None:
                         continue
 
-                    score = round(fuzz.token_sort_ratio(name, candidate_name), 2)
+                    overlap = masked_document_overlap(
+                        left=document, right=candidate_document
+                    )
 
-                    if score < _MIN_CONFIDENCE_SCORE:
+                    if overlap is None:
                         continue
 
                     matches.add(
                         PossiblyMatches(
                             source_id=node.id,
                             target_id=candidate.id,
-                            confidence=Decimal(str(score)) / 100,
+                            confidence=Decimal(overlap) / Decimal(len(document)),
                         )
                     )
                     matched_nodes.add(node)
@@ -122,7 +127,7 @@ class FindPossiblyMatches(Query[Graph | None]):
 
         _logger.info("possibly_matches.found", match_count=len(matches))
 
-        anchor = next(iter(matched_nodes))
+        anchor = min(matched_nodes, key=lambda node: node.id)
 
         return Graph(
             edges=frozenset(matches), nodes=frozenset(matched_nodes), root_id=anchor.id

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
@@ -29,6 +30,7 @@ from osint_engine.domain.entities.edges.person_received_sanction import (
     PersonReceivedSanction,
 )
 from osint_engine.domain.entities.edges.person_reside_at import PersonResideAt
+from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
 from osint_engine.domain.entities.nodes.address import AddressID
 from osint_engine.domain.entities.nodes.cnae import CnaeID
 from osint_engine.domain.entities.nodes.company import CompanyID
@@ -56,6 +58,7 @@ from osint_engine.interface.http.schemas.edge_schema import (
     PersonOwnsCompanySchema,
     PersonReceivedSanctionSchema,
     PersonResideAtSchema,
+    PossiblyMatchesSchema,
 )
 
 if TYPE_CHECKING:
@@ -125,6 +128,12 @@ _PERSON_MENTIONED_IN_TEXT = PersonMentionedInText(
     pattern_id=_pattern_id,
 )
 
+_POSSIBLY_MATCHES = PossiblyMatches(
+    source_id=_person_id,
+    target_id=_company_id,
+    confidence=Decimal("0.5454545454545454"),
+)
+
 
 class TestEdgePresenterDispatch:
     @pytest.mark.parametrize(
@@ -182,6 +191,9 @@ class TestEdgePresenterDispatch:
             pytest.param(
                 _PERSON_RESIDE_AT, PersonResideAtSchema, id="person_reside_at"
             ),
+            pytest.param(
+                _POSSIBLY_MATCHES, PossiblyMatchesSchema, id="possibly_matches"
+            ),
         ],
     )
     def test_dispatches_to_correct_schema_type(
@@ -233,6 +245,19 @@ class TestEdgePresenterFieldMapping:
         assert result.matched_field == _PERSON_MENTIONED_IN_TEXT.matched_field
 
         assert result.pattern_id == _PERSON_MENTIONED_IN_TEXT.pattern_id
+
+    def test_possibly_matches_extra_fields_are_correctly_mapped(self) -> None:
+        result = edge_to_schema(_POSSIBLY_MATCHES)
+
+        assert isinstance(result, PossiblyMatchesSchema)
+
+        assert result.id == _POSSIBLY_MATCHES.id
+
+        assert result.source_id == _POSSIBLY_MATCHES.source_id
+
+        assert result.target_id == _POSSIBLY_MATCHES.target_id
+
+        assert result.confidence == _POSSIBLY_MATCHES.confidence
 
 
 class TestEdgePresenterErrors:

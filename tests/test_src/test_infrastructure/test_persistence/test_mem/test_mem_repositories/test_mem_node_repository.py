@@ -133,6 +133,64 @@ class TestMemNodeRepositoryGet:
         assert "Node" in str(exception.value)
 
 
+class TestMemNodeRepositoryListByType:
+    @pytest.mark.asyncio
+    async def test_returns_empty_tuple_when_no_node_of_the_type_is_stored(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_node: MakeFakeNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        revision = make_entity_revision(entity=make_fake_node())
+        repo = make_mem_node_repository(mem_storage=make_mem_storage(nodes=[revision]))
+
+        assert await repo.list_by_type(node_type=FakeMergeableNode) == ()
+
+    @pytest.mark.asyncio
+    async def test_returns_only_revisions_whose_entity_matches_the_type(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_node: MakeFakeNode,
+        make_fake_mergeable_node: MakeFakeMergeableNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        fake_revision = make_entity_revision(entity=make_fake_node())
+        mergeable_revision = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="a")
+        )
+        repo = make_mem_node_repository(
+            mem_storage=make_mem_storage(nodes=[fake_revision, mergeable_revision])
+        )
+
+        found = await repo.list_by_type(node_type=FakeMergeableNode)
+
+        assert found == (mergeable_revision,)
+
+    @pytest.mark.asyncio
+    async def test_returns_the_selection_policy_pick_for_each_node_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_mergeable_node: MakeFakeMergeableNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        older = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="a"), fetched_at=_EARLY
+        )
+        newer = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="b"), fetched_at=_LATE
+        )
+        repo = make_mem_node_repository(
+            mem_storage=make_mem_storage(nodes=[older, newer])
+        )
+
+        found = await repo.list_by_type(node_type=FakeMergeableNode)
+
+        assert found == (newer,)
+
+
 class TestMemNodeRepositoryMerge:
     @pytest.mark.asyncio
     async def test_first_write_stores_the_revision_under_id_and_content_id(
