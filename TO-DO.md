@@ -52,19 +52,6 @@
   which the current design deliberately doesn't do for anything, cosmetic or not — revisit only if this formatting
   inconsistency actually surfaces as a real complaint
 
-## test(matching)
-
-- `FindPossiblyMatches` (fuzzy cross-entity matching, `application/use_cases/matching/find_possibly_matches.py`),
-  `NodeRepository.list_by_type`, the `PossiblyMatchesSchema`/`possibly_matches_to_schema` wiring, and the 5 handlers
-  that now merge matches into their `Graph` response (`get_cnpj`, `get_cpf`, `get_ceis`, `get_cnep`,
-  `post_text_ingestion`) shipped with zero pytest coverage, by explicit user instruction to ship fast and validate
-  empirically instead. Empirical validation so far: a standalone script seeding two `Person` nodes (full CPF vs a
-  masked-CPF QSA-style id, equivalent names) confirmed a `PossiblyMatches` edge is created, scored, and persisted, and
-  that an unrelated name produces no match; `python -m scripts check` (lint + type) passes. Needs proper unit tests
-  (including Unicode/accented-name edge cases) and handler-level integration tests before this is production-ready. The
-  confidence threshold (`_MIN_CONFIDENCE_SCORE = 92` in `find_possibly_matches.py`) is an untuned guess — validate
-  against real masked-QSA data once available
-
 ## test(gates)
 
 - `fail_under` in `[tool.coverage.report]` is a placeholder `90`, not a measured value; run

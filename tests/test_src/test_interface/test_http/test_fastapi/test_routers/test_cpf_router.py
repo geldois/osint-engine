@@ -11,18 +11,22 @@ from osint_engine.application.auth.external_credential import (
     Provider,
 )
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
+from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cpf_fetcher import (  # noqa: E501
     PortalTransparenciaCPFFetcher,
 )
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 from osint_engine.interface.http.schemas.graph_schema import GraphSchema
+from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
+    masked_overlapping_cpf,
+)
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from osint_engine.config.container import Container
     from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
-    from tests.conftest import MakeMemStorage
+    from tests.conftest import MakeEntityRevision, MakeMemStorage
     from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
         MakeContainer,
     )
@@ -135,6 +139,51 @@ class TestGetCPFExpansion:
             )
 
         assert response.status_code == 404
+
+
+class TestGetCPFPossiblyMatches:
+    @pytest.mark.asyncio
+    async def test_returns_possibly_matches_edge_when_a_masked_person_overlaps(
+        self,
+        make_container: MakeContainer,
+        make_mem_storage: MakeMemStorage,
+        make_entity_revision: MakeEntityRevision,
+        portal_transparencia_http_client: AsyncClient,
+        valid_token: str,
+    ) -> None:
+        stored = Person(
+            age_range="Entre 41 a 50 anos",
+            birthdate=None,
+            cpf=masked_overlapping_cpf(real_cpf=CPF),
+            name="FULANO DE TAL",
+        )
+        container = make_container(
+            http_client=portal_transparencia_http_client,
+            mem_storage=make_mem_storage(nodes=[make_entity_revision(entity=stored)]),
+        )
+        credential = ExternalCredential(
+            api_key="test-api-key",
+            provider=Provider.PORTAL_TRANSPARENCIA,
+            username="admin",
+        )
+
+        async with container.uow_factory() as uow:
+            await uow.external_credentials.save(credential=credential)
+
+        app = build_fastapi_app(container=container)
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.get(
+                f"/cpf/{CPF}", headers={"Authorization": f"Bearer {valid_token}"}
+            )
+
+        assert response.status_code == 200
+
+        graph = GraphSchema.model_validate(response.json())
+
+        assert any(edge.type == "possibly_matches" for edge in graph.edges)
 
 
 class TestCPFCompositionRoot:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 import pytest
@@ -8,16 +8,34 @@ import pytest_asyncio
 from httpx2 import ASGITransport, AsyncClient, MockTransport, Request, Response
 
 from osint_engine.application.auth.user import Role
+from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
+from osint_engine.interface.http.schemas.graph_schema import GraphSchema
 from tests.data.brasilapi import CNPJ, COMPLETE_PAYLOAD_DATA
+from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
+    masked_overlapping_cpf,
+)
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
+    from tests.conftest import MakeEntityRevision, MakeMemStorage
     from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
         MakeContainer,
     )
+
+
+def _person_partner_cpf() -> str:
+    partners = cast("list[dict[str, object]]", COMPLETE_PAYLOAD_DATA["qsa"])
+
+    partner = next(entry for entry in partners if entry["identificador_de_socio"] == 2)
+
+    cpf = partner["cnpj_cpf_do_socio"]
+
+    assert isinstance(cpf, str)
+
+    return cpf
 
 
 @pytest_asyncio.fixture(loop_scope="session")
@@ -128,6 +146,43 @@ class TestGetCnpjExpansion:
         )
 
         assert response.status_code == 200
+
+
+class TestGetCnpjPossiblyMatches:
+    @pytest.mark.asyncio
+    async def test_returns_possibly_matches_edge_when_a_masked_partner_overlaps(
+        self,
+        make_container: MakeContainer,
+        make_mem_storage: MakeMemStorage,
+        make_entity_revision: MakeEntityRevision,
+        brasilapi_http_client: AsyncClient,
+        valid_token: str,
+    ) -> None:
+        partner_cpf = _person_partner_cpf()
+        stored = Person(
+            age_range="Entre 41 a 50 anos",
+            birthdate=None,
+            cpf=masked_overlapping_cpf(real_cpf=partner_cpf),
+            name="FULANO DE TAL",
+        )
+        container = make_container(
+            http_client=brasilapi_http_client,
+            mem_storage=make_mem_storage(nodes=[make_entity_revision(entity=stored)]),
+        )
+        app = build_fastapi_app(container=container)
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.get(
+                f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            )
+
+        assert response.status_code == 200
+
+        graph = GraphSchema.model_validate(response.json())
+
+        assert any(edge.type == "possibly_matches" for edge in graph.edges)
 
 
 class TestCnpjRateLimit:

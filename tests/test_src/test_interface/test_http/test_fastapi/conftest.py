@@ -9,6 +9,7 @@ from httpx2 import ASGITransport, AsyncClient, Timeout
 
 from osint_engine.config.croot import build_container
 from osint_engine.config.settings import Settings
+from osint_engine.domain.services.normalization import normalize_masked_document
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 
 if TYPE_CHECKING:
@@ -23,6 +24,21 @@ if TYPE_CHECKING:
 
 type MakeContainer = Callable[..., Container]
 type MakeSettings = Callable[..., Settings]
+
+
+def masked_overlapping_cpf(*, real_cpf: str) -> str:
+    normalized = normalize_masked_document(value=real_cpf)
+    kept = 0
+    masked: list[str] = []
+
+    for char in normalized:
+        if char != "*" and kept < 4:
+            masked.append(char)
+            kept += 1
+        else:
+            masked.append("*")
+
+    return "".join(masked)
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
