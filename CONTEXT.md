@@ -50,9 +50,10 @@ orchestrating workflow. *Avoid*: envelope
 **Merge policy**: Decides how two revisions of the same entity reconcile into one when both carry data worth keeping.
 *Avoid*: combine, upsert rule
 
-**Possible match**: An advisory edge (`PossiblyMatches`) between two nodes with distinct identities but strongly similar
-names, carrying a similarity score. It never merges, re-identifies, or touches either node — the judgment stays with
-whoever reviews the graph. *Avoid*: duplicate, alias, fuzzy match, candidate merge
+**Possible match**: An advisory edge (`PossiblyMatches`) between two `Person` nodes with distinct identities whose CPF
+overlaps — every visible digit of a masked value agrees with the corresponding digit of another, complete or differently
+masked, value — carrying the overlap as a confidence score. It never merges, re-identifies, or touches either node — the
+judgment stays with whoever reviews the graph. *Avoid*: duplicate, alias, fuzzy match, candidate merge, name match
 
 **Domain Service**: Stateless domain logic that operates on primitive or Value Object inputs but doesn't naturally
 belong to any Entity or Value Object — `document_checksum`, `normalization`. Distinct from the application layer's own

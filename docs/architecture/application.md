@@ -23,14 +23,15 @@ edge, and the existing node is never touched. Which **pattern set** applies isn'
 per request, because providers format the same identifier differently in free text, and locking one set in globally
 would mean a redeploy every time a new provider needs recognizing.
 
-A separate, best-effort workflow runs after any expansion or ingestion produces a fresh batch of people or companies: it
-compares each newly seen one's name against every node of the same kind already known and records a **possible match**
-where two carry distinct identities but strongly similar names. This is deliberately separate from ingestion's own
-resolution rule, which stays exact-identifier-only; the two solve different problems. An official identifier can itself
-be inconsistent across providers — one may reveal only a partial, masked form of the identifier another knows in full —
-so the same real person or company can end up recorded under two identities with no shared identifier to resolve them
-by. Comparing names is the only signal left in that situation, so it stays explicitly probabilistic and advisory rather
-than folded into the identifier-based resolution everything else relies on.
+A separate, best-effort workflow runs after any expansion or ingestion produces a fresh batch of people: it compares
+each newly seen `Person`'s CPF against every `Person` already known, overlapping the visible digits of a masked value
+against another value's corresponding digits, and records a **possible match** where two carry distinct identities but
+an overlapping CPF. This is deliberately separate from ingestion's own resolution rule, which stays
+exact-identifier-only; the two solve different problems. An official identifier can itself be inconsistent across
+providers — one may reveal only a partial, masked form of the identifier another knows in full — so the same real person
+can end up recorded under two identities with no shared identifier to resolve them by. Comparing the document's visible
+digits is the only signal left in that situation, so it stays explicitly probabilistic and advisory rather than folded
+into the identifier-based resolution everything else relies on.
 
 ## Decisions
 
@@ -51,8 +52,8 @@ selection policy treat a stale re-fetch as the freshest revision and silently di
 provenance. Checking each entity against what's already stored, and only touching what's genuinely new or changed, fixed
 that.
 
-The name-similarity workflow deliberately never merges or re-identifies the two nodes it flags; it only ever adds the
-possible-match edge, leaving the judgment call to whoever reviews the graph. Auto-merging on a name match alone was
-rejected outright: name matching produces false positives by nature, and merging two nodes that turn out to be different
-real people or companies is a much more damaging, harder-to-undo mistake than surfacing a match a human has to
-double-check.
+The CPF-overlap workflow deliberately never merges or re-identifies the two nodes it flags; it only ever adds the
+possible-match edge, leaving the judgment call to whoever reviews the graph. Auto-merging on an overlapping CPF alone
+was rejected outright: an overlap can still coincide by chance on the digits either side happened to reveal, and merging
+two nodes that turn out to be different real people is a much more damaging, harder-to-undo mistake than surfacing a
+match a human has to double-check.
