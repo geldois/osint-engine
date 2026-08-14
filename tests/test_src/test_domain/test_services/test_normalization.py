@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from osint_engine.domain.errors.document_error import InvalidMaskedDocumentError
 from osint_engine.domain.services.normalization import (
     normalize_address_number,
     normalize_masked_document,
@@ -33,13 +34,54 @@ class TestNormalizeMaskedDocument:
         assert normalize_masked_document(value="***128734**") == "***128734**"
 
     def test_returns_unchanged_value_when_already_digits_only(self) -> None:
-        assert normalize_masked_document(value="33754482000124") == "33754482000124"
+        assert (
+            normalize_masked_document(value="33754482000124", expected_length=14)
+            == "33754482000124"
+        )
 
     def test_preserves_total_length_across_differently_placed_masks(self) -> None:
         formatted = normalize_masked_document(value="128.734.***-**")
         masked = normalize_masked_document(value="***128734**")
 
         assert len(formatted) == len(masked) == 11
+
+    def test_raises_for_a_non_separator_character_in_digit_position(self) -> None:
+        with pytest.raises(InvalidMaskedDocumentError):
+            normalize_masked_document(value="123X45678909")
+
+    def test_preserves_a_mask_character_in_digit_position(self) -> None:
+        assert normalize_masked_document(value="123*5678909") == "123*5678909"
+
+    def test_raises_when_structural_count_exceeds_expected_length(self) -> None:
+        with pytest.raises(InvalidMaskedDocumentError):
+            normalize_masked_document(value="123*45678909")
+
+    def test_raises_when_structural_count_falls_below_expected_length(self) -> None:
+        with pytest.raises(InvalidMaskedDocumentError):
+            normalize_masked_document(value="123 5678909")
+
+    def test_strips_canonical_separators_keeping_structural_order(self) -> None:
+        assert normalize_masked_document(value="123.456.789-09") == "12345678909"
+
+    def test_supports_cnpj_with_explicit_expected_length(self) -> None:
+        assert (
+            normalize_masked_document(value="33.754.482/0001-24", expected_length=14)
+            == "33754482000124"
+        )
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("***128734**", "***128734**"),
+            ("128.734.***-**", "128734*****"),
+            ("128*7341*22", "128*7341*22"),
+            ("***.123.456-**", "***123456**"),
+        ],
+    )
+    def test_preserves_the_mask_characters_in_their_structural_positions(
+        self, value: str, expected: str
+    ) -> None:
+        assert normalize_masked_document(value=value) == expected
 
 
 class TestNormalizeAddressNumberNumericCanonicalization:

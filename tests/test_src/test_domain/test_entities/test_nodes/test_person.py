@@ -76,3 +76,14 @@ class TestPersonIdentityValidation:
         assert error.field == "cpf"
         assert error.expected_length == 11
         assert error.actual_length == 7
+
+    def test_raises_when_cpf_contains_a_corrupted_digit(self) -> None:
+        with pytest.raises(EntityInvalidIdentifierError) as exc_info:
+            _make_person(cpf="123X45678909")
+
+        error = exc_info.value
+
+        assert error.subject is Person
+        assert error.field == "cpf"
+        assert error.expected_length == 11
+        assert error.actual_length == 12
