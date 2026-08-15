@@ -238,8 +238,8 @@ shortcuts and atomic names — only the input differs: every cell of the uploade
 verbatim (no trimming, no reformatting, numeric cells converted via plain `str()`) and fed to the same matcher. Every
 sheet of a `.xlsx` workbook is scanned, not only the active one; a formula cell is read by its last computed value,
 never the formula text. Rejects anything above 10 MB or 50,000 rows in a single sheet, any extension other than `.xlsx`
-or `.csv`, and any file whose content isn't a valid spreadsheet, all as `422`. See
-`docs/architecture/infrastructure.md`.
+or `.csv`, a CSV field past the parser's own size limit, and any file whose content isn't a valid spreadsheet, all as
+`422`. See `docs/architecture/infrastructure.md`.
 
 ### Health
 

@@ -68,6 +68,26 @@ class TooManyRowsError(
         return f"{sheet_report} exceeds the {self.max_rows}-row limit."
 
 
+class FieldTooLargeError(
+    SpreadsheetIngestionError,
+    error_code="SPREADSHEET_INGESTION_FIELD_TOO_LARGE",
+    category=ErrorCategory.INVALID_INPUT,
+):
+    filename: str
+    max_field_bytes: int
+
+    @override
+    def __init__(self, *, filename: str, max_field_bytes: int) -> None:
+        super().__init__(filename=filename, max_field_bytes=max_field_bytes)
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"'{self.filename}' has a field exceeding the "
+            f"{self.max_field_bytes}-byte limit."
+        )
+
+
 class MalformedSpreadsheetError(
     SpreadsheetIngestionError,
     error_code="SPREADSHEET_INGESTION_MALFORMED",

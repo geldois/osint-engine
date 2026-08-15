@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import io
 import re
 import zipfile
@@ -8,6 +9,7 @@ import pytest
 from openpyxl import Workbook
 
 from osint_engine.application.errors.spreadsheet_ingestion_error import (
+    FieldTooLargeError,
     FileTooLargeError,
     MalformedSpreadsheetError,
     TooManyRowsError,
@@ -105,13 +107,15 @@ class TestReadSpreadsheetTextCsv:
 
         assert text == "a  c"
 
-    def test_field_above_the_csv_module_limit_raises_malformed_spreadsheet_error(
+    def test_field_above_the_csv_module_limit_raises_field_too_large_error(
         self,
     ) -> None:
         content = b"a," + b"x" * 200_000
 
-        with pytest.raises(MalformedSpreadsheetError):
+        with pytest.raises(FieldTooLargeError) as exc_info:
             read_spreadsheet_text(content=content, filename="data.csv")
+
+        assert exc_info.value.max_field_bytes == csv.field_size_limit()
 
     def test_too_many_rows_raises_citing_no_sheet_name(
         self, monkeypatch: pytest.MonkeyPatch

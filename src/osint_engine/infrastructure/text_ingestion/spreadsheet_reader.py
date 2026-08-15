@@ -10,6 +10,7 @@ import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
 
 from osint_engine.application.errors.spreadsheet_ingestion_error import (
+    FieldTooLargeError,
     FileTooLargeError,
     MalformedSpreadsheetError,
     TooManyRowsError,
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
 MAX_FILE_BYTES = 10 * 1024 * 1024
 _MAX_ROWS_PER_SHEET = 50_000
 _ALLOWED_EXTENSIONS = frozenset({"csv", "xlsx"})
+_FIELD_LIMIT_ERROR_PREFIX = "field larger than field limit"
 
 
 def read_spreadsheet_text(*, content: bytes, filename: str) -> str:
@@ -70,6 +72,10 @@ def _read_csv(*, content: bytes, filename: str) -> str:
     except TooManyRowsError:
         raise
     except csv.Error as error:
+        if str(error).startswith(_FIELD_LIMIT_ERROR_PREFIX):
+            raise FieldTooLargeError(
+                filename=filename, max_field_bytes=csv.field_size_limit()
+            ) from error
         raise MalformedSpreadsheetError(filename=filename) from error
     except Exception as error:
         raise MalformedSpreadsheetError(filename=filename) from error
