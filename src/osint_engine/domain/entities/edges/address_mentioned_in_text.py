@@ -7,18 +7,20 @@ from osint_engine.domain.entities.bases.edge import Edge
 from osint_engine.domain.entities.nodes.address import AddressID
 from osint_engine.domain.entities.nodes.text_source import TextSourceID
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
-from osint_engine.domain.value_objects.pattern_set_id import PatternSetID  # noqa: TC001
+from osint_engine.domain.value_objects.text_pattern import (
+    TextPatternName,
+)
 
 AddressMentionedInTextID = NewType("AddressMentionedInTextID", UUID)
 
 
 class AddressMentionedInText(
     Edge[AddressMentionedInTextID, AddressID, TextSourceID],
-    id_fields=None,
+    id_fields=frozenset({"pattern_name"}),
     namespace=EntityNAMESPACE.ADDRESS_TEXT_SOURCE,
 ):
     matched_field: str
-    pattern_id: PatternSetID
+    pattern_name: TextPatternName
 
     @override
     def __init__(
@@ -27,11 +29,21 @@ class AddressMentionedInText(
         source_id: AddressID,
         target_id: TextSourceID,
         matched_field: str,
-        pattern_id: PatternSetID,
+        pattern_name: TextPatternName,
     ) -> None:
         super().__init__(
             source_id=source_id,
             target_id=target_id,
             matched_field=matched_field,
-            pattern_id=pattern_id,
+            pattern_name=pattern_name,
         )
+
+    @classmethod
+    @override
+    def _calculate_id(cls, **kwargs: object) -> AddressMentionedInTextID:
+        pattern_name = kwargs.get("pattern_name")
+
+        if isinstance(pattern_name, TextPatternName):
+            kwargs["pattern_name"] = pattern_name.name
+
+        return super()._calculate_id(**kwargs)

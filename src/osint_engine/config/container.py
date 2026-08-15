@@ -39,8 +39,8 @@ if TYPE_CHECKING:
         FindPossiblyMatches,
     )
     from osint_engine.application.use_cases.text_ingestion.ingest_text import IngestText
-    from osint_engine.application.use_cases.text_ingestion.list_text_pattern_sets import (  # noqa: E501
-        ListTextPatternSets,
+    from osint_engine.application.use_cases.text_ingestion.list_text_patterns import (
+        ListTextPatterns,
     )
     from osint_engine.config.settings import Settings
 
@@ -86,5 +86,5 @@ class UseCases:
     find_possibly_matches: partial[FindPossiblyMatches]
     ingest_text: partial[IngestText]
     list_external_credentials: partial[ListExternalCredentials]
-    list_text_pattern_sets: partial[ListTextPatternSets]
+    list_text_patterns: partial[ListTextPatterns]
     save_external_credential: partial[SaveExternalCredential]

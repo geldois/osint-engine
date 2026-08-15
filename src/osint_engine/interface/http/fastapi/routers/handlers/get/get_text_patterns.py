@@ -6,10 +6,10 @@ from fastapi import Depends
 
 from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_jwt_guard
 from osint_engine.interface.http.presenters.text_pattern_set_presenter import (
-    text_pattern_set_to_schema,
+    text_pattern_catalog_to_schema,
 )
 from osint_engine.interface.http.schemas.text_ingestion_schema import (  # noqa: TC001
-    TextPatternSetSchema,
+    TextPatternCatalogSchema,
 )
 
 if TYPE_CHECKING:
@@ -20,21 +20,20 @@ if TYPE_CHECKING:
 
 def build_get_text_patterns_handler(
     *, container: Container
-) -> Callable[[dict[str, object]], Awaitable[list[TextPatternSetSchema]]]:
+) -> Callable[[dict[str, object]], Awaitable[TextPatternCatalogSchema]]:
     jwt_guard = build_jwt_guard(container=container)
 
     async def get_text_patterns(
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
-    ) -> list[TextPatternSetSchema]:
+    ) -> TextPatternCatalogSchema:
         del payload
 
-        use_case = container.use_cases.list_text_pattern_sets()
+        use_case = container.use_cases.list_text_patterns()
 
-        pattern_sets = await use_case.execute()
+        catalog = await use_case.execute()
 
-        return [
-            text_pattern_set_to_schema(pattern_set=pattern_set)
-            for pattern_set in pattern_sets
-        ]
+        return text_pattern_catalog_to_schema(
+            patterns=catalog.patterns, bundles=catalog.bundles
+        )
 
     return get_text_patterns

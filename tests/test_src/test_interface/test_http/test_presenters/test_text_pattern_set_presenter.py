@@ -1,30 +1,51 @@
 from __future__ import annotations
 
+from osint_engine.domain.value_objects.text_pattern import TextPatternName
 from osint_engine.infrastructure.persistence.mem.default_pattern_sets import (
-    BRAZILIAN_DOCUMENT_PATTERNS,
+    BRAZILIAN_DOCUMENTS_V1,
 )
 from osint_engine.interface.http.presenters.text_pattern_set_presenter import (
-    text_pattern_set_to_schema,
+    text_pattern_catalog_to_schema,
 )
 
 
-class TestTextPatternSetPresenter:
-    def test_maps_id_and_every_pattern_s_covered_fields(self) -> None:
-        result = text_pattern_set_to_schema(pattern_set=BRAZILIAN_DOCUMENT_PATTERNS)
+class TestTextPatternCatalogPresenterPatterns:
+    def test_lists_every_atomic_pattern_name(self) -> None:
+        result = text_pattern_catalog_to_schema(
+            patterns=tuple(TextPatternName), bundles=()
+        )
 
-        assert result.id == BRAZILIAN_DOCUMENT_PATTERNS.id
-        assert len(result.patterns) == len(BRAZILIAN_DOCUMENT_PATTERNS.patterns)
+        assert len(result.patterns) == len(TextPatternName)
+        assert {p.name for p in result.patterns} == {p.name for p in TextPatternName}
 
     def test_does_not_expose_the_compiled_regex(self) -> None:
-        result = text_pattern_set_to_schema(pattern_set=BRAZILIAN_DOCUMENT_PATTERNS)
+        result = text_pattern_catalog_to_schema(
+            patterns=tuple(TextPatternName), bundles=()
+        )
 
-        dumped = result.model_dump()
+        assert "regex" not in str(result.model_dump())
 
-        assert "regex" not in str(dumped)
+    def test_cpf_loose_pattern_reports_cpf_as_a_covered_field(self) -> None:
+        result = text_pattern_catalog_to_schema(
+            patterns=(TextPatternName.CPF_LOOSE,), bundles=()
+        )
 
-    def test_person_pattern_reports_cpf_as_a_covered_field(self) -> None:
-        result = text_pattern_set_to_schema(pattern_set=BRAZILIAN_DOCUMENT_PATTERNS)
+        assert result.patterns[0].name == "CPF_LOOSE"
+        assert result.patterns[0].node_type == "Person"
+        assert result.patterns[0].fields == ["cpf"]
 
-        person_summary = next(p for p in result.patterns if p.node_type == "Person")
 
-        assert person_summary.fields == ["cpf"]
+class TestTextPatternCatalogPresenterBundles:
+    def test_lists_every_bundle_with_its_pattern_names(self) -> None:
+        result = text_pattern_catalog_to_schema(
+            patterns=(), bundles=(BRAZILIAN_DOCUMENTS_V1,)
+        )
+
+        assert len(result.bundles) == 1
+        assert result.bundles[0].id == BRAZILIAN_DOCUMENTS_V1.id
+        assert result.bundles[0].pattern_names == ["CPF_LOOSE"]
+
+    def test_returns_empty_bundles_for_an_empty_input(self) -> None:
+        result = text_pattern_catalog_to_schema(patterns=(), bundles=())
+
+        assert result.bundles == []

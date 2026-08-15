@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from osint_engine.domain.entities.bases.node import Node
-    from osint_engine.domain.value_objects.text_pattern import TextPatternSet
+    from osint_engine.domain.value_objects.text_pattern import TextPatternName
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -15,15 +15,17 @@ class ExtractedMatch:
     node_type: type[Node[UUID]]
     field_values: tuple[tuple[str, str], ...]
     matched_field: str
+    pattern_name: TextPatternName
 
 
 def extract_matches(
-    *, text: str, pattern_set: TextPatternSet
+    *, text: str, pattern_names: frozenset[TextPatternName]
 ) -> frozenset[ExtractedMatch]:
 
     matches: set[ExtractedMatch] = set()
 
-    for field_pattern in pattern_set.patterns:
+    for pattern_name in pattern_names:
+        field_pattern = pattern_name.value
         for regex_match in field_pattern.regex.finditer(text):
             field_values = regex_match.groupdict()
 
@@ -38,6 +40,7 @@ def extract_matches(
                     node_type=field_pattern.node_type,
                     field_values=tuple(sorted(field_values.items())),
                     matched_field=",".join(sorted(field_values)),
+                    pattern_name=pattern_name,
                 )
             )
 

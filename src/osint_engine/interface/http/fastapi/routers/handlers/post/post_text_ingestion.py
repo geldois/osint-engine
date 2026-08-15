@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 from fastapi import Depends
 
-from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
 from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_jwt_guard
 from osint_engine.interface.http.presenters.graph_presenter import graph_to_schema
 from osint_engine.interface.http.schemas.graph_schema import GraphSchema  # noqa: TC001
@@ -30,7 +29,7 @@ def build_post_text_ingestion_handler(
         del payload
 
         use_case = container.use_cases.ingest_text(
-            pattern_set_id=PatternSetID(body.pattern_set_id), text=body.text
+            patterns=frozenset(body.patterns), text=body.text
         )
 
         graph = await use_case.execute()

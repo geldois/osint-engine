@@ -69,7 +69,7 @@ class AddressMentionedInTextSchema(EdgeSchema[AddressMentionedInText]):
     type: Literal["address_mentioned_in_text"] = "address_mentioned_in_text"
 
     matched_field: str
-    pattern_id: str
+    pattern_name: str
 
     @classmethod
     @override
@@ -126,7 +126,7 @@ class CompanyMentionedInTextSchema(EdgeSchema[CompanyMentionedInText]):
     type: Literal["company_mentioned_in_text"] = "company_mentioned_in_text"
 
     matched_field: str
-    pattern_id: str
+    pattern_name: str
 
     @classmethod
     @override
@@ -177,7 +177,7 @@ class PersonMentionedInTextSchema(EdgeSchema[PersonMentionedInText]):
     type: Literal["person_mentioned_in_text"] = "person_mentioned_in_text"
 
     matched_field: str
-    pattern_id: str
+    pattern_name: str
 
     @classmethod
     @override

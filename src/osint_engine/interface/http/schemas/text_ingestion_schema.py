@@ -5,14 +5,20 @@ from pydantic import BaseModel
 
 class IngestTextRequestSchema(BaseModel):
     text: str
-    pattern_set_id: str
+    patterns: list[str]
 
 
-class FieldPatternSummarySchema(BaseModel):
+class TextPatternNameSchema(BaseModel):
+    name: str
     node_type: str
     fields: list[str]
 
 
 class TextPatternSetSchema(BaseModel):
     id: str
-    patterns: list[FieldPatternSummarySchema]
+    pattern_names: list[str]
+
+
+class TextPatternCatalogSchema(BaseModel):
+    patterns: list[TextPatternNameSchema]
+    bundles: list[TextPatternSetSchema]

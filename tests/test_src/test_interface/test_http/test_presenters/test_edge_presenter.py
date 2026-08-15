@@ -39,7 +39,7 @@ from osint_engine.domain.entities.nodes.person import PersonID
 from osint_engine.domain.entities.nodes.phone import PhoneID
 from osint_engine.domain.entities.nodes.sanction import SanctionID
 from osint_engine.domain.entities.nodes.text_source import TextSourceID
-from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
+from osint_engine.domain.value_objects.text_pattern import TextPatternName
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
 from osint_engine.interface.http.presenters.edge_presenter import edge_to_schema
 from osint_engine.interface.http.schemas.edge_schema import (
@@ -74,7 +74,7 @@ _person_id = PersonID(uuid4())
 _phone_id = PhoneID(uuid4())
 _sanction_id = SanctionID(uuid4())
 _text_source_id = TextSourceID(uuid4())
-_pattern_id = PatternSetID("brazilian_documents_v1")
+_pattern_name = TextPatternName.CPF_LABELED
 
 _COMPANY_HAS_CNAE = CompanyHasCnae(source_id=_company_id, target_id=_cnae_id)
 
@@ -111,21 +111,21 @@ _ADDRESS_MENTIONED_IN_TEXT = AddressMentionedInText(
     source_id=_address_id,
     target_id=_text_source_id,
     matched_field="cep,number",
-    pattern_id=_pattern_id,
+    pattern_name=_pattern_name,
 )
 
 _COMPANY_MENTIONED_IN_TEXT = CompanyMentionedInText(
     source_id=_company_id,
     target_id=_text_source_id,
     matched_field="cnpj",
-    pattern_id=_pattern_id,
+    pattern_name=_pattern_name,
 )
 
 _PERSON_MENTIONED_IN_TEXT = PersonMentionedInText(
     source_id=_person_id,
     target_id=_text_source_id,
     matched_field="cpf",
-    pattern_id=_pattern_id,
+    pattern_name=_pattern_name,
 )
 
 _POSSIBLY_MATCHES = PossiblyMatches(
@@ -244,7 +244,7 @@ class TestEdgePresenterFieldMapping:
 
         assert result.matched_field == _PERSON_MENTIONED_IN_TEXT.matched_field
 
-        assert result.pattern_id == _PERSON_MENTIONED_IN_TEXT.pattern_id
+        assert result.pattern_name == _PERSON_MENTIONED_IN_TEXT.pattern_name.name
 
     def test_possibly_matches_extra_fields_are_correctly_mapped(self) -> None:
         result = edge_to_schema(_POSSIBLY_MATCHES)

@@ -62,7 +62,7 @@ def address_mentioned_in_text_to_schema(
     return AddressMentionedInTextSchema(
         id=edge.id,
         matched_field=edge.matched_field,
-        pattern_id=edge.pattern_id,
+        pattern_name=edge.pattern_name.name,
         source_id=edge.source_id,
         target_id=edge.target_id,
     )
@@ -104,7 +104,7 @@ def company_mentioned_in_text_to_schema(
     return CompanyMentionedInTextSchema(
         id=edge.id,
         matched_field=edge.matched_field,
-        pattern_id=edge.pattern_id,
+        pattern_name=edge.pattern_name.name,
         source_id=edge.source_id,
         target_id=edge.target_id,
     )
@@ -148,7 +148,7 @@ def person_mentioned_in_text_to_schema(
     return PersonMentionedInTextSchema(
         id=edge.id,
         matched_field=edge.matched_field,
-        pattern_id=edge.pattern_id,
+        pattern_name=edge.pattern_name.name,
         source_id=edge.source_id,
         target_id=edge.target_id,
     )

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 _TEXT_CPF = "111.444.777-35"
 _VALID_CPF_TEXT = f"Contato: CPF {_TEXT_CPF}, favor confirmar."
-_PATTERN_SET_ID = "brazilian_documents_v1"
+_BUNDLE_ID = "brazilian_documents_v1"
 
 
 @pytest_asyncio.fixture(loop_scope="session")
@@ -53,7 +53,7 @@ class TestPostTextIngestionAuthentication:
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
         response = await client.post(
             "/text-ingestion",
-            json={"text": _VALID_CPF_TEXT, "pattern_set_id": _PATTERN_SET_ID},
+            json={"text": _VALID_CPF_TEXT, "patterns": [_BUNDLE_ID]},
         )
 
         assert response.status_code == 401
@@ -66,7 +66,7 @@ class TestPostTextIngestionAuthorization:
     ) -> None:
         response = await client.post(
             "/text-ingestion",
-            json={"text": _VALID_CPF_TEXT, "pattern_set_id": _PATTERN_SET_ID},
+            json={"text": _VALID_CPF_TEXT, "patterns": [_BUNDLE_ID]},
             headers={"Authorization": f"Bearer {viewer_token}"},
         )
 
@@ -80,7 +80,7 @@ class TestPostTextIngestion:
     ) -> None:
         response = await client.post(
             "/text-ingestion",
-            json={"text": _VALID_CPF_TEXT, "pattern_set_id": _PATTERN_SET_ID},
+            json={"text": _VALID_CPF_TEXT, "patterns": [_BUNDLE_ID]},
             headers={"Authorization": f"Bearer {valid_token}"},
         )
 
@@ -88,28 +88,47 @@ class TestPostTextIngestion:
         GraphSchema.model_validate(response.json())
 
     @pytest.mark.asyncio
+    async def test_mixed_bundle_and_atomic_names_return_200(
+        self, client: AsyncClient, valid_token: str
+    ) -> None:
+        response = await client.post(
+            "/text-ingestion",
+            json={
+                "text": "Empresa CNPJ 11.222.333/0001-81 registrada",
+                "patterns": [_BUNDLE_ID, "CNPJ_LOOSE"],
+            },
+            headers={"Authorization": f"Bearer {valid_token}"},
+        )
+
+        assert response.status_code == 200
+
+        graph = GraphSchema.model_validate(response.json())
+
+        assert any(node.type == "company" for node in graph.nodes)
+
+    @pytest.mark.asyncio
     async def test_returns_422_when_no_pattern_matches(
         self, client: AsyncClient, valid_token: str
     ) -> None:
         response = await client.post(
             "/text-ingestion",
-            json={"text": "nada relevante aqui", "pattern_set_id": _PATTERN_SET_ID},
+            json={"text": "nada relevante aqui", "patterns": [_BUNDLE_ID]},
             headers={"Authorization": f"Bearer {valid_token}"},
         )
 
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_returns_404_for_unknown_pattern_set(
+    async def test_returns_422_for_an_unknown_pattern_name(
         self, client: AsyncClient, valid_token: str
     ) -> None:
         response = await client.post(
             "/text-ingestion",
-            json={"text": _VALID_CPF_TEXT, "pattern_set_id": "does_not_exist"},
+            json={"text": _VALID_CPF_TEXT, "patterns": ["does_not_exist"]},
             headers={"Authorization": f"Bearer {valid_token}"},
         )
 
-        assert response.status_code == 404
+        assert response.status_code == 422
 
 
 class TestGetTextPatterns:
@@ -135,7 +154,7 @@ class TestGetTextPatternsAuthorization:
 
 class TestGetTextPatternsSuccess:
     @pytest.mark.asyncio
-    async def test_returns_200_with_default_pattern_set(
+    async def test_returns_200_with_the_atomic_catalog_and_default_bundle(
         self, client: AsyncClient, valid_token: str
     ) -> None:
         response = await client.get(
@@ -147,7 +166,14 @@ class TestGetTextPatternsSuccess:
 
         body = response.json()
 
-        assert any(entry["id"] == _PATTERN_SET_ID for entry in body)
+        assert {p["name"] for p in body["patterns"]} == {
+            "CPF_LOOSE",
+            "CPF_LABELED",
+            "CNPJ_LOOSE",
+            "CNPJ_LABELED",
+            "CEP_AND_NUMBER",
+        }
+        assert any(bundle["id"] == _BUNDLE_ID for bundle in body["bundles"])
 
 
 class TestPostTextIngestionPossiblyMatches:
@@ -175,7 +201,7 @@ class TestPostTextIngestionPossiblyMatches:
         ) as client:
             response = await client.post(
                 "/text-ingestion",
-                json={"text": _VALID_CPF_TEXT, "pattern_set_id": _PATTERN_SET_ID},
+                json={"text": _VALID_CPF_TEXT, "patterns": [_BUNDLE_ID]},
                 headers={"Authorization": f"Bearer {valid_token}"},
             )
 
@@ -192,7 +218,7 @@ class TestTextIngestionRateLimit:
         self, client: AsyncClient, valid_token: str
     ) -> None:
         headers = {"Authorization": f"Bearer {valid_token}"}
-        body = {"text": _VALID_CPF_TEXT, "pattern_set_id": _PATTERN_SET_ID}
+        body = {"text": _VALID_CPF_TEXT, "patterns": [_BUNDLE_ID]}
 
         for _ in range(100):
             await client.post("/text-ingestion", json=body, headers=headers)

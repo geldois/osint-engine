@@ -26,8 +26,8 @@ from osint_engine.application.use_cases.matching.find_possibly_matches import (
     FindPossiblyMatches,
 )
 from osint_engine.application.use_cases.text_ingestion.ingest_text import IngestText
-from osint_engine.application.use_cases.text_ingestion.list_text_pattern_sets import (
-    ListTextPatternSets,
+from osint_engine.application.use_cases.text_ingestion.list_text_patterns import (
+    ListTextPatterns,
 )
 from osint_engine.config.container import (
     Container,
@@ -41,7 +41,7 @@ from osint_engine.infrastructure.hashers.argon2_password_hasher import (
 )
 from osint_engine.infrastructure.persistence.hybrid_uow import HybridUoW
 from osint_engine.infrastructure.persistence.mem.default_pattern_sets import (
-    BRAZILIAN_DOCUMENT_PATTERNS,
+    BRAZILIAN_DOCUMENTS_V1,
 )
 from osint_engine.infrastructure.persistence.mem.mem_seeder import seed_mem_storage
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
@@ -95,7 +95,7 @@ def build_container(  # noqa: PLR0913
         settings=settings, mem_storage=mem_storage, password_hasher=password_hasher
     )
 
-    pattern_sets = MemPatternSetRepository(pattern_sets=(BRAZILIAN_DOCUMENT_PATTERNS,))
+    pattern_sets = MemPatternSetRepository(pattern_sets=(BRAZILIAN_DOCUMENTS_V1,))
 
     external_credential_encryption_key = (
         external_credential_encryption_key
@@ -148,8 +148,8 @@ def build_container(  # noqa: PLR0913
         list_external_credentials=partial(
             ListExternalCredentials, uow_factory=uow_factory
         ),
-        list_text_pattern_sets=partial(
-            ListTextPatternSets, pattern_set_repository=pattern_sets
+        list_text_patterns=partial(
+            ListTextPatterns, pattern_set_repository=pattern_sets
         ),
         save_external_credential=partial(
             SaveExternalCredential, uow_factory=uow_factory

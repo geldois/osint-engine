@@ -6,28 +6,44 @@ from osint_engine.application.contracts.repositories.pattern_set_repository impo
     PatternSetRepository,
 )
 from osint_engine.application.errors.text_ingestion_error import (
-    PatternSetNotFoundError,
+    UnknownPatternNameError,
 )
+from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
+from osint_engine.domain.value_objects.text_pattern import TextPatternName
 
 if TYPE_CHECKING:
-    from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
     from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
 
 class MemPatternSetRepository(PatternSetRepository):
     @override
     def __init__(self, *, pattern_sets: tuple[TextPatternSet, ...]) -> None:
-        self._by_id = {pattern_set.id: pattern_set for pattern_set in pattern_sets}
+        self._by_id: dict[PatternSetID, TextPatternSet] = {
+            pattern_set.id: pattern_set for pattern_set in pattern_sets
+        }
 
     @override
-    async def list(self) -> tuple[TextPatternSet, ...]:
+    async def list_bundles(self) -> tuple[TextPatternSet, ...]:
         return tuple(self._by_id.values())
 
     @override
-    async def get(self, *, id_: PatternSetID) -> TextPatternSet:
-        found = self._by_id.get(id_)
+    async def resolve(self, *, names: frozenset[str]) -> frozenset[TextPatternName]:
+        resolved: set[TextPatternName] = set()
+        unknown: list[str] = []
 
-        if found is None:
-            raise PatternSetNotFoundError(pattern_set_id=id_)
+        for name in names:
+            bundle = self._by_id.get(PatternSetID(name))
 
-        return found
+            if bundle is not None:
+                resolved.update(bundle.patterns)
+                continue
+
+            try:
+                resolved.add(TextPatternName[name])
+            except KeyError:
+                unknown.append(name)
+
+        if unknown:
+            raise UnknownPatternNameError(names=frozenset(unknown))
+
+        return frozenset(resolved)

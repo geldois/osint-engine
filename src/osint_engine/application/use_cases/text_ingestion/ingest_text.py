@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.node import Node
     from osint_engine.domain.entities.nodes.text_source import TextSourceID
-    from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
+    from osint_engine.domain.value_objects.text_pattern import TextPatternName
 
 _logger = get_logger()
 
@@ -110,7 +110,7 @@ def _build_mention_edge(
     node: Node[UUID],
     text_source_id: TextSourceID,
     matched_field: str,
-    pattern_id: PatternSetID,
+    pattern_name: TextPatternName,
 ) -> Edge[UUID, UUID, UUID]:
     builder = _MENTION_EDGE_BUILDERS.get(type(node))
 
@@ -121,7 +121,7 @@ def _build_mention_edge(
         source_id=node.id,
         target_id=text_source_id,
         matched_field=matched_field,
-        pattern_id=pattern_id,
+        pattern_name=pattern_name,
     )
 
 
@@ -138,7 +138,7 @@ async def _resolve_node(*, uow: UoW, match: ExtractedMatch) -> Node[UUID]:
 class IngestText(Query[Graph]):
     uow_factory: Callable[[], UoW]
     pattern_set_repository: PatternSetRepository
-    pattern_set_id: PatternSetID
+    patterns: frozenset[str]
     text: str
 
     @override
@@ -147,25 +147,25 @@ class IngestText(Query[Graph]):
         *,
         uow_factory: Callable[[], UoW],
         pattern_set_repository: PatternSetRepository,
-        pattern_set_id: PatternSetID,
+        patterns: frozenset[str],
         text: str,
     ) -> None:
         super().__init__(
             uow_factory=uow_factory,
             pattern_set_repository=pattern_set_repository,
-            pattern_set_id=pattern_set_id,
+            patterns=patterns,
             text=text,
         )
 
     @override
     async def execute(self) -> Graph:
-        _logger.info("text_ingestion.start", pattern_set_id=self.pattern_set_id)
+        _logger.info("text_ingestion.start", patterns=self.patterns)
 
-        pattern_set = await self.pattern_set_repository.get(id_=self.pattern_set_id)
-        matches = extract_matches(text=self.text, pattern_set=pattern_set)
+        pattern_names = await self.pattern_set_repository.resolve(names=self.patterns)
+        matches = extract_matches(text=self.text, pattern_names=pattern_names)
 
         if not matches:
-            raise NoPatternMatchedError(pattern_set_id=self.pattern_set_id)
+            raise NoPatternMatchedError(requested_patterns=self.patterns)
 
         fetched_at = datetime.now(tz=UTC)
         text_source = TextSource(text=self.text)
@@ -180,7 +180,7 @@ class IngestText(Query[Graph]):
                     node=node,
                     text_source_id=text_source.id,
                     matched_field=match.matched_field,
-                    pattern_id=self.pattern_set_id,
+                    pattern_name=match.pattern_name,
                 )
 
                 nodes.add(node)
@@ -201,7 +201,7 @@ class IngestText(Query[Graph]):
 
         _logger.info(
             "text_ingestion.success",
-            pattern_set_id=self.pattern_set_id,
+            patterns=self.patterns,
             match_count=len(matches),
         )
 
