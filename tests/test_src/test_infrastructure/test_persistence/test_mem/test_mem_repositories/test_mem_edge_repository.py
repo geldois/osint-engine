@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 
 from osint_engine.domain.errors.entity_error import EntityNotFoundError
+from tests.fakes.domain import FakeDefaultEdge
 
 if TYPE_CHECKING:
     from tests.conftest import MakeEntityRevision, MakeFakeEdge, MakeMemStorage
@@ -105,6 +106,51 @@ class TestMemEdgeRepositoryGet:
         assert str(edge.id) in str(exception.value)
 
         assert "Edge" in str(exception.value)
+
+
+class TestMemEdgeRepositoryListRevisions:
+    @pytest.mark.asyncio
+    async def test_returns_empty_tuple_for_an_unseen_id(
+        self,
+        make_fake_edge: MakeFakeEdge,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
+    ) -> None:
+        repo = make_mem_edge_repository(mem_storage=make_mem_storage())
+
+        assert await repo.list_revisions(id_=make_fake_edge().id) == ()
+
+    @pytest.mark.asyncio
+    async def test_returns_every_revision_merged_for_the_same_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_mem_storage: MakeMemStorage,
+        make_mem_edge_repository: MakeMemEdgeRepository,
+    ) -> None:
+        source_id, target_id = uuid4(), uuid4()
+        older = make_entity_revision(
+            entity=FakeDefaultEdge(
+                source_id=source_id, target_id=target_id, content="a"
+            ),
+            fetched_at=_EARLY,
+        )
+        newer = make_entity_revision(
+            entity=FakeDefaultEdge(
+                source_id=source_id, target_id=target_id, content="b"
+            ),
+            fetched_at=_LATE,
+        )
+        repo = make_mem_edge_repository(mem_storage=make_mem_storage())
+
+        await repo.merge(revision=older)
+        await repo.merge(revision=newer)
+
+        found = await repo.list_revisions(id_=older.entity.id)
+
+        assert {revision.entity.content_id for revision in found} == {
+            older.entity.content_id,
+            newer.entity.content_id,
+        }
 
 
 class TestMemEdgeRepositoryMerge:

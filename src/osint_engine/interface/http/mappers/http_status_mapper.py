@@ -1,6 +1,7 @@
 from osint_engine.domain.errors.error_category import ErrorCategory
 
 _CATEGORY_STATUS: dict[ErrorCategory, int] = {
+    ErrorCategory.CONFLICT: 409,
     ErrorCategory.NOT_FOUND: 404,
     ErrorCategory.UNAUTHORIZED: 401,
     ErrorCategory.FORBIDDEN: 403,

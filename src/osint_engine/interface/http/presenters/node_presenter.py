@@ -75,6 +75,8 @@ def person_to_schema(*, node: Person) -> PersonSchema:
         birthdate=node.birthdate,
         cpf=node.cpf,
         name=node.name,
+        registration_date=node.registration_date,
+        registration_status=node.registration_status,
     )
 
 

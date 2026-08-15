@@ -47,7 +47,14 @@ _PROVIDER = "text_pattern"
 
 
 def _build_person_stub(*, field_values: dict[str, str]) -> Person:
-    return Person(age_range=None, birthdate=None, cpf=field_values["cpf"], name=None)
+    return Person(
+        age_range=None,
+        birthdate=None,
+        cpf=field_values["cpf"],
+        name=None,
+        registration_date=None,
+        registration_status=None,
+    )
 
 
 def _build_company_stub(*, field_values: dict[str, str]) -> Company:

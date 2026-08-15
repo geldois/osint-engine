@@ -22,6 +22,8 @@ class Person(
     birthdate: str | None
     cpf: str
     name: str | None
+    registration_date: str | None
+    registration_status: str | None
 
     @override
     def __init__(
@@ -31,6 +33,8 @@ class Person(
         birthdate: str | None,
         cpf: str,
         name: str | None,
+        registration_date: str | None,
+        registration_status: str | None,
     ) -> None:
         super().__init__(**own_init_kwargs(**locals()))
 

@@ -164,6 +164,8 @@ class TestGetCnpjPossiblyMatches:
             birthdate=None,
             cpf=masked_overlapping_cpf(real_cpf=partner_cpf),
             name="FULANO DE TAL",
+            registration_date=None,
+            registration_status=None,
         )
         container = make_container(
             http_client=brasilapi_http_client,

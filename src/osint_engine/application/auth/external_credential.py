@@ -12,4 +12,5 @@ class ExternalCredential:
 
 
 class Provider(StrEnum):
+    KIPFLOW = "KIPFLOW"
     PORTAL_TRANSPARENCIA = "PORTAL_TRANSPARENCIA"

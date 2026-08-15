@@ -5,6 +5,7 @@ from enum import Enum, unique
 
 @unique
 class ErrorCategory(Enum):
+    CONFLICT = "conflict"
     NOT_FOUND = "not_found"
     UNAUTHORIZED = "unauthorized"
     FORBIDDEN = "forbidden"

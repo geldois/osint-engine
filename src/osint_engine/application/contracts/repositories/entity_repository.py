@@ -45,3 +45,7 @@ class EntityRepository[Entity_: Entity[UUID]](ABC):
         self, *, revisions: frozenset[EntityRevision[Entity_]]
     ) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def list_revisions(self, *, id_: UUID) -> tuple[EntityRevision[Entity_], ...]:
+        raise NotImplementedError

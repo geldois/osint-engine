@@ -170,6 +170,8 @@ class TestIngestTextExistingEntity:
             birthdate=None,
             cpf=_VALID_CPF_DIGITS,
             name="Real Enriched Name",
+            registration_date=None,
+            registration_status=None,
         )
         mem_storage = make_mem_storage(
             nodes=[make_entity_revision(entity=existing_person)]

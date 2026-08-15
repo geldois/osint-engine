@@ -23,13 +23,13 @@ class FakeCNPJFetcher(CNPJFetcher):
 
 
 class FakeCPFFetcher(CPFFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph]) -> None:
+    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
         self.revision = revision
 
     @override
     async def fetch(
         self, *, cpf: str, credential: ExternalCredential
-    ) -> EntityRevision[Graph]:
+    ) -> EntityRevision[Graph] | None:
         return self.revision
 
 

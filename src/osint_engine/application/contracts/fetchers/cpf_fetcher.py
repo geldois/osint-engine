@@ -13,5 +13,5 @@ class CPFFetcher(ABC):
     @abstractmethod
     async def fetch(
         self, *, cpf: str, credential: ExternalCredential
-    ) -> EntityRevision[Graph]:
+    ) -> EntityRevision[Graph] | None:
         raise NotImplementedError

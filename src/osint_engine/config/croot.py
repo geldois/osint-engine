@@ -51,14 +51,14 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_pattern_set_re
 from osint_engine.infrastructure.providers.brasilapi.endpoints.cnpj_v1_fetcher import (
     BrasilAPICNPJv1Fetcher,
 )
+from osint_engine.infrastructure.providers.kipflow.endpoints.cpf_fetcher import (
+    KipFlowCPFFetcher,
+)
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceis_fetcher import (  # noqa: E501
     PortalTransparenciaCEISFetcher,
 )
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cnep_fetcher import (  # noqa: E501
     PortalTransparenciaCNEPFetcher,
-)
-from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cpf_fetcher import (  # noqa: E501
-    PortalTransparenciaCPFFetcher,
 )
 from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 from osint_engine.infrastructure.text_ingestion.spreadsheet_reader import (
@@ -86,7 +86,7 @@ def build_container(  # noqa: PLR0913
         ceis_fetcher=PortalTransparenciaCEISFetcher(http_client=http_client),
         cnep_fetcher=PortalTransparenciaCNEPFetcher(http_client=http_client),
         cnpj_fetcher=BrasilAPICNPJv1Fetcher(http_client=http_client),
-        cpf_fetcher=PortalTransparenciaCPFFetcher(http_client=http_client),
+        cpf_fetcher=KipFlowCPFFetcher(http_client=http_client),
     )
 
     pyjwt_service = PyJWTService(settings=settings)

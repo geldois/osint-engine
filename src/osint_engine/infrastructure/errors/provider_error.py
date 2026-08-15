@@ -18,6 +18,20 @@ class ProviderError(
 ): ...
 
 
+class InsufficientCreditsError(
+    ProviderError, error_code="PROVIDER_INSUFFICIENT_CREDITS"
+):
+    provider: str
+
+    @override
+    def __init__(self, *, provider: str) -> None:
+        super().__init__(provider=provider)
+
+    @override
+    def _build_message(self) -> str:
+        return f"'{self.provider}' rejected the request: insufficient credit balance."
+
+
 class ProviderRequestError(ProviderError, error_code="PROVIDER_REQUEST_FAILED"):
     provider: str
     status_code: int | None

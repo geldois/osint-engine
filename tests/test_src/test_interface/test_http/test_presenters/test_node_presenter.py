@@ -67,6 +67,8 @@ _PERSON = Person(
     birthdate="1990-01-01",
     cpf="123.456.789-09",
     name="João Silva",
+    registration_date="2010-05-20",
+    registration_status="REGULAR",
 )
 
 _PHONE = Phone(number="+5511999999999")
@@ -174,6 +176,10 @@ class TestNodePresenterFieldMapping:
         assert result.cpf == _PERSON.cpf
 
         assert result.name == _PERSON.name
+
+        assert result.registration_date == _PERSON.registration_date
+
+        assert result.registration_status == _PERSON.registration_status
 
     def test_sanction_fields_are_correctly_mapped(self) -> None:
         result = node_to_schema(_SANCTION)

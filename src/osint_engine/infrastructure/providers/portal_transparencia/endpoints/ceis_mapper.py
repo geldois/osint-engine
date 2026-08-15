@@ -72,6 +72,8 @@ def _map_person_stub(*, payload: Payload) -> Person:
         birthdate=None,
         cpf=payload.require(key="cpfFormatado", expected_type=str),
         name=payload.require(key="nome", expected_type=str),
+        registration_date=None,
+        registration_status=None,
     )
 
 

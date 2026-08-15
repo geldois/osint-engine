@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import override
 from uuid import uuid4
 
@@ -7,6 +8,7 @@ import pytest
 
 from osint_engine.application.auth.external_credential import Provider
 from osint_engine.application.errors.auth_error import InvalidCredentialsError
+from osint_engine.application.errors.entity_fetch_error import AlreadyFetchedError
 from osint_engine.application.errors.external_credential_error import (
     ExternalCredentialNotFoundError,
 )
@@ -77,6 +79,15 @@ class TestStatusMapping:
                 EntityNotFoundError(entity_id=uuid4(), subject=Company),
                 404,
                 id="EntityNotFoundError→404",
+            ),
+            pytest.param(
+                AlreadyFetchedError(
+                    entity_id=uuid4(),
+                    provider="kipflow",
+                    fetched_at=datetime(2026, 1, 1, tzinfo=UTC),
+                ),
+                409,
+                id="AlreadyFetchedError→409",
             ),
             pytest.param(
                 InvalidCredentialsError(username="user"),

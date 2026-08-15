@@ -7,7 +7,14 @@ from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
 
 
 def _make_person(*, cpf: str, name: str = "TARCIANA PAULA GOMES MEDEIROS") -> Person:
-    return Person(age_range="Entre 41 a 50 anos", birthdate=None, cpf=cpf, name=name)
+    return Person(
+        age_range="Entre 41 a 50 anos",
+        birthdate=None,
+        cpf=cpf,
+        name=name,
+        registration_date=None,
+        registration_status=None,
+    )
 
 
 class TestPersonIdentityNormalization:
@@ -51,6 +58,28 @@ class TestPersonIdentityNormalization:
         person = _make_person(cpf="***128734**")
 
         assert person.cpf == "***128734**"
+
+
+class TestPersonEnrichedFields:
+    def test_registration_fields_are_not_part_of_the_identity(self) -> None:
+        regular = Person(
+            age_range=None,
+            birthdate=None,
+            cpf="11144477735",
+            name=None,
+            registration_date="2010-05-20",
+            registration_status="REGULAR",
+        )
+        suspended = Person(
+            age_range=None,
+            birthdate=None,
+            cpf="11144477735",
+            name=None,
+            registration_date="2019-08-01",
+            registration_status="SUSPENSO",
+        )
+
+        assert regular.id == suspended.id
 
 
 class TestPersonIdentityValidation:

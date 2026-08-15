@@ -198,6 +198,45 @@ class TestMemNodeRepositoryListByType:
         assert found == (newer,)
 
 
+class TestMemNodeRepositoryListRevisions:
+    @pytest.mark.asyncio
+    async def test_returns_empty_tuple_for_an_unseen_id(
+        self,
+        make_fake_node: MakeFakeNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        repo = make_mem_node_repository(mem_storage=make_mem_storage())
+
+        assert await repo.list_revisions(id_=make_fake_node().id) == ()
+
+    @pytest.mark.asyncio
+    async def test_returns_every_revision_merged_for_the_same_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_mergeable_node: MakeFakeMergeableNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        older = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="a"), fetched_at=_EARLY
+        )
+        newer = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="b"), fetched_at=_LATE
+        )
+        repo = make_mem_node_repository(mem_storage=make_mem_storage())
+
+        await repo.merge(revision=older)
+        await repo.merge(revision=newer)
+
+        found = await repo.list_revisions(id_=older.entity.id)
+
+        assert {revision.entity.content_id for revision in found} == {
+            older.entity.content_id,
+            newer.entity.content_id,
+        }
+
+
 class TestMemNodeRepositoryMerge:
     @pytest.mark.asyncio
     async def test_first_write_stores_the_revision_under_id_and_content_id(

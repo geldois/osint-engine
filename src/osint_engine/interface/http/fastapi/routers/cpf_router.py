@@ -22,6 +22,8 @@ def build_cpf_router(*, container: Container) -> APIRouter:
         prefix="/cpf", dependencies=[Depends(jwt_guard), Depends(rate_limit)]
     )
 
-    router.get(path="/{cpf}")(build_get_cpf_handler(container=container))
+    router.get(path="/{cpf}", response_model=None)(
+        build_get_cpf_handler(container=container)
+    )
 
     return router

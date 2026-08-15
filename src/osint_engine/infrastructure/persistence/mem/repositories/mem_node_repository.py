@@ -86,6 +86,10 @@ class MemNodeRepository(NodeRepository):
             await self.merge(revision=revision)
 
     @override
+    async def list_revisions(self, *, id_: UUID) -> tuple[NodeRevision, ...]:
+        return tuple(self.nodes.get(id_, {}).values())
+
+    @override
     async def list_by_type(
         self, *, node_type: type[Node[UUID]]
     ) -> tuple[EntityRevision[Node[UUID]], ...]:

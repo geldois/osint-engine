@@ -116,6 +116,8 @@ class PersonSchema(NodeSchema[Person]):
     cpf: str
     id: UUID
     name: str | None
+    registration_date: str | None
+    registration_status: str | None
 
     @classmethod
     @override

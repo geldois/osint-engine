@@ -190,6 +190,8 @@ class TestPostTextIngestionPossiblyMatches:
             birthdate=None,
             cpf=masked_overlapping_cpf(real_cpf=_TEXT_CPF),
             name="FULANO DE TAL",
+            registration_date=None,
+            registration_status=None,
         )
         container = make_container(
             mem_storage=make_mem_storage(nodes=[make_entity_revision(entity=stored)])

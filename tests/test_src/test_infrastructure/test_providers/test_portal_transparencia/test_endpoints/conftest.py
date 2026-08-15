@@ -17,9 +17,6 @@ from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceis_f
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cnep_fetcher import (  # noqa: E501
     PortalTransparenciaCNEPFetcher,
 )
-from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cpf_fetcher import (  # noqa: E501
-    PortalTransparenciaCPFFetcher,
-)
 
 if TYPE_CHECKING:
     from osint_engine.infrastructure.providers.payload import Payload
@@ -27,7 +24,6 @@ if TYPE_CHECKING:
 
 type MakePortalTransparenciaCEISFetcher = Callable[..., PortalTransparenciaCEISFetcher]
 type MakePortalTransparenciaCNEPFetcher = Callable[..., PortalTransparenciaCNEPFetcher]
-type MakePortalTransparenciaCPFFetcher = Callable[..., PortalTransparenciaCPFFetcher]
 
 
 @pytest.fixture
@@ -63,19 +59,6 @@ def make_portal_transparencia_cnep_fetcher() -> MakePortalTransparenciaCNEPFetch
         )
 
     return cnep_fetcher
-
-
-@pytest.fixture
-def make_portal_transparencia_cpf_fetcher() -> MakePortalTransparenciaCPFFetcher:
-
-    def cpf_fetcher(
-        *, handler: Callable[[Request], Response]
-    ) -> PortalTransparenciaCPFFetcher:
-        return PortalTransparenciaCPFFetcher(
-            http_client=AsyncClient(transport=MockTransport(handler=handler))
-        )
-
-    return cpf_fetcher
 
 
 @pytest.fixture

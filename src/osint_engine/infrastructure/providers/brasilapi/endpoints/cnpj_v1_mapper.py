@@ -131,6 +131,8 @@ def _map_person(*, payload: Payload) -> Person:
         birthdate=None,
         cpf=payload.require(key="cnpj_cpf_do_socio", expected_type=str),
         name=payload.require(key="nome_socio", expected_type=str),
+        registration_date=None,
+        registration_status=None,
     )
 
 

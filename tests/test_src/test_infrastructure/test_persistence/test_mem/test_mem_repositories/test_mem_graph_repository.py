@@ -115,6 +115,36 @@ class TestMemGraphRepositoryGet:
         assert "Graph" in str(exception.value)
 
 
+class TestMemGraphRepositoryListRevisions:
+    @pytest.mark.asyncio
+    async def test_returns_empty_tuple_for_an_unseen_id(
+        self,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        repo = make_mem_graph_repository(mem_storage=make_mem_storage())
+
+        assert await repo.list_revisions(id_=make_graph().id) == ()
+
+    @pytest.mark.asyncio
+    async def test_returns_the_merged_revision(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        revision = make_entity_revision(entity=make_graph())
+        repo = make_mem_graph_repository(mem_storage=make_mem_storage())
+
+        await repo.merge(revision=revision)
+
+        found = await repo.list_revisions(id_=revision.entity.id)
+
+        assert found == (revision,)
+
+
 class TestMemGraphRepositoryMerge:
     @pytest.mark.asyncio
     async def test_first_write_stores_the_revision_under_id_and_content_id(

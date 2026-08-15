@@ -23,7 +23,14 @@ if TYPE_CHECKING:
 
 
 def _make_person(*, cpf: str, name: str = "FULANO DE TAL") -> Person:
-    return Person(age_range="Entre 41 a 50 anos", birthdate=None, cpf=cpf, name=name)
+    return Person(
+        age_range="Entre 41 a 50 anos",
+        birthdate=None,
+        cpf=cpf,
+        name=name,
+        registration_date=None,
+        registration_status=None,
+    )
 
 
 def _make_company(*, cnpj: str = "33754482000124") -> Company:

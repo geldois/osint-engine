@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fastapi import Depends
+from fastapi import Depends, Response
 
 from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_jwt_guard
 from osint_engine.interface.http.presenters.graph_presenter import graph_to_schema
@@ -17,19 +17,26 @@ if TYPE_CHECKING:
 
 def build_get_cpf_handler(
     *, container: Container
-) -> Callable[[str, dict[str, object]], Awaitable[GraphSchema]]:
+) -> Callable[[str, dict[str, object], bool], Awaitable[GraphSchema | Response]]:
     jwt_guard = build_jwt_guard(container=container)
 
     async def get_cpf(
         cpf: str,
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
-    ) -> GraphSchema:
+        force: bool = False,  # noqa: FBT001, FBT002
+    ) -> GraphSchema | Response:
         cpf = sanitize_cpf(cpf)
         username = str(payload["sub"])
 
-        use_case = container.use_cases.expand_by_cpf(cpf=cpf, username=username)
+        use_case = container.use_cases.expand_by_cpf(
+            cpf=cpf, force=force, username=username
+        )
 
         graph = await use_case.execute()
+
+        if graph is None:
+            return Response(status_code=204)
+
         matches_graph = await container.use_cases.find_possibly_matches(
             graph=graph
         ).execute()

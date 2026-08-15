@@ -207,6 +207,8 @@ class TestGetCeisPossiblyMatches:
             birthdate=None,
             cpf=masked_overlapping_cpf(real_cpf=PERSON_CPF),
             name="FULANO DE TAL",
+            registration_date=None,
+            registration_status=None,
         )
 
         async with AsyncClient(transport=MockTransport(handler)) as http_client:

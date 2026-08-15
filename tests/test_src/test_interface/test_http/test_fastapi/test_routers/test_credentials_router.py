@@ -135,7 +135,8 @@ class TestGetCredentialStatus:
 
         assert response.status_code == 200
         assert response.json() == [
-            {"configured": False, "provider": "PORTAL_TRANSPARENCIA"}
+            {"configured": False, "provider": "KIPFLOW"},
+            {"configured": False, "provider": "PORTAL_TRANSPARENCIA"},
         ]
 
     @pytest.mark.asyncio
@@ -153,7 +154,8 @@ class TestGetCredentialStatus:
         )
 
         assert response.json() == [
-            {"configured": True, "provider": "PORTAL_TRANSPARENCIA"}
+            {"configured": False, "provider": "KIPFLOW"},
+            {"configured": True, "provider": "PORTAL_TRANSPARENCIA"},
         ]
 
     @pytest.mark.asyncio
@@ -178,5 +180,6 @@ class TestGetCredentialStatus:
         )
 
         assert response.json() == [
-            {"configured": False, "provider": "PORTAL_TRANSPARENCIA"}
+            {"configured": False, "provider": "KIPFLOW"},
+            {"configured": False, "provider": "PORTAL_TRANSPARENCIA"},
         ]

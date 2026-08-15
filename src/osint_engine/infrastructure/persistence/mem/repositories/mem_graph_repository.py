@@ -142,3 +142,7 @@ class MemGraphRepository(GraphRepository):
     async def merge_many(self, *, revisions: frozenset[GraphRevision]) -> None:
         for revision in revisions:
             await self.merge(revision=revision)
+
+    @override
+    async def list_revisions(self, *, id_: UUID) -> tuple[GraphRevision, ...]:
+        return tuple(self.graphs.get(id_, {}).values())
