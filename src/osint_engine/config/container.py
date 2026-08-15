@@ -15,6 +15,9 @@ if TYPE_CHECKING:
         PatternSetRepository,
     )
     from osint_engine.application.contracts.services.jwt_service import JWTService
+    from osint_engine.application.contracts.services.spreadsheet_reader import (
+        ReadSpreadsheetText,
+    )
     from osint_engine.application.contracts.uow import UoW
     from osint_engine.application.revision.policies.revision_merge_policy import (
         RevisionMergePolicy,
@@ -74,6 +77,8 @@ class Policies:
 @dataclass(frozen=True, kw_only=True)
 class Services:
     jwt_service: JWTService
+    read_spreadsheet_text: ReadSpreadsheetText
+    spreadsheet_max_file_bytes: int
 
 
 @dataclass(frozen=True, kw_only=True)

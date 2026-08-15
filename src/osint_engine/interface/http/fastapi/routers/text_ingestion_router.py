@@ -13,6 +13,9 @@ from osint_engine.interface.http.fastapi.routers.handlers.get.get_text_patterns 
 from osint_engine.interface.http.fastapi.routers.handlers.post.post_text_ingestion import (  # noqa: E501
     build_post_text_ingestion_handler,
 )
+from osint_engine.interface.http.fastapi.routers.handlers.post.post_text_ingestion_file import (  # noqa: E501
+    build_post_text_ingestion_file_handler,
+)
 
 if TYPE_CHECKING:
     from osint_engine.config.container import Container
@@ -31,5 +34,8 @@ def build_text_ingestion_router(*, container: Container) -> APIRouter:
 
     router.get(path="/patterns")(build_get_text_patterns_handler(container=container))
     router.post(path="")(build_post_text_ingestion_handler(container=container))
+    router.post(path="/file")(
+        build_post_text_ingestion_file_handler(container=container)
+    )
 
     return router

@@ -61,6 +61,10 @@ from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cpf_fe
     PortalTransparenciaCPFFetcher,
 )
 from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
+from osint_engine.infrastructure.text_ingestion.spreadsheet_reader import (
+    MAX_FILE_BYTES,
+    read_spreadsheet_text,
+)
 
 if TYPE_CHECKING:
     from asyncpg import Pool
@@ -86,7 +90,11 @@ def build_container(  # noqa: PLR0913
     )
 
     pyjwt_service = PyJWTService(settings=settings)
-    services = Services(jwt_service=pyjwt_service)
+    services = Services(
+        jwt_service=pyjwt_service,
+        read_spreadsheet_text=read_spreadsheet_text,
+        spreadsheet_max_file_bytes=MAX_FILE_BYTES,
+    )
 
     mem_storage = mem_storage if mem_storage is not None else MemStorage()
     password_hasher = Argon2PasswordHasher()
