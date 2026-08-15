@@ -15,6 +15,16 @@ class RevisionMergePolicy(Protocol):
     ) -> EntityRevision[Entity_]: ...
 
 
+def keep_incoming_policy[Entity_: Entity[UUID]](
+    left: EntityRevision[Entity_], right: EntityRevision[Entity_], /
+) -> EntityRevision[Entity_]:
+
+    if left.entity.id != right.entity.id:
+        raise EntityIDMismatchError(left_id=left.entity.id, right_id=right.entity.id)
+
+    return right
+
+
 def merge_by_filled_fields_policy[Entity_: Entity[UUID]](
     left: EntityRevision[Entity_], right: EntityRevision[Entity_], /
 ) -> EntityRevision[Entity_]:

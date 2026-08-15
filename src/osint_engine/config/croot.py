@@ -4,7 +4,7 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from osint_engine.application.revision.policies.revision_merge_policy import (
-    merge_by_filled_fields_policy,
+    keep_incoming_policy,
 )
 from osint_engine.application.revision.policies.revision_selection_policy import (
     select_current_by_newest_fetched,
@@ -107,7 +107,7 @@ def build_container(  # noqa: PLR0913
         policies
         if policies is not None
         else Policies(
-            revision_merge_policy=merge_by_filled_fields_policy,
+            revision_merge_policy=keep_incoming_policy,
             revision_selection_policy=select_current_by_newest_fetched,
         )
     )

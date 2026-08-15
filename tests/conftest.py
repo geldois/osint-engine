@@ -16,7 +16,7 @@ from osint_engine.application.auth.external_credential import (
 from osint_engine.application.auth.user import Role, User
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.application.revision.policies.revision_merge_policy import (
-    merge_by_filled_fields_policy,
+    keep_incoming_policy,
 )
 from osint_engine.application.revision.policies.revision_selection_policy import (
     select_current_by_newest_fetched,
@@ -323,7 +323,7 @@ def make_user() -> MakeUser:
 def policies(make_policies: MakePolicies) -> Policies:
 
     return make_policies(
-        revision_merge_policy=merge_by_filled_fields_policy,
+        revision_merge_policy=keep_incoming_policy,
         revision_selection_policy=select_current_by_newest_fetched,
     )
 

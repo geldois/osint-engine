@@ -6,6 +6,12 @@ from uuid import uuid4
 
 import pytest
 
+from osint_engine.application.revision.policies.revision_merge_policy import (
+    merge_by_filled_fields_policy,
+)
+from osint_engine.application.revision.policies.revision_selection_policy import (
+    select_current_by_newest_fetched,
+)
 from osint_engine.domain.errors.entity_error import EntityNotFoundError
 from tests.fakes.domain import FakeMergeableNode
 
@@ -15,6 +21,7 @@ if TYPE_CHECKING:
         MakeFakeMergeableNode,
         MakeFakeNode,
         MakeMemStorage,
+        MakePolicies,
     )
     from tests.test_src.test_infrastructure.test_persistence.test_mem.test_mem_repositories.conftest import (  # noqa: E501
         MakeMemNodeRepository,
@@ -220,6 +227,7 @@ class TestMemNodeRepositoryMerge:
         make_fake_mergeable_node: MakeFakeMergeableNode,
         make_mem_storage: MakeMemStorage,
         make_mem_node_repository: MakeMemNodeRepository,
+        make_policies: MakePolicies,
     ) -> None:
         stored = make_entity_revision(
             entity=make_fake_mergeable_node(key="k", label="preserved"),
@@ -228,7 +236,13 @@ class TestMemNodeRepositoryMerge:
         incoming = make_entity_revision(
             entity=make_fake_mergeable_node(key="k", label=None), fetched_at=_LATE
         )
-        repo = make_mem_node_repository(mem_storage=make_mem_storage(nodes=[stored]))
+        repo = make_mem_node_repository(
+            mem_storage=make_mem_storage(nodes=[stored]),
+            policies_override=make_policies(
+                revision_merge_policy=merge_by_filled_fields_policy,
+                revision_selection_policy=select_current_by_newest_fetched,
+            ),
+        )
 
         merged = await repo.merge(revision=incoming)
 

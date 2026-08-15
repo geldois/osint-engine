@@ -8,6 +8,7 @@ import pytest
 
 from osint_engine.application.errors.revision_error import EntityIDMismatchError
 from osint_engine.application.revision.policies.revision_merge_policy import (
+    keep_incoming_policy,
     merge_by_filled_fields_policy,
 )
 from osint_engine.domain.entities.nodes.company import Company
@@ -239,3 +240,49 @@ class TestMergeEqualFetchedAtTiebreak:
         merged = merge_by_filled_fields_policy(left, right)
 
         assert merged.entity.label == "left"
+
+
+class TestKeepIncomingPolicy:
+    def test_rejects_revisions_of_distinct_entities(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_node: MakeFakeNode,
+    ) -> None:
+        left = make_entity_revision(entity=make_fake_node(content="a"))
+        right = make_entity_revision(entity=make_fake_node(content="b"))
+
+        with pytest.raises(EntityIDMismatchError) as exception:
+            keep_incoming_policy(left, right)
+
+        assert str(left.entity.id) in str(exception.value)
+
+        assert str(right.entity.id) in str(exception.value)
+
+    def test_returns_the_incoming_revision_unchanged(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_mergeable_node: MakeFakeMergeableNode,
+    ) -> None:
+        left = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="preserved"),
+            fetched_at=_EARLY,
+        )
+        right = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label=None), fetched_at=_LATE
+        )
+
+        assert keep_incoming_policy(left, right) is right
+
+    def test_ignores_fetched_at_ordering(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_mergeable_node: MakeFakeMergeableNode,
+    ) -> None:
+        left = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="left"), fetched_at=_LATE
+        )
+        right = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="right"), fetched_at=_EARLY
+        )
+
+        assert keep_incoming_policy(left, right) is right

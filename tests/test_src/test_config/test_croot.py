@@ -8,7 +8,7 @@ import pytest_asyncio
 from httpx2 import AsyncClient
 
 from osint_engine.application.revision.policies.revision_merge_policy import (
-    merge_by_filled_fields_policy,
+    keep_incoming_policy,
 )
 from osint_engine.application.revision.policies.revision_selection_policy import (
     select_current_by_newest_fetched,
@@ -137,7 +137,7 @@ class TestBuildContainerPolicies:
         assert isinstance(uow, HybridUoW)
 
         async with uow:
-            assert uow.revision_merge_policy is merge_by_filled_fields_policy
+            assert uow.revision_merge_policy is keep_incoming_policy
             assert uow.revision_selection_policy is select_current_by_newest_fetched
 
     @pytest.mark.asyncio
