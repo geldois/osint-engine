@@ -72,13 +72,15 @@ flowchart LR
 
     UseCases --> AuthenticateUser("AuthenticateUser")
     UseCases --> ExpandByCNPJ("ExpandByCNPJ")
-    UseCases --> ExpandByPortal("ExpandBy CPF / CNEP / CEIS")
+    UseCases --> ExpandByCPF("ExpandByCPF")
+    UseCases --> ExpandByPortal("ExpandBy CNEP / CEIS")
     UseCases --> CredentialUseCases("List / Save ExternalCredential")
     UseCases --> IngestText("IngestText")
     UseCases --> ListPatternSets("ListTextPatterns")
     Services --> PyJWTService("PyJWTService")
     Services --> SpreadsheetReader("read_spreadsheet_text")
     Fetchers --> CNPJFetcher("BrasilAPICNPJv1Fetcher")
+    Fetchers --> KipFlowFetcher("KipFlowCPFFetcher")
     Fetchers --> PortalFetchers("Portal da Transparência Fetchers")
     PatternSets --> MemPatternSets("MemPatternSetRepository")
     MemPatternSets --> DefaultPatterns("BRAZILIAN_DOCUMENTS_V1")
@@ -86,6 +88,7 @@ flowchart LR
     PostToken --> AuthenticateUser
     PostViewerToken --> PyJWTService
     GetCNPJ --> ExpandByCNPJ
+    GetExpansion --> ExpandByCPF
     GetExpansion --> ExpandByPortal
     PostCredential --> CredentialUseCases
     GetCredentials --> CredentialUseCases
@@ -110,9 +113,12 @@ flowchart LR
 
     ExpandByCNPJ --> UoWFactory
     ExpandByCNPJ --> CNPJFetcher
+    ExpandByCPF --> UoWFactory
+    ExpandByCPF --> KipFlowFetcher
     ExpandByPortal --> UoWFactory
     ExpandByPortal --> PortalFetchers
     CNPJFetcher --> BrasilAPI("BrasilAPI")
+    KipFlowFetcher --> KipFlowAPI("KipFlow")
     PortalFetchers --> PortalAPI("Portal da Transparência")
     CNPJFetcher --> Mapper("cnpj_v1_mapper")
     Mapper --> EntityRevision("EntityRevision")
@@ -197,6 +203,17 @@ Returns a `GraphSchema` containing the root company, all connected entities, and
 both `ADMIN` and `VIEWER` tokens. The current provider is [BrasilAPI](https://brasilapi.com.br) (see
 `docs/architecture/infrastructure.md`).
 
+```http
+GET /cpf/{cpf}?force=false
+Authorization: Bearer <token>
+```
+
+Returns a `GraphSchema` rooted at the `Person` the CPF resolves to, including `registration_status`/`registration_date`
+when the provider has them. The current provider is [KipFlow](https://kipflow.io), a paid API — a repeated expansion of
+the same CPF returns `409` instead of calling the provider again, unless `force=true` is passed. Returns `204` (empty
+body) when the provider has no record for the CPF. Requires the caller's own saved `KIPFLOW` credential, via
+`POST /credentials`.
+
 ### Text ingestion
 
 ```http
@@ -280,6 +297,7 @@ own IP/token. The health endpoints are unthrottled.
 Every response includes an `X-Correlation-ID` header for end-to-end request tracing. Error responses carry the same
 correlation ID in the body alongside a machine-readable `type` field derived from the domain error hierarchy. A `401`
 response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `403` means a valid token lacks the required role; a
+`409` means the request conflicts with something already done (e.g. `GET /cpf/{cpf}` repeated without `force=true`); a
 `429` means a rate limit was exceeded.
 
 ## Stack

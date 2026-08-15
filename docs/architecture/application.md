@@ -74,6 +74,18 @@ fields than an earlier one now makes the "current" view look less complete than 
 even though the more complete, older data is still stored underneath; closing that gap is the frontend's own
 history-navigation work, not this layer's.
 
+A workflow that reaches a paid provider guards against paying twice for the same identifier by checking, before it ever
+calls out, whether any revision already stored for that identifier came from that same provider — a caller who repeats
+the same expansion without asking to pays nothing extra, and only an explicit `force` bypasses the check. This reused
+the revision history a `merge()` already keeps rather than introducing a separate record of what's been paid for: the
+provider name already travels with every revision, so the check is a lookup, not new state to keep consistent. The lock
+is scoped per provider, not per identifier, because a revision that arrived from ingestion or a different provider
+carries no information about whether the paid one has ever run. Merging the fetched result into the graph alone isn't
+enough to arm the lock: a graph merge only cascades a node revision when the node's content is actually new, so a paid
+result that happens to carry the exact content something else already recorded would leave no trace of which provider
+paid for it. The workflow records that node's revision a second time, directly and unconditionally, purely so the
+provider name is never lost to that optimization.
+
 Ingestion's recognition criteria were split from one fixed combination into individually addressable pieces once a
 concrete gap showed up: a document appearing as bare digits with no punctuation and no textual label next to it —
 exactly what a spreadsheet cell looks like — matched none of the fixed combination's pieces, and the fix couldn't be to

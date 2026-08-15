@@ -20,15 +20,6 @@
   fetcher's actual consumer is still undecided: a manual "enrich this Address stub" endpoint is the likely shape, not
   automatic chaining from `cnpj_v1` (whose `_map_address` already returns a complete `Address`)
 
-## feat(cpf)
-
-- `GET /cpf/{cpf}` is fully implemented, tested, and wired (mirrors CNPJ's architecture exactly), but the Portal da
-  Transparência `/pf` endpoint currently rejects our API key with a bare `403` at the CloudFront edge (confirmed via
-  direct `curl` against `api.portaldatransparencia.gov.br`, bypassing osint-engine entirely — same key works fine for
-  `/cnep`/`/ceis`). Not a code defect: `ExternalCredentialRejectedError` classifies it correctly. Account already holds
-  gov.br selo Ouro, so it isn't a trust-seal gap; root cause is still unconfirmed (undocumented restricted-API tier?
-  per-endpoint scope grant?). Next step is external, via Fala.BR — revisit once the Portal da Transparência responds
-
 ## feat(graph-history)
 
 - No server endpoint lists the historical revisions stored for a node/edge/graph id — every revision a `merge()` ever
@@ -48,13 +39,29 @@
   Excel) degrades cell-level granularity to line-level, though CPF/CNPJ extraction is unaffected since neither pattern
   depends on cell boundaries — revisit only if a real file makes this an actual problem
 
+## fix(cpf-reuse-lock)
+
+- `ExpandByCPF`'s reuse lock (see `docs/architecture/application.md`) records a `provider="kipflow"` node revision
+  explicitly, but that record still passes through `NodeRepository.merge()`'s configured merge policy — under the
+  shipped `keep_incoming_policy` this always wins, so the lock is sound in production today.
+  `merge_by_filled_fields_policy` (already implemented, already injectable via `Policies`, just never wired in
+  `croot.py`) can discard the explicit "kipflow" tag back to an older provider's tag when the KipFlow response happens
+  to add no new field beyond what an existing revision from a different provider already had (e.g. a CPF also known as a
+  company's sócio via BrasilAPI, paired with KipFlow's documented bare response shape carrying no field beyond `cpf`
+  itself) — in that specific combination the lock silently never arms, allowing unlimited repeat KipFlow billing for
+  that CPF. Not exploitable while `croot.py` only wires `keep_incoming_policy`; revisit before ever wiring
+  `merge_by_filled_fields_policy` into a deployment that also uses KipFlow
+
 ## fix(rate-limit)
 
 - expansion buckets are a flat 100/min per route, but Portal da Transparência's token ceiling is 90/min from 06:00–23:59
-  (higher overnight); with three Portal-backed routes (`/cpf`, `/cnep`, `/ceis`) the aggregate can exceed that ceiling,
-  so the per-route limiter protects this server but not the shared upstream token — Portal may `429` the token first
-  under load. Deliberate for the visitor-only demo; tighten to a combined cross-route Portal bucket under 90/min if real
-  traffic trips it
+  (higher overnight); with two Portal-backed routes (`/cnep`, `/ceis`) the aggregate can still exceed that ceiling, so
+  the per-route limiter protects this server but not the shared upstream token — Portal may `429` the token first under
+  load. Deliberate for the visitor-only demo; tighten to a combined cross-route Portal bucket under 90/min if real
+  traffic trips it. `/cpf` moved off Portal entirely (KipFlow) and carries its own upstream ceiling instead (5/s ·
+  100/min · 1000/hour) — our existing 100/min per-route limiter already sits at KipFlow's own per-minute ceiling, but
+  nothing stops a burst past KipFlow's 5/s window within that minute; revisit if a real burst ever trips KipFlow's `429`
+  before ours does
 
 ## fix(text-ingestion)
 

@@ -70,8 +70,8 @@ nothing to inject, and lives in `domain/`, never `application/contracts/`. *Avoi
 `CNEPFetcher`, `CEPFetcher`). The concrete client lives in infrastructure and this layer never names it. *Avoid*:
 gateway, api wrapper
 
-**Provider**: The external organization an identifier is fetched from — BrasilAPI, Portal da Transparência. *Avoid*:
-data source, vendor
+**Provider**: The external organization an identifier is fetched from — BrasilAPI, Portal da Transparência, KipFlow.
+*Avoid*: data source, vendor
 
 **External credential**: A caller's stored key for reaching a paid provider.
 
