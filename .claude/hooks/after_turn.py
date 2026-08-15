@@ -32,8 +32,9 @@ _DOCS_NUDGE = (
     "Area(s) touched: {areas}. Judge, don't act reflexively: was the change "
     "semantic (business/flow logic) or purely mechanical (rename, typing, "
     "refactor)? If semantic, update the matching docs/architecture/<area>.md in "
-    "natural language — never cite a function, class, or type name. If "
-    "mechanical, skip."
+    "natural language — never cite a function, class, or type name — and check "
+    "whether the Mermaid architecture diagram in README.md still represents the "
+    "truth. If mechanical, skip."
 )
 
 
