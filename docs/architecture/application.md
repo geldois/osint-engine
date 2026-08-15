@@ -57,3 +57,16 @@ possible-match edge, leaving the judgment call to whoever reviews the graph. Aut
 was rejected outright: an overlap can still coincide by chance on the digits either side happened to reveal, and merging
 two nodes that turn out to be different real people is a much more damaging, harder-to-undo mistake than surfacing a
 match a human has to double-check.
+
+The merge policy's default was revisited once the frontend's own design became clear: it now treats every expansion or
+ingestion as a fresh, immutable snapshot stacked on top of what came before, not a single record it keeps refining in
+place, and it intends to let a person navigate back through those snapshots per node or edge. Reconciling a newly
+arrived revision with whatever was already stored — filling its missing fields from an older, more complete one — was
+the right default when the server owned the single "current" view, but it now works against a client that wants the
+revisions exactly as they arrived, distinct and stacked, so it can offer that history navigation honestly. The default
+became simpler: keep the incoming revision exactly as it arrived, no synthesis. The old reconciling behavior was not
+deleted — it remains available to inject for a future workflow that genuinely needs a server-synthesized view — but
+nothing wires it in by default anymore. The one accepted cost: a later revision that happens to carry fewer filled
+fields than an earlier one now makes the "current" view look less complete than it did before that revision arrived,
+even though the more complete, older data is still stored underneath; closing that gap is the frontend's own
+history-navigation work, not this layer's.

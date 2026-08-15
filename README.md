@@ -311,10 +311,13 @@ An entity captures *what* something is; *when* it was observed and how repeated 
 concerns that must never leak into the content-addressable identity. Every fetched entity is wrapped in an immutable
 `EntityRevision` that stamps `fetched_at` at the I/O boundary — the fetcher owns provenance, the mapper stays a pure
 payload-to-graph function, and the `id` never absorbs a timestamp. When a re-fetch arrives for an entity already stored
-under the same `id`, a pluggable `RevisionMergePolicy` reconciles the two by filled fields — the newest observation
-wins, the older one fills nulls — and a `RevisionSelectionPolicy` chooses the current revision by newest `fetched_at`.
-Repositories retain every revision keyed by `content_id`, so a leaner re-fetch can never silently overwrite a richer
-prior observation.
+under the same `id`, a pluggable `RevisionMergePolicy` decides how the two reconcile — by default the incoming revision
+is kept exactly as it arrived, no field synthesis, since the frontend renders every fetch as its own immutable snapshot
+and navigates prior ones itself; a field-filling policy that lets the newest observation fill its nulls from the older
+one remains available to inject where server-side reconciliation is actually wanted. A `RevisionSelectionPolicy` chooses
+the current revision by newest `fetched_at`. Repositories retain every revision keyed by `content_id`, so a leaner
+re-fetch never physically overwrites a richer prior observation, even when the default policy makes the current revision
+look less complete than the one before it.
 
 See `docs/architecture/application.md`.
 
