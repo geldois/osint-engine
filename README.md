@@ -59,6 +59,7 @@ flowchart LR
     TextIngestionRouter --> ExpansionRateLimit
     TextIngestionRouter --> GetPatterns("GET /text-ingestion/patterns")
     TextIngestionRouter --> PostIngestion("POST /text-ingestion")
+    TextIngestionRouter --> PostIngestionFile("POST /text-ingestion/file")
 
     Bootstrap("build_container") --> Container("Container")
     Container --> Fetchers("Fetchers")
@@ -76,6 +77,7 @@ flowchart LR
     UseCases --> IngestText("IngestText")
     UseCases --> ListPatternSets("ListTextPatterns")
     Services --> PyJWTService("PyJWTService")
+    Services --> SpreadsheetReader("read_spreadsheet_text")
     Fetchers --> CNPJFetcher("BrasilAPICNPJv1Fetcher")
     Fetchers --> PortalFetchers("Portal da Transparência Fetchers")
     PatternSets --> MemPatternSets("MemPatternSetRepository")
@@ -89,6 +91,8 @@ flowchart LR
     GetCredentials --> CredentialUseCases
     GetPatterns --> ListPatternSets
     PostIngestion --> IngestText
+    PostIngestionFile --> SpreadsheetReader
+    PostIngestionFile --> IngestText
     Readiness --> ReadinessProbe
     RoleGuard --> PyJWTService
     JwtGuard --> PyJWTService
@@ -219,6 +223,24 @@ is a `GraphSchema` rooted at a `TextSource` node, with a `PersonMentionedInText`
 `AddressMentionedInText` edge per match, each carrying the exact pattern name that produced it. Returns `422` if nothing
 matched or if `patterns` names an unknown pattern set or atomic pattern. See `docs/architecture/application.md`.
 
+```http
+POST /text-ingestion/file
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+file=<a .xlsx or .csv file>
+patterns=brazilian_documents_v1
+patterns=CNPJ_LOOSE
+```
+
+Same matching, stubbing, and response shape as `POST /text-ingestion` above, `patterns` accepting the same mix of
+shortcuts and atomic names — only the input differs: every cell of the uploaded spreadsheet is flattened into text
+verbatim (no trimming, no reformatting, numeric cells converted via plain `str()`) and fed to the same matcher. Every
+sheet of a `.xlsx` workbook is scanned, not only the active one; a formula cell is read by its last computed value,
+never the formula text. Rejects anything above 10 MB or 50,000 rows in a single sheet, any extension other than `.xlsx`
+or `.csv`, and any file whose content isn't a valid spreadsheet, all as `422`. See
+`docs/architecture/infrastructure.md`.
+
 ### Health
 
 ```http
@@ -270,6 +292,7 @@ response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `403` means 
 - **Encryption:** cryptography (Fernet, application-layer encryption of stored API keys)
 - **Rate limiting:** fastapi-throttle (in-memory)
 - **HTTP client:** httpx2 (async)
+- **File reading:** openpyxl (`.xlsx`), stdlib `csv` (`.csv`)
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
 - **Tooling:** uv, Ruff, basedpyright (strict), import-linter, cosmic-ray

@@ -42,6 +42,12 @@
 - make commits atomic across PostgreSQL credentials and the in-memory graph/user snapshot; `HybridUoW` intentionally
   persists credentials during repository `save()` and only coordinates the in-memory snapshot during `commit()`
 
+## feat(spreadsheet-ingestion)
+
+- `_read_csv` splits rows on a fixed `,` delimiter with no `;`-sniffing; a `;`-delimited export (common from PT-BR
+  Excel) degrades cell-level granularity to line-level, though CPF/CNPJ extraction is unaffected since neither pattern
+  depends on cell boundaries — revisit only if a real file makes this an actual problem
+
 ## fix(rate-limit)
 
 - expansion buckets are a flat 100/min per route, but Portal da Transparência's token ceiling is 90/min from 06:00–23:59

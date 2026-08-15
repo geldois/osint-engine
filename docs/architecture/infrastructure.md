@@ -29,6 +29,14 @@ candidate passwords stays expensive for an attacker; verification always runs th
 being checked actually exists, so an attempt against a username that isn't there takes the same time as one against a
 real account, closing a timing side-channel that would otherwise let an attacker enumerate valid usernames.
 
+Turning an uploaded spreadsheet into plain text is a single, stateless step with no state of its own: it flattens
+whatever the file actually contained, cell by cell, into text without inserting or reformatting anything the source
+didn't have, so ingestion downstream sees exactly what a caller uploaded. Every failure a corrupted or oversized file
+can produce — a size limit crossed before any of the file's content is read, a row count crossed mid-file, or the
+underlying file-reading library itself failing on content that only looks like a valid spreadsheet — is converted into
+one of a small, closed set of errors at this boundary, so nothing about a third-party library's own exception surface
+ever reaches the layers above.
+
 ## Decisions
 
 The production persistence target is a proper graph database; the in-memory snapshot is a deliberate, explicit MVP
@@ -40,3 +48,12 @@ The durable, database-backed storage stays close to raw hand-written queries by 
 and a learning goal over the convenience of an abstraction that writes the queries automatically; schema changes are
 plain, ordered, reversible migration files rather than a framework-specific migration language, so they carry no
 dependency on any particular ORM or Python tooling.
+
+Converting a corrupted spreadsheet into a clear error rather than letting an underlying library's own exception escape
+started with the small number of failure types documented for that library, then grew once actually reproducing a
+handful of different corruption shapes — an archive missing an internal part, a truncated internal document — surfaced
+distinct exception types the library raises for the same broad situation, confirming that no closed list can be trusted
+as exhaustive for a file format understood by a third-party library, not authored by this project. The chosen shape
+keeps both properties at once: every failure mode already reproduced and confirmed stays named explicitly, so the code
+documents exactly what's actually been seen and tested, while one final, deliberately broad catch underneath guarantees
+nothing from that same boundary can still escape unclassified.

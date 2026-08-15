@@ -15,3 +15,11 @@ wiring the whole application, and deliberately scoped down instead to only the n
 the interface layer (reading form data, applying an authentication check to a route) — assembling everything else by
 hand keeps every layer below the interface completely framework-free and keeps the wiring graph traceable in a single
 place instead of resolved implicitly at request time.
+
+Whether a pure, stateless capability ever justifies bypassing this wiring was tested once: reading an uploaded file's
+raw bytes into text has exactly one implementation and no state to inject, so letting the interface-layer handler that
+needs it import it directly looked harmless. It was routed through here instead, exposed the same way a real technical
+capability is, because the value of assembling every dependency in one traceable place holds regardless of whether a
+given dependency happens to have alternatives today — the moment one caller is allowed to reach past this layer because
+"there's nothing to inject," every future caller with the same argument has precedent to do the same, and the one wiring
+graph stops being complete.
