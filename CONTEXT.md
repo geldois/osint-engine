@@ -24,7 +24,7 @@ TextSource. *Avoid*: vertex
 `CompanyLocatedAt`). Which node kind may sit on each end is fixed at the type level. *Avoid*: relation, association
 
 **Graph**: A root node with the nodes and edges reachable from it, validated whole at construction — a self-loop or an
-edge pointing outside the node set is rejected there, never later. *Avoid*: result set, bundle
+edge pointing outside the node set is rejected there, never later. *Avoid*: result set
 
 **Expansion**: The workflow that takes one official identifier (CPF, CNPJ, CEIS, CNEP) and returns a graph of everything
 connected to it. *Avoid*: enrichment, crawl, search
@@ -33,8 +33,12 @@ connected to it. *Avoid*: enrichment, crawl, search
 candidate by that format's own checksum rule, and links only exact resolutions. Never fuzzy. *Avoid*: parsing, scraping,
 NER
 
-**Pattern set**: The set of recognition patterns ingestion runs against the text, chosen per request rather than fixed
-at startup, because providers format the same identifier differently. *Avoid*: ruleset, regex config, profile
+**Pattern name**: One atomic, individually addressable recognition rule — a regex plus optional checksum validators for
+one node type (`TextPatternName`, e.g. `CPF_LOOSE`). Chosen directly in a request or grouped into a pattern set.
+
+**Pattern set**: A named shortcut bundling one or more pattern names under a single reusable id (`TextPatternSet`, e.g.
+`brazilian_documents_v1`), resolved alongside any directly-named pattern in the same request rather than fixed at
+startup, because providers format the same identifier differently. *Avoid*: ruleset, regex config, profile
 
 **Stub**: A node carrying nothing but the identifier ingestion just recognized, created when that identifier is not yet
 known. Expansion enriches it later; ingestion never touches a node that already exists. *Avoid*: placeholder, skeleton,
@@ -79,6 +83,7 @@ data source, vendor
 - **Expansion** and **Ingestion** both produce a **Graph**
 - **Possible match** is an **Edge**, produced after **Expansion** or **Ingestion**, never during
 - **Ingestion** creates a **Stub** only for an identifier no **Node** already carries
+- A **Pattern set** groups one or more **Pattern name**s under one shortcut id
 
 ## Flagged ambiguities
 
@@ -87,3 +92,7 @@ data source, vendor
   `ProviderError` and `infrastructure/providers/`; the wire codes moved from `DATA_SOURCE_*` to `PROVIDER_*`. The three
   that stay are distinct concepts, not drift: `TextSource` (a node holding ingested text), `Edge.source_id` (an edge's
   origin node), and `source` meaning source code in the `scripts/` tests.
+
+- **"bundle" carried two senses.** Early glossary work discarded it as a synonym for **Graph** (`result set`, `bundle`).
+  The pattern-set repository (`list_bundles`, the `bundles` field) later claimed it for real, naming the same concept as
+  **Pattern set** — a named shortcut grouping pattern names. That sense won; **Graph**'s `*Avoid*` list drops `bundle`.

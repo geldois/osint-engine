@@ -19,9 +19,12 @@ newest fetch), and the **merge policy** decides how two revisions reconcile into
 Ingestion is a hard boundary by design: only a match the system can deterministically resolve — never a fuzzy or
 probabilistic guess — is allowed to link into existing data. A recognized identifier that isn't already known creates a
 **stub**, enriched later through expansion; a match against a node that already exists only ever adds a "mentioned in"
-edge, and the existing node is never touched. Which **pattern set** applies isn't fixed at startup — a caller picks one
-per request, because providers format the same identifier differently in free text, and locking one set in globally
-would mean a redeploy every time a new provider needs recognizing.
+edge, and the existing node is never touched. Which criteria apply isn't fixed at startup — a caller composes the exact
+list per request, naming individual **pattern names** and reusable **pattern sets** together, because providers format
+the same identifier differently in free text and locking one fixed combination in globally would mean a redeploy every
+time a new provider needs recognizing. Each mention edge records the one specific pattern name that actually produced
+it, not just which combination was requested, so provenance stays precise even when two different criteria both match
+the same text.
 
 A separate, best-effort workflow runs after any expansion or ingestion produces a fresh batch of people: it compares
 each newly seen `Person`'s CPF against every `Person` already known, overlapping the visible digits of a masked value
@@ -70,3 +73,13 @@ nothing wires it in by default anymore. The one accepted cost: a later revision 
 fields than an earlier one now makes the "current" view look less complete than it did before that revision arrived,
 even though the more complete, older data is still stored underneath; closing that gap is the frontend's own
 history-navigation work, not this layer's.
+
+Ingestion's recognition criteria were split from one fixed combination into individually addressable pieces once a
+concrete gap showed up: a document appearing as bare digits with no punctuation and no textual label next to it —
+exactly what a spreadsheet cell looks like — matched none of the fixed combination's pieces, and the fix couldn't be to
+reformat the text before recognizing it, since ingested text feeds an immutable snapshot that must honestly reflect what
+the source actually contained. Splitting recognition into individually addressable pieces, composable per request, let a
+new loose-matching piece cover that gap without touching or redefining what any existing named combination means to
+whoever already depends on it. The one accepted cost is the same one a loose, label-free match always carries: it will
+occasionally match something that merely happens to satisfy the checksum by chance, so it stays opt-in per request
+rather than folded into any existing default combination.

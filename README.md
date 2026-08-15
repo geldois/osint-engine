@@ -74,12 +74,12 @@ flowchart LR
     UseCases --> ExpandByPortal("ExpandBy CPF / CNEP / CEIS")
     UseCases --> CredentialUseCases("List / Save ExternalCredential")
     UseCases --> IngestText("IngestText")
-    UseCases --> ListPatternSets("ListTextPatternSets")
+    UseCases --> ListPatternSets("ListTextPatterns")
     Services --> PyJWTService("PyJWTService")
     Fetchers --> CNPJFetcher("BrasilAPICNPJv1Fetcher")
     Fetchers --> PortalFetchers("Portal da Transparência Fetchers")
     PatternSets --> MemPatternSets("MemPatternSetRepository")
-    MemPatternSets --> DefaultPatterns("BRAZILIAN_DOCUMENT_PATTERNS")
+    MemPatternSets --> DefaultPatterns("BRAZILIAN_DOCUMENTS_V1")
 
     PostToken --> AuthenticateUser
     PostViewerToken --> PyJWTService
@@ -96,7 +96,6 @@ flowchart LR
     IngestText --> UoWFactory
     IngestText --> PatternSets
     IngestText --> ExtractMatches("extract_matches · regex + mod-11 checksum")
-    ExtractMatches --> DefaultPatterns
     IngestText --> TextSourceNode("TextSource")
     IngestText --> MentionEdges("Person/Company/AddressMentionedInText")
     ListPatternSets --> PatternSets
@@ -201,21 +200,24 @@ GET /text-ingestion/patterns
 Authorization: Bearer <token>
 ```
 
-Lists the available pattern sets and which fields each one covers, without exposing the underlying compiled regex.
+Lists every atomic pattern name (with the node type and fields it covers) plus every registered pattern set shortcut,
+without exposing the underlying compiled regex.
 
 ```http
 POST /text-ingestion
 Authorization: Bearer <token>
 Content-Type: application/json
 
-{ "text": "...", "pattern_set_id": "brazilian_documents_v1" }
+{ "text": "...", "patterns": ["brazilian_documents_v1", "CNPJ_LOOSE"] }
 ```
 
-Extracts CPF/CNPJ/CEP-and-number from free text via regex plus a mod-11 checksum, never calling any external API. Every
-match is checked against what the graph already knows by deterministic id: an existing entity is only linked, a new one
-becomes a minimal stub (identity field only, nothing invented). The response is a `GraphSchema` rooted at a `TextSource`
-node, with a `PersonMentionedInText`/`CompanyMentionedInText`/`AddressMentionedInText` edge per match. Returns `422` if
-no pattern in the set matched anything, `404` for an unknown `pattern_set_id`. See `docs/architecture/application.md`.
+`patterns` accepts any mix of pattern set shortcuts and individually-named atomic patterns in the same call; they
+resolve to a union before matching. Extracts CPF/CNPJ/CEP-and-number from free text via regex plus a mod-11 checksum,
+never calling any external API. Every match is checked against what the graph already knows by deterministic id: an
+existing entity is only linked, a new one becomes a minimal stub (identity field only, nothing invented). The response
+is a `GraphSchema` rooted at a `TextSource` node, with a `PersonMentionedInText`/`CompanyMentionedInText`/
+`AddressMentionedInText` edge per match, each carrying the exact pattern name that produced it. Returns `422` if nothing
+matched or if `patterns` names an unknown pattern set or atomic pattern. See `docs/architecture/application.md`.
 
 ### Health
 
