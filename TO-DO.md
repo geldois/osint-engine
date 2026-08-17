@@ -20,14 +20,6 @@
   fetcher's actual consumer is still undecided: a manual "enrich this Address stub" endpoint is the likely shape, not
   automatic chaining from `cnpj_v1` (whose `_map_address` already returns a complete `Address`)
 
-## feat(graph-history)
-
-- No server endpoint lists the historical revisions stored for a node/edge/graph id — every revision a `merge()` ever
-  received is still kept (`{entity.id: {content_id: revision}}`, nothing is ever overwritten), but nothing exposes that
-  map over HTTP. The frontend accumulates and renders history itself from the `Graph` snapshot it already receives on
-  every expansion/ingestion response; a `GET` for the full revision history of one entity is deferred until a real
-  client need shows up
-
 ## feat(persistence)
 
 - make commits atomic across PostgreSQL credentials and the in-memory graph/user snapshot; `HybridUoW` intentionally

@@ -51,3 +51,14 @@ considered and rejected: two different real-world subjects can reveal the same d
 positions, and merging their identities on that basis has no real grounding. The accepted cost is that two genuinely
 identical subjects, hidden differently by different sources, are no longer recognized as the same one automatically —
 relinking them is a deliberate, separate concern, not folded into identity.
+
+A composite entity — one built from other entities — was found to have silently collapsed its own stable identity and
+its content-derived id into the same value: every one of its own fields is also part of what makes it the composite it
+is, leaving no attribute of its own to carry an "exact content" signal, and its calculation only ever consulted each
+constituent's stable identity, never that constituent's own content. Two revisions built from the same constituents but
+differing only in one constituent's non-identifying content — the common case being the same person re-fetched with a
+different observed name — computed to the identical id, so a store keeping revisions by content id silently discarded
+the older one instead of stacking both, undermining the very "distinct, stacked revisions" guarantee Application's
+history relies on. The fix makes the composite's content-id derive from its constituents' own content-ids while its
+stable identity keeps deriving from their identities alone, restoring the same separation every other entity already
+has, one level removed.

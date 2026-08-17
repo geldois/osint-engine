@@ -38,6 +38,7 @@ flowchart LR
     FastAPI --> AuthRouter("Auth Router")
     FastAPI --> CNPJRouter("CNPJ Router")
     FastAPI --> ExpansionRouters("CPF / CNEP / CEIS Routers")
+    FastAPI --> GraphHistoryRouter("Graph History Router")
     FastAPI --> CredentialsRouter("Credentials Router")
     FastAPI --> HealthRouter("Health Router")
     FastAPI --> TextIngestionRouter("Text Ingestion Router")
@@ -50,6 +51,9 @@ flowchart LR
     ExpansionRouters --> JwtGuard("JWT Guard")
     ExpansionRouters --> ExpansionRateLimit
     ExpansionRouters --> GetExpansion("GET /cpf · /cnep · /ceis")
+    GraphHistoryRouter --> JwtGuard
+    GraphHistoryRouter --> ExpansionRateLimit
+    GraphHistoryRouter --> GetGraphHistory("GET /graphs/{root_id}/history")
     CredentialsRouter --> RoleGuard
     CredentialsRouter --> PostCredential("POST /credentials")
     CredentialsRouter --> GetCredentials("GET /credentials")
@@ -74,6 +78,7 @@ flowchart LR
     UseCases --> ExpandByCNPJ("ExpandByCNPJ")
     UseCases --> ExpandByCPF("ExpandByCPF")
     UseCases --> ExpandByPortal("ExpandBy CNEP / CEIS")
+    UseCases --> ListGraphHistory("ListGraphHistory")
     UseCases --> CredentialUseCases("List / Save ExternalCredential")
     UseCases --> IngestText("IngestText")
     UseCases --> ListPatternSets("ListTextPatterns")
@@ -90,6 +95,7 @@ flowchart LR
     GetCNPJ --> ExpandByCNPJ
     GetExpansion --> ExpandByCPF
     GetExpansion --> ExpandByPortal
+    GetGraphHistory --> ListGraphHistory
     PostCredential --> CredentialUseCases
     GetCredentials --> CredentialUseCases
     GetPatterns --> ListPatternSets
@@ -117,6 +123,7 @@ flowchart LR
     ExpandByCPF --> KipFlowFetcher
     ExpandByPortal --> UoWFactory
     ExpandByPortal --> PortalFetchers
+    ListGraphHistory --> UoWFactory
     CNPJFetcher --> BrasilAPI("BrasilAPI")
     KipFlowFetcher --> KipFlowAPI("KipFlow")
     PortalFetchers --> PortalAPI("Portal da Transparência")
@@ -160,6 +167,7 @@ flowchart LR
     GraphRepo -.cascades new content only.-> EdgeRepo
 
     GetCNPJ --> GraphPresenter("Graph Presenter")
+    GetGraphHistory --> GraphPresenter
     GraphPresenter --> GraphSchema("GraphSchema")
     PostToken --> TokenSchema("TokenSchema")
 ```
@@ -213,6 +221,15 @@ when the provider has them. The current provider is [KipFlow](https://kipflow.io
 the same CPF returns `409` instead of calling the provider again, unless `force=true` is passed. Returns `204` (empty
 body) when the provider has no record for the CPF. Requires the caller's own saved `KIPFLOW` credential, via
 `POST /credentials`.
+
+```http
+GET /graphs/{root_id}/history
+Authorization: Bearer <token>
+```
+
+Returns every `Graph` revision ever stored for that `root_id`, as a `GraphSchema` array ordered by `fetched_at`
+ascending (oldest first). Available to both `ADMIN` and `VIEWER` tokens. `200 []` for a `root_id` never seen — an empty
+history is a valid state, not an error.
 
 ### Text ingestion
 
@@ -275,16 +292,17 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 
 ### Rate limiting
 
-| Endpoint                       | Limit      | Keyed by                |
-| ------------------------------ | ---------- | ----------------------- |
-| `POST /auth/token`             | 5 / 15 min | Client IP               |
-| `POST /auth/viewer-token`      | 20 / min   | Client IP               |
-| `GET /cnpj/{cnpj}`             | 100 / min  | Shared per-route bucket |
-| `GET /cpf/{cpf}`               | 100 / min  | Shared per-route bucket |
-| `GET /cnep/{cpf_or_cnpj}`      | 100 / min  | Shared per-route bucket |
-| `GET /ceis/{cpf_or_cnpj}`      | 100 / min  | Shared per-route bucket |
-| `GET /text-ingestion/patterns` | 100 / min  | Shared per-route bucket |
-| `POST /text-ingestion`         | 100 / min  | Shared per-route bucket |
+| Endpoint                        | Limit      | Keyed by                |
+| ------------------------------- | ---------- | ----------------------- |
+| `POST /auth/token`              | 5 / 15 min | Client IP               |
+| `POST /auth/viewer-token`       | 20 / min   | Client IP               |
+| `GET /cnpj/{cnpj}`              | 100 / min  | Shared per-route bucket |
+| `GET /cpf/{cpf}`                | 100 / min  | Shared per-route bucket |
+| `GET /graphs/{root_id}/history` | 100 / min  | Shared per-route bucket |
+| `GET /cnep/{cpf_or_cnpj}`       | 100 / min  | Shared per-route bucket |
+| `GET /ceis/{cpf_or_cnpj}`       | 100 / min  | Shared per-route bucket |
+| `GET /text-ingestion/patterns`  | 100 / min  | Shared per-route bucket |
+| `POST /text-ingestion`          | 100 / min  | Shared per-route bucket |
 
 A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
 `Access-Control-Expose-Headers`. See `docs/architecture/interface.md`. Each expansion route has one global bucket shared

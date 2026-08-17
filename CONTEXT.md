@@ -52,9 +52,10 @@ orchestrating workflow. *Avoid*: envelope
 *Avoid*: conflict resolution, dedup rule
 
 **Merge policy**: Decides how two revisions of the same entity reconcile into one when both carry data worth keeping.
-Default: keeps the incoming revision as-is, no field synthesis — full history now lives client-side, one immutable
-`Graph` snapshot per expansion/ingestion. The previous field-filling default remains available for injection when a use
-case actually needs server-side reconciliation. *Avoid*: combine, upsert rule
+Default: keeps the incoming revision as-is, no field synthesis — every revision stays distinct and stacked, one
+immutable `Graph` snapshot per expansion/ingestion, readable back through its own history endpoint. The previous
+field-filling default remains available for injection when a use case actually needs server-side reconciliation.
+*Avoid*: combine, upsert rule
 
 **Possible match**: An advisory edge (`PossiblyMatches`) between two `Person` nodes with distinct identities whose CPF
 overlaps — every visible digit of a masked value agrees with the corresponding digit of another, complete or differently
