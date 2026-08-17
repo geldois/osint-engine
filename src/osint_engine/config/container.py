@@ -11,9 +11,6 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.fetchers.cnep_fetcher import CNEPFetcher
     from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
     from osint_engine.application.contracts.fetchers.cpf_fetcher import CPFFetcher
-    from osint_engine.application.contracts.repositories.pattern_set_repository import (
-        PatternSetRepository,
-    )
     from osint_engine.application.contracts.services.jwt_service import JWTService
     from osint_engine.application.contracts.services.spreadsheet_reader import (
         ReadSpreadsheetText,
@@ -55,7 +52,6 @@ if TYPE_CHECKING:
 class Container:
     settings: Settings
     fetchers: Fetchers
-    pattern_sets: PatternSetRepository
     policies: Policies
     readiness_probe: Callable[[], Awaitable[None]]
     services: Services

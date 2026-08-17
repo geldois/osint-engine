@@ -19,6 +19,9 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.repositories.node_repository import (
         NodeRepository,
     )
+    from osint_engine.application.contracts.repositories.pattern_set_repository import (
+        PatternSetRepository,
+    )
     from osint_engine.application.contracts.repositories.user_repository import (
         UserRepository,
     )
@@ -29,6 +32,7 @@ class UoW(AbstractAsyncContextManager["UoW"]):
     external_credentials: ExternalCredentialRepository
     graphs: GraphRepository
     nodes: NodeRepository
+    pattern_sets: PatternSetRepository
     users: UserRepository
 
     @abstractmethod

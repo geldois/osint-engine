@@ -16,17 +16,23 @@ if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.graph import Graph
     from osint_engine.domain.entities.bases.node import Node
+    from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
+    from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
 
 class TestMemStorageInitialization:
     def test_creates_empty_dicts_when_no_storages_are_injected(self) -> None:
-        mem_storage = MemStorage(edges=None, graphs=None, nodes=None, users=None)
+        mem_storage = MemStorage(
+            edges=None, graphs=None, nodes=None, pattern_sets=None, users=None
+        )
 
         assert not (mem_storage.edges and mem_storage.edges is None)
 
         assert not (mem_storage.graphs and mem_storage.graphs is None)
 
         assert not (mem_storage.nodes and mem_storage.nodes is None)
+
+        assert not (mem_storage.pattern_sets and mem_storage.pattern_sets is None)
 
         assert not (mem_storage.users and mem_storage.users is None)
 
@@ -38,15 +44,24 @@ class TestMemStorageInitialization:
         nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]] = defaultdict(
             dict
         )
+        pattern_sets: dict[PatternSetID, TextPatternSet] = {}
         users: dict[str, User] = {}
 
-        mem_storage = MemStorage(edges=edges, graphs=graphs, nodes=nodes, users=users)
+        mem_storage = MemStorage(
+            edges=edges,
+            graphs=graphs,
+            nodes=nodes,
+            pattern_sets=pattern_sets,
+            users=users,
+        )
 
         assert mem_storage.edges is edges
 
         assert mem_storage.graphs is graphs
 
         assert mem_storage.nodes is nodes
+
+        assert mem_storage.pattern_sets is pattern_sets
 
         assert mem_storage.users is users
 
@@ -69,6 +84,9 @@ class TestMemStorageProperties:
 
         with pytest.raises(FrozenInstanceError):
             del mem_storage.nodes
+
+        with pytest.raises(FrozenInstanceError):
+            del mem_storage.pattern_sets
 
         with pytest.raises(FrozenInstanceError):
             del mem_storage.users

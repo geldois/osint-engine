@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     )
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.node import Node
+    from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
 
 class MakeEntityRevision(Protocol):
@@ -225,6 +226,7 @@ def make_mem_storage() -> MakeMemStorage:
         external_credentials: Iterable[ExternalCredential] | None = None,
         graphs: Iterable[EntityRevision[Graph]] | None = None,
         nodes: Iterable[EntityRevision[Node[UUID]]] | None = None,
+        pattern_sets: Iterable[TextPatternSet] | None = None,
         users: Iterable[User] | None = None,
     ) -> MemStorage:
         return MemStorage(
@@ -237,6 +239,9 @@ def make_mem_storage() -> MakeMemStorage:
             else None,
             graphs=_entity_store(graphs),
             nodes=_entity_store(nodes),
+            pattern_sets={pattern_set.id: pattern_set for pattern_set in pattern_sets}
+            if pattern_sets is not None
+            else None,
             users={user.username: user for user in users}
             if users is not None
             else None,

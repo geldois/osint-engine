@@ -13,18 +13,17 @@ from osint_engine.domain.value_objects.text_pattern import TextPatternName
 
 if TYPE_CHECKING:
     from osint_engine.domain.value_objects.text_pattern import TextPatternSet
+    from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 
 
 class MemPatternSetRepository(PatternSetRepository):
     @override
-    def __init__(self, *, pattern_sets: tuple[TextPatternSet, ...]) -> None:
-        self._by_id: dict[PatternSetID, TextPatternSet] = {
-            pattern_set.id: pattern_set for pattern_set in pattern_sets
-        }
+    def __init__(self, *, mem_storage: MemStorage) -> None:
+        self.pattern_sets = mem_storage.pattern_sets
 
     @override
     async def list_bundles(self) -> tuple[TextPatternSet, ...]:
-        return tuple(self._by_id.values())
+        return tuple(self.pattern_sets.values())
 
     @override
     async def resolve(self, *, names: frozenset[str]) -> frozenset[TextPatternName]:
@@ -32,7 +31,7 @@ class MemPatternSetRepository(PatternSetRepository):
         unknown: list[str] = []
 
         for name in names:
-            bundle = self._by_id.get(PatternSetID(name))
+            bundle = self.pattern_sets.get(PatternSetID(name))
 
             if bundle is not None:
                 resolved.update(bundle.patterns)

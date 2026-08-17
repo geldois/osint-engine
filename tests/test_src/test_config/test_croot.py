@@ -112,6 +112,37 @@ class TestBuildContainerMemStorage:
         )
 
 
+class TestBuildContainerPatternSets:
+    @pytest.mark.asyncio
+    async def test_two_transactions_see_the_same_seeded_pattern_set(
+        self,
+        settings: Settings,
+        http_client: AsyncClient,
+        pg_pool: Pool,
+        policies: Policies,
+    ) -> None:
+        container = build_container(
+            settings=settings,
+            http_client=http_client,
+            pg_pool=pg_pool,
+            external_credential_encryption_key=(
+                settings.external_credential_encryption_key
+            ),
+            mem_storage=None,
+            policies=policies,
+        )
+
+        async with container.uow_factory() as first_uow:
+            first_bundles = await first_uow.pattern_sets.list_bundles()
+
+        async with container.uow_factory() as second_uow:
+            second_bundles = await second_uow.pattern_sets.list_bundles()
+
+        assert first_bundles == second_bundles
+        assert len(first_bundles) == 1
+        assert first_bundles[0].id == "brazilian_documents_v1"
+
+
 class TestBuildContainerPolicies:
     @pytest.mark.asyncio
     async def test_defaults_to_the_canonical_revision_policies_when_none_given(

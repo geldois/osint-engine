@@ -26,9 +26,6 @@ from osint_engine.domain.value_objects.text_pattern import TextPatternName
 from osint_engine.infrastructure.persistence.mem.default_pattern_sets import (
     BRAZILIAN_DOCUMENTS_V1,
 )
-from osint_engine.infrastructure.persistence.mem.repositories.mem_pattern_set_repository import (  # noqa: E501
-    MemPatternSetRepository,
-)
 
 if TYPE_CHECKING:
     from tests.conftest import MakeEntityRevision, MakeMemStorage, MakeMemUoW
@@ -40,10 +37,6 @@ _VALID_CNPJ_TEXT = "Empresa CNPJ 11.222.333/0001-81 registrada"
 _VALID_CEP_AND_NUMBER_TEXT = "Endereco: CEP 01310-100, numero 500"
 
 
-def _pattern_set_repository() -> MemPatternSetRepository:
-    return MemPatternSetRepository(pattern_sets=(BRAZILIAN_DOCUMENTS_V1,))
-
-
 class TestIngestTextCompanyAndAddressStubs:
     @pytest.mark.asyncio
     async def test_creates_a_stub_company_and_links_it_to_the_text_provider(
@@ -51,7 +44,6 @@ class TestIngestTextCompanyAndAddressStubs:
     ) -> None:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
-            pattern_set_repository=_pattern_set_repository(),
             patterns=frozenset({"CNPJ_LOOSE"}),
             text=_VALID_CNPJ_TEXT,
         )
@@ -76,7 +68,6 @@ class TestIngestTextCompanyAndAddressStubs:
     ) -> None:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
-            pattern_set_repository=_pattern_set_repository(),
             patterns=frozenset({"CEP_AND_NUMBER"}),
             text=_VALID_CEP_AND_NUMBER_TEXT,
         )
@@ -104,7 +95,6 @@ class TestIngestTextNewStub:
     ) -> None:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
-            pattern_set_repository=_pattern_set_repository(),
             patterns=frozenset({"CPF_LABELED"}),
             text=_VALID_CPF_LABELED_TEXT,
         )
@@ -141,7 +131,6 @@ class TestIngestTextNewStub:
 
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
-            pattern_set_repository=_pattern_set_repository(),
             patterns=frozenset({"CPF_LABELED"}),
             text=_VALID_CPF_LABELED_TEXT,
         )
@@ -180,7 +169,6 @@ class TestIngestTextExistingEntity:
 
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
-            pattern_set_repository=_pattern_set_repository(),
             patterns=frozenset({"CPF_LABELED"}),
             text=_VALID_CPF_LABELED_TEXT,
         )
@@ -196,11 +184,16 @@ class TestIngestTextExistingEntity:
 class TestIngestTextNoMatch:
     @pytest.mark.asyncio
     async def test_raises_when_no_pattern_matches_anything(
-        self, make_mem_uow_factory: MakeMemUoWFactory
+        self,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
     ) -> None:
+        mem_storage = make_mem_storage(pattern_sets=[BRAZILIAN_DOCUMENTS_V1])
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+
         use_case = IngestText(
-            uow_factory=make_mem_uow_factory(),
-            pattern_set_repository=_pattern_set_repository(),
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
             patterns=frozenset({"brazilian_documents_v1"}),
             text="nothing relevant in here",
         )
@@ -215,12 +208,11 @@ class TestIngestTextNoMatch:
         make_mem_uow: MakeMemUoW,
         make_mem_uow_factory: MakeMemUoWFactory,
     ) -> None:
-        mem_storage = make_mem_storage()
+        mem_storage = make_mem_storage(pattern_sets=[BRAZILIAN_DOCUMENTS_V1])
         mem_uow = make_mem_uow(mem_storage=mem_storage)
 
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
-            pattern_set_repository=_pattern_set_repository(),
             patterns=frozenset({"brazilian_documents_v1"}),
             text="nothing relevant in here",
         )
@@ -239,7 +231,6 @@ class TestIngestTextUnknownPatternName:
     ) -> None:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
-            pattern_set_repository=_pattern_set_repository(),
             patterns=frozenset({"does_not_exist"}),
             text=_VALID_CPF_LABELED_TEXT,
         )
@@ -255,7 +246,6 @@ class TestIngestTextOverlappingAtomicPatterns:
     ) -> None:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
-            pattern_set_repository=_pattern_set_repository(),
             patterns=frozenset({"CPF_LOOSE", "CPF_LABELED"}),
             text=_VALID_CPF_LABELED_TEXT,
         )
@@ -284,7 +274,6 @@ class TestIngestTextLoosePatternIsOptIn:
     ) -> None:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
-            pattern_set_repository=_pattern_set_repository(),
             patterns=frozenset({"CPF_LOOSE"}),
             text=_VALID_CPF_DIGITS,
         )
@@ -300,7 +289,6 @@ class TestIngestTextLoosePatternIsOptIn:
     ) -> None:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
-            pattern_set_repository=_pattern_set_repository(),
             patterns=frozenset({"CPF_LABELED"}),
             text=_VALID_CPF_DIGITS,
         )

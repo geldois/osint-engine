@@ -23,6 +23,9 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_graph_reposito
 from osint_engine.infrastructure.persistence.mem.repositories.mem_node_repository import (  # noqa: E501
     MemNodeRepository,
 )
+from osint_engine.infrastructure.persistence.mem.repositories.mem_pattern_set_repository import (  # noqa: E501
+    MemPatternSetRepository,
+)
 from osint_engine.infrastructure.persistence.mem.repositories.mem_user_repository import (  # noqa: E501
     MemUserRepository,
 )
@@ -58,6 +61,7 @@ class MemUoW(UoW):
                 "external_credentials",
                 "graphs",
                 "nodes",
+                "pattern_sets",
                 "users",
             )
         )
@@ -89,6 +93,7 @@ class MemUoW(UoW):
             node_repository=self.nodes,
             edge_repository=self.edges,
         )
+        self.pattern_sets = MemPatternSetRepository(mem_storage=self._snapshot)
         self.users = MemUserRepository(mem_storage=self._snapshot)
 
     @override
@@ -107,6 +112,8 @@ class MemUoW(UoW):
         del self.graphs
 
         del self.nodes
+
+        del self.pattern_sets
 
         del self.users
 

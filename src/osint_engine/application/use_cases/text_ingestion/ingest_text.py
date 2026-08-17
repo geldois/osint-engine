@@ -31,9 +31,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from uuid import UUID
 
-    from osint_engine.application.contracts.repositories.pattern_set_repository import (
-        PatternSetRepository,
-    )
     from osint_engine.application.contracts.uow import UoW
     from osint_engine.application.text_ingestion.extraction import ExtractedMatch
     from osint_engine.domain.entities.bases.edge import Edge
@@ -144,7 +141,6 @@ async def _resolve_node(*, uow: UoW, match: ExtractedMatch) -> Node[UUID]:
 
 class IngestText(Query[Graph]):
     uow_factory: Callable[[], UoW]
-    pattern_set_repository: PatternSetRepository
     patterns: frozenset[str]
     text: str
 
@@ -153,26 +149,14 @@ class IngestText(Query[Graph]):
         self,
         *,
         uow_factory: Callable[[], UoW],
-        pattern_set_repository: PatternSetRepository,
         patterns: frozenset[str],
         text: str,
     ) -> None:
-        super().__init__(
-            uow_factory=uow_factory,
-            pattern_set_repository=pattern_set_repository,
-            patterns=patterns,
-            text=text,
-        )
+        super().__init__(uow_factory=uow_factory, patterns=patterns, text=text)
 
     @override
     async def execute(self) -> Graph:
         _logger.info("text_ingestion.start", patterns=self.patterns)
-
-        pattern_names = await self.pattern_set_repository.resolve(names=self.patterns)
-        matches = extract_matches(text=self.text, pattern_names=pattern_names)
-
-        if not matches:
-            raise NoPatternMatchedError(requested_patterns=self.patterns)
 
         fetched_at = datetime.now(tz=UTC)
         text_source = TextSource(text=self.text)
@@ -181,6 +165,12 @@ class IngestText(Query[Graph]):
         edges: set[Edge[UUID, UUID, UUID]] = set()
 
         async with self.uow_factory() as uow:
+            pattern_names = await uow.pattern_sets.resolve(names=self.patterns)
+            matches = extract_matches(text=self.text, pattern_names=pattern_names)
+
+            if not matches:
+                raise NoPatternMatchedError(requested_patterns=self.patterns)
+
             for match in matches:
                 node = await _resolve_node(uow=uow, match=match)
                 edge = _build_mention_edge(

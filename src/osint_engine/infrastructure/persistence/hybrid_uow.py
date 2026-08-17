@@ -53,6 +53,7 @@ class HybridUoW(UoW):
                 "external_credentials",
                 "graphs",
                 "nodes",
+                "pattern_sets",
                 "users",
             )
         )
@@ -71,6 +72,7 @@ class HybridUoW(UoW):
         self.external_credentials = external_credentials
         self.graphs = self._mem_uow.graphs
         self.nodes = self._mem_uow.nodes
+        self.pattern_sets = self._mem_uow.pattern_sets
         self.users = self._mem_uow.users
 
     @override
@@ -84,6 +86,7 @@ class HybridUoW(UoW):
         del self.external_credentials
         del self.graphs
         del self.nodes
+        del self.pattern_sets
         del self.users
 
     @override

@@ -43,14 +43,8 @@ from osint_engine.infrastructure.hashers.argon2_password_hasher import (
     Argon2PasswordHasher,
 )
 from osint_engine.infrastructure.persistence.hybrid_uow import HybridUoW
-from osint_engine.infrastructure.persistence.mem.default_pattern_sets import (
-    BRAZILIAN_DOCUMENTS_V1,
-)
 from osint_engine.infrastructure.persistence.mem.mem_seeder import seed_mem_storage
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
-from osint_engine.infrastructure.persistence.mem.repositories.mem_pattern_set_repository import (  # noqa: E501
-    MemPatternSetRepository,
-)
 from osint_engine.infrastructure.providers.brasilapi.endpoints.cnpj_v1_fetcher import (
     BrasilAPICNPJv1Fetcher,
 )
@@ -106,8 +100,6 @@ def build_container(  # noqa: PLR0913
         settings=settings, mem_storage=mem_storage, password_hasher=password_hasher
     )
 
-    pattern_sets = MemPatternSetRepository(pattern_sets=(BRAZILIAN_DOCUMENTS_V1,))
-
     external_credential_encryption_key = (
         external_credential_encryption_key
         if external_credential_encryption_key is not None
@@ -153,16 +145,12 @@ def build_container(  # noqa: PLR0913
             ExpandByCPF, uow_factory=uow_factory, cpf_fetcher=fetchers.cpf_fetcher
         ),
         find_possibly_matches=partial(FindPossiblyMatches, uow_factory=uow_factory),
-        ingest_text=partial(
-            IngestText, uow_factory=uow_factory, pattern_set_repository=pattern_sets
-        ),
+        ingest_text=partial(IngestText, uow_factory=uow_factory),
         list_external_credentials=partial(
             ListExternalCredentials, uow_factory=uow_factory
         ),
         list_graph_history=partial(ListGraphHistory, uow_factory=uow_factory),
-        list_text_patterns=partial(
-            ListTextPatterns, pattern_set_repository=pattern_sets
-        ),
+        list_text_patterns=partial(ListTextPatterns, uow_factory=uow_factory),
         save_external_credential=partial(
             SaveExternalCredential, uow_factory=uow_factory
         ),
@@ -171,7 +159,6 @@ def build_container(  # noqa: PLR0913
     return Container(
         settings=settings,
         fetchers=fetchers,
-        pattern_sets=pattern_sets,
         policies=policies,
         readiness_probe=readiness_probe,
         services=services,

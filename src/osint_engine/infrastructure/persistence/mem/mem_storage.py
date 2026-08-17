@@ -18,6 +18,8 @@ if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.graph import Graph
     from osint_engine.domain.entities.bases.node import Node
+    from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
+    from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
 
 class MemStorage:
@@ -25,9 +27,10 @@ class MemStorage:
     external_credentials: dict[tuple[str, Provider], ExternalCredential]
     graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]]
     nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]]
+    pattern_sets: dict[PatternSetID, TextPatternSet]
     users: dict[str, User]
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         edges: defaultdict[UUID, dict[UUID, EntityRevision[Edge[UUID, UUID, UUID]]]]
@@ -36,6 +39,7 @@ class MemStorage:
         | None = None,
         graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]] | None = None,
         nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]] | None = None,
+        pattern_sets: dict[PatternSetID, TextPatternSet] | None = None,
         users: dict[str, User] | None = None,
     ) -> None:
         object.__setattr__(
@@ -51,6 +55,9 @@ class MemStorage:
         )
         object.__setattr__(
             self, "nodes", nodes if nodes is not None else defaultdict(dict)
+        )
+        object.__setattr__(
+            self, "pattern_sets", pattern_sets if pattern_sets is not None else {}
         )
         object.__setattr__(self, "users", users if users is not None else {})
 
@@ -75,6 +82,7 @@ class MemStorageSnapshot(MemStorage):
             external_credentials=copy(mem_storage.external_credentials),
             graphs=self.deepcopy_entity_storage(mem_storage.graphs),
             nodes=self.deepcopy_entity_storage(mem_storage.nodes),
+            pattern_sets=copy(mem_storage.pattern_sets),
             users=copy(mem_storage.users),
         )
 
@@ -95,6 +103,7 @@ class MemStorageSnapshot(MemStorage):
         self.external_credentials.clear()
         self.graphs.clear()
         self.nodes.clear()
+        self.pattern_sets.clear()
         self.users.clear()
 
     def commit_to_storage(self) -> None:
@@ -109,6 +118,9 @@ class MemStorageSnapshot(MemStorage):
 
         self._mem_storage.nodes.clear()
         self._mem_storage.nodes.update(self.nodes)
+
+        self._mem_storage.pattern_sets.clear()
+        self._mem_storage.pattern_sets.update(self.pattern_sets)
 
         self._mem_storage.users.clear()
         self._mem_storage.users.update(self.users)

@@ -10,3 +10,5 @@ BRAZILIAN_DOCUMENTS_V1 = TextPatternSet(
     id=PatternSetID("brazilian_documents_v1"),
     patterns=frozenset({TextPatternName.CPF_LOOSE}),
 )
+
+DEFAULT_PATTERN_SETS: tuple[TextPatternSet, ...] = (BRAZILIAN_DOCUMENTS_V1,)

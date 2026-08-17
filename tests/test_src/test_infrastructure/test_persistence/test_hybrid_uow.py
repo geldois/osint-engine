@@ -35,6 +35,7 @@ _LIFECYCLE_ATTRIBUTES = (
     "external_credentials",
     "graphs",
     "nodes",
+    "pattern_sets",
     "users",
 )
 
