@@ -8,6 +8,7 @@ from scripts import fixtures
 from scripts.fix import run_fix, run_precommit
 from scripts.gates import run_check
 from scripts.mutation import run_mutation
+from scripts.sqlc import run_sqlc_generate
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 fixtures_app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -38,6 +39,12 @@ def precommit() -> None:
 def mutation(*, max_survival: float = _DEFAULT_MAX_SURVIVAL) -> None:
     """Run the cosmic-ray mutation gate (periodic; never a hook)."""
     raise typer.Exit(run_mutation(max_survival=max_survival))
+
+
+@app.command("sqlc-generate")
+def sqlc_generate() -> None:
+    """Regenerate sqlc models, discarding the unused generated querier."""
+    raise typer.Exit(run_sqlc_generate())
 
 
 @fixtures_app.command("refresh")

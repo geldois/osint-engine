@@ -1,0 +1,16 @@
+version: "2"
+plugins:
+  - name: py
+    wasm:
+      url: https://downloads.sqlc.dev/plugin/sqlc-gen-python_1.3.0.wasm
+      sha256: fbedae96b5ecae2380a70fb5b925fd4bff58a6cfb1f3140375d098fbab7b3a3c
+sql:
+  - schema: "migrations"
+    queries: "src/osint_engine/infrastructure/persistence/pg/queries/external_credentials.sql"
+    engine: postgresql
+    codegen:
+      - out: src/osint_engine/infrastructure/persistence/pg/generated
+        plugin: py
+        options:
+          package: external_credentials
+          emit_async_querier: false

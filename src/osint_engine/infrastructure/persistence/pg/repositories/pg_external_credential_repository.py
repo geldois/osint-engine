@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, TypedDict, cast, override
+from typing import TYPE_CHECKING, override
 
-import aiosql
 from cryptography.fernet import Fernet
 
 from osint_engine.application.auth.external_credential import (
@@ -13,45 +11,31 @@ from osint_engine.application.auth.external_credential import (
 from osint_engine.application.contracts.repositories.external_credential_repository import (  # noqa: E501
     ExternalCredentialRepository,
 )
+from osint_engine.infrastructure.persistence.pg.generated.models import (
+    ExternalCredential as ExternalCredentialRow,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
-
     from asyncpg import Pool
 
+_FIND_BY_USERNAME_AND_PROVIDER = """
+SELECT username, provider, api_key
+FROM external_credentials
+WHERE username = $1 AND provider = $2
+"""
 
-class _ExternalCredentialRow(TypedDict):
-    api_key: str
-    provider: str
-    username: str
+_UPSERT = """
+INSERT INTO external_credentials (username, provider, api_key)
+VALUES ($1, $2, $3)
+ON CONFLICT (username, provider)
+DO UPDATE SET api_key = excluded.api_key
+"""
 
-
-class _ProviderRow(TypedDict):
-    provider: str
-
-
-class _ExternalCredentialQueries(Protocol):
-    async def find_by_username_and_provider(
-        self, connection: Pool, *, username: str, provider: str
-    ) -> _ExternalCredentialRow | None: ...
-
-    async def upsert(
-        self, connection: Pool, *, username: str, provider: str, api_key: str
-    ) -> str: ...
-
-    def list_providers_by_username(
-        self, connection: Pool, *, username: str
-    ) -> AsyncIterator[_ProviderRow]: ...
-
-
-_QUERIES_PATH = Path(__file__).parent.parent / "queries" / "external_credentials.sql"
-
-_queries = cast(
-    "_ExternalCredentialQueries",
-    aiosql.from_path(  # pyright: ignore[reportUnknownMemberType]
-        _QUERIES_PATH, "asyncpg", mandatory_parameters=False
-    ),
-)
+_LIST_PROVIDERS_BY_USERNAME = """
+SELECT provider
+FROM external_credentials
+WHERE username = $1
+"""
 
 
 class PgExternalCredentialRepository(ExternalCredentialRepository):
@@ -64,39 +48,34 @@ class PgExternalCredentialRepository(ExternalCredentialRepository):
     async def find(
         self, *, username: str, provider: Provider
     ) -> ExternalCredential | None:
-        row = await _queries.find_by_username_and_provider(
-            self._pool, username=username, provider=provider.value
+        record = await self._pool.fetchrow(
+            _FIND_BY_USERNAME_AND_PROVIDER, username, provider.value
         )
 
-        if row is None:
+        if record is None:
             return None
 
-        api_key = self._fernet.decrypt(row["api_key"].encode()).decode()
+        row = ExternalCredentialRow(**record)
+        api_key = self._fernet.decrypt(row.api_key.encode()).decode()
 
         return ExternalCredential(
             api_key=api_key,
-            provider=Provider(row["provider"]),
-            username=row["username"],
+            provider=Provider(row.provider),
+            username=row.username,
         )
 
     @override
     async def save(self, *, credential: ExternalCredential) -> None:
         encrypted_api_key = self._fernet.encrypt(credential.api_key.encode()).decode()
 
-        await _queries.upsert(
-            self._pool,
-            username=credential.username,
-            provider=credential.provider.value,
-            api_key=encrypted_api_key,
+        await self._pool.execute(
+            _UPSERT,
+            credential.username,
+            credential.provider.value,
+            encrypted_api_key,
         )
 
     @override
     async def list_configured_providers(self, *, username: str) -> frozenset[Provider]:
-        return frozenset(
-            [
-                Provider(row["provider"])
-                async for row in _queries.list_providers_by_username(
-                    self._pool, username=username
-                )
-            ]
-        )
+        records = await self._pool.fetch(_LIST_PROVIDERS_BY_USERNAME, username)
+        return frozenset(Provider(record["provider"]) for record in records)

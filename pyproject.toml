@@ -43,6 +43,7 @@ Repository = "https://github.com/geldois/osint-engine"
 
 [dependency-groups]
 dev = [
+  "asyncpg-stubs>=0.31.3",
   "basedpyright>=1.39",
   "cosmic-ray==8.4.6",
   "hypothesis>=6.156.1",
