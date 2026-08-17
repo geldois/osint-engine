@@ -121,6 +121,8 @@ class TestGraphIdentity:
 
         assert graph_a.id == graph_b.id
 
+        assert graph_a.content_id != graph_b.content_id
+
     def test_graph_id_ignores_edge_content_id_divergence(
         self, make_fake_node: MakeFakeNode
     ) -> None:
@@ -150,6 +152,8 @@ class TestGraphIdentity:
         )
 
         assert graph_a.id == graph_b.id
+
+        assert graph_a.content_id != graph_b.content_id
 
 
 class TestGraphMerge:

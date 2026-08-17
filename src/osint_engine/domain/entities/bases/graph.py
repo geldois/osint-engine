@@ -68,11 +68,16 @@ class Graph(
     @classmethod
     @override
     def _calculate_id(cls, **kwargs: object) -> GraphID:
+        for_content = bool(kwargs.get("for_content"))
         edges = cast("frozenset[Edge[UUID, UUID, UUID]]", kwargs["edges"])
         nodes = cast("frozenset[Node[UUID]]", kwargs["nodes"])
 
-        kwargs["edges"] = tuple(sorted(edge.id for edge in edges))
-        kwargs["nodes"] = tuple(sorted(node.id for node in nodes))
+        if for_content:
+            kwargs["edges"] = tuple(sorted(edge.content_id for edge in edges))
+            kwargs["nodes"] = tuple(sorted(node.content_id for node in nodes))
+        else:
+            kwargs["edges"] = tuple(sorted(edge.id for edge in edges))
+            kwargs["nodes"] = tuple(sorted(node.id for node in nodes))
 
         return super()._calculate_id(**kwargs)
 

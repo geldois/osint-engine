@@ -157,7 +157,9 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
 
     @abstractmethod
     def __init__(self, **kwargs: object) -> None:
-        object.__setattr__(self, "content_id", self._calculate_id(**kwargs))
+        object.__setattr__(
+            self, "content_id", self._calculate_id(for_content=True, **kwargs)
+        )
 
         identified_by = {field: kwargs[field] for field in self.id_fields}
 
@@ -187,6 +189,8 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
 
     @classmethod
     def _calculate_id(cls, **kwargs: object) -> IDType_co:
+        kwargs.pop("for_content", None)
+
         parameter_pairs: list[tuple[str, object]] = []
 
         for parameter_name, parameter in kwargs.items():
