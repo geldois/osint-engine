@@ -443,6 +443,14 @@ The production image runs this sequence: its entrypoint chains `wait-db`, `migra
 deploy (Render) needs no manual migration step — the commands above are only for running against a local Postgres
 outside the container.
 
+`infrastructure/persistence/pg/generated/` is [sqlc](https://sqlc.dev)-generated from `migrations/` and `queries/*.sql`,
+committed to the repo. Regenerate it by hand after changing either — never run bare `sqlc generate`, which also emits an
+unused, unresolvable querier file that this command discards:
+
+```bash
+uv run python -m scripts sqlc-generate
+```
+
 ### Test
 
 `tests/**/responses/` (golden HTTP fixtures for the BrasilAPI/Portal da Transparência provider tests) is untracked and

@@ -17,6 +17,10 @@ reported inline is the fix-and-retry signal. `.claude/hooks/block_direct_checks.
 single-file/single-test runs stay allowed for fast local feedback. `mutation` stays periodic and manual, never a hook.
 Needs Docker and a local `.env` (the runner loads it).
 
+`scripts sqlc-generate` regenerates `infrastructure/persistence/pg/generated/` from `migrations/` and `queries/*.sql` —
+run it by hand after changing either, same periodic-manual footing as `mutation`. Never run bare `sqlc generate` (leaves
+an unusable generated querier file behind) and never hand-edit that directory.
+
 ## Code
 
 No comments and no docstrings in `src/`, `tests/`, `scripts/`, `migrations/` — the name says it, or the code is wrong.
