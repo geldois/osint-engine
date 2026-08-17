@@ -21,7 +21,13 @@ _UV_RUN = ("uv", "run", "--no-sync")
 _SHELL_FILES = (
     ".githooks/pre-commit",
     ".githooks/pre-merge-commit",
+    "cloud-init.sh",
     "docker-entrypoint.sh",
+)
+_WORKFLOW_FILES = (
+    ".github/workflows/publish-image.yml",
+    ".github/workflows/release.yml",
+    ".github/workflows/test.yml",
 )
 _PRE_SYNC: tuple[Gate, ...] = (
     Gate("lock-check", ("uv", "lock", "--check")),
@@ -29,6 +35,7 @@ _PRE_SYNC: tuple[Gate, ...] = (
     Gate("sqruff", ("mise", "exec", "--", "sqruff", "lint", "migrations", "src")),
     Gate("shellcheck", ("mise", "exec", "--", "shellcheck", *_SHELL_FILES)),
     Gate("shfmt", ("mise", "exec", "--", "shfmt", "-d", *_SHELL_FILES)),
+    Gate("actionlint", ("mise", "exec", "--", "actionlint", *_WORKFLOW_FILES)),
 )
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
 _POST_SYNC: tuple[Gate, ...] = (

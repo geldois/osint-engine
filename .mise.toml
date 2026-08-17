@@ -1,5 +1,6 @@
 [tools]
 act = "0.2.89"
+actionlint = "1.7.12"
 "aqua:quarylabs/sqruff" = "0.39.0"
 dprint = "0.55.2"
 gomigrate = "4.19.1"
