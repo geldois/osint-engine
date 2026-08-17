@@ -67,7 +67,6 @@ flowchart LR
 
     Bootstrap("build_container") --> Container("Container")
     Container --> Fetchers("Fetchers")
-    Container --> PatternSets("PatternSetRepository")
     Container --> Policies("Policies")
     Container --> Services("Services")
     Container --> UoWFactory("UoWFactory")
@@ -87,8 +86,6 @@ flowchart LR
     Fetchers --> CNPJFetcher("BrasilAPICNPJv1Fetcher")
     Fetchers --> KipFlowFetcher("KipFlowCPFFetcher")
     Fetchers --> PortalFetchers("Portal da Transparência Fetchers")
-    PatternSets --> MemPatternSets("MemPatternSetRepository")
-    MemPatternSets --> DefaultPatterns("BRAZILIAN_DOCUMENTS_V1")
 
     PostToken --> AuthenticateUser
     PostViewerToken --> PyJWTService
@@ -107,11 +104,10 @@ flowchart LR
     JwtGuard --> PyJWTService
 
     IngestText --> UoWFactory
-    IngestText --> PatternSets
     IngestText --> ExtractMatches("extract_matches · regex + mod-11 checksum")
     IngestText --> TextSourceNode("TextSource")
     IngestText --> MentionEdges("Person/Company/AddressMentionedInText")
-    ListPatternSets --> PatternSets
+    ListPatternSets --> UoWFactory
 
     AuthenticateUser --> UoWFactory
     AuthenticateUser --> Argon2("Argon2PasswordHasher")
@@ -142,6 +138,7 @@ flowchart LR
     MemUoW --> NodeRepo("MemNodeRepository")
     MemUoW --> EdgeRepo("MemEdgeRepository")
     MemUoW --> GraphRepo("MemGraphRepository")
+    MemUoW --> PatternSetRepo("MemPatternSetRepository")
     MemUoW --> UserRepo("MemUserRepository")
 
     Policies --> MergePolicy("RevisionMergePolicy")
@@ -156,8 +153,10 @@ flowchart LR
     NodeRepo --> Snapshot
     EdgeRepo --> Snapshot
     GraphRepo --> Snapshot
+    PatternSetRepo --> Snapshot
     UserRepo --> Snapshot
     Snapshot --> MemStorage("MemStorage")
+    MemStorage --> DefaultPatterns("BRAZILIAN_DOCUMENTS_V1 · seeded")
 
     NodeRepo --> Node
     EdgeRepo --> Edge
