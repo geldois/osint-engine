@@ -406,6 +406,24 @@ class TestEntityIDCalculation:
         assert type(nested_invalid).__name__ in str(exception.value)
 
 
+class TestEntityForContentSignal:
+    def test_constructed_entity_has_no_for_content_attribute(self) -> None:
+        entity = FakeEntity(content="test")
+
+        assert not hasattr(entity, "for_content")
+
+    def test_reconstruct_kwargs_excludes_for_content(self) -> None:
+        entity = FakeEntity(content="test")
+
+        assert "for_content" not in entity.reconstruct_kwargs()
+
+    def test_calculate_id_ignores_for_content_in_the_hash(self) -> None:
+        with_flag = FakeEntity._calculate_id(content="test", for_content=True)  # pyright: ignore[reportPrivateUsage]
+        without_flag = FakeEntity._calculate_id(content="test")  # pyright: ignore[reportPrivateUsage]
+
+        assert with_flag == without_flag
+
+
 class TestEntityIdentityFieldsValidation:
     def test_raises_when_identity_field_is_absent_from_kwargs(
         self,
