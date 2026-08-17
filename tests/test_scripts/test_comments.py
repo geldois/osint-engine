@@ -153,6 +153,10 @@ _SQL_CASES: dict[str, tuple[str, str]] = {
         "SELECT 1; -- noqa: disable=all\n",
         "SELECT 1; -- noqa: disable=all\n",
     ),
+    "sqlc_name_annotation_survives": (
+        "-- name: FindByUsernameAndProvider :one\nSELECT 1;\n",
+        "-- name: FindByUsernameAndProvider :one\nSELECT 1;\n",
+    ),
     "dashes_inside_single_quoted_string_survive": (
         "SELECT '--not a comment';\n",
         "SELECT '--not a comment';\n",

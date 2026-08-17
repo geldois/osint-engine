@@ -33,7 +33,7 @@ _PY_PRAGMA_CLAUSE = re.compile(
     r"|pragma:\s*no cover"
     r")\s*",
 )
-_SQL_PRAGMA = re.compile(r"^--\s*noqa\b.*$")
+_SQL_PRAGMA = re.compile(r"^--\s*(?:noqa\b.*|name:\s*\S+\s+:\S+\s*)$")
 
 
 class _Span(NamedTuple):
