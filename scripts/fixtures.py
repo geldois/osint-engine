@@ -5,9 +5,8 @@ import re
 from os import getenv
 from pathlib import Path
 
+from dotenv import load_dotenv
 from httpx2 import URL, Client, Timeout
-
-from osint_engine.config.dotenv import load_dotenv
 
 SOURCES_DIR = Path("tests/test_src/test_infrastructure/test_providers")
 
@@ -64,7 +63,7 @@ def _build_http_client() -> Client:
 
 
 def main() -> None:
-    load_dotenv()
+    load_dotenv(dotenv_path=".env", interpolate=False)
 
     apis = [_BrasilAPI, _PortalTransparencia]
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from os import environ, getenv
 
-from osint_engine.config.dotenv import load_dotenv
+from dotenv import load_dotenv
 
 
 @dataclass(frozen=True)
@@ -86,7 +86,7 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> Settings:
-        load_dotenv()
+        load_dotenv(dotenv_path=".env", interpolate=False)
 
         return cls(
             access_token_expire_minutes=cls._load_access_token_expire_minutes(),
