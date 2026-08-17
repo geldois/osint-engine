@@ -38,6 +38,9 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
     from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
     from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
+    from osint_engine.application.use_cases.history.list_graph_history import (
+        ListGraphHistory,
+    )
     from osint_engine.application.use_cases.matching.find_possibly_matches import (
         FindPossiblyMatches,
     )
@@ -91,5 +94,6 @@ class UseCases:
     find_possibly_matches: partial[FindPossiblyMatches]
     ingest_text: partial[IngestText]
     list_external_credentials: partial[ListExternalCredentials]
+    list_graph_history: partial[ListGraphHistory]
     list_text_patterns: partial[ListTextPatterns]
     save_external_credential: partial[SaveExternalCredential]

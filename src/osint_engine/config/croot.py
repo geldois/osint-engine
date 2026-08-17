@@ -22,6 +22,9 @@ from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandBy
 from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
+from osint_engine.application.use_cases.history.list_graph_history import (
+    ListGraphHistory,
+)
 from osint_engine.application.use_cases.matching.find_possibly_matches import (
     FindPossiblyMatches,
 )
@@ -156,6 +159,7 @@ def build_container(  # noqa: PLR0913
         list_external_credentials=partial(
             ListExternalCredentials, uow_factory=uow_factory
         ),
+        list_graph_history=partial(ListGraphHistory, uow_factory=uow_factory),
         list_text_patterns=partial(
             ListTextPatterns, pattern_set_repository=pattern_sets
         ),

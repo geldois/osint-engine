@@ -9,7 +9,12 @@ import pytest
 from osint_engine.domain.errors.entity_error import EntityNotFoundError
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEntityRevision, MakeGraph, MakeMemStorage
+    from tests.conftest import (
+        MakeEntityRevision,
+        MakeFakeNode,
+        MakeGraph,
+        MakeMemStorage,
+    )
     from tests.test_src.test_infrastructure.test_persistence.test_mem.test_mem_repositories.conftest import (  # noqa: E501
         MakeMemGraphRepository,
     )
@@ -143,6 +148,72 @@ class TestMemGraphRepositoryListRevisions:
         found = await repo.list_revisions(id_=revision.entity.id)
 
         assert found == (revision,)
+
+
+class TestMemGraphRepositoryListRevisionsByRoot:
+    @pytest.mark.asyncio
+    async def test_returns_empty_tuple_for_an_unseen_root_id(
+        self,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        repo = make_mem_graph_repository(mem_storage=make_mem_storage())
+
+        assert await repo.list_revisions_by_root(root_id=uuid4()) == ()
+
+    @pytest.mark.asyncio
+    async def test_returns_every_revision_sharing_the_root_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_node: MakeFakeNode,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        root_node = make_fake_node()
+        first = make_entity_revision(
+            entity=make_graph(
+                edges=frozenset(),
+                nodes={root_node, make_fake_node()},
+                root_id=root_node.id,
+            ),
+            fetched_at=_EARLY,
+        )
+        second = make_entity_revision(
+            entity=make_graph(
+                edges=frozenset(),
+                nodes={root_node, make_fake_node()},
+                root_id=root_node.id,
+            ),
+            fetched_at=_LATE,
+        )
+        repo = make_mem_graph_repository(mem_storage=make_mem_storage())
+
+        await repo.merge(revision=first)
+        await repo.merge(revision=second)
+
+        found = await repo.list_revisions_by_root(root_id=root_node.id)
+
+        assert set(found) == {first, second}
+
+    @pytest.mark.asyncio
+    async def test_excludes_revisions_from_a_different_root_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        matching = make_entity_revision(entity=make_graph())
+        other = make_entity_revision(entity=make_graph())
+        repo = make_mem_graph_repository(mem_storage=make_mem_storage())
+
+        await repo.merge(revision=matching)
+        await repo.merge(revision=other)
+
+        found = await repo.list_revisions_by_root(root_id=matching.entity.root_id)
+
+        assert found == (matching,)
 
 
 class TestMemGraphRepositoryMerge:

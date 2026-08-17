@@ -146,3 +146,14 @@ class MemGraphRepository(GraphRepository):
     @override
     async def list_revisions(self, *, id_: UUID) -> tuple[GraphRevision, ...]:
         return tuple(self.graphs.get(id_, {}).values())
+
+    @override
+    async def list_revisions_by_root(
+        self, *, root_id: UUID
+    ) -> tuple[GraphRevision, ...]:
+        return tuple(
+            revision
+            for graph_revisions in self.graphs.values()
+            for revision in graph_revisions.values()
+            if revision.entity.root_id == root_id
+        )
