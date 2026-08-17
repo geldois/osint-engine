@@ -4,10 +4,11 @@ Read-only by design. A hook that rewrites the edited file leaves the model's
 in-context copy silently wrong and forces a full re-read on the next edit, so
 this one only *reports*, and every fixer runs once at ``pre-commit`` instead.
 
-Reports only the irreducible: violations ruff cannot fix itself (``fix`` is
-null in its JSON output). Everything auto-fixable, and every formatting
-concern, is resolved silently by the pre-commit ``fix`` step and never costs a
-token here. Silent when there is nothing irreducible to say.
+Violations ruff cannot fix itself (``fix`` is null in its JSON output) are
+injected verbatim; everything auto-fixable, and every formatting concern, is
+resolved silently by the pre-commit ``fix`` step and never costs a token here.
+A clean run injects a one-line green signal so the model never re-runs the
+linter to confirm. Silence is reserved for files ruff never ran on.
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ _MAX_REPORTED = 20
 
 
 def main() -> int:
-    """Report the edited Python file's non-auto-fixable ruff violations."""
+    """Report the edited Python file's lint verdict to the model."""
     file = tool_input(read_event(), "file_path")
     if not file:
         return 0
@@ -39,25 +40,30 @@ def main() -> int:
     if root is None:
         return 0
 
-    lines = _irreducible(path, root)
-    if lines:
-        add_context("\n".join(["── ruff (not auto-fixable) ──", *lines]))
+    violations = _irreducible(path, root)
+    if violations is None:
+        return 0
+    if violations:
+        add_context("\n".join(["── ruff (not auto-fixable) ──", *violations]))
+    else:
+        label = path if not path.is_relative_to(root) else path.relative_to(root)
+        add_context(f"linting: ok ({label})")
 
     return 0
 
 
-def _irreducible(path: Path, root: Path) -> list[str]:
+def _irreducible(path: Path, root: Path) -> list[str] | None:
     result = run(
         [*_RUFF, "check", "--output-format=json", "--force-exclude", str(path)], root
     )
     if result is None:
-        return []
+        return None
     try:
         raw: object = json.loads(result.stdout)
     except json.JSONDecodeError:
-        return []
+        return None
     if not isinstance(raw, list):
-        return []
+        return None
 
     reported: list[str] = []
     for entry in cast("list[object]", raw):
