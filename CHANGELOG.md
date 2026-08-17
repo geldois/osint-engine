@@ -2,6 +2,239 @@
 
 <!-- version list -->
 
+## v1.8.0 (2026-08-17)
+
+### Bug Fixes
+
+- **domain**: Derive Graph.content_id from constituents' content, not identity
+  ([`78b9415`](https://github.com/geldois/osint-engine/commit/78b9415a54f726671cd023e40eae644f039f97ef))
+
+- **domain**: Preserve masked-CPF digit position in Person identity
+  ([`e210eda`](https://github.com/geldois/osint-engine/commit/e210eda032f7d953d8efb6ed8312f3c195cf7c24))
+
+- **gates**: Carry untracked live-API fixtures into the materialized snapshot
+  ([`4b2a3f4`](https://github.com/geldois/osint-engine/commit/4b2a3f40017798cd4cd997ef396ecbd7328ad392))
+
+- **harness**: Block agent from pre-running check --full before commit
+  ([`f7f6274`](https://github.com/geldois/osint-engine/commit/f7f627405bcde25358d119739f3e0ae6408389fa))
+
+- **harness**: Fire the autofix hook on MultiEdit, not just Edit and Write
+  ([`799bb7b`](https://github.com/geldois/osint-engine/commit/799bb7ba604ea08968c839ccab23c49b64a6d63e))
+
+- **harness**: Match Stop hook on all matchers via empty string
+  ([`cfd1181`](https://github.com/geldois/osint-engine/commit/cfd1181e30bb7ed117c677c7e649a451f133ecde))
+
+- **harness**: Run the commit-time fixer on renamed files too
+  ([`f0dfb47`](https://github.com/geldois/osint-engine/commit/f0dfb474d91d8e2cfab5c403f7d8d0257edb76bd))
+
+- **harness**: Scan every statement for a bypassed direct check, not just the string's start
+  ([`7f514f3`](https://github.com/geldois/osint-engine/commit/7f514f3db51df12cfa5a70a5ef20a87b1e0595a3))
+
+- **harness**: Stop the agent from self-verifying with the gate facade
+  ([`18a28c8`](https://github.com/geldois/osint-engine/commit/18a28c846f3470f39790b16335a67df7abe0768c))
+
+- **harness**: Sync code-review-graph after commit lands
+  ([`1fe3543`](https://github.com/geldois/osint-engine/commit/1fe3543b06aadfa5c0771a9481070df92153a588))
+
+- **harness**: Type hook IO with casts so it stays clean under stricter basedpyright
+  ([`cdcd535`](https://github.com/geldois/osint-engine/commit/cdcd5350b5d71b000cd2a9ece9aa277d5bd2c8f1))
+
+- **scripts**: Stop the comment stripper from eating sqlc query annotations
+  ([`1d0441f`](https://github.com/geldois/osint-engine/commit/1d0441fc21286193536448da0bed4402a2502d29))
+
+- **tests**: Detect the container socket by type instead of existence
+  ([`57916e0`](https://github.com/geldois/osint-engine/commit/57916e04bb8968f31374286dfbb8da723a2cadaa))
+
+- **tests**: Exclude Python keywords from the generated identifier strategy
+  ([`4908f1f`](https://github.com/geldois/osint-engine/commit/4908f1f1d6c63c8966ca5769dfc159990699559c))
+
+- **text-ingestion**: Dedicate FieldTooLargeError to oversized CSV fields
+  ([`f368f9a`](https://github.com/geldois/osint-engine/commit/f368f9a328f6384304aa6a56261af57dafade98a))
+
+### Chores
+
+- Bump project version to 1.7.0 in uv.lock
+  ([`d9b1a37`](https://github.com/geldois/osint-engine/commit/d9b1a37e5286ef5c41e85c66f2df157369f458a3))
+
+- Drop the opencode harness in favour of Claude Code only
+  ([`df1c012`](https://github.com/geldois/osint-engine/commit/df1c01234176c68022de3d478bc1a67814aa00ce))
+
+- Untrack recorded live-API fixtures
+  ([`def741f`](https://github.com/geldois/osint-engine/commit/def741f6e3b0580d4f774e4e529647f1c07be558))
+
+- **harness**: Align local Claude Code harness with global conventions
+  ([`397705c`](https://github.com/geldois/osint-engine/commit/397705c0aa3bbe68d3c184192f97ca0cf4aa2816))
+
+- **harness**: Modernize the self-owned quality-gate harness
+  ([`5c74f0f`](https://github.com/geldois/osint-engine/commit/5c74f0ffc9f6d6edcefeb75ab436ec7f24c06ab7))
+
+- **harness**: Remove dead checks-triager guard and stale doc references
+  ([`9491dbc`](https://github.com/geldois/osint-engine/commit/9491dbc87ca9061ffe7476722da02689e28c499b))
+
+- **hooks**: Confirm lint-green per edit via additionalContext
+  ([`048609c`](https://github.com/geldois/osint-engine/commit/048609c341d5f36ae9d33488f85b5d313d563237))
+
+- **hooks**: Remind to check the README diagram after semantic changes
+  ([`545a5fc`](https://github.com/geldois/osint-engine/commit/545a5fc208f35dfc327bf19cea46f8201b9b6904))
+
+- **lint**: Ignore PLR0917 for tests, matching PLR0913's existing exemption
+  ([`a8bfc3e`](https://github.com/geldois/osint-engine/commit/a8bfc3eef24f50911d2a64205f1faf8108695e96))
+
+- **tooling**: Ignore hypothesis and import-linter caches in dprint
+  ([`22b0679`](https://github.com/geldois/osint-engine/commit/22b067997aee3944364c3d6c496de2213f3b4302))
+
+### Code Style
+
+- Apply formatter line-wrap the pre-commit gate had reformatted post-tree
+  ([`1d42383`](https://github.com/geldois/osint-engine/commit/1d42383287ecdaeaf798a30e892566b1aad57a7d))
+
+### Documentation
+
+- Add CONTEXT.md as the project's ubiquitous language
+  ([`e035a98`](https://github.com/geldois/osint-engine/commit/e035a98f52470e9ec85790cc27a415443cd8117c))
+
+- Describe spreadsheet ingestion in README and architecture docs
+  ([`f458acf`](https://github.com/geldois/osint-engine/commit/f458acf660d03e14838d4546790d6de003617df0))
+
+- Describe the atomic pattern catalog and the pattern-name/pattern-set split
+  ([`9883682`](https://github.com/geldois/osint-engine/commit/9883682d3a39720e79b1015bab6761e827ff26fb))
+
+- Describe the graph-history endpoint and the id/content_id split
+  ([`049b729`](https://github.com/geldois/osint-engine/commit/049b729788f7623978793a7302732086173ef2e6))
+
+- Describe the keep-incoming merge default and its graph-history debt
+  ([`f476461`](https://github.com/geldois/osint-engine/commit/f476461fe3ccd07977781f7ef19c2af11aa3c944))
+
+- Describe the sqlc-generate regen command
+  ([`7b22fe9`](https://github.com/geldois/osint-engine/commit/7b22fe9309b076861ac5a361dbc0b36f84a31e91))
+
+- Reflect the pattern-sets UoW move in the architecture diagram
+  ([`20c6756`](https://github.com/geldois/osint-engine/commit/20c675668ebeb50f6ebff4f60b2e6365d6a38a5f))
+
+- Repoint ADR references to docs/architecture
+  ([`260c234`](https://github.com/geldois/osint-engine/commit/260c23405fe66c7877267470c35025321089f0ea))
+
+- Rewrite the architecture prose against the CONTEXT.md vocabulary
+  ([`16252e5`](https://github.com/geldois/osint-engine/commit/16252e528bd200dcf77c652e129ce534b31a4c52))
+
+- **architecture**: Describe possible-match as CPF overlap, not name similarity
+  ([`96ec652`](https://github.com/geldois/osint-engine/commit/96ec65234cc4e2a5a7fc166820eafeca044d0418))
+
+- **architecture**: Replace docs/adr with per-area architecture docs
+  ([`07d85f7`](https://github.com/geldois/osint-engine/commit/07d85f7be3e0e03fe4201974e760a9d0b9a02f11))
+
+- **cpf**: Describe the KipFlow provider swap and its reuse lock
+  ([`1470215`](https://github.com/geldois/osint-engine/commit/14702158bf88632b893daadfefd6339ea27d264b))
+
+- **readme**: Sync architecture diagram with current backend
+  ([`4fc4149`](https://github.com/geldois/osint-engine/commit/4fc4149830f9738946d99974bbb4524b9da434e3))
+
+### Features
+
+- **cpf**: Replace Portal da Transparência with KipFlow as the CPF provider
+  ([`8888fee`](https://github.com/geldois/osint-engine/commit/8888fee8adf2943c7b76420e09df8a5c81e3425e))
+
+- **deploy**: Add Oracle Cloud deploy pipeline
+  ([`af88627`](https://github.com/geldois/osint-engine/commit/af88627ada2516d1d4d01b4a9077e11311a5a97e))
+
+- **deploy**: Orchestrate wait-db and migrate up before serve via entrypoint
+  ([`ff7b905`](https://github.com/geldois/osint-engine/commit/ff7b905dc5e8010f93f2b42f87ca32b170a1ce67))
+
+- **domain**: Add PossiblyMatches generic edge for cross-entity similarity
+  ([`ff5bfe3`](https://github.com/geldois/osint-engine/commit/ff5bfe34543fa00e8059bd82576201024c014130))
+
+- **domain**: Validate masked documents strictly and add overlap comparison
+  ([`b2005ef`](https://github.com/geldois/osint-engine/commit/b2005ef4feedef9028cf911c66e93adf14b6075a))
+
+- **graph-history**: Expose stored Graph revisions via GET /graphs/{root_id}/history
+  ([`d018d5f`](https://github.com/geldois/osint-engine/commit/d018d5f3a4cf97877c8074ffda8bcf5b22a0b98e))
+
+- **harness**: Add sqruff as the deterministic SQL gate
+  ([`b13467c`](https://github.com/geldois/osint-engine/commit/b13467cc1dcbfbaba8de546b4c424c25ff51ed27))
+
+- **harness**: Extend pre-commit safe-autofix to every fixer-owned filetype
+  ([`f2867c5`](https://github.com/geldois/osint-engine/commit/f2867c5b68e3744d938e734d31adefc6d105e2bf))
+
+- **harness**: Self-provision the local .env in the gate runner
+  ([`ff77a5a`](https://github.com/geldois/osint-engine/commit/ff77a5a386aab827e1fd818df657bcb38c7dfd5f))
+
+- **harness**: Strip agent-authored comments and nudge architecture-doc updates
+  ([`f109ddc`](https://github.com/geldois/osint-engine/commit/f109ddcdba8526b11e5776aa8f833feec814a63a))
+
+- **harness**: Surface failing-gate output inline on every channel
+  ([`8130fe9`](https://github.com/geldois/osint-engine/commit/8130fe9d7e3373c9342c7c1c1e36a571adbd1b5c))
+
+- **http**: Add health endpoints and unify expansion rate limiting
+  ([`baeacff`](https://github.com/geldois/osint-engine/commit/baeacff010d54baa703f21f02d804c9996c94f22))
+
+- **matching**: Produce and expose PossiblyMatches fuzzy cross-entity edges
+  ([`206d08b`](https://github.com/geldois/osint-engine/commit/206d08b23ab61ef09b6b535efd0e64efd8b145cb))
+
+- **persistence**: Make nodes/edges individually addressable and provenance-tracked
+  ([`1a96d64`](https://github.com/geldois/osint-engine/commit/1a96d6425be2644e480e00ac7d3a56d0f892ae72))
+
+- **revision**: Keep incoming revisions by default instead of filling nulls
+  ([`c2217e8`](https://github.com/geldois/osint-engine/commit/c2217e81d2019a39e89305052107bf89652d905e))
+
+- **text-ingestion**: Accept .xlsx/.csv uploads via POST /text-ingestion/file
+  ([`32fde3e`](https://github.com/geldois/osint-engine/commit/32fde3e183cad0472023c39b1300475ade106011))
+
+- **text-ingestion**: Add stub-and-link entity extraction from free text
+  ([`ca80385`](https://github.com/geldois/osint-engine/commit/ca80385a003f134ddcd6fe9b8740eeb45bb4835b))
+
+- **text-ingestion**: Compose individually addressable pattern names per request
+  ([`097d4bb`](https://github.com/geldois/osint-engine/commit/097d4bb8e1e47acb6f11e0896daffa1013ff5e45))
+
+- **text-ingestion**: Restrict access to ADMIN role only
+  ([`53b0df2`](https://github.com/geldois/osint-engine/commit/53b0df29f8d0d99322432d38a3277659dd0a7aaf))
+
+### Refactoring
+
+- Name the provider concept out of the overloaded "source"
+  ([`9ebe9c6`](https://github.com/geldois/osint-engine/commit/9ebe9c6e25091c31304e45efd962d507aa764d53))
+
+- Split domain services out of value_objects
+  ([`d8861d1`](https://github.com/geldois/osint-engine/commit/d8861d1fa5f66f322da8b0159e460547777093c6))
+
+- Strip existing agent-authored comments and docstrings
+  ([`dbb95e9`](https://github.com/geldois/osint-engine/commit/dbb95e9cd1db6b8180f0fe62f8228c1026a3fd3c))
+
+- **config**: Load .env via python-dotenv instead of a hand-rolled parser
+  ([`d980c83`](https://github.com/geldois/osint-engine/commit/d980c8344c23fa8c323c4b325c6269f64ae1c8c1))
+
+- **domain**: Extract own_init_kwargs to dedupe entity __init__ boilerplate
+  ([`4f2dc7a`](https://github.com/geldois/osint-engine/commit/4f2dc7a3a03aa43b0be18cd17ff2cf7019698c9b))
+
+- **harness**: Rebuild the local harness around read-only hooks and zero-skip tests
+  ([`6060b95`](https://github.com/geldois/osint-engine/commit/6060b9509a16a35ed3ddb6b8ce965676c52d21f1))
+
+- **harness**: Trim the pytest gate to lean failure-only output
+  ([`57042cc`](https://github.com/geldois/osint-engine/commit/57042cca4e9f29a52ce8272ea2924b444cf1acb6))
+
+- **matching**: Compare CPF overlap instead of name similarity
+  ([`4551a08`](https://github.com/geldois/osint-engine/commit/4551a0806b4a32ece07064c0ca10e9d3be53e733))
+
+- **pattern-sets**: Move PatternSetRepository from Container into UoW
+  ([`0e03555`](https://github.com/geldois/osint-engine/commit/0e035553bd436124e8f5c47bdfc074a03a11a435))
+
+- **persistence**: Type external-credential rows via sqlc-generated models
+  ([`60fcbcb`](https://github.com/geldois/osint-engine/commit/60fcbcbd81786d605840ff9affa20fdf00d88fac))
+
+- **text-ingestion**: Resolve TextPatternSet import eagerly instead of under TYPE_CHECKING
+  ([`d900d4e`](https://github.com/geldois/osint-engine/commit/d900d4e755e8eb3c3ce86c3f47cd01bc487ecb21))
+
+### Testing
+
+- **domain**: Confirm the for_content signal never leaks into a constructed entity
+  ([`754da03`](https://github.com/geldois/osint-engine/commit/754da0316972442715f72ac6ea3f340dce8c9322))
+
+- **matching**: Cover possibly-matches edge across the 5 CPF-producing handlers
+  ([`42bfa44`](https://github.com/geldois/osint-engine/commit/42bfa4435f791e04047ff89ca101232b1b34edb5))
+
+- **text-ingestion**: Cover spreadsheet flattening, limits, and the file upload endpoint
+  ([`233e7b1`](https://github.com/geldois/osint-engine/commit/233e7b1b9ba5ce37ba4edbc53416dfa3c8d9661e))
+
+
 ## v1.7.0 (2026-07-28)
 
 ### Bug Fixes
