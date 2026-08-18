@@ -57,13 +57,16 @@ POSTGRES_PASSWORD_GENERATED=$(openssl rand -hex 32)
 # equivalente shell de Fernet.generate_key().
 FERNET_KEY_GENERATED=$(openssl rand -base64 32 | tr '+/' '-_')
 ADMIN_PASSWORD_GENERATED=$(openssl rand -hex 16)
+# sslmode=disable: golang-migrate's postgres driver defaults to requiring SSL when the DSN
+# doesn't say otherwise, and the compose-internal Postgres has no TLS configured — without this,
+# the app container's entrypoint migration step fails every time with "SSL is not enabled".
 cat >.env <<EOF
 SECRET_KEY=$(openssl rand -hex 32)
 EXTERNAL_CREDENTIAL_ENCRYPTION_KEY=${FERNET_KEY_GENERATED}
 POSTGRES_USER=osint_engine
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD_GENERATED}
 POSTGRES_DB=osint_engine
-DATABASE_URL=postgresql://osint_engine:${POSTGRES_PASSWORD_GENERATED}@postgres:5432/osint_engine
+DATABASE_URL=postgresql://osint_engine:${POSTGRES_PASSWORD_GENERATED}@postgres:5432/osint_engine?sslmode=disable
 ADMIN_PASSWORD=${ADMIN_PASSWORD_GENERATED}
 CORS_ORIGINS=https://osint.angelitochagas.com
 API_DOMAIN=api.osint.angelitochagas.com
