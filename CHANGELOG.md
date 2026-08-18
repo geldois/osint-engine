@@ -2,6 +2,22 @@
 
 <!-- version list -->
 
+## v1.9.0 (2026-08-18)
+
+### Bug Fixes
+
+- **ci**: Keep uv.lock's own version in sync on every release commit
+  ([`498f194`](https://github.com/geldois/osint-engine/commit/498f194c526f7bc78bb4140c1f733bbd2587ae35))
+
+- **deps**: Sync uv.lock's self-referenced version with the 1.8.0 release
+  ([`6d836bb`](https://github.com/geldois/osint-engine/commit/6d836bb42bc74de71522cf652f27b28ee534a180))
+
+### Features
+
+- **deploy**: Build and publish a multi-arch image (amd64 + arm64)
+  ([`a105eb7`](https://github.com/geldois/osint-engine/commit/a105eb7d9a56e8623a19b0f643802b4fe217462a))
+
+
 ## v1.8.0 (2026-08-17)
 
 ### Bug Fixes
