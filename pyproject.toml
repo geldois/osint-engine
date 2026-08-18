@@ -35,6 +35,9 @@ dependencies = [
   "uvicorn>=0.48",
 ]
 
+[project.optional-dependencies]
+build = ["uv==0.11.25"]
+
 [project.scripts]
 osint-engine = "osint_engine.interface.cli.typer.typer_app:main"
 
@@ -152,6 +155,7 @@ version_toml = ["pyproject.toml:project.version"]
 commit_parser = "conventional"
 tag_format = "v{version}"
 build_command = """
+    python -m pip install -e '.[build]'
     uv lock --upgrade-package "$PACKAGE_NAME"
     git add uv.lock
 """
