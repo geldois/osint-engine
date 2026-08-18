@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
 _DEFAULT_RETRY_AFTER_SECONDS = 60
-_FIFTEEN_MINUTES_IN_SECONDS = 15 * 60
+_TEN_MINUTES_IN_SECONDS = 10 * 60
 _EXPANSION_REQUESTS_PER_MINUTE = 100
 
 
@@ -35,7 +35,7 @@ def _translate_rate_limit_error(
 
 def build_auth_token_rate_limit() -> Callable[[Request, Response], Awaitable[None]]:
     return _translate_rate_limit_error(
-        RateLimiter(times=5, seconds=_FIFTEEN_MINUTES_IN_SECONDS)
+        RateLimiter(times=5, seconds=_TEN_MINUTES_IN_SECONDS)
     )
 
 
