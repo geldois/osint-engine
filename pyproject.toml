@@ -151,6 +151,10 @@ convention = "google"
 version_toml = ["pyproject.toml:project.version"]
 commit_parser = "conventional"
 tag_format = "v{version}"
+build_command = """
+    uv lock --upgrade-package "$PACKAGE_NAME"
+    git add uv.lock
+"""
 
 [tool.semantic_release.branches.main]
 match = "main"
