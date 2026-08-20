@@ -27,6 +27,20 @@ from _hook_io import deny, read_event, tool_input
 # past every anchor.
 _STATEMENT_SPLIT = re.compile(r"&&|[;\n]|\|+|[()]")
 
+# A heredoc body (a commit message passed via `<<'EOF' ... EOF`, the
+# prescribed way to commit) is literal data, never a shell statement — but
+# splitting on bare `(`/`)` above has no notion of that, so a conventional
+# commit's own `(scope):` collides with a targetable name once split (e.g.
+# `fix(pytest): ...` yields the bare statement `pytest`). Strip every
+# heredoc down to its opening redirect before splitting, so its body and
+# closing marker are never seen as statements at all.
+_HEREDOC = re.compile(r"<<-?(['\"]?)(\w+)\1\n.*?\n\s*\2(?=\s|$)", re.DOTALL)
+
+
+def _strip_heredocs(command: str) -> str:
+    return _HEREDOC.sub(lambda m: f"<<{m.group(2)}", command)
+
+
 # Strip every leading runner/flag token (uv run, uv run --no-sync, python -m,
 # uvx, npx, mise exec --, stray -q/--flags) so wrapping the call cannot bypass
 # the tool-name match below.
@@ -66,7 +80,7 @@ def main() -> int:
     if not command:
         return 0
 
-    for statement in _STATEMENT_SPLIT.split(command):
+    for statement in _STATEMENT_SPLIT.split(_strip_heredocs(command)):
         normalized = statement.strip()
         while match := _LEADING.match(normalized):
             normalized = normalized[match.end() :]
