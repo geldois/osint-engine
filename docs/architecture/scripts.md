@@ -22,10 +22,15 @@ repository's private directory by an install command. What runs on every commit 
 any other source file, and setting up a fresh clone is one configuration line instead of a command that could silently
 never be run — which is exactly how this project spent a period with no hooks installed at all.
 
-Formatters and comment strippers deliberately never run while an assistant is editing. Rewriting a file immediately
-after it was written leaves the editor's own understanding of that file silently wrong and forces it to re-read the
-whole thing before the next change. Everything mechanical is therefore applied exactly once, at commit time, and the
-only thing surfaced while writing is what no tool can fix on its own.
+Formatters deliberately never run while an assistant is editing. Rewriting a file immediately after it was written
+leaves the editor's own understanding of that file silently wrong and forces it to re-read the whole thing before the
+next change. Everything mechanical is therefore applied exactly once, at commit time, and the only thing surfaced while
+writing is what no tool can fix on its own.
+
+A newly-introduced comment or docstring is never auto-removed, at commit time or otherwise — an AST-level rewrite
+carries edge cases (a typer-command exemption, an f-string false positive) that could silently corrupt a file nobody
+reviews before it lands. A per-edit hook instead nudges the assistant to remove it or make the name say what it said,
+leaving the actual judgment call to whoever wrote the comment.
 
 Running every check against a snapshot deliberately isolated from the real working copy — materialized fresh at commit
 time — replaced an off-the-shelf pre-commit framework entirely; the only thing that framework was actually providing

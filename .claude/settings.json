@@ -44,6 +44,14 @@
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_lint.py"
             ],
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_comments.py"
+            ],
+            "timeout": 30
           }
         ]
       }

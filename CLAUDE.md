@@ -23,5 +23,8 @@ an unusable generated querier file behind) and never hand-edit that directory.
 
 ## Code
 
-No comments and no docstrings in `src/`, `tests/`, `scripts/`, `migrations/` — the name says it, or the code is wrong.
-Only linter-suppression pragmas survive. `pre-commit` strips the rest.
+No comments and no docstrings in `src/`, `tests/`, `scripts/`, `migrations/`, ever — the name says it, or the code is
+wrong. Nothing strips one automatically: writing it is the mistake, not leaving it in the file.
+`.claude/hooks/report_comments.py` nudges on any new one introduced this turn (linter-suppression pragmas are exempt,
+never flagged). Comments and docstrings are fine everywhere else — `.claude/hooks/`, `.github/`, root-level config —
+where a non-obvious decision may need one.
