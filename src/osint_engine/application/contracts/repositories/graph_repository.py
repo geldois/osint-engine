@@ -20,3 +20,7 @@ class GraphRepository(EntityRepository[Graph]):
         self, *, root_id: UUID
     ) -> tuple[EntityRevision[Graph], ...]:
         raise NotImplementedError
+
+    @abstractmethod
+    async def list_all_revisions(self) -> tuple[EntityRevision[Graph], ...]:
+        raise NotImplementedError

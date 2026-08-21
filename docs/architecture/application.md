@@ -95,3 +95,11 @@ new loose-matching piece cover that gap without touching or redefining what any 
 whoever already depends on it. The one accepted cost is the same one a loose, label-free match always carries: it will
 occasionally match something that merely happens to satisfy the checksum by chance, so it stays opt-in per request
 rather than folded into any existing default combination.
+
+The catalog that lists every root ever fetched groups its entries by `root_id`, not by `Graph.id`, even though
+`Graph.id` is the identity `merge()` already keys storage by. `Graph.id` is derived from the exact set of node and edge
+ids it holds, so an expansion that discovers one new node under an already-known root produces a different `Graph.id`
+from the one before it — grouping by that id would split a single root's timeline into two unrelated entries the moment
+it grew, silently losing the earlier revision from view. Grouping by `root_id` instead means the aggregation can't live
+in the repository, which only ever indexes by an entity's own id; it has to walk every stored revision and bucket it by
+the root each one points to, in the use case, where it stays trivial to test without a storage double.

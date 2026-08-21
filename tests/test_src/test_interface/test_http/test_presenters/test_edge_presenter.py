@@ -41,7 +41,10 @@ from osint_engine.domain.entities.nodes.sanction import SanctionID
 from osint_engine.domain.entities.nodes.text_source import TextSourceID
 from osint_engine.domain.value_objects.text_pattern import TextPatternName
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
-from osint_engine.interface.http.presenters.edge_presenter import edge_to_schema
+from osint_engine.interface.http.presenters.edge_presenter import (
+    edge_history_to_schema,
+    edge_to_schema,
+)
 from osint_engine.interface.http.schemas.edge_schema import (
     AddressMentionedInTextSchema,
     CompanyHasCnaeSchema,
@@ -64,7 +67,7 @@ from osint_engine.interface.http.schemas.edge_schema import (
 if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
-    from tests.conftest import MakeFakeEdge
+    from tests.conftest import MakeEntityRevision, MakeFakeEdge
 
 _address_id = AddressID(uuid4())
 
@@ -282,3 +285,30 @@ class TestEdgePresenterErrors:
             edge_to_schema(edge, revision=revision_schema)
 
         assert type(edge).__name__ in str(exception.value)
+
+
+class TestEdgeHistoryPresenter:
+    def test_maps_every_revision_preserving_order(
+        self, make_entity_revision: MakeEntityRevision
+    ) -> None:
+        first = make_entity_revision(entity=_POSSIBLY_MATCHES)
+        second = make_entity_revision(entity=_POSSIBLY_MATCHES)
+
+        result = edge_history_to_schema((first, second))
+
+        assert len(result) == 2
+        assert all(isinstance(item, PossiblyMatchesSchema) for item in result)
+
+    def test_each_item_carries_its_own_revision(
+        self, make_entity_revision: MakeEntityRevision
+    ) -> None:
+        first = make_entity_revision(entity=_POSSIBLY_MATCHES, provider="a")
+        second = make_entity_revision(entity=_POSSIBLY_MATCHES, provider="b")
+
+        result = edge_history_to_schema((first, second))
+
+        assert result[0].revision.provider == "a"
+        assert result[1].revision.provider == "b"
+
+    def test_empty_history_maps_to_an_empty_list(self) -> None:
+        assert edge_history_to_schema(()) == []

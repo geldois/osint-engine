@@ -38,6 +38,29 @@ class TestGetGraphHistoryAuthentication:
         assert response.status_code == 401
 
 
+class TestGetGraphCatalogAuthentication:
+    @pytest.mark.asyncio
+    async def test_missing_token_returns_401(
+        self, fastapi_app_client: AsyncClient
+    ) -> None:
+        response = await fastapi_app_client.get("/graphs")
+
+        assert response.status_code == 401
+
+
+class TestGetGraphCatalogReadAccess:
+    @pytest.mark.asyncio
+    async def test_viewer_token_returns_200_with_no_entries_when_nothing_was_fetched(
+        self, fastapi_app_client: AsyncClient, viewer_token: str
+    ) -> None:
+        response = await fastapi_app_client.get(
+            "/graphs", headers={"Authorization": f"Bearer {viewer_token}"}
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"entries": []}
+
+
 class TestGetGraphHistoryReadAccess:
     @pytest.mark.asyncio
     async def test_viewer_token_returns_200_for_an_unseen_root_id(
@@ -104,3 +127,56 @@ class TestGetGraphHistorySmoke:
 
         assert len(history) == 2
         assert {graph.root_id for graph in history} == {root_id}
+
+
+class TestGetGraphCatalogSmoke:
+    @pytest.mark.asyncio
+    async def test_lists_one_entry_with_revision_count_two_after_force_re_expansion(
+        self,
+        make_container: MakeContainer,
+        make_mem_storage: MakeMemStorage,
+        viewer_token: str,
+    ) -> None:
+        payloads: list[dict[str, object]] = [
+            {"success": True, "data": {"cpf": CPF, "nome": "FULANO DE TAL"}},
+            {"success": True, "data": {"cpf": CPF, "nome": "FULANO DE TAL SILVA"}},
+        ]
+        pending = iter(payloads)
+
+        def handler(request: Request) -> Response:  # noqa: ARG001
+            return Response(200, json=next(pending))
+
+        async with AsyncClient(transport=MockTransport(handler)) as kipflow_http_client:
+            container = make_container(
+                http_client=kipflow_http_client, mem_storage=make_mem_storage()
+            )
+            credential = ExternalCredential(
+                api_key="test-api-key", provider=Provider.KIPFLOW, username="viewer"
+            )
+
+            async with container.uow_factory() as uow:
+                await uow.external_credentials.save(credential=credential)
+
+            app = build_fastapi_app(container=container)
+            headers = {"Authorization": f"Bearer {viewer_token}"}
+
+            async with AsyncClient(
+                transport=ASGITransport(app=app), base_url="http://test"
+            ) as client:
+                first = await client.get(f"/cpf/{CPF}", headers=headers)
+                second = await client.get(f"/cpf/{CPF}?force=true", headers=headers)
+
+                assert first.status_code == 200
+                assert second.status_code == 200
+
+                root_id = GraphSchema.model_validate(first.json()).root_id
+
+                catalog_response = await client.get("/graphs", headers=headers)
+
+        assert catalog_response.status_code == 200
+
+        entries = catalog_response.json()["entries"]
+
+        assert len(entries) == 1
+        assert entries[0]["revision_count"] == 2
+        assert entries[0]["root"]["id"] == str(root_id)

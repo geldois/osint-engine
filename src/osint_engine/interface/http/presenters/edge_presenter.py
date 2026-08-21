@@ -29,6 +29,9 @@ from osint_engine.domain.entities.edges.person_received_sanction import (
 from osint_engine.domain.entities.edges.person_reside_at import PersonResideAt
 from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
+from osint_engine.interface.http.presenters.revision_presenter import (
+    revision_to_schema,
+)
 from osint_engine.interface.http.schemas.edge_schema import (
     AddressMentionedInTextSchema,
     CompanyHasCnaeSchema,
@@ -53,6 +56,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from uuid import UUID
 
+    from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
 
@@ -287,3 +291,12 @@ def edge_to_schema(
         return _EDGE_MAP[type(edge)](edge=edge, revision=revision)
     except KeyError:
         raise UnmappedTypeSchemaError(subject=type(edge)) from None
+
+
+def edge_history_to_schema(
+    revisions: tuple[EntityRevision[Edge[UUID, UUID, UUID]], ...], /
+) -> list[EdgeSchemaUnion]:
+    return [
+        edge_to_schema(revision.entity, revision=revision_to_schema(revision))
+        for revision in revisions
+    ]

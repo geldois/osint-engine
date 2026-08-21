@@ -19,12 +19,12 @@ from osint_engine.interface.http.fastapi.routers.cpf_router import build_cpf_rou
 from osint_engine.interface.http.fastapi.routers.credentials_router import (
     build_credentials_router,
 )
-from osint_engine.interface.http.fastapi.routers.graph_history_router import (
-    build_graph_history_router,
-)
+from osint_engine.interface.http.fastapi.routers.edge_router import build_edge_router
+from osint_engine.interface.http.fastapi.routers.graph_router import build_graph_router
 from osint_engine.interface.http.fastapi.routers.health_router import (
     build_health_router,
 )
+from osint_engine.interface.http.fastapi.routers.node_router import build_node_router
 from osint_engine.interface.http.fastapi.routers.text_ingestion_router import (
     build_text_ingestion_router,
 )
@@ -54,8 +54,10 @@ def build_fastapi_app(*, container: Container) -> FastAPI:
     fastapi_app.include_router(router=build_cnpj_router(container=container))
     fastapi_app.include_router(router=build_cpf_router(container=container))
     fastapi_app.include_router(router=build_credentials_router(container=container))
-    fastapi_app.include_router(router=build_graph_history_router(container=container))
+    fastapi_app.include_router(router=build_edge_router(container=container))
+    fastapi_app.include_router(router=build_graph_router(container=container))
     fastapi_app.include_router(router=build_health_router(container=container))
+    fastapi_app.include_router(router=build_node_router(container=container))
     fastapi_app.include_router(router=build_text_ingestion_router(container=container))
 
     error_handler = build_error_handler(container=container)

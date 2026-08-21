@@ -216,6 +216,37 @@ class TestMemGraphRepositoryListRevisionsByRoot:
         assert found == (matching,)
 
 
+class TestMemGraphRepositoryListAllRevisions:
+    @pytest.mark.asyncio
+    async def test_returns_empty_tuple_when_nothing_was_ever_merged(
+        self,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        repo = make_mem_graph_repository(mem_storage=make_mem_storage())
+
+        assert await repo.list_all_revisions() == ()
+
+    @pytest.mark.asyncio
+    async def test_returns_revisions_across_every_distinct_root(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        first = make_entity_revision(entity=make_graph())
+        second = make_entity_revision(entity=make_graph())
+        repo = make_mem_graph_repository(mem_storage=make_mem_storage())
+
+        await repo.merge(revision=first)
+        await repo.merge(revision=second)
+
+        found = await repo.list_all_revisions()
+
+        assert set(found) == {first, second}
+
+
 class TestMemGraphRepositoryMerge:
     @pytest.mark.asyncio
     async def test_first_write_stores_the_revision_under_id_and_content_id(

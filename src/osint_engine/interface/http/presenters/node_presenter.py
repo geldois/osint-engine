@@ -11,6 +11,9 @@ from osint_engine.domain.entities.nodes.phone import Phone
 from osint_engine.domain.entities.nodes.sanction import Sanction
 from osint_engine.domain.entities.nodes.text_source import TextSource
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
+from osint_engine.interface.http.presenters.revision_presenter import (
+    revision_to_schema,
+)
 from osint_engine.interface.http.schemas.node_schema import (
     AddressSchema,
     CnaeSchema,
@@ -27,6 +30,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from uuid import UUID
 
+    from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.node import Node
     from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
 
@@ -153,3 +157,12 @@ def node_to_schema(node: Node[UUID], /, *, revision: RevisionSchema) -> NodeSche
         return _NODE_MAP[type(node)](node=node, revision=revision)
     except KeyError:
         raise UnmappedTypeSchemaError(subject=type(node)) from None
+
+
+def node_history_to_schema(
+    revisions: tuple[EntityRevision[Node[UUID]], ...], /
+) -> list[NodeSchemaUnion]:
+    return [
+        node_to_schema(revision.entity, revision=revision_to_schema(revision))
+        for revision in revisions
+    ]

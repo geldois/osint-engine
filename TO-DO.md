@@ -24,12 +24,26 @@
 
 - make commits atomic across PostgreSQL credentials and the in-memory graph/user snapshot; `HybridUoW` intentionally
   persists credentials during repository `save()` and only coordinates the in-memory snapshot during `commit()`
+- `GraphRepository.list_all_revisions()` is a full scan; in `MemStorage` it costs the same as `list_revisions_by_root`
+  already does, but a future Neo4j/Postgres adapter needs an aggregated projection instead of replaying this scan per
+  `GET /graphs` request — the projection wasn't designed up front because doing so against a storage that doesn't exist
+  yet would mean guessing its shape; when that adapter lands, `list_all_revisions` is the one method to replace, and
+  `ListGraphCatalog` is its only caller
 
 ## feat(spreadsheet-ingestion)
 
 - `_read_csv` splits rows on a fixed `,` delimiter with no `;`-sniffing; a `;`-delimited export (common from PT-BR
   Excel) degrades cell-level granularity to line-level, though CPF/CNPJ extraction is unaffected since neither pattern
   depends on cell boundaries — revisit only if a real file makes this an actual problem
+
+## fix(api)
+
+- `GET /graphs` returns every graph the process holds, with no notion of owner — `MemStorage` never records which user
+  originated a revision, and no expansion route writes one. Invisible with a single demo operator; the moment a second
+  real user exists, the catalog becomes a cross-account leak and the route needs scoping before it goes public
+- `GET /graphs` has no pagination; `entries` sits in the dozens for a demo. If the catalog grows past a few hundred
+  before the Neo4j migration, the route needs `limit`/`cursor` and the studio client needs to handle a partial response
+  — not designed ahead of the need, since the shape depends on how the client ends up consuming it
 
 ## fix(cpf-reuse-lock)
 

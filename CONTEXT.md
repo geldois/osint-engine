@@ -48,6 +48,10 @@ partial entity
 (`EntityRevision`). Provenance travels with the data; it is stamped by whatever performed the fetch, never by the
 orchestrating workflow. *Avoid*: envelope
 
+**Catalog**: Every distinct `root_id` ever fetched, grouped by that root rather than by `Graph.id` — a **Graph**'s id
+changes the moment a new node is discovered under the same root, so grouping by it would lose that expansion's place in
+the timeline (`GraphCatalogSchema`).
+
 **Selection policy**: Decides which revision of the same entity counts as current. Default: newest `fetched_at`.
 *Avoid*: conflict resolution, dedup rule
 
@@ -81,6 +85,7 @@ gateway, api wrapper
 - A **Graph** holds one root **Node**, many **Nodes**, and many **Edges**
 - An **Edge** connects exactly two **Nodes**, and both are **Entities**
 - A **Revision** wraps one **Entity** and names one **Provider**
+- A **Catalog** entry groups every **Revision** of every **Graph** sharing one root_id
 - **Expansion** and **Ingestion** both produce a **Graph**
 - **Possible match** is an **Edge**, produced after **Expansion** or **Ingestion**, never during
 - **Ingestion** creates a **Stub** only for an identifier no **Node** already carries

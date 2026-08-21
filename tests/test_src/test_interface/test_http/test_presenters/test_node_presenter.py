@@ -14,7 +14,10 @@ from osint_engine.domain.entities.nodes.phone import Phone
 from osint_engine.domain.entities.nodes.sanction import Sanction
 from osint_engine.domain.entities.nodes.text_source import TextSource
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
-from osint_engine.interface.http.presenters.node_presenter import node_to_schema
+from osint_engine.interface.http.presenters.node_presenter import (
+    node_history_to_schema,
+    node_to_schema,
+)
 from osint_engine.interface.http.schemas.node_schema import (
     AddressSchema,
     CnaeSchema,
@@ -32,7 +35,7 @@ if TYPE_CHECKING:
 
     from osint_engine.domain.entities.bases.node import Node
     from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
-    from tests.conftest import MakeFakeNode
+    from tests.conftest import MakeEntityRevision, MakeFakeNode
 
 
 _ADDRESS = Address(
@@ -242,3 +245,30 @@ class TestNodePresenterErrors:
             node_to_schema(node, revision=revision_schema)
 
         assert type(node).__name__ in str(exception.value)
+
+
+class TestNodeHistoryPresenter:
+    def test_maps_every_revision_preserving_order(
+        self, make_entity_revision: MakeEntityRevision
+    ) -> None:
+        first = make_entity_revision(entity=_PERSON)
+        second = make_entity_revision(entity=_PERSON)
+
+        result = node_history_to_schema((first, second))
+
+        assert len(result) == 2
+        assert all(isinstance(item, PersonSchema) for item in result)
+
+    def test_each_item_carries_its_own_revision(
+        self, make_entity_revision: MakeEntityRevision
+    ) -> None:
+        first = make_entity_revision(entity=_PERSON, provider="text_ingestion")
+        second = make_entity_revision(entity=_PERSON, provider="kipflow")
+
+        result = node_history_to_schema((first, second))
+
+        assert result[0].revision.provider == "text_ingestion"
+        assert result[1].revision.provider == "kipflow"
+
+    def test_empty_history_maps_to_an_empty_list(self) -> None:
+        assert node_history_to_schema(()) == []

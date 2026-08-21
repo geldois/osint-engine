@@ -9,6 +9,7 @@ from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
 from osint_engine.domain.entities.nodes.cnae import Cnae
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.interface.http.presenters.graph_presenter import (
+    graph_catalog_to_schema,
     graph_to_schema,
     revision_to_schema,
 )
@@ -147,3 +148,79 @@ class TestRevisionPresenter:
         assert schema.fetched_at == fetched_at
         assert schema.merged_at is None
         assert schema.provider == "kipflow"
+
+
+class TestGraphCatalogPresenter:
+    def test_entry_reports_extremes_count_and_root(
+        self, make_entity_revision: MakeEntityRevision
+    ) -> None:
+        early = make_entity_revision(
+            entity=_GRAPH, fetched_at=datetime(2026, 1, 1, tzinfo=UTC)
+        )
+        late = make_entity_revision(
+            entity=_GRAPH, fetched_at=datetime(2026, 6, 1, tzinfo=UTC)
+        )
+
+        schema = graph_catalog_to_schema(((early, late),))
+
+        assert len(schema.entries) == 1
+        entry = schema.entries[0]
+        assert entry.first_fetched_at == early.fetched_at
+        assert entry.last_fetched_at == late.fetched_at
+        assert entry.revision_count == 2
+        assert entry.root.id == _COMPANY.id
+        assert entry.root.revision.fetched_at == late.fetched_at
+
+    def test_providers_are_sorted_and_deduplicated(
+        self, make_entity_revision: MakeEntityRevision
+    ) -> None:
+        revisions = (
+            make_entity_revision(
+                entity=_GRAPH,
+                provider="text_ingestion",
+                fetched_at=datetime(2026, 1, 1, tzinfo=UTC),
+            ),
+            make_entity_revision(
+                entity=_GRAPH,
+                provider="kipflow",
+                fetched_at=datetime(2026, 2, 1, tzinfo=UTC),
+            ),
+            make_entity_revision(
+                entity=_GRAPH,
+                provider="kipflow",
+                fetched_at=datetime(2026, 3, 1, tzinfo=UTC),
+            ),
+        )
+
+        schema = graph_catalog_to_schema((revisions,))
+
+        assert schema.entries[0].providers == ["kipflow", "text_ingestion"]
+
+    def test_root_is_the_only_node_when_the_graph_has_a_single_node(
+        self, make_entity_revision: MakeEntityRevision
+    ) -> None:
+        lone_graph = Graph(
+            nodes=frozenset({_CNAE}), edges=frozenset(), root_id=_CNAE.id
+        )
+        revision = make_entity_revision(entity=lone_graph)
+
+        schema = graph_catalog_to_schema(((revision,),))
+
+        assert schema.entries[0].root.id == _CNAE.id
+
+    def test_multiple_entries_are_each_mapped_independently(
+        self, make_entity_revision: MakeEntityRevision
+    ) -> None:
+        other_graph = Graph(
+            nodes=frozenset({_CNAE}), edges=frozenset(), root_id=_CNAE.id
+        )
+        entry_a = (make_entity_revision(entity=_GRAPH),)
+        entry_b = (make_entity_revision(entity=other_graph),)
+
+        schema = graph_catalog_to_schema((entry_a, entry_b))
+
+        assert len(schema.entries) == 2
+        assert {entry.root.id for entry in schema.entries} == {
+            _COMPANY.id,
+            _CNAE.id,
+        }
