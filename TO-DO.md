@@ -64,10 +64,7 @@
   (higher overnight); with two Portal-backed routes (`/cnep`, `/ceis`) the aggregate can still exceed that ceiling, so
   the per-route limiter protects this server but not the shared upstream token — Portal may `429` the token first under
   load. Deliberate for the visitor-only demo; tighten to a combined cross-route Portal bucket under 90/min if real
-  traffic trips it. `/cpf` moved off Portal entirely (KipFlow) and carries its own upstream ceiling instead (5/s ·
-  100/min · 1000/hour) — our existing 100/min per-route limiter already sits at KipFlow's own per-minute ceiling, but
-  nothing stops a burst past KipFlow's 5/s window within that minute; revisit if a real burst ever trips KipFlow's `429`
-  before ours does
+  traffic trips it
 
 ## fix(text-ingestion)
 

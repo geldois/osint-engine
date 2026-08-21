@@ -37,7 +37,8 @@ flowchart LR
     FastAPI --> ErrorHandler("Error Handler")
     FastAPI --> AuthRouter("Auth Router")
     FastAPI --> CNPJRouter("CNPJ Router")
-    FastAPI --> ExpansionRouters("CPF / CNEP / CEIS Routers")
+    FastAPI --> ExpansionRouters("CNEP / CEIS Routers")
+    FastAPI --> CPFRouter("CPF Router")
     FastAPI --> GraphHistoryRouter("Graph History Router")
     FastAPI --> CredentialsRouter("Credentials Router")
     FastAPI --> HealthRouter("Health Router")
@@ -50,7 +51,12 @@ flowchart LR
     CNPJRouter --> GetCNPJ("GET /cnpj/{cnpj}")
     ExpansionRouters --> JwtGuard("JWT Guard")
     ExpansionRouters --> ExpansionRateLimit
-    ExpansionRouters --> GetExpansion("GET /cpf · /cnep · /ceis")
+    ExpansionRouters --> GetExpansion("GET /cnep · /ceis")
+    CPFRouter --> RoleGuard
+    CPFRouter --> ExpansionRateLimit
+    CPFRouter --> GetCPF("GET /cpf/{cpf}")
+    CPFRouter --> PostCPFBatch("POST /cpf/batch · /cpf/batch/estimate")
+    CPFRouter --> BatchRateLimit("Batch Rate Limit · 10 per min, shared")
     GraphHistoryRouter --> JwtGuard
     GraphHistoryRouter --> ExpansionRateLimit
     GraphHistoryRouter --> GetGraphHistory("GET /graphs/{root_id}/history")
@@ -76,6 +82,8 @@ flowchart LR
     UseCases --> AuthenticateUser("AuthenticateUser")
     UseCases --> ExpandByCNPJ("ExpandByCNPJ")
     UseCases --> ExpandByCPF("ExpandByCPF")
+    UseCases --> ExpandByCPFBatch("ExpandByCPFBatch")
+    UseCases --> EstimateCPFBatch("EstimateCPFBatch")
     UseCases --> ExpandByPortal("ExpandBy CNEP / CEIS")
     UseCases --> ListGraphHistory("ListGraphHistory")
     UseCases --> CredentialUseCases("List / Save ExternalCredential")
@@ -83,6 +91,7 @@ flowchart LR
     UseCases --> ListPatternSets("ListTextPatterns")
     Services --> PyJWTService("PyJWTService")
     Services --> SpreadsheetReader("read_spreadsheet_text")
+    Services --> KipFlowPacing("KipFlow Pacing · per API key · 5/s · 100/min · 1000/h")
     Fetchers --> CNPJFetcher("BrasilAPICNPJv1Fetcher")
     Fetchers --> KipFlowFetcher("KipFlowCPFFetcher")
     Fetchers --> PortalFetchers("Portal da Transparência Fetchers")
@@ -90,8 +99,10 @@ flowchart LR
     PostToken --> AuthenticateUser
     PostViewerToken --> PyJWTService
     GetCNPJ --> ExpandByCNPJ
-    GetExpansion --> ExpandByCPF
     GetExpansion --> ExpandByPortal
+    GetCPF --> ExpandByCPF
+    PostCPFBatch --> ExpandByCPFBatch
+    PostCPFBatch --> EstimateCPFBatch
     GetGraphHistory --> ListGraphHistory
     PostCredential --> CredentialUseCases
     GetCredentials --> CredentialUseCases
@@ -235,7 +246,35 @@ Returns a `GraphSchema` rooted at the `Person` the CPF resolves to, including `r
 when the provider has them. The current provider is [KipFlow](https://kipflow.io), a paid API — a repeated expansion of
 the same CPF returns `409` instead of calling the provider again, unless `force=true` is passed. Returns `204` (empty
 body) when the provider has no record for the CPF. Requires the caller's own saved `KIPFLOW` credential, via
-`POST /credentials`.
+`POST /credentials`. Available to `ADMIN` tokens only.
+
+```http
+POST /cpf/batch
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "cpfs": ["11144477735", "..."], "force": false }
+```
+
+Expands up to 50 CPFs in one request, every expansion in its own transaction — one item's failure never discards
+another's paid fetch. The response carries a single `GraphSchema` union of everything that expanded (`null` when nothing
+did) plus one `outcome` per deduplicated input CPF (`expanded`, `already_fetched`, `failed`, `empty` or `invalid`), in
+input order, each echoing the input string verbatim. Always `200` when the batch was processed, even when every item
+failed — the per-item result lives in `outcomes`, never in the HTTP status. `ADMIN` only.
+
+```http
+POST /cpf/batch/estimate
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "cpfs": ["11144477735", "..."] }
+```
+
+The read-only pre-flight for a batch: sorts the deduplicated CPFs into `already_fetched`, `billable` and `invalid`, and
+returns `wait_seconds` — the forecast, rounded up, for the caller's own KipFlow quota to release the billable calls,
+counting anything already queued ahead. `0` when nothing is billable or the caller has no `KIPFLOW` credential saved.
+`force` mirrors the batch's: with `force: true`, already-fetched CPFs count as billable, since the batch would spend
+calls on them. `ADMIN` only.
 
 ```http
 GET /graphs/{root_id}/history
@@ -313,6 +352,8 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 | `POST /auth/viewer-token`       | 20 / min   | Client IP               |
 | `GET /cnpj/{cnpj}`              | 100 / min  | Shared per-route bucket |
 | `GET /cpf/{cpf}`                | 100 / min  | Shared per-route bucket |
+| `POST /cpf/batch`               | 10 / min   | Shared per-route bucket |
+| `POST /cpf/batch/estimate`      | 10 / min   | Shared per-route bucket |
 | `GET /graphs/{root_id}/history` | 100 / min  | Shared per-route bucket |
 | `GET /cnep/{cpf_or_cnpj}`       | 100 / min  | Shared per-route bucket |
 | `GET /ceis/{cpf_or_cnpj}`       | 100 / min  | Shared per-route bucket |
@@ -323,7 +364,12 @@ A `429` response includes a `Retry-After` header (seconds) and is exposed cross-
 `Access-Control-Expose-Headers`. See `docs/architecture/interface.md`. Each expansion route has one global bucket shared
 across all callers — a fixed key, not per-IP or per-role — so the combined outbound traffic every visitor generates
 together is capped against the upstream API's per-minute quota, since every request proxies through this deployment's
-own IP/token. The health endpoints are unthrottled.
+own IP/token. The two batch routes share their own `cpf_batch` bucket instead of the single-CPF one: one batch request
+drives up to 50 paid provider calls, so the HTTP quota and the outbound quota must not share a counter. Outbound KipFlow
+traffic is additionally paced client-side against KipFlow's own documented per-API-key limits — a 5/s burst, a 100/min
+average and a 1000/hour volume — by an in-memory queue keyed per credential: a fetch that would cross any window waits
+its turn in FIFO order instead of dropping or overrunning, and `POST /cpf/batch/estimate` surfaces how long that wait
+would be before the caller pays for anything. The health endpoints are unthrottled.
 
 ### Errors
 

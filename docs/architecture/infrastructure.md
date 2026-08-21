@@ -48,6 +48,17 @@ boundary, not a temporary hack — every persistence contract the layers above d
 real, working implementation, so introducing a different backend later is a matter of writing a new adapter against the
 same contracts, not changing anything above this layer.
 
+The paid CPF provider publishes per-API-key limits across three windows — a 5-per-second burst, a 100-per-minute average
+and a 1000-per-hour volume — and the engine paces every outbound call against them from the client side instead of
+discovering the ceiling through 429s. Each credential gets its own in-memory queue of three token buckets fed at the
+documented rates; a fetch that would cross any window waits in arrival order rather than dropping, nothing re-tries on
+the caller's behalf, and the batch pre-flight reads the queue's current deficit so a caller knows the wait before paying
+for anything. The buckets start full rather than dripping from empty: the burst capacity mirrors the provider's own
+published limits and keeps small demo batches fast, at the accepted cost that the first requests of a fresh process may
+front-load a window up to its burst allowance while the long-run rate stays at or under the documented average. The
+state lives in one process only — a restart loses the queue, but never paid work, because each expansion commits the
+moment it completes and re-submitting a batch costs nothing twice.
+
 The durable, database-backed storage stays close to raw hand-written queries by explicit choice, favoring inspectability
 and a learning goal over the convenience of an abstraction that writes the queries automatically; schema changes are
 plain, ordered, reversible migration files rather than a framework-specific migration language, so they carry no

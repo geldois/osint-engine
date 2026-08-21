@@ -29,6 +29,13 @@ edge pointing outside the node set is rejected there, never later. *Avoid*: resu
 **Expansion**: The workflow that takes one official identifier (CPF, CNPJ, CEIS, CNEP) and returns a graph of everything
 connected to it. *Avoid*: enrichment, crawl, search
 
+**Batch**: One request expanding many CPFs at once, every expansion in its own transaction with its own outcome, so one
+item's failure never discards another's paid fetch. *Avoid*: bulk
+
+**Estimate**: The read-only pre-flight that sorts a batch's CPFs into three buckets — already fetched, billable or
+invalid — so the caller learns which items would cost a provider call, and how long the provider's rate-limited queue
+would hold the billable ones, before paying for any. *Avoid*: quote, preview
+
 **Ingestion**: The workflow that scans free text for anything shaped like an official identifier, validates each
 candidate by that format's own checksum rule, and links only exact resolutions. Never fuzzy. *Avoid*: parsing, scraping,
 NER
@@ -67,9 +74,9 @@ masked, value — carrying the overlap as a confidence score. It never merges, r
 judgment stays with whoever reviews the graph. *Avoid*: duplicate, alias, fuzzy match, candidate merge, name match
 
 **Domain Service**: Stateless domain logic that operates on primitive or Value Object inputs but doesn't naturally
-belong to any Entity or Value Object — `document_checksum`, `normalization`. Distinct from the application layer's own
-use of "Service" (`JWTService`, an injectable port for a technical capability): a Domain Service has no interface and
-nothing to inject, and lives in `domain/`, never `application/contracts/`. *Avoid*: helper, util
+belong to any Entity or Value Object — `document_checksum`, `normalization`, `sanitization`. Distinct from the
+application layer's own use of "Service" (`JWTService`, an injectable port for a technical capability): a Domain Service
+has no interface and nothing to inject, and lives in `domain/`, never `application/contracts/`. *Avoid*: helper, util
 
 **Fetcher**: The application-layer contract for one external endpoint (`CPFFetcher`, `CNPJFetcher`, `CEISFetcher`,
 `CNEPFetcher`, `CEPFetcher`). The concrete client lives in infrastructure and this layer never names it. *Avoid*:
@@ -87,6 +94,8 @@ gateway, api wrapper
 - A **Revision** wraps one **Entity** and names one **Provider**
 - A **Catalog** entry groups every **Revision** of every **Graph** sharing one root_id
 - **Expansion** and **Ingestion** both produce a **Graph**
+- A **Batch** runs many **Expansion**s, one outcome per item
+- An **Estimate** classifies a **Batch**'s CPFs before any **Expansion** runs
 - **Possible match** is an **Edge**, produced after **Expansion** or **Ingestion**, never during
 - **Ingestion** creates a **Stub** only for an identifier no **Node** already carries
 - A **Pattern set** groups one or more **Pattern name**s under one shortcut id
