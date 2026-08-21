@@ -28,8 +28,8 @@ def build_get_graph_history_handler(
 
         use_case = container.use_cases.list_graph_history(root_id=root_id)
 
-        graphs = await use_case.execute()
+        revisions = await use_case.execute()
 
-        return [graph_to_schema(graph) for graph in graphs]
+        return [graph_to_schema(revision) for revision in revisions]
 
     return get_graph_history

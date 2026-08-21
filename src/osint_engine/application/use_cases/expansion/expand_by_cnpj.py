@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, override
 from structlog.stdlib import get_logger
 
 from osint_engine.application.contracts.use_case import Query
+from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.domain.entities.bases.graph import Graph
 
 if TYPE_CHECKING:
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
 _logger = get_logger()
 
 
-class ExpandByCNPJ(Query[Graph]):
+class ExpandByCNPJ(Query[EntityRevision[Graph]]):
     uow_factory: Callable[[], UoW]
     cnpj_fetcher: CNPJFetcher
     cnpj: str
@@ -28,14 +29,14 @@ class ExpandByCNPJ(Query[Graph]):
         super().__init__(uow_factory=uow_factory, cnpj_fetcher=cnpj_fetcher, cnpj=cnpj)
 
     @override
-    async def execute(self) -> Graph:
+    async def execute(self) -> EntityRevision[Graph]:
         _logger.info("cnpj.expansion.start", cnpj=self.cnpj)
 
         async with self.uow_factory() as uow:
             revision = await self.cnpj_fetcher.fetch(cnpj=self.cnpj)
 
-            await uow.graphs.merge(revision=revision)
+            stored = await uow.graphs.merge(revision=revision)
 
         _logger.info("cnpj.expansion.success", cnpj=self.cnpj)
 
-        return revision.entity
+        return stored

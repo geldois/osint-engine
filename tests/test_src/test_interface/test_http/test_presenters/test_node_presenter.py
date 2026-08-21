@@ -31,6 +31,7 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from osint_engine.domain.entities.bases.node import Node
+    from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
     from tests.conftest import MakeFakeNode
 
 
@@ -107,13 +108,18 @@ class TestNodePresenterDispatch:
         self,
         node: Node[UUID],
         expected_schema_class: type[NodeSchema[Node[UUID]]],
+        revision_schema: RevisionSchema,
     ) -> None:
-        assert isinstance(node_to_schema(node), expected_schema_class)
+        assert isinstance(
+            node_to_schema(node, revision=revision_schema), expected_schema_class
+        )
 
 
 class TestNodePresenterFieldMapping:
-    def test_address_fields_are_correctly_mapped(self) -> None:
-        result = node_to_schema(_ADDRESS)
+    def test_address_fields_are_correctly_mapped(
+        self, revision_schema: RevisionSchema
+    ) -> None:
+        result = node_to_schema(_ADDRESS, revision=revision_schema)
 
         assert isinstance(result, AddressSchema)
 
@@ -133,8 +139,10 @@ class TestNodePresenterFieldMapping:
 
         assert result.street == _ADDRESS.street
 
-    def test_company_fields_are_correctly_mapped(self) -> None:
-        result = node_to_schema(_COMPANY)
+    def test_company_fields_are_correctly_mapped(
+        self, revision_schema: RevisionSchema
+    ) -> None:
+        result = node_to_schema(_COMPANY, revision=revision_schema)
 
         assert isinstance(result, CompanySchema)
 
@@ -162,8 +170,10 @@ class TestNodePresenterFieldMapping:
 
         assert result.size_category == _COMPANY.size_category
 
-    def test_person_fields_are_correctly_mapped(self) -> None:
-        result = node_to_schema(_PERSON)
+    def test_person_fields_are_correctly_mapped(
+        self, revision_schema: RevisionSchema
+    ) -> None:
+        result = node_to_schema(_PERSON, revision=revision_schema)
 
         assert isinstance(result, PersonSchema)
 
@@ -181,8 +191,10 @@ class TestNodePresenterFieldMapping:
 
         assert result.registration_status == _PERSON.registration_status
 
-    def test_sanction_fields_are_correctly_mapped(self) -> None:
-        result = node_to_schema(_SANCTION)
+    def test_sanction_fields_are_correctly_mapped(
+        self, revision_schema: RevisionSchema
+    ) -> None:
+        result = node_to_schema(_SANCTION, revision=revision_schema)
 
         assert isinstance(result, SanctionSchema)
 
@@ -208,8 +220,10 @@ class TestNodePresenterFieldMapping:
 
         assert result.start_date == _SANCTION.start_date
 
-    def test_text_provider_fields_are_correctly_mapped(self) -> None:
-        result = node_to_schema(_TEXT_SOURCE)
+    def test_text_provider_fields_are_correctly_mapped(
+        self, revision_schema: RevisionSchema
+    ) -> None:
+        result = node_to_schema(_TEXT_SOURCE, revision=revision_schema)
 
         assert isinstance(result, TextSourceSchema)
 
@@ -219,10 +233,12 @@ class TestNodePresenterFieldMapping:
 
 
 class TestNodePresenterErrors:
-    def test_raises_for_unmapped_node_type(self, make_fake_node: MakeFakeNode) -> None:
+    def test_raises_for_unmapped_node_type(
+        self, make_fake_node: MakeFakeNode, revision_schema: RevisionSchema
+    ) -> None:
         node = make_fake_node()
 
         with pytest.raises(UnmappedTypeSchemaError) as exception:
-            node_to_schema(node)
+            node_to_schema(node, revision=revision_schema)
 
         assert type(node).__name__ in str(exception.value)

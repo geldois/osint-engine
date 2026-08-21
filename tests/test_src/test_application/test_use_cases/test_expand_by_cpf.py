@@ -69,7 +69,7 @@ def _make_kipflow_graph() -> Graph:
 
 class TestExpandByCPFOrchestration:
     @pytest.mark.asyncio
-    async def test_returns_the_graph_wrapped_by_the_fetched_revision(
+    async def test_returns_the_revision_the_repository_stored(
         self,
         make_entity_revision: MakeEntityRevision,
         make_external_credential: MakeExternalCredential,
@@ -95,7 +95,8 @@ class TestExpandByCPFOrchestration:
 
         result = await use_case.execute()
 
-        assert result is revision.entity
+        assert result is not None
+        assert result.entity is revision.entity
 
     @pytest.mark.asyncio
     async def test_persists_the_fetched_revision_to_storage(

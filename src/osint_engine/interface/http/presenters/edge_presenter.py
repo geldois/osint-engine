@@ -54,13 +54,16 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from osint_engine.domain.entities.bases.edge import Edge
+    from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
 
 
 def address_mentioned_in_text_to_schema(
-    *, edge: AddressMentionedInText
+    *, edge: AddressMentionedInText, revision: RevisionSchema
 ) -> AddressMentionedInTextSchema:
     return AddressMentionedInTextSchema(
+        content_id=edge.content_id,
         id=edge.id,
+        revision=revision,
         matched_field=edge.matched_field,
         pattern_name=edge.pattern_name.name,
         source_id=edge.source_id,
@@ -68,41 +71,73 @@ def address_mentioned_in_text_to_schema(
     )
 
 
-def company_has_cnae_to_schema(*, edge: CompanyHasCnae) -> CompanyHasCnaeSchema:
+def company_has_cnae_to_schema(
+    *, edge: CompanyHasCnae, revision: RevisionSchema
+) -> CompanyHasCnaeSchema:
     return CompanyHasCnaeSchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
     )
 
 
-def company_has_email_to_schema(*, edge: CompanyHasEmail) -> CompanyHasEmailSchema:
+def company_has_email_to_schema(
+    *, edge: CompanyHasEmail, revision: RevisionSchema
+) -> CompanyHasEmailSchema:
     return CompanyHasEmailSchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
     )
 
 
-def company_has_member_to_schema(*, edge: CompanyHasMember) -> CompanyHasMemberSchema:
+def company_has_member_to_schema(
+    *, edge: CompanyHasMember, revision: RevisionSchema
+) -> CompanyHasMemberSchema:
     return CompanyHasMemberSchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
     )
 
 
-def company_has_phone_to_schema(*, edge: CompanyHasPhone) -> CompanyHasPhoneSchema:
+def company_has_phone_to_schema(
+    *, edge: CompanyHasPhone, revision: RevisionSchema
+) -> CompanyHasPhoneSchema:
     return CompanyHasPhoneSchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
     )
 
 
-def company_located_at_to_schema(*, edge: CompanyLocatedAt) -> CompanyLocatedAtSchema:
+def company_located_at_to_schema(
+    *, edge: CompanyLocatedAt, revision: RevisionSchema
+) -> CompanyLocatedAtSchema:
     return CompanyLocatedAtSchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
     )
 
 
 def company_mentioned_in_text_to_schema(
-    *, edge: CompanyMentionedInText
+    *, edge: CompanyMentionedInText, revision: RevisionSchema
 ) -> CompanyMentionedInTextSchema:
     return CompanyMentionedInTextSchema(
+        content_id=edge.content_id,
         id=edge.id,
+        revision=revision,
         matched_field=edge.matched_field,
         pattern_name=edge.pattern_name.name,
         source_id=edge.source_id,
@@ -111,10 +146,12 @@ def company_mentioned_in_text_to_schema(
 
 
 def company_owns_company_to_schema(
-    *, edge: CompanyOwnsCompany
+    *, edge: CompanyOwnsCompany, revision: RevisionSchema
 ) -> CompanyOwnsCompanySchema:
     return CompanyOwnsCompanySchema(
+        content_id=edge.content_id,
         id=edge.id,
+        revision=revision,
         entry_date=edge.entry_date,
         role=edge.role,
         source_id=edge.source_id,
@@ -123,30 +160,48 @@ def company_owns_company_to_schema(
 
 
 def company_received_sanction_to_schema(
-    *, edge: CompanyReceivedSanction
+    *, edge: CompanyReceivedSanction, revision: RevisionSchema
 ) -> CompanyReceivedSanctionSchema:
     return CompanyReceivedSanctionSchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
     )
 
 
-def person_has_email_to_schema(*, edge: PersonHasEmail) -> PersonHasEmailSchema:
+def person_has_email_to_schema(
+    *, edge: PersonHasEmail, revision: RevisionSchema
+) -> PersonHasEmailSchema:
     return PersonHasEmailSchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
     )
 
 
-def person_has_phone_to_schema(*, edge: PersonHasPhone) -> PersonHasPhoneSchema:
+def person_has_phone_to_schema(
+    *, edge: PersonHasPhone, revision: RevisionSchema
+) -> PersonHasPhoneSchema:
     return PersonHasPhoneSchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
     )
 
 
 def person_mentioned_in_text_to_schema(
-    *, edge: PersonMentionedInText
+    *, edge: PersonMentionedInText, revision: RevisionSchema
 ) -> PersonMentionedInTextSchema:
     return PersonMentionedInTextSchema(
+        content_id=edge.content_id,
         id=edge.id,
+        revision=revision,
         matched_field=edge.matched_field,
         pattern_name=edge.pattern_name.name,
         source_id=edge.source_id,
@@ -155,10 +210,12 @@ def person_mentioned_in_text_to_schema(
 
 
 def person_owns_company_to_schema(
-    *, edge: PersonOwnsCompany
+    *, edge: PersonOwnsCompany, revision: RevisionSchema
 ) -> PersonOwnsCompanySchema:
     return PersonOwnsCompanySchema(
+        content_id=edge.content_id,
         id=edge.id,
+        revision=revision,
         entry_date=edge.entry_date,
         role=edge.role,
         source_id=edge.source_id,
@@ -167,22 +224,36 @@ def person_owns_company_to_schema(
 
 
 def person_received_sanction_to_schema(
-    *, edge: PersonReceivedSanction
+    *, edge: PersonReceivedSanction, revision: RevisionSchema
 ) -> PersonReceivedSanctionSchema:
     return PersonReceivedSanctionSchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
-    )
-
-
-def person_reside_at_to_schema(*, edge: PersonResideAt) -> PersonResideAtSchema:
-    return PersonResideAtSchema(
-        id=edge.id, source_id=edge.source_id, target_id=edge.target_id
-    )
-
-
-def possibly_matches_to_schema(*, edge: PossiblyMatches[UUID]) -> PossiblyMatchesSchema:
-    return PossiblyMatchesSchema(
+        content_id=edge.content_id,
         id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
+    )
+
+
+def person_reside_at_to_schema(
+    *, edge: PersonResideAt, revision: RevisionSchema
+) -> PersonResideAtSchema:
+    return PersonResideAtSchema(
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
+    )
+
+
+def possibly_matches_to_schema(
+    *, edge: PossiblyMatches[UUID], revision: RevisionSchema
+) -> PossiblyMatchesSchema:
+    return PossiblyMatchesSchema(
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
         confidence=edge.confidence,
         source_id=edge.source_id,
         target_id=edge.target_id,
@@ -209,8 +280,10 @@ _EDGE_MAP: dict[type[Edge[UUID, UUID, UUID]], Callable[..., EdgeSchemaUnion]] = 
 }
 
 
-def edge_to_schema(edge: Edge[UUID, UUID, UUID], /) -> EdgeSchemaUnion:
+def edge_to_schema(
+    edge: Edge[UUID, UUID, UUID], /, *, revision: RevisionSchema
+) -> EdgeSchemaUnion:
     try:
-        return _EDGE_MAP[type(edge)](edge=edge)
+        return _EDGE_MAP[type(edge)](edge=edge, revision=revision)
     except KeyError:
         raise UnmappedTypeSchemaError(subject=type(edge)) from None

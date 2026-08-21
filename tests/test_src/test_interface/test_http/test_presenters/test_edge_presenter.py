@@ -63,6 +63,7 @@ from osint_engine.interface.http.schemas.edge_schema import (
 
 if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
+    from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
     from tests.conftest import MakeFakeEdge
 
 _address_id = AddressID(uuid4())
@@ -200,13 +201,18 @@ class TestEdgePresenterDispatch:
         self,
         edge: Edge[UUID, UUID, UUID],
         expected_schema_class: type[EdgeSchema[Edge[UUID, UUID, UUID]]],
+        revision_schema: RevisionSchema,
     ) -> None:
-        assert isinstance(edge_to_schema(edge), expected_schema_class)
+        assert isinstance(
+            edge_to_schema(edge, revision=revision_schema), expected_schema_class
+        )
 
 
 class TestEdgePresenterFieldMapping:
-    def test_base_edge_fields_are_correctly_mapped(self) -> None:
-        result = edge_to_schema(_COMPANY_HAS_CNAE)
+    def test_base_edge_fields_are_correctly_mapped(
+        self, revision_schema: RevisionSchema
+    ) -> None:
+        result = edge_to_schema(_COMPANY_HAS_CNAE, revision=revision_schema)
 
         assert isinstance(result, CompanyHasCnaeSchema)
 
@@ -216,8 +222,10 @@ class TestEdgePresenterFieldMapping:
 
         assert result.target_id == _COMPANY_HAS_CNAE.target_id
 
-    def test_person_owns_company_extra_fields_are_correctly_mapped(self) -> None:
-        result = edge_to_schema(_PERSON_OWNS_COMPANY)
+    def test_person_owns_company_extra_fields_are_correctly_mapped(
+        self, revision_schema: RevisionSchema
+    ) -> None:
+        result = edge_to_schema(_PERSON_OWNS_COMPANY, revision=revision_schema)
 
         assert isinstance(result, PersonOwnsCompanySchema)
 
@@ -231,8 +239,10 @@ class TestEdgePresenterFieldMapping:
 
         assert result.role == _PERSON_OWNS_COMPANY.role
 
-    def test_person_mentioned_in_text_extra_fields_are_correctly_mapped(self) -> None:
-        result = edge_to_schema(_PERSON_MENTIONED_IN_TEXT)
+    def test_person_mentioned_in_text_extra_fields_are_correctly_mapped(
+        self, revision_schema: RevisionSchema
+    ) -> None:
+        result = edge_to_schema(_PERSON_MENTIONED_IN_TEXT, revision=revision_schema)
 
         assert isinstance(result, PersonMentionedInTextSchema)
 
@@ -246,8 +256,10 @@ class TestEdgePresenterFieldMapping:
 
         assert result.pattern_name == _PERSON_MENTIONED_IN_TEXT.pattern_name.name
 
-    def test_possibly_matches_extra_fields_are_correctly_mapped(self) -> None:
-        result = edge_to_schema(_POSSIBLY_MATCHES)
+    def test_possibly_matches_extra_fields_are_correctly_mapped(
+        self, revision_schema: RevisionSchema
+    ) -> None:
+        result = edge_to_schema(_POSSIBLY_MATCHES, revision=revision_schema)
 
         assert isinstance(result, PossiblyMatchesSchema)
 
@@ -261,10 +273,12 @@ class TestEdgePresenterFieldMapping:
 
 
 class TestEdgePresenterErrors:
-    def test_raises_for_unmapped_edge_type(self, make_fake_edge: MakeFakeEdge) -> None:
+    def test_raises_for_unmapped_edge_type(
+        self, make_fake_edge: MakeFakeEdge, revision_schema: RevisionSchema
+    ) -> None:
         edge = make_fake_edge()
 
         with pytest.raises(UnmappedTypeSchemaError) as exception:
-            edge_to_schema(edge)
+            edge_to_schema(edge, revision=revision_schema)
 
         assert type(edge).__name__ in str(exception.value)

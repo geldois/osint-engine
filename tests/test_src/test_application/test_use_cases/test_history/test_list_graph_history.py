@@ -77,7 +77,7 @@ class TestListGraphHistoryOrchestration:
 
         graphs = await use_case.execute()
 
-        assert graphs == (early.entity, late.entity)
+        assert graphs == (early, late)
 
     @pytest.mark.asyncio
     async def test_excludes_graphs_from_a_different_root_id(
@@ -100,4 +100,4 @@ class TestListGraphHistoryOrchestration:
 
         graphs = await use_case.execute()
 
-        assert graphs == (matching.entity,)
+        assert graphs == (matching,)

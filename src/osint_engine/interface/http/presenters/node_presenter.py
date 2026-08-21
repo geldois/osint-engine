@@ -28,11 +28,14 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from osint_engine.domain.entities.bases.node import Node
+    from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
 
 
-def address_to_schema(*, node: Address) -> AddressSchema:
+def address_to_schema(*, node: Address, revision: RevisionSchema) -> AddressSchema:
     return AddressSchema(
+        content_id=node.content_id,
         id=node.id,
+        revision=revision,
         cep=node.cep,
         city=node.city,
         complement=node.complement,
@@ -43,13 +46,21 @@ def address_to_schema(*, node: Address) -> AddressSchema:
     )
 
 
-def cnae_to_schema(*, node: Cnae) -> CnaeSchema:
-    return CnaeSchema(id=node.id, code=node.code, description=node.description)
-
-
-def company_to_schema(*, node: Company) -> CompanySchema:
-    return CompanySchema(
+def cnae_to_schema(*, node: Cnae, revision: RevisionSchema) -> CnaeSchema:
+    return CnaeSchema(
+        content_id=node.content_id,
         id=node.id,
+        revision=revision,
+        code=node.code,
+        description=node.description,
+    )
+
+
+def company_to_schema(*, node: Company, revision: RevisionSchema) -> CompanySchema:
+    return CompanySchema(
+        content_id=node.content_id,
+        id=node.id,
+        revision=revision,
         activity_start_date=node.activity_start_date,
         cnpj=node.cnpj,
         is_headquarters=node.is_headquarters,
@@ -64,13 +75,20 @@ def company_to_schema(*, node: Company) -> CompanySchema:
     )
 
 
-def email_to_schema(*, node: Email) -> EmailSchema:
-    return EmailSchema(id=node.id, address=node.address)
-
-
-def person_to_schema(*, node: Person) -> PersonSchema:
-    return PersonSchema(
+def email_to_schema(*, node: Email, revision: RevisionSchema) -> EmailSchema:
+    return EmailSchema(
+        content_id=node.content_id,
         id=node.id,
+        revision=revision,
+        address=node.address,
+    )
+
+
+def person_to_schema(*, node: Person, revision: RevisionSchema) -> PersonSchema:
+    return PersonSchema(
+        content_id=node.content_id,
+        id=node.id,
+        revision=revision,
         age_range=node.age_range,
         birthdate=node.birthdate,
         cpf=node.cpf,
@@ -80,13 +98,20 @@ def person_to_schema(*, node: Person) -> PersonSchema:
     )
 
 
-def phone_to_schema(*, node: Phone) -> PhoneSchema:
-    return PhoneSchema(id=node.id, number=node.number)
-
-
-def sanction_to_schema(*, node: Sanction) -> SanctionSchema:
-    return SanctionSchema(
+def phone_to_schema(*, node: Phone, revision: RevisionSchema) -> PhoneSchema:
+    return PhoneSchema(
+        content_id=node.content_id,
         id=node.id,
+        revision=revision,
+        number=node.number,
+    )
+
+
+def sanction_to_schema(*, node: Sanction, revision: RevisionSchema) -> SanctionSchema:
+    return SanctionSchema(
+        content_id=node.content_id,
+        id=node.id,
+        revision=revision,
         end_date=node.end_date,
         fine_amount=node.fine_amount,
         legal_basis=node.legal_basis,
@@ -100,8 +125,15 @@ def sanction_to_schema(*, node: Sanction) -> SanctionSchema:
     )
 
 
-def text_source_to_schema(*, node: TextSource) -> TextSourceSchema:
-    return TextSourceSchema(id=node.id, text=node.text)
+def text_source_to_schema(
+    *, node: TextSource, revision: RevisionSchema
+) -> TextSourceSchema:
+    return TextSourceSchema(
+        content_id=node.content_id,
+        id=node.id,
+        revision=revision,
+        text=node.text,
+    )
 
 
 _NODE_MAP: dict[type[Node[UUID]], Callable[..., NodeSchemaUnion]] = {
@@ -116,8 +148,8 @@ _NODE_MAP: dict[type[Node[UUID]], Callable[..., NodeSchemaUnion]] = {
 }
 
 
-def node_to_schema(node: Node[UUID], /) -> NodeSchemaUnion:
+def node_to_schema(node: Node[UUID], /, *, revision: RevisionSchema) -> NodeSchemaUnion:
     try:
-        return _NODE_MAP[type(node)](node=node)
+        return _NODE_MAP[type(node)](node=node, revision=revision)
     except KeyError:
         raise UnmappedTypeSchemaError(subject=type(node)) from None

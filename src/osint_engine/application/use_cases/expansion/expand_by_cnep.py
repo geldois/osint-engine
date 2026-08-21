@@ -9,6 +9,7 @@ from osint_engine.application.contracts.use_case import Query
 from osint_engine.application.errors.external_credential_error import (
     ExternalCredentialNotFoundError,
 )
+from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.domain.entities.bases.graph import Graph
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 _logger = get_logger()
 
 
-class ExpandByCNEP(Query[Graph | None]):
+class ExpandByCNEP(Query[EntityRevision[Graph] | None]):
     uow_factory: Callable[[], UoW]
     cnep_fetcher: CNEPFetcher
     cpf_or_cnpj: str
@@ -46,7 +47,7 @@ class ExpandByCNEP(Query[Graph | None]):
         )
 
     @override
-    async def execute(self) -> Graph | None:
+    async def execute(self) -> EntityRevision[Graph] | None:
         _logger.info("cnep.expansion.start", cpf_or_cnpj=self.cpf_or_cnpj)
 
         async with self.uow_factory() as uow:
@@ -70,8 +71,8 @@ class ExpandByCNEP(Query[Graph | None]):
 
                 return None
 
-            await uow.graphs.merge(revision=revision)
+            stored = await uow.graphs.merge(revision=revision)
 
         _logger.info("cnep.expansion.success", cpf_or_cnpj=self.cpf_or_cnpj)
 
-        return revision.entity
+        return stored

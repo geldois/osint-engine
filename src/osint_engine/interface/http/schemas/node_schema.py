@@ -22,9 +22,16 @@ from osint_engine.interface.http.errors.schema_error import (
     MissingDiscriminatorFieldError,
     UnmappedTypeSchemaError,
 )
+from osint_engine.interface.http.schemas.revision_schema import (  # noqa: TC001
+    RevisionSchema,
+)
 
 
 class NodeSchema[NodeType_co: Node[UUID]](ABC, BaseModel):
+    content_id: UUID
+    id: UUID
+    revision: RevisionSchema
+
     @classmethod
     @override
     def __pydantic_init_subclass__(cls, **kwargs: object) -> None:
@@ -49,7 +56,6 @@ class AddressSchema(NodeSchema[Address]):
     cep: str
     city: str | None
     complement: str | None
-    id: UUID
     neighborhood: str | None
     number: str
     state: str | None
@@ -66,7 +72,6 @@ class CnaeSchema(NodeSchema[Cnae]):
 
     code: str
     description: str
-    id: UUID
 
     @classmethod
     @override
@@ -79,7 +84,6 @@ class CompanySchema(NodeSchema[Company]):
 
     activity_start_date: str | None
     cnpj: str
-    id: UUID
     is_headquarters: bool | None
     legal_name: str | None
     legal_nature: str | None
@@ -100,7 +104,6 @@ class EmailSchema(NodeSchema[Email]):
     type: Literal["email"] = "email"
 
     address: str
-    id: UUID
 
     @classmethod
     @override
@@ -114,7 +117,6 @@ class PersonSchema(NodeSchema[Person]):
     age_range: str | None
     birthdate: str | None
     cpf: str
-    id: UUID
     name: str | None
     registration_date: str | None
     registration_status: str | None
@@ -128,7 +130,6 @@ class PersonSchema(NodeSchema[Person]):
 class PhoneSchema(NodeSchema[Phone]):
     type: Literal["phone"] = "phone"
 
-    id: UUID
     number: str
 
     @classmethod
@@ -142,7 +143,6 @@ class SanctionSchema(NodeSchema[Sanction]):
 
     end_date: str | None
     fine_amount: Decimal | None
-    id: UUID
     legal_basis: tuple[str, ...]
     organ: Literal["CEIS", "CNEP"]
     process_number: str | None
@@ -161,7 +161,6 @@ class SanctionSchema(NodeSchema[Sanction]):
 class TextSourceSchema(NodeSchema[TextSource]):
     type: Literal["text_source"] = "text_source"
 
-    id: UUID
     text: str
 
     @classmethod

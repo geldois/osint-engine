@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from fastapi import Depends, Response
@@ -32,18 +33,19 @@ def build_get_cpf_handler(
             cpf=cpf, force=force, username=username
         )
 
-        graph = await use_case.execute()
+        revision = await use_case.execute()
 
-        if graph is None:
+        if revision is None:
             return Response(status_code=204)
 
+        graph = revision.entity
         matches_graph = await container.use_cases.find_possibly_matches(
             graph=graph
         ).execute()
 
         if matches_graph is not None:
-            graph = graph.merge(other=matches_graph)
+            revision = replace(revision, entity=graph.merge(other=matches_graph))
 
-        return graph_to_schema(graph)
+        return graph_to_schema(revision)
 
     return get_cpf

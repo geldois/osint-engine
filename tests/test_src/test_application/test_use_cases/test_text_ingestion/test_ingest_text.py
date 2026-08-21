@@ -48,7 +48,7 @@ class TestIngestTextCompanyAndAddressStubs:
             text=_VALID_CNPJ_TEXT,
         )
 
-        graph = await use_case.execute()
+        graph = (await use_case.execute()).entity
 
         companies = [node for node in graph.nodes if isinstance(node, Company)]
         assert len(companies) == 1
@@ -72,7 +72,7 @@ class TestIngestTextCompanyAndAddressStubs:
             text=_VALID_CEP_AND_NUMBER_TEXT,
         )
 
-        graph = await use_case.execute()
+        graph = (await use_case.execute()).entity
 
         addresses = [node for node in graph.nodes if isinstance(node, Address)]
         assert len(addresses) == 1
@@ -99,7 +99,7 @@ class TestIngestTextNewStub:
             text=_VALID_CPF_LABELED_TEXT,
         )
 
-        graph = await use_case.execute()
+        graph = (await use_case.execute()).entity
 
         persons = [node for node in graph.nodes if isinstance(node, Person)]
         assert len(persons) == 1
@@ -135,7 +135,7 @@ class TestIngestTextNewStub:
             text=_VALID_CPF_LABELED_TEXT,
         )
 
-        graph = await use_case.execute()
+        graph = (await use_case.execute()).entity
 
         person = next(node for node in graph.nodes if isinstance(node, Person))
         text_source = next(node for node in graph.nodes if isinstance(node, TextSource))
@@ -173,7 +173,7 @@ class TestIngestTextExistingEntity:
             text=_VALID_CPF_LABELED_TEXT,
         )
 
-        graph = await use_case.execute()
+        graph = (await use_case.execute()).entity
 
         person = next(node for node in graph.nodes if isinstance(node, Person))
 
@@ -250,7 +250,7 @@ class TestIngestTextOverlappingAtomicPatterns:
             text=_VALID_CPF_LABELED_TEXT,
         )
 
-        graph = await use_case.execute()
+        graph = (await use_case.execute()).entity
 
         mention_edges = [
             edge for edge in graph.edges if isinstance(edge, PersonMentionedInText)
@@ -278,7 +278,7 @@ class TestIngestTextLoosePatternIsOptIn:
             text=_VALID_CPF_DIGITS,
         )
 
-        graph = await use_case.execute()
+        graph = (await use_case.execute()).entity
 
         persons = [node for node in graph.nodes if isinstance(node, Person)]
         assert len(persons) == 1

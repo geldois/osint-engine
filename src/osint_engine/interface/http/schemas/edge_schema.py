@@ -40,10 +40,15 @@ from osint_engine.interface.http.errors.schema_error import (
     MissingDiscriminatorFieldError,
     UnmappedTypeSchemaError,
 )
+from osint_engine.interface.http.schemas.revision_schema import (  # noqa: TC001
+    RevisionSchema,
+)
 
 
 class EdgeSchema[EdgeType_co: Edge[UUID, UUID, UUID]](ABC, BaseModel):
+    content_id: UUID
     id: UUID
+    revision: RevisionSchema
     source_id: UUID
     target_id: UUID
 

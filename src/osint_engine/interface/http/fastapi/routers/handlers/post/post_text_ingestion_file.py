@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends, File, Form, UploadFile
@@ -35,14 +36,15 @@ def build_post_text_ingestion_file_handler(
             patterns=frozenset(patterns), text=text
         )
 
-        graph = await use_case.execute()
+        revision = await use_case.execute()
+        graph = revision.entity
         matches_graph = await container.use_cases.find_possibly_matches(
             graph=graph
         ).execute()
 
         if matches_graph is not None:
-            graph = graph.merge(other=matches_graph)
+            revision = replace(revision, entity=graph.merge(other=matches_graph))
 
-        return graph_to_schema(graph)
+        return graph_to_schema(revision)
 
     return post_text_ingestion_file

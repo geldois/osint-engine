@@ -25,7 +25,7 @@ _logger = get_logger()
 _KIPFLOW_PROVIDER = "kipflow"
 
 
-class ExpandByCPF(Query[Graph | None]):
+class ExpandByCPF(Query[EntityRevision[Graph] | None]):
     uow_factory: Callable[[], UoW]
     cpf_fetcher: CPFFetcher
     cpf: str
@@ -51,7 +51,7 @@ class ExpandByCPF(Query[Graph | None]):
         )
 
     @override
-    async def execute(self) -> Graph | None:
+    async def execute(self) -> EntityRevision[Graph] | None:
         _logger.info("cpf.expansion.start", cpf=self.cpf, force=self.force)
 
         stub = Person(
@@ -100,7 +100,7 @@ class ExpandByCPF(Query[Graph | None]):
 
                 return None
 
-            await uow.graphs.merge(revision=revision)
+            stored = await uow.graphs.merge(revision=revision)
 
             person = next(node for node in revision.entity.nodes if node.id == stub.id)
 
@@ -115,4 +115,4 @@ class ExpandByCPF(Query[Graph | None]):
 
         _logger.info("cpf.expansion.success", cpf=self.cpf)
 
-        return revision.entity
+        return stored

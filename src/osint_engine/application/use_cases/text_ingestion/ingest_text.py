@@ -139,7 +139,7 @@ async def _resolve_node(*, uow: UoW, match: ExtractedMatch) -> Node[UUID]:
     return existing.entity if existing is not None else stub
 
 
-class IngestText(Query[Graph]):
+class IngestText(Query[EntityRevision[Graph]]):
     uow_factory: Callable[[], UoW]
     patterns: frozenset[str]
     text: str
@@ -155,7 +155,7 @@ class IngestText(Query[Graph]):
         super().__init__(uow_factory=uow_factory, patterns=patterns, text=text)
 
     @override
-    async def execute(self) -> Graph:
+    async def execute(self) -> EntityRevision[Graph]:
         _logger.info("text_ingestion.start", patterns=self.patterns)
 
         fetched_at = datetime.now(tz=UTC)
@@ -187,7 +187,7 @@ class IngestText(Query[Graph]):
                 edges=frozenset(edges), nodes=frozenset(nodes), root_id=text_source.id
             )
 
-            await uow.graphs.merge(
+            stored = await uow.graphs.merge(
                 revision=EntityRevision(
                     entity=graph,
                     fetched_at=fetched_at,
@@ -202,4 +202,4 @@ class IngestText(Query[Graph]):
             match_count=len(matches),
         )
 
-        return graph
+        return stored

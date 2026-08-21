@@ -199,6 +199,22 @@ Issues a `VIEWER`-role token with no credential — 20-minute TTL by default (`V
 response shape as above. Intended for public demo access: it can read `/cnpj/{cnpj}` but is rejected with `403` on
 `/credentials`. See `docs/architecture/interface.md`.
 
+### Provenance on every graph response
+
+Every endpoint returning a `GraphSchema` — expansion, text ingestion, and graph history alike — carries provenance
+alongside the data. The graph itself, and every node and edge inside it, each carry a `content_id` (a UUID5 over the
+entity's full content, distinct from the `id` derived only from its identity fields) and a `revision` object:
+
+```json
+{ "fetched_at": "2026-08-21T03:11:59.728122Z", "merged_at": null, "provider": "brasilapi" }
+```
+
+`content_id` is what distinguishes two observations of the same entity: the `id` is stable across every revision, the
+`content_id` changes whenever the content does, and two fetches returning identical content produce the same
+`content_id`. Within a single response every node and edge repeats the enclosing graph's own `revision`, since they were
+all observed in that one fetch; the repetition is what lets a client merge several graphs and still know where each part
+came from. `merged_at` is `null` until a revision has actually been reconciled with an earlier one.
+
 ### Graph expansion
 
 ```http

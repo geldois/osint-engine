@@ -36,3 +36,25 @@ type-checking.
 Authorization deliberately lives beside authentication as its own dedicated check at this layer rather than inside each
 individual workflow, keeping "is this caller who they claim to be" and "is this caller allowed to do this" as pure
 interface-layer concerns instead of scattering the same role logic across every workflow that happens to need it.
+
+A response now carries when its data was observed and where it came from, rather than only the data itself. The
+information had always been recorded when a fetch happened and had always been used internally to decide which
+observation counted as current, but the layer that shapes a response stripped it out before anything left the process —
+so a caller receiving several observations of the same entity had no way to tell them apart or order them. The
+provenance travels nested under one named object rather than smeared as loose fields across every entity in the payload,
+because the concept already had a name in the project's own vocabulary and repeating four unrelated-looking keys on two
+dozen entity shapes would have obscured it on both sides of the wire.
+
+The identifier derived from an entity's complete content is now published beside the one derived only from its identity
+fields. That exposes a piece of the internal identity model to callers, which was weighed and accepted: it is precisely
+the key a caller needs to recognise that two observations of the same entity differ, or that two separate fetches
+produced identical content, and it is derived deterministically rather than assigned, so it commits nothing that could
+later shift underneath a caller.
+
+Within a single response the same provenance is repeated on the graph and on every entity inside it, which is redundant
+when read alone and stops being redundant the moment a caller accumulates several responses into one view — the point at
+which knowing which fetch each part arrived from is the only thing that makes the accumulated view interpretable.
+
+A handler that enriches a graph after the workflow returns — attaching advisory cross-entity links computed at read time
+— rebuilds the provenance wrapper around the enriched result rather than reporting the stored one, so the
+content-derived identifier in a response always describes what that response actually contains.
