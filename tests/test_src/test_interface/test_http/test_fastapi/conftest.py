@@ -18,6 +18,9 @@ if TYPE_CHECKING:
     from asyncpg import Pool
     from fastapi import FastAPI
 
+    from osint_engine.application.contracts.services.kipflow_rate_limiter import (
+        KipFlowRateLimiter,
+    )
     from osint_engine.config.container import Container, Policies
     from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
     from tests.conftest import MakeMemStorage
@@ -133,6 +136,7 @@ def make_container(
         pg_pool: Pool | None = None,
         mem_storage: MemStorage | None = None,
         policies: Policies | None = None,
+        kipflow_rate_limiter: KipFlowRateLimiter | None = None,
     ) -> Container:
         return build_container(
             settings=settings if settings is not None else settings_,
@@ -145,6 +149,7 @@ def make_container(
             ),
             mem_storage=mem_storage if mem_storage is not None else make_mem_storage(),
             policies=policies if policies is not None else policies_,
+            kipflow_rate_limiter=kipflow_rate_limiter,
         )
 
     return container_

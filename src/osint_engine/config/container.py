@@ -12,6 +12,9 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
     from osint_engine.application.contracts.fetchers.cpf_fetcher import CPFFetcher
     from osint_engine.application.contracts.services.jwt_service import JWTService
+    from osint_engine.application.contracts.services.kipflow_rate_limiter import (
+        KipFlowRateLimiter,
+    )
     from osint_engine.application.contracts.services.spreadsheet_reader import (
         ReadSpreadsheetText,
     )
@@ -35,6 +38,10 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
     from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
     from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
+    from osint_engine.application.use_cases.expansion.expand_by_cpf_batch import (
+        EstimateCPFBatch,
+        ExpandByCPFBatch,
+    )
     from osint_engine.application.use_cases.history.list_edge_history import (
         ListEdgeHistory,
     )
@@ -85,6 +92,7 @@ class Policies:
 @dataclass(frozen=True, kw_only=True)
 class Services:
     jwt_service: JWTService
+    kipflow_rate_limiter: KipFlowRateLimiter
     read_spreadsheet_text: ReadSpreadsheetText
     spreadsheet_max_file_bytes: int
 
@@ -96,6 +104,8 @@ class UseCases:
     expand_by_cnep: partial[ExpandByCNEP]
     expand_by_cnpj: partial[ExpandByCNPJ]
     expand_by_cpf: partial[ExpandByCPF]
+    expand_by_cpf_batch: partial[ExpandByCPFBatch]
+    estimate_cpf_batch: partial[EstimateCPFBatch]
     find_possibly_matches: partial[FindPossiblyMatches]
     ingest_text: partial[IngestText]
     list_edge_history: partial[ListEdgeHistory]

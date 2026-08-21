@@ -22,6 +22,10 @@ from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandBy
 from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
+from osint_engine.application.use_cases.expansion.expand_by_cpf_batch import (
+    EstimateCPFBatch,
+    ExpandByCPFBatch,
+)
 from osint_engine.application.use_cases.history.list_edge_history import (
     ListEdgeHistory,
 )
@@ -60,6 +64,9 @@ from osint_engine.infrastructure.providers.brasilapi.endpoints.cnpj_v1_fetcher i
 from osint_engine.infrastructure.providers.kipflow.endpoints.cpf_fetcher import (
     KipFlowCPFFetcher,
 )
+from osint_engine.infrastructure.providers.kipflow.in_memory_rate_limiter import (
+    InMemoryKipFlowRateLimiter,
+)
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceis_fetcher import (  # noqa: E501
     PortalTransparenciaCEISFetcher,
 )
@@ -76,6 +83,9 @@ if TYPE_CHECKING:
     from asyncpg import Pool
     from httpx2 import AsyncClient
 
+    from osint_engine.application.contracts.services.kipflow_rate_limiter import (
+        KipFlowRateLimiter,
+    )
     from osint_engine.config.settings import Settings
 
 
@@ -87,17 +97,27 @@ def build_container(  # noqa: PLR0913
     external_credential_encryption_key: str | None = None,
     mem_storage: MemStorage | None = None,
     policies: Policies | None = None,
+    kipflow_rate_limiter: KipFlowRateLimiter | None = None,
 ) -> Container:
+    kipflow_rate_limiter = (
+        kipflow_rate_limiter
+        if kipflow_rate_limiter is not None
+        else InMemoryKipFlowRateLimiter()
+    )
+
     fetchers = Fetchers(
         ceis_fetcher=PortalTransparenciaCEISFetcher(http_client=http_client),
         cnep_fetcher=PortalTransparenciaCNEPFetcher(http_client=http_client),
         cnpj_fetcher=BrasilAPICNPJv1Fetcher(http_client=http_client),
-        cpf_fetcher=KipFlowCPFFetcher(http_client=http_client),
+        cpf_fetcher=KipFlowCPFFetcher(
+            http_client=http_client, rate_limiter=kipflow_rate_limiter
+        ),
     )
 
     pyjwt_service = PyJWTService(settings=settings)
     services = Services(
         jwt_service=pyjwt_service,
+        kipflow_rate_limiter=kipflow_rate_limiter,
         read_spreadsheet_text=read_spreadsheet_text,
         spreadsheet_max_file_bytes=MAX_FILE_BYTES,
     )
@@ -152,6 +172,14 @@ def build_container(  # noqa: PLR0913
         ),
         expand_by_cpf=partial(
             ExpandByCPF, uow_factory=uow_factory, cpf_fetcher=fetchers.cpf_fetcher
+        ),
+        expand_by_cpf_batch=partial(
+            ExpandByCPFBatch, uow_factory=uow_factory, cpf_fetcher=fetchers.cpf_fetcher
+        ),
+        estimate_cpf_batch=partial(
+            EstimateCPFBatch,
+            uow_factory=uow_factory,
+            rate_limiter=kipflow_rate_limiter,
         ),
         find_possibly_matches=partial(FindPossiblyMatches, uow_factory=uow_factory),
         ingest_text=partial(IngestText, uow_factory=uow_factory),

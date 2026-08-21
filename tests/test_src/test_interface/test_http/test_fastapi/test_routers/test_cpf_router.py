@@ -10,6 +10,7 @@ from osint_engine.application.auth.external_credential import (
     ExternalCredential,
     Provider,
 )
+from osint_engine.application.auth.user import Role
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.infrastructure.providers.kipflow.endpoints.cpf_fetcher import (
@@ -90,7 +91,7 @@ async def client(cpf_container: Container) -> AsyncGenerator[AsyncClient, None]:
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role="admin")
+    return pyjwt_service.create_access_token(username="admin", role=Role.ADMIN)
 
 
 class TestGetCPFAuthentication:

@@ -28,6 +28,11 @@ def viewer_token(pyjwt_service: PyJWTService) -> str:
     return pyjwt_service.create_access_token(username="viewer", role="VIEWER")
 
 
+@pytest.fixture
+def admin_token(pyjwt_service: PyJWTService) -> str:
+    return pyjwt_service.create_access_token(username="admin", role="ADMIN")
+
+
 class TestGetGraphHistoryAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(
@@ -81,7 +86,7 @@ class TestGetGraphHistorySmoke:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        viewer_token: str,
+        admin_token: str,
     ) -> None:
         payloads: list[dict[str, object]] = [
             {"success": True, "data": {"cpf": CPF, "nome": "FULANO DE TAL"}},
@@ -97,14 +102,14 @@ class TestGetGraphHistorySmoke:
                 http_client=kipflow_http_client, mem_storage=make_mem_storage()
             )
             credential = ExternalCredential(
-                api_key="test-api-key", provider=Provider.KIPFLOW, username="viewer"
+                api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
             )
 
             async with container.uow_factory() as uow:
                 await uow.external_credentials.save(credential=credential)
 
             app = build_fastapi_app(container=container)
-            headers = {"Authorization": f"Bearer {viewer_token}"}
+            headers = {"Authorization": f"Bearer {admin_token}"}
 
             async with AsyncClient(
                 transport=ASGITransport(app=app), base_url="http://test"
@@ -135,7 +140,7 @@ class TestGetGraphCatalogSmoke:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        viewer_token: str,
+        admin_token: str,
     ) -> None:
         payloads: list[dict[str, object]] = [
             {"success": True, "data": {"cpf": CPF, "nome": "FULANO DE TAL"}},
@@ -151,14 +156,14 @@ class TestGetGraphCatalogSmoke:
                 http_client=kipflow_http_client, mem_storage=make_mem_storage()
             )
             credential = ExternalCredential(
-                api_key="test-api-key", provider=Provider.KIPFLOW, username="viewer"
+                api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
             )
 
             async with container.uow_factory() as uow:
                 await uow.external_credentials.save(credential=credential)
 
             app = build_fastapi_app(container=container)
-            headers = {"Authorization": f"Bearer {viewer_token}"}
+            headers = {"Authorization": f"Bearer {admin_token}"}
 
             async with AsyncClient(
                 transport=ASGITransport(app=app), base_url="http://test"

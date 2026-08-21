@@ -19,6 +19,9 @@ from osint_engine.infrastructure.providers.payload import Payload
 
 if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import ExternalCredential
+    from osint_engine.application.contracts.services.kipflow_rate_limiter import (
+        KipFlowRateLimiter,
+    )
     from osint_engine.domain.entities.bases.graph import Graph
 
 _NOT_FOUND_STATUS = 404
@@ -27,14 +30,19 @@ _INSUFFICIENT_CREDITS_STATUS = 402
 
 class KipFlowCPFFetcher(KipFlowFetcher, CPFFetcher, url_suffix="people/v1/search"):
     @override
-    def __init__(self, *, http_client: AsyncClient) -> None:
+    def __init__(
+        self, *, http_client: AsyncClient, rate_limiter: KipFlowRateLimiter
+    ) -> None:
         super().__init__(http_client=http_client)
+        self._rate_limiter = rate_limiter
 
     @override
     async def fetch(
         self, *, cpf: str, credential: ExternalCredential
     ) -> EntityRevision[Graph] | None:
         self._logger.info("cpf.fetch.start", cpf=cpf)
+
+        await self._rate_limiter.acquire(credential=credential)
 
         try:
             headers = self._build_headers(credential=credential)

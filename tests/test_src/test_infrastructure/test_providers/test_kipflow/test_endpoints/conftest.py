@@ -13,6 +13,9 @@ from osint_engine.application.auth.external_credential import (
 from osint_engine.infrastructure.providers.kipflow.endpoints.cpf_fetcher import (
     KipFlowCPFFetcher,
 )
+from osint_engine.infrastructure.providers.kipflow.in_memory_rate_limiter import (
+    InMemoryKipFlowRateLimiter,
+)
 
 if TYPE_CHECKING:
     from httpx2 import Request, Response
@@ -32,7 +35,8 @@ def make_kipflow_cpf_fetcher() -> MakeKipFlowCPFFetcher:
 
     def cpf_fetcher(*, handler: Callable[[Request], Response]) -> KipFlowCPFFetcher:
         return KipFlowCPFFetcher(
-            http_client=AsyncClient(transport=MockTransport(handler=handler))
+            http_client=AsyncClient(transport=MockTransport(handler=handler)),
+            rate_limiter=InMemoryKipFlowRateLimiter(),
         )
 
     return cpf_fetcher

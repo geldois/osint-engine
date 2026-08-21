@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 _DEFAULT_RETRY_AFTER_SECONDS = 60
 _TEN_MINUTES_IN_SECONDS = 10 * 60
 _EXPANSION_REQUESTS_PER_MINUTE = 100
+_BATCH_REQUESTS_PER_MINUTE = 10
 
 
 def _translate_rate_limit_error(
@@ -52,5 +53,15 @@ def build_expansion_rate_limit(
             times=_EXPANSION_REQUESTS_PER_MINUTE,
             seconds=60,
             key_func=lambda _request: f"expansion:{scope}",
+        )
+    )
+
+
+def build_cpf_batch_rate_limit() -> Callable[[Request, Response], Awaitable[None]]:
+    return _translate_rate_limit_error(
+        RateLimiter(
+            times=_BATCH_REQUESTS_PER_MINUTE,
+            seconds=60,
+            key_func=lambda _request: "expansion:cpf_batch",
         )
     )
