@@ -114,7 +114,7 @@ class TestMemStorageSnapshotSnapshot:
 
 
 class TestMemStorageSnapshotCommit:
-    def test_commit_flushes_the_snapshot_into_the_backing_storage(
+    def test_commit_merges_a_new_entry_written_on_the_snapshot_into_the_backing_storage(
         self,
         make_entity_revision: MakeEntityRevision,
         make_fake_edge: MakeFakeEdge,
@@ -133,16 +133,45 @@ class TestMemStorageSnapshotCommit:
         )
         snapshot = MemStorageSnapshot(mem_storage=mem_storage)
 
-        snapshot.clear_snapshot()
-
-        assert mem_storage.nodes
+        new_node = make_fake_node()
+        new_revision = make_entity_revision(entity=new_node)
+        snapshot.nodes[new_node.id][new_node.content_id] = new_revision
 
         snapshot.commit_to_storage()
 
-        assert mem_storage.edges == snapshot.edges
+        assert mem_storage.nodes[new_node.id][new_node.content_id] == new_revision
 
-        assert mem_storage.graphs == snapshot.graphs
+    def test_commit_does_not_erase_an_entry_a_concurrent_transaction_committed_first(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_edge: MakeFakeEdge,
+        make_graph: MakeGraph,
+        make_fake_node: MakeFakeNode,
+        make_user: MakeUser,
+        make_mem_storage: MakeMemStorage,
+    ) -> None:
+        mem_storage = _seeded_storage(
+            make_entity_revision=make_entity_revision,
+            make_fake_edge=make_fake_edge,
+            make_graph=make_graph,
+            make_fake_node=make_fake_node,
+            make_user=make_user,
+            make_mem_storage=make_mem_storage,
+        )
 
-        assert mem_storage.nodes == snapshot.nodes
+        early_snapshot = MemStorageSnapshot(mem_storage=mem_storage)
+        late_snapshot = MemStorageSnapshot(mem_storage=mem_storage)
 
-        assert mem_storage.users == snapshot.users
+        new_node = make_fake_node()
+        new_graph = make_graph(edges=[], nodes=[new_node], root_id=new_node.id)
+        new_graph_revision = make_entity_revision(entity=new_graph)
+        early_snapshot.graphs[new_graph.id][new_graph.content_id] = new_graph_revision
+        early_snapshot.commit_to_storage()
+
+        assert new_graph.id in mem_storage.graphs
+
+        late_snapshot.commit_to_storage()
+
+        assert (
+            mem_storage.graphs[new_graph.id][new_graph.content_id] == new_graph_revision
+        )

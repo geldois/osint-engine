@@ -106,21 +106,19 @@ class MemStorageSnapshot(MemStorage):
         self.pattern_sets.clear()
         self.users.clear()
 
+    @staticmethod
+    def _merge_entity_storage[Entity_: Entity[UUID]](
+        *,
+        into: defaultdict[UUID, dict[UUID, EntityRevision[Entity_]]],
+        from_: defaultdict[UUID, dict[UUID, EntityRevision[Entity_]]],
+    ) -> None:
+        for entity_id, revisions in from_.items():
+            into[entity_id].update(revisions)
+
     def commit_to_storage(self) -> None:
-        self._mem_storage.edges.clear()
-        self._mem_storage.edges.update(self.edges)
-
-        self._mem_storage.external_credentials.clear()
+        self._merge_entity_storage(into=self._mem_storage.edges, from_=self.edges)
         self._mem_storage.external_credentials.update(self.external_credentials)
-
-        self._mem_storage.graphs.clear()
-        self._mem_storage.graphs.update(self.graphs)
-
-        self._mem_storage.nodes.clear()
-        self._mem_storage.nodes.update(self.nodes)
-
-        self._mem_storage.pattern_sets.clear()
+        self._merge_entity_storage(into=self._mem_storage.graphs, from_=self.graphs)
+        self._merge_entity_storage(into=self._mem_storage.nodes, from_=self.nodes)
         self._mem_storage.pattern_sets.update(self.pattern_sets)
-
-        self._mem_storage.users.clear()
         self._mem_storage.users.update(self.users)
