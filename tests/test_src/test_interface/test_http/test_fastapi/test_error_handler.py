@@ -11,12 +11,12 @@ from fastapi.responses import JSONResponse
 
 from osint_engine.application.errors.application_error import ApplicationError
 from osint_engine.domain.errors.domain_error import DomainError
+from osint_engine.domain.errors.sanitization_error import InvalidCNPJError
 from osint_engine.infrastructure.errors.infrastructure_error import (
     InfrastructureError,
 )
 from osint_engine.infrastructure.errors.token_error import InvalidTokenError
 from osint_engine.interface.errors.interface_error import InterfaceError
-from osint_engine.interface.errors.sanitization_error import InvalidCNPJError
 from osint_engine.interface.http.fastapi import error_handler as error_handler_module
 from osint_engine.interface.http.fastapi.error_handler import build_error_handler
 from osint_engine.observability.context import correlation_id

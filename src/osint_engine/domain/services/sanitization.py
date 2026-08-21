@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from osint_engine.interface.errors.sanitization_error import (
+from osint_engine.domain.errors.sanitization_error import (
     InvalidCNPJError,
     InvalidCPFError,
     InvalidCPFOrCNPJError,

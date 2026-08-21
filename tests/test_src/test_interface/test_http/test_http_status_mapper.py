@@ -25,6 +25,7 @@ from osint_engine.domain.errors.graph_error import (
     GraphInconsistentError,
     GraphRootNotInNodesError,
 )
+from osint_engine.domain.errors.sanitization_error import InvalidCNPJError
 from osint_engine.infrastructure.errors.external_credential_error import (
     ExternalCredentialRejectedError,
 )
@@ -36,7 +37,6 @@ from osint_engine.infrastructure.errors.provider_error import (
 )
 from osint_engine.infrastructure.errors.token_error import InvalidTokenError, TokenError
 from osint_engine.infrastructure.errors.uow_error import UoWError
-from osint_engine.interface.errors.sanitization_error import InvalidCNPJError
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
 from osint_engine.interface.http.mappers.http_status_mapper import map_status_from_error
 

@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import override
 
+from osint_engine.domain.errors.domain_error import DomainError
 from osint_engine.domain.errors.error_category import ErrorCategory
-from osint_engine.interface.errors.interface_error import InterfaceError
 
 
 class SanitizationError(
-    InterfaceError, error_code=None, category=ErrorCategory.INVALID_INPUT
+    DomainError, error_code=None, category=ErrorCategory.INVALID_INPUT
 ): ...
 
 

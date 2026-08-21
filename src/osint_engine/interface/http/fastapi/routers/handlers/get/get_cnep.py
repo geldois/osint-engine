@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 from fastapi import Depends, Response
 
+from osint_engine.domain.services.sanitization import sanitize_cpf_or_cnpj
 from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_jwt_guard
 from osint_engine.interface.http.presenters.graph_presenter import graph_to_schema
 from osint_engine.interface.http.schemas.graph_schema import GraphSchema  # noqa: TC001
-from osint_engine.interface.sanitizers import sanitize_cpf_or_cnpj
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable

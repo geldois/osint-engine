@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from osint_engine.interface.errors.sanitization_error import (
+from osint_engine.domain.errors.sanitization_error import (
     InvalidCNPJError,
     InvalidCPFError,
     InvalidCPFOrCNPJError,
 )
-from osint_engine.interface.sanitizers import (
+from osint_engine.domain.services.sanitization import (
     sanitize_cnpj,
     sanitize_cpf,
     sanitize_cpf_or_cnpj,
