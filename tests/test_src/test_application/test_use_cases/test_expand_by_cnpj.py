@@ -26,18 +26,12 @@ if TYPE_CHECKING:
     )
 
 
-# TEST DOUBLES
-
-
 def _keep_stored_policy[Entity_: Entity[UUID]](
     left: EntityRevision[Entity_], right: EntityRevision[Entity_], /
 ) -> EntityRevision[Entity_]:
     del right
 
     return left
-
-
-# TESTS
 
 
 class TestExpandByCNPJOrchestration:
