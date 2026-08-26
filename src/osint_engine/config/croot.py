@@ -18,7 +18,9 @@ from osint_engine.application.use_cases.credentials.list_credentials import (
 from osint_engine.application.use_cases.credentials.save_credential import (
     SaveExternalCredential,
 )
+from osint_engine.application.use_cases.expansion.expand_by_ceaf import ExpandByCEAF
 from osint_engine.application.use_cases.expansion.expand_by_ceis import ExpandByCEIS
+from osint_engine.application.use_cases.expansion.expand_by_cepim import ExpandByCEPIM
 from osint_engine.application.use_cases.expansion.expand_by_cnep import ExpandByCNEP
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
@@ -67,8 +69,14 @@ from osint_engine.infrastructure.providers.kipflow.endpoints.cpf_fetcher import 
 from osint_engine.infrastructure.providers.kipflow.in_memory_rate_limiter import (
     InMemoryKipFlowRateLimiter,
 )
+from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceaf_fetcher import (  # noqa: E501
+    PortalTransparenciaCEAFFetcher,
+)
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceis_fetcher import (  # noqa: E501
     PortalTransparenciaCEISFetcher,
+)
+from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cepim_fetcher import (  # noqa: E501
+    PortalTransparenciaCEPIMFetcher,
 )
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cnep_fetcher import (  # noqa: E501
     PortalTransparenciaCNEPFetcher,
@@ -106,7 +114,9 @@ def build_container(  # noqa: PLR0913
     )
 
     fetchers = Fetchers(
+        ceaf_fetcher=PortalTransparenciaCEAFFetcher(http_client=http_client),
         ceis_fetcher=PortalTransparenciaCEISFetcher(http_client=http_client),
+        cepim_fetcher=PortalTransparenciaCEPIMFetcher(http_client=http_client),
         cnep_fetcher=PortalTransparenciaCNEPFetcher(http_client=http_client),
         cnpj_fetcher=BrasilAPICNPJv1Fetcher(http_client=http_client),
         cpf_fetcher=KipFlowCPFFetcher(
@@ -161,8 +171,14 @@ def build_container(  # noqa: PLR0913
         authenticate_user=partial(
             AuthenticateUser, uow_factory=uow_factory, password_hasher=password_hasher
         ),
+        expand_by_ceaf=partial(
+            ExpandByCEAF, uow_factory=uow_factory, ceaf_fetcher=fetchers.ceaf_fetcher
+        ),
         expand_by_ceis=partial(
             ExpandByCEIS, uow_factory=uow_factory, ceis_fetcher=fetchers.ceis_fetcher
+        ),
+        expand_by_cepim=partial(
+            ExpandByCEPIM, uow_factory=uow_factory, cepim_fetcher=fetchers.cepim_fetcher
         ),
         expand_by_cnep=partial(
             ExpandByCNEP, uow_factory=uow_factory, cnep_fetcher=fetchers.cnep_fetcher

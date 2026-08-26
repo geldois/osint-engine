@@ -11,8 +11,14 @@ from osint_engine.application.auth.external_credential import (
     ExternalCredential,
     Provider,
 )
+from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceaf_fetcher import (  # noqa: E501
+    PortalTransparenciaCEAFFetcher,
+)
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceis_fetcher import (  # noqa: E501
     PortalTransparenciaCEISFetcher,
+)
+from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cepim_fetcher import (  # noqa: E501
+    PortalTransparenciaCEPIMFetcher,
 )
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cnep_fetcher import (  # noqa: E501
     PortalTransparenciaCNEPFetcher,
@@ -22,7 +28,11 @@ if TYPE_CHECKING:
     from osint_engine.infrastructure.providers.payload import Payload
     from tests.test_src.test_infrastructure.test_providers.conftest import MakePayload
 
+type MakePortalTransparenciaCEAFFetcher = Callable[..., PortalTransparenciaCEAFFetcher]
 type MakePortalTransparenciaCEISFetcher = Callable[..., PortalTransparenciaCEISFetcher]
+type MakePortalTransparenciaCEPIMFetcher = Callable[
+    ..., PortalTransparenciaCEPIMFetcher
+]
 type MakePortalTransparenciaCNEPFetcher = Callable[..., PortalTransparenciaCNEPFetcher]
 
 
@@ -59,6 +69,32 @@ def make_portal_transparencia_cnep_fetcher() -> MakePortalTransparenciaCNEPFetch
         )
 
     return cnep_fetcher
+
+
+@pytest.fixture
+def make_portal_transparencia_cepim_fetcher() -> MakePortalTransparenciaCEPIMFetcher:
+
+    def cepim_fetcher(
+        *, handler: Callable[[Request], Response]
+    ) -> PortalTransparenciaCEPIMFetcher:
+        return PortalTransparenciaCEPIMFetcher(
+            http_client=AsyncClient(transport=MockTransport(handler=handler))
+        )
+
+    return cepim_fetcher
+
+
+@pytest.fixture
+def make_portal_transparencia_ceaf_fetcher() -> MakePortalTransparenciaCEAFFetcher:
+
+    def ceaf_fetcher(
+        *, handler: Callable[[Request], Response]
+    ) -> PortalTransparenciaCEAFFetcher:
+        return PortalTransparenciaCEAFFetcher(
+            http_client=AsyncClient(transport=MockTransport(handler=handler))
+        )
+
+    return ceaf_fetcher
 
 
 @pytest.fixture

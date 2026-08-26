@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
+from osint_engine.application.contracts.fetchers.ceaf_fetcher import CEAFFetcher
 from osint_engine.application.contracts.fetchers.ceis_fetcher import CEISFetcher
+from osint_engine.application.contracts.fetchers.cepim_fetcher import CEPIMFetcher
 from osint_engine.application.contracts.fetchers.cnep_fetcher import CNEPFetcher
 from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
 from osint_engine.application.contracts.fetchers.cpf_fetcher import CPFFetcher
@@ -51,5 +53,27 @@ class FakeCNEPFetcher(CNEPFetcher):
     @override
     async def fetch(
         self, *, cpf_or_cnpj: str, cnep_id: int | None, credential: ExternalCredential
+    ) -> EntityRevision[Graph] | None:
+        return self.revision
+
+
+class FakeCEPIMFetcher(CEPIMFetcher):
+    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+        self.revision = revision
+
+    @override
+    async def fetch(
+        self, *, cnpj: str, cepim_id: int | None, credential: ExternalCredential
+    ) -> EntityRevision[Graph] | None:
+        return self.revision
+
+
+class FakeCEAFFetcher(CEAFFetcher):
+    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+        self.revision = revision
+
+    @override
+    async def fetch(
+        self, *, cpf: str, ceaf_id: int | None, credential: ExternalCredential
     ) -> EntityRevision[Graph] | None:
         return self.revision

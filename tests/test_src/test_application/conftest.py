@@ -6,7 +6,9 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tests.fakes.fetchers import (
+    FakeCEAFFetcher,
     FakeCEISFetcher,
+    FakeCEPIMFetcher,
     FakeCNEPFetcher,
     FakeCNPJFetcher,
     FakeCPFFetcher,
@@ -18,7 +20,9 @@ if TYPE_CHECKING:
     from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
     from tests.conftest import MakeEntityRevision, MakeGraph, MakeMemUoW
 
+type MakeFakeCEAFFetcher = Callable[..., FakeCEAFFetcher]
 type MakeFakeCEISFetcher = Callable[..., FakeCEISFetcher]
+type MakeFakeCEPIMFetcher = Callable[..., FakeCEPIMFetcher]
 type MakeFakeCNEPFetcher = Callable[..., FakeCNEPFetcher]
 type MakeFakeCNPJFetcher = Callable[..., FakeCNPJFetcher]
 type MakeFakeCPFFetcher = Callable[..., FakeCPFFetcher]
@@ -102,3 +106,37 @@ def make_fake_cnep_fetcher(
         )
 
     return fake_cnep_fetcher
+
+
+@pytest.fixture
+def make_fake_cepim_fetcher(
+    make_entity_revision: MakeEntityRevision, make_graph: MakeGraph
+) -> MakeFakeCEPIMFetcher:
+
+    def fake_cepim_fetcher(
+        *, revision: EntityRevision[Graph] | None = None
+    ) -> FakeCEPIMFetcher:
+        return FakeCEPIMFetcher(
+            revision=revision
+            if revision is not None
+            else make_entity_revision(entity=make_graph())
+        )
+
+    return fake_cepim_fetcher
+
+
+@pytest.fixture
+def make_fake_ceaf_fetcher(
+    make_entity_revision: MakeEntityRevision, make_graph: MakeGraph
+) -> MakeFakeCEAFFetcher:
+
+    def fake_ceaf_fetcher(
+        *, revision: EntityRevision[Graph] | None = None
+    ) -> FakeCEAFFetcher:
+        return FakeCEAFFetcher(
+            revision=revision
+            if revision is not None
+            else make_entity_revision(entity=make_graph())
+        )
+
+    return fake_ceaf_fetcher
