@@ -125,6 +125,7 @@ def sanction_to_schema(*, node: Sanction, revision: RevisionSchema) -> SanctionS
         publication_link=node.publication_link,
         sanction_type=node.sanction_type,
         sanctioning_body=node.sanctioning_body,
+        source_id=node.source_id,
         start_date=node.start_date,
     )
 

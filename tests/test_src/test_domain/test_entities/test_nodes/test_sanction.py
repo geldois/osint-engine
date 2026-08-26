@@ -8,6 +8,7 @@ from osint_engine.domain.entities.nodes.sanction import Sanction
 def _make_sanction(
     *,
     organ: str = "CNEP",
+    source_id: str = "123",
     process_number: str | None = "123/2024",
     fine_amount: Decimal | None = Decimal("1000.50"),
 ) -> Sanction:
@@ -21,30 +22,31 @@ def _make_sanction(
         publication_link="https://portaldatransparencia.gov.br/sancoes/cnep/123",
         sanction_type="Suspensão",
         sanctioning_body="CGU",
+        source_id=source_id,
         start_date="2024-01-01",
     )
 
 
 class TestSanctionIdentityComposition:
-    def test_id_is_same_for_identical_organ_and_process_number(self) -> None:
-        sanction_a = _make_sanction(organ="CNEP", process_number="123/2024")
-        sanction_b = _make_sanction(organ="CNEP", process_number="123/2024")
+    def test_id_is_same_for_identical_organ_and_source_id(self) -> None:
+        sanction_a = _make_sanction(organ="CNEP", source_id="123")
+        sanction_b = _make_sanction(organ="CNEP", source_id="123")
 
         assert sanction_a.id == sanction_b.id
 
-    def test_id_differs_for_different_process_number_under_the_same_organ(
+    def test_id_differs_for_different_source_id_under_the_same_organ(
         self,
     ) -> None:
-        sanction_a = _make_sanction(organ="CNEP", process_number="123/2024")
-        sanction_b = _make_sanction(organ="CNEP", process_number="456/2024")
+        sanction_a = _make_sanction(organ="CNEP", source_id="123")
+        sanction_b = _make_sanction(organ="CNEP", source_id="456")
 
         assert sanction_a.id != sanction_b.id
 
-    def test_id_differs_for_the_same_process_number_under_different_organs(
+    def test_id_differs_for_the_same_source_id_under_different_organs(
         self,
     ) -> None:
-        sanction_a = _make_sanction(organ="CNEP", process_number="123/2024")
-        sanction_b = _make_sanction(organ="CEIS", process_number="123/2024")
+        sanction_a = _make_sanction(organ="CNEP", source_id="123")
+        sanction_b = _make_sanction(organ="CEIS", source_id="123")
 
         assert sanction_a.id != sanction_b.id
 
@@ -54,6 +56,14 @@ class TestSanctionIdentityComposition:
 
         assert sanction_a.id == sanction_b.id
         assert sanction_a.content_id != sanction_b.content_id
+
+    def test_id_is_stable_when_process_number_changes_under_the_same_source_id(
+        self,
+    ) -> None:
+        sanction_a = _make_sanction(source_id="123", process_number="123/2024")
+        sanction_b = _make_sanction(source_id="123", process_number="999/2099")
+
+        assert sanction_a.id == sanction_b.id
 
 
 class TestSanctionFieldStorage:
@@ -71,6 +81,7 @@ class TestSanctionFieldStorage:
         )
         assert sanction.sanction_type == "Suspensão"
         assert sanction.sanctioning_body == "CGU"
+        assert sanction.source_id == "123"
         assert sanction.start_date == "2024-01-01"
 
     def test_process_number_and_fine_amount_are_optional(self) -> None:

@@ -70,6 +70,7 @@ def _map_sanction(*, payload: Payload) -> Sanction:
         publication_link=payload.require(key="linkPublicacao", expected_type=str),
         sanction_type=tipo_sancao.require(key="descricaoResumida", expected_type=str),
         sanctioning_body=orgao_sancionador.require(key="nome", expected_type=str),
+        source_id=str(payload.require(key="id", expected_type=int)),
         start_date=payload.require(key="dataInicioSancao", expected_type=str),
     )
 

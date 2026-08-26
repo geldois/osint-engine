@@ -35,6 +35,7 @@ _SANCTION_DATA: dict[str, object] = {
     "dataInicioSancao": "2024-01-01",
     "dataPublicacaoSancao": "2024-01-15",
     "fundamentacao": [{"codigo": "1", "descricao": "Lei 8.666/1993, art. 87"}],
+    "id": 359510,
     "linkPublicacao": "https://portaldatransparencia.gov.br/sancoes/cnep/123",
     "numeroProcesso": "123/2024",
     "orgaoSancionador": {"nome": "CGU"},
@@ -95,6 +96,7 @@ class TestMapSanction:
             "https://portaldatransparencia.gov.br/sancoes/cnep/123"
         )
         assert sanction.legal_basis == ("Lei 8.666/1993, art. 87",)
+        assert sanction.source_id == "359510"
 
     def test_fine_amount_is_none_when_absent(self, make_payload: MakePayload) -> None:
         data = {

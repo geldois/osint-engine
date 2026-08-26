@@ -23,6 +23,7 @@ _CEIS_RECORD_DATA = {
     "dataInicioSancao": "2024-01-01",
     "dataPublicacaoSancao": "2024-01-15",
     "fundamentacao": [{"codigo": "1", "descricao": "Lei 8.666/1993, art. 87"}],
+    "id": 314300,
     "linkPublicacao": "https://portaldatransparencia.gov.br/sancoes/ceis/123",
     "numeroProcesso": "123/2024",
     "orgaoSancionador": {"nome": "CGU"},

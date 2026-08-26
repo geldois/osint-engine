@@ -144,12 +144,13 @@ class SanctionSchema(NodeSchema[Sanction]):
     end_date: str | None
     fine_amount: Decimal | None
     legal_basis: tuple[str, ...]
-    organ: Literal["CEIS", "CNEP"]
+    organ: Literal["CEIS", "CNEP", "CEPIM", "CEAF"]
     process_number: str | None
     publication_date: str | None
     publication_link: str
     sanction_type: str
     sanctioning_body: str
+    source_id: str
     start_date: str | None
 
     @classmethod

@@ -87,6 +87,7 @@ _SANCTION = Sanction(
     publication_link="https://portaldatransparencia.gov.br/sancoes/ceis/12345",
     sanction_type="Suspensão",
     sanctioning_body="CEIS",
+    source_id="12345",
     start_date="2024-01-01",
 )
 
@@ -220,6 +221,8 @@ class TestNodePresenterFieldMapping:
         assert result.sanction_type == _SANCTION.sanction_type
 
         assert result.sanctioning_body == _SANCTION.sanctioning_body
+
+        assert result.source_id == _SANCTION.source_id
 
         assert result.start_date == _SANCTION.start_date
 
