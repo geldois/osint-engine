@@ -23,3 +23,23 @@ capability is, because the value of assembling every dependency in one traceable
 given dependency happens to have alternatives today — the moment one caller is allowed to reach past this layer because
 "there's nothing to inject," every future caller with the same argument has precedent to do the same, and the one wiring
 graph stops being complete.
+
+The one edge out of this layer the architecture-direction check would otherwise flag — this layer reaching into
+infrastructure to wire a concrete implementation — is exempted by name rather than by pattern. A composition root has to
+import the concrete implementations it assembles; that single, explicit exception keeps the real interface-to-
+infrastructure direction enforced everywhere else in the codebase.
+
+## Consequences
+
+Every future dependency this layer wires becomes one more explicit line in the same one place, never a second resolution
+mechanism competing with it — the wiring stays traceable exactly because nothing is ever allowed to resolve itself
+outside it, no matter how small.
+
+Having already routed one stateless, single-implementation capability through this layer sets the precedent for the next
+one that looks just as harmless: it goes through wiring too, keeping the same one-place guarantee rather than
+accumulating quiet, case-by-case exceptions that each seemed small on their own.
+
+The one named exemption in the architecture-direction check covers exactly this layer's own edge into infrastructure — a
+future concrete implementation this layer wires in still has to be imported directly from here, and stays exempted by
+the same rule, but nothing else in the codebase inherits that exemption; a similar-looking edge opened anywhere else
+still fails the check.

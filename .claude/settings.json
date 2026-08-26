@@ -4,17 +4,12 @@
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(./uv.lock)",
-      "Read(./coverage.xml)",
-      "Read(./.coverage)",
       "Read(./CHANGELOG.md)",
       "Read(./build/**)",
       "Read(./.venv/**)",
+      "Read(./.cache/**)",
       "Read(./migrations/**/*.sql.bak)",
-      "Read(./tests/data/**)",
-      "Read(./.hypothesis/**)",
-      "Read(./.ruff_cache/**)",
-      "Read(./.pytest_cache/**)",
-      "Read(./.import_linter_cache/**)"
+      "Read(./tests/data/**)"
     ]
   },
   "hooks": {
@@ -45,6 +40,19 @@
             ],
             "timeout": 30
           },
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_fixtures_coverage.py"
+            ],
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|Read",
+        "hooks": [
           {
             "type": "command",
             "command": "python3",

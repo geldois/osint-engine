@@ -1,14 +1,3 @@
-"""End-of-turn type check and docs nudge — ``Stop``.
-
-One process, one injection, read-only. Runs at the end of the turn rather than
-per edit for two reasons: the code is finally complete (mid-refactor a
-type-checker reports cascading errors from code not yet written, and the model
-chases them), and one run costs a fraction of one run per edit.
-
-Both signals derive from ``git status --porcelain`` — no marker files, no
-temp-directory sweep, and accurate even across a session restart.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -25,8 +14,8 @@ _SRC_AREAS = frozenset(
     {"domain", "application", "infrastructure", "interface", "config", "observability"},
 )
 _ROOT_AREAS = frozenset({"scripts", "tests", "migrations"})
-_SRC_AREA_DEPTH = 3  # src/osint_engine/<area>/...
-_PATH_START = 3  # porcelain line is "XY <path>"
+_SRC_AREA_DEPTH = 3
+_PATH_START = 3
 
 _DOCS_NUDGE = (
     "Area(s) touched: {areas}. Judge, don't act reflexively: was the change "
@@ -39,10 +28,7 @@ _DOCS_NUDGE = (
 
 
 def main() -> int:
-    """Report end-of-turn type errors and nudge the architecture docs, once."""
     event = read_event()
-    # Claude Code sets this when the turn was itself resumed by a Stop hook.
-    # Without the guard, an unfixable type error would loop forever.
     if event.get("stop_hook_active") is True:
         return 0
 
@@ -66,7 +52,6 @@ def main() -> int:
 
 
 def _changed_files(root: Path) -> list[str]:
-    """Paths changed vs HEAD, staged, unstaged or untracked; repo-relative."""
     result = run(["git", "status", "--porcelain", "--untracked-files=all"], root)
     if result is None or result.returncode != 0:
         return []
@@ -75,7 +60,6 @@ def _changed_files(root: Path) -> list[str]:
     for line in result.stdout.splitlines():
         if len(line) <= _PATH_START or line[0] == "D" or line[1] == "D":
             continue
-        # A rename entry is "R  old -> new"; only the destination exists.
         path = line[_PATH_START:].split(" -> ")[-1].strip('"')
         if (root / path).is_file():
             paths.append(path)

@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Protocol, cast
 from uuid import UUID, uuid4
 
 import pytest
+from hypothesis import settings as hypothesis_settings
+from hypothesis.database import DirectoryBasedExampleDatabase
 
 from osint_engine.application.auth.external_credential import (
     ExternalCredential,
@@ -49,6 +51,11 @@ if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.node import Node
     from osint_engine.domain.value_objects.text_pattern import TextPatternSet
+
+hypothesis_settings.register_profile(
+    "osint_engine", database=DirectoryBasedExampleDatabase(".cache/hypothesis")
+)
+hypothesis_settings.load_profile("osint_engine")
 
 
 class MakeEntityRevision(Protocol):

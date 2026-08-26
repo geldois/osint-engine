@@ -30,19 +30,10 @@ jobs:
         run: uv sync
 
       - name: Refresh test fixtures
-        # tests/**/responses/ is gitignored and regenerated against the live
-        # BrasilAPI/Portal da Transparência APIs. Forked-repo pull requests
-        # don't have access to repository secrets, so this step is skipped
-        # rather than failing the job — the golden-snapshot tests that depend
-        # on these fixtures then fail instead, same trade-off as the Docker
-        # Hub login step below.
         if: ${{ env.PORTAL_TRANSPARENCIA_API_KEY != '' }}
         run: uv run python -m scripts fixtures refresh
 
       - name: Log in to Docker Hub
-        # Forked-repo pull requests don't have access to repository secrets,
-        # so this step is skipped rather than failing the job — the pull
-        # step below then falls back to Docker Hub's anonymous rate limit.
         if: ${{ env.DOCKERHUB_USERNAME != '' }}
         uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
         with:
@@ -50,25 +41,14 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Pull testcontainers images
-        # Authenticated pulls get a much higher Docker Hub rate limit than
-        # anonymous ones, and shared GitHub Actions runner IPs can otherwise
-        # get throttled. A dedicated step also keeps an image-pull failure
-        # from being misread as a test failure.
         run: |
           docker pull postgres:18
           docker pull testcontainers/ryuk:0.8.1
 
       - name: Install mise tools
-        # The markdown gate runs markdownlint-cli2 via `mise exec` — the same
-        # invocation the local hooks use — so .mise.toml is the single source of
-        # truth for its version. The gates runner no longer skips a missing tool,
-        # so mise must be present here or the markdownlint gate fails the job.
         uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14 # v4.2.3
 
       - name: Quality gates
-        # Single source of truth: the same runner the git hooks call.
-        # Fails on lint, type, architecture, lockfile, or coverage violations,
-        # not just test failures. Emits coverage.xml for the upload step below.
         run: uv run python -m scripts check --full
 
       - name: Upload coverage report
@@ -76,5 +56,5 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage-report
-          path: coverage.xml
+          path: .cache/coverage/coverage.xml
           retention-days: 14

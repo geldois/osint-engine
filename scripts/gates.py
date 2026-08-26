@@ -41,7 +41,10 @@ _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
 _POST_SYNC: tuple[Gate, ...] = (
     Gate("ruff-format", (*_UV_RUN, "ruff", "format", "--check", ".")),
     Gate("ruff-check", (*_UV_RUN, "ruff", "check", ".")),
-    Gate("import-linter", (*_UV_RUN, "lint-imports")),
+    Gate(
+        "import-linter",
+        (*_UV_RUN, "lint-imports", "--cache-dir", ".cache/import-linter"),
+    ),
     Gate("basedpyright", (*_UV_RUN, "basedpyright")),
 )
 _SUITE = Gate(
@@ -54,7 +57,7 @@ _SUITE = Gate(
         "--tb=short",
         "--cov",
         "--cov-branch",
-        "--cov-report=xml",
+        "--cov-report=xml:.cache/coverage/coverage.xml",
     ),
 )
 

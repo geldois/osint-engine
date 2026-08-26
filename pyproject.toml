@@ -72,11 +72,6 @@ typeCheckingMode = "strict"
 pythonPlatform = "All"
 reportMissingTypeStubs = "none"
 
-# The Claude Code hooks run as standalone scripts (their own directory on
-# sys.path at runtime), so `import _hook_io` resolves from the hooks root.
-# (typeCheckingMode cannot be set per-executionEnvironment; the hooks inherit
-# the top-level `strict`, and _hook_io.py is cast-typed to stay clean even
-# under the editor's stricter `all` default.)
 [[tool.basedpyright.executionEnvironments]]
 root = ".claude/hooks"
 
@@ -87,16 +82,17 @@ packages = ["src/osint_engine"]
 pythonpath = ["src", "tests", "."]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "session"
+cache_dir = ".cache/pytest"
 
 [tool.pytest-language-server]
-exclude = ["build/**", "dist/**", ".tox/**"]
+exclude = ["build/**", "dist/**", ".tox/**", ".cache/**"]
 
 [tool.coverage.run]
 branch = true
 source = ["src"]
+data_file = ".cache/coverage/.coverage"
 
 [tool.coverage.report]
-# Ratchet-only floor: set to the measured baseline, never lower it.
 fail_under = 90
 show_missing = true
 
@@ -111,15 +107,11 @@ layers = [
   "osint_engine.application",
   "osint_engine.domain",
 ]
-# The composition root (config.*) is Clean Architecture's Main component: it is
-# exempt from the dependency rule because a DI container must import the concrete
-# implementations it wires. Ignoring its edge into infrastructure keeps the
-# legitimate interface -> config -> infrastructure assembly path from reading as
-# an interface -> infrastructure violation.
 ignore_imports = ["osint_engine.config.** -> osint_engine.infrastructure.**"]
 
 [tool.ruff]
 line-length = 88
+cache-dir = ".cache/ruff"
 
 [tool.ruff.format]
 quote-style = "double"

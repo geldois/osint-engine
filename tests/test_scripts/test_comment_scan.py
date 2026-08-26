@@ -1,11 +1,3 @@
-"""Tests for ``.claude/hooks/_comment_scan.py``.
-
-Loaded by file path via ``importlib`` rather than a normal import: the module
-lives under a dot-directory pytest never collects into its rootdir-relative
-package tree, and the hook itself only ever runs standalone (``python3
-.claude/hooks/report_comments.py``), never as part of the ``scripts`` package.
-"""
-
 from __future__ import annotations
 
 import importlib.util
@@ -22,6 +14,7 @@ _spec.loader.exec_module(_comment_scan)
 
 new_comment_lines_python = _comment_scan.new_comment_lines_python
 new_comment_lines_sql = _comment_scan.new_comment_lines_sql
+new_comment_lines_hash = _comment_scan.new_comment_lines_hash
 is_pragma_comment = _comment_scan.is_pragma_comment
 
 _PYTHON_CASES: dict[str, tuple[str, list[int]]] = {
@@ -139,3 +132,42 @@ def test_new_comment_lines_sql_respects_changed_lines() -> None:
 def test_is_pragma_comment_rejects_ordinary_comment_mentioning_pragma_word() -> None:
     comment = "# this used to have a noqa word in it, not a pragma"
     assert is_pragma_comment(comment) is False
+
+
+_HASH_CASES: dict[str, tuple[str, list[int]]] = {
+    "plain_comment_own_line": ("set -e\n# just a comment\necho hi\n", [2]),
+    "plain_trailing_comment": ("echo hi  # trailing\n", [1]),
+    "shebang_survives": ("#!/bin/sh\necho hi\n", []),
+    "shellcheck_disable_survives": (
+        "# shellcheck disable=SC2034\nx=1\n",
+        [],
+    ),
+    "shellcheck_source_survives": (
+        "# shellcheck source=/dev/null\n. ./lib.sh\n",
+        [],
+    ),
+    "shellcheck_enable_survives": ("# shellcheck enable=all\n", []),
+    "pinned_action_version_comment_survives": (
+        "  - uses: actions/checkout@abc123 # v7.0.0\n",
+        [],
+    ),
+    "hash_inside_single_quoted_string_survives": ("echo 'not # a comment'\n", []),
+    "hash_inside_double_quoted_string_survives": ('echo "not # a comment"\n', []),
+    "escaped_double_quote_inside_string_handled": (
+        'echo "she said \\"hi\\" # still a string"\n',
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"), _HASH_CASES.values(), ids=_HASH_CASES.keys()
+)
+def test_new_comment_lines_hash(source: str, expected: list[int]) -> None:
+    assert new_comment_lines_hash(source, None) == expected
+
+
+def test_new_comment_lines_hash_respects_changed_lines() -> None:
+    source = "echo hi  # keep\necho bye  # flag\n"
+
+    assert new_comment_lines_hash(source, frozenset({2})) == [2]

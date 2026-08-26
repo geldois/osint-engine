@@ -1,16 +1,3 @@
-"""Per-edit lint report — ``PostToolUse(Edit|Write|MultiEdit)``.
-
-Read-only by design. A hook that rewrites the edited file leaves the model's
-in-context copy silently wrong and forces a full re-read on the next edit, so
-this one only *reports*, and every fixer runs once at ``pre-commit`` instead.
-
-Violations ruff cannot fix itself (``fix`` is null in its JSON output) are
-injected verbatim; everything auto-fixable, and every formatting concern, is
-resolved silently by the pre-commit ``fix`` step and never costs a token here.
-A clean run injects a one-line green signal so the model never re-runs the
-linter to confirm. Silence is reserved for files ruff never ran on.
-"""
-
 from __future__ import annotations
 
 import json
@@ -25,7 +12,6 @@ _MAX_REPORTED = 20
 
 
 def main() -> int:
-    """Report the edited Python file's lint verdict to the model."""
     file = tool_input(read_event(), "file_path")
     if not file:
         return 0

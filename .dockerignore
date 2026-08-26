@@ -1,7 +1,6 @@
 .git
 .venv
-.pytest_cache
-.ruff_cache
+.cache
 __pycache__
 *.pyc
 *.pyo
@@ -13,7 +12,6 @@ docs/
 .github/
 .claude/
 build/
-coverage.xml
 CHANGELOG.md
 TO-DO.md
 .actrc

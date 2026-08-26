@@ -33,15 +33,10 @@
     "uv.lock",
     "build/",
     "**/responses/",
-    "coverage/",
-    "node_modules/",
+    ".cache/",
     ".venv/",
     ".git/",
-    ".ruff_cache/",
-    ".pytest_cache/",
-    "**/__pycache__/",
-    ".hypothesis/",
-    ".import_linter_cache/"
+    "**/__pycache__/"
   ],
   "plugins": [
     "https://plugins.dprint.dev/json-0.23.0.wasm",

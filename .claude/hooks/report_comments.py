@@ -1,28 +1,34 @@
-"""Comment-introduction nudge — ``PostToolUse(Edit|Write|MultiEdit)``.
-
-Read-only: reports, never strips — see ``_comment_scan.py``'s header for why
-the prior auto-stripping pipeline was removed. Flags a newly-introduced,
-non-pragma comment or docstring inside a path CLAUDE.md forbids one from, so
-the assistant removes it or renames instead of leaving it to a fixer that no
-longer runs.
-"""
-
 from __future__ import annotations
 
 import re
 import sys
 from pathlib import Path
 
-from _comment_scan import new_comment_lines_python, new_comment_lines_sql
+from _comment_scan import (
+    new_comment_lines_hash,
+    new_comment_lines_python,
+    new_comment_lines_sql,
+)
 from _hook_io import add_context, git_root, read_event, run, tool_input
 
-_ENFORCED_ROOTS = ("src/", "tests/", "scripts/", "migrations/")
+_HASH_EXTENSIONS = (".sh", ".yml", ".yaml", ".toml")
+_HASH_FILENAMES = frozenset(
+    {
+        "Dockerfile",
+        "Caddyfile",
+        ".gitconfig",
+        ".gitignore",
+        ".dockerignore",
+        ".editorconfig",
+        ".actrc",
+    }
+)
 _HUNK_HEADER = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 
 
 def main() -> int:
-    """Report the edited file's newly-introduced comment lines, if any."""
-    file = tool_input(read_event(), "file_path")
+    event = read_event()
+    file = tool_input(event, "file_path")
     if not file:
         return 0
 
@@ -31,22 +37,19 @@ def main() -> int:
         return 0
     path, root, rel = target
 
-    lines = _changed_lines(rel, root)
-    if lines is not None and not lines:
-        return 0
+    if event.get("tool_name") == "Read":
+        lines: frozenset[int] | None = None
+        preexisting = True
+    else:
+        lines = _changed_lines(rel, root)
+        if lines is not None and not lines:
+            return 0
+        preexisting = False
 
     source = path.read_text(encoding="utf-8")
-    hits = (
-        new_comment_lines_python(source, lines)
-        if rel.endswith(".py")
-        else new_comment_lines_sql(source, lines)
-    )
+    hits = _scan(rel, source, lines)
     if hits:
-        add_context(
-            f"New comment on {rel} (no comments in enforced paths — CLAUDE.md). "
-            f"Lines: {', '.join(str(n) for n in hits)}. Remove it, or make the "
-            "name say what it says."
-        )
+        _report(rel, hits, preexisting=preexisting)
 
     return 0
 
@@ -66,16 +69,34 @@ def _resolve_target(file: str) -> tuple[Path, Path, str] | None:
     except ValueError:
         return None
 
-    if not rel.startswith(_ENFORCED_ROOTS) or not rel.endswith((".py", ".sql")):
+    if Path(rel).name not in _HASH_FILENAMES and not rel.endswith(
+        (".py", ".sql", *_HASH_EXTENSIONS)
+    ):
         return None
 
     return path, root, rel
 
 
+def _scan(rel: str, source: str, lines: frozenset[int] | None) -> list[int]:
+    if rel.endswith(".py"):
+        return new_comment_lines_python(source, lines)
+    if rel.endswith(".sql"):
+        return new_comment_lines_sql(source, lines)
+    return new_comment_lines_hash(source, lines)
+
+
+def _report(rel: str, hits: list[int], *, preexisting: bool) -> None:
+    numbers = ", ".join(str(n) for n in hits)
+    lead = "Pre-existing comment(s) in" if preexisting else "New comment on"
+    add_context(
+        f"{lead} {rel} (this repo allows none, anywhere, except a linter-ignore "
+        f"pragma — CLAUDE.md). Lines: {numbers}. Remove it, make the name say "
+        "what it says, or move the decision into README/TO-DO/docs/architecture/"
+        "CLAUDE/CONTEXT."
+    )
+
+
 def _changed_lines(rel: str, root: Path) -> frozenset[int] | None:
-    """``None`` means every line counts (an untracked/new file has no HEAD
-    version for ``git diff`` to compare against). Empty means a tracked file
-    with no actual diff, so nothing to scan."""
     status = run(["git", "status", "--porcelain", "--", rel], root)
     if status is not None and status.stdout.startswith("??"):
         return None

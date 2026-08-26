@@ -21,13 +21,6 @@ class _DockerClient(Protocol):
 
 
 def _ensure_docker_host() -> None:
-    """Point the Docker API client at a running Podman socket when there is no Docker.
-
-    testcontainers talks to the Docker API socket, never the CLI, so a Podman
-    install exposed only through a `docker` shim reads as "Docker is
-    unavailable" and silently skips every integration test. Real Docker and an
-    explicit DOCKER_HOST are both left untouched.
-    """
     if environ.get("DOCKER_HOST") or Path("/var/run/docker.sock").is_socket():
         return
 
@@ -51,9 +44,6 @@ def _project_root() -> Path:
 @pytest.fixture(scope="session")
 def postgres_url() -> Iterator[str]:
     _ensure_docker_host()
-    # A container runtime is a documented setup requirement, so its absence is
-    # a broken environment, not an optional test. from_env() raising here is
-    # the report — louder and more diagnostic than a skip.
     docker_client = cast("_DockerClient", from_env())
     docker_client.ping()
     docker_client.close()

@@ -1,13 +1,7 @@
-# Mutation testing config. Periodic job, never a git hook.
-# Run via: uv run python -m scripts mutation --max-survival <ceiling>
-
 [cosmic-ray]
 module-path = "src/osint_engine"
 timeout = 30.0
 excluded-modules = []
-# Fast unit tests only (no testcontainers/Postgres) — running the full suite per
-# mutant is intractable. A mutant only an integration test would catch counts as
-# survived; acceptable, since mutation's signal is the pure domain/application logic.
 test-command = "uv run --no-sync pytest tests/test_domain tests/test_application -x -q"
 
 [cosmic-ray.distributor]

@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# Docker via repositório oficial (não o docker.io do Ubuntu, que atrasa versão) — pin explícito e
-# portável entre codenames Ubuntu via o padrão documentado pelo próprio Docker.
 apt-get update
 apt-get install -y --no-install-recommends ca-certificates curl git
 
@@ -31,12 +29,9 @@ usermod -aG docker ubuntu
 systemctl enable --now docker
 systemctl enable --now fail2ban
 
-# unattended-upgrades: só patch de segurança, nunca reboot automático — um reboot inesperado
-# perto da demo é pior que um patch de kernel pendente até reboot manual.
 echo 'Unattended-Upgrade::Automatic-Reboot "false";' \
   >/etc/apt/apt.conf.d/51unattended-upgrades-osint-engine
 
-# Rotação de log do Docker — sem isso o log dos containers cresce sem limite.
 mkdir -p /etc/docker
 cat >/etc/docker/daemon.json <<'EOF'
 {
@@ -46,20 +41,13 @@ cat >/etc/docker/daemon.json <<'EOF'
 EOF
 systemctl restart docker
 
-# Clona o repo, gera .env uma única vez — nada aqui é tocado de novo por nenhum deploy futuro.
 git clone https://github.com/geldois/osint-engine.git /opt/osint-engine
 chown -R ubuntu:ubuntu /opt/osint-engine
 cd /opt/osint-engine
 
 POSTGRES_PASSWORD_GENERATED=$(openssl rand -hex 32)
-# EXTERNAL_CREDENTIAL_ENCRYPTION_KEY precisa ser uma chave Fernet válida (32 bytes url-safe
-# base64), não hex — openssl rand -base64 32 mais a tradução pro alfabeto url-safe é o
-# equivalente shell de Fernet.generate_key().
 FERNET_KEY_GENERATED=$(openssl rand -base64 32 | tr '+/' '-_')
 ADMIN_PASSWORD_GENERATED=$(openssl rand -hex 16)
-# sslmode=disable: golang-migrate's postgres driver defaults to requiring SSL when the DSN
-# doesn't say otherwise, and the compose-internal Postgres has no TLS configured — without this,
-# the app container's entrypoint migration step fails every time with "SSL is not enabled".
 cat >.env <<EOF
 SECRET_KEY=$(openssl rand -hex 32)
 EXTERNAL_CREDENTIAL_ENCRYPTION_KEY=${FERNET_KEY_GENERATED}
@@ -74,7 +62,3 @@ IMAGE_TAG=
 EOF
 chown ubuntu:ubuntu .env
 chmod 600 .env
-
-# IMAGE_TAG fica vazio de propósito — o cloud-init não sobe a stack. A primeira subida
-# (com a tag real da imagem já publicada no GHCR) é o passo manual seguinte do runbook de
-# provisionamento, na mesma sessão SSH em que ADMIN_PASSWORD é revisado.

@@ -1,19 +1,3 @@
-"""Comment/docstring detection — read-only, never a rewrite.
-
-A prior version of this pipeline auto-stripped new comments and docstrings at
-pre-commit; removed because its edge cases (typer-command exemption, f-string
-false positives) could silently mismatch what the model still holds in
-context. ``report_comments.py`` nudges instead, so a misparse here costs an
-extra reminder, never a corrupted file.
-
-Distinguishes a real comment/docstring from a linter-suppression pragma via a
-closed, tool-documented allowlist (ruff noqa, basedpyright pyright:ignore and
-the PEP 484 type:ignore form, coverage.py pragma, sqruff/sqlfluff noqa) —
-never by guessing intent. Python detection walks ``tokenize`` for comments and
-``ast`` for docstring statements so a ``#`` inside a string/f-string is never
-misread as a comment.
-"""
-
 from __future__ import annotations
 
 import ast
@@ -32,6 +16,9 @@ _PY_PRAGMA_CLAUSE = re.compile(
     r")\s*",
 )
 _SQL_PRAGMA = re.compile(r"^--\s*(?:noqa\b.*|name:\s*\S+\s+:\S+\s*)$")
+_HASH_PRAGMA = re.compile(
+    r"^#\s*(?:shellcheck\s+(?:disable|enable|source)=\S+|v\d+(?:\.\d+){1,2})\s*$"
+)
 
 
 class _Span(NamedTuple):
@@ -89,12 +76,6 @@ def _docstring_spans(tree: ast.Module) -> list[_Span]:
 
 
 def is_pragma_comment(text: str) -> bool:
-    """Whether every ``#``-clause chained in ``text`` is an allowlisted pragma.
-
-    A single trailing comment can chain more than one directive on one line
-    (``# noqa: SLF001  # pyright: ignore[reportPrivateUsage]``) — tokenize
-    yields that as one COMMENT token, so each clause is checked individually.
-    """
     clauses = [clause.strip() for clause in re.split(r"(?=#)", text) if clause.strip()]
     return bool(clauses) and all(
         _PY_PRAGMA_CLAUSE.fullmatch(clause) for clause in clauses
@@ -123,11 +104,6 @@ def _in_changed_lines(span: _Span, changed_lines: frozenset[int] | None) -> bool
 def new_comment_lines_python(
     source: str, changed_lines: frozenset[int] | None
 ) -> list[int]:
-    """Line numbers of every non-pragma comment/docstring inside ``changed_lines``.
-
-    ``changed_lines=None`` means every line counts. Unchanged (empty) on a
-    syntax error — a file that doesn't parse has nothing safe to scan.
-    """
     try:
         tree = ast.parse(source)
     except SyntaxError:
@@ -143,12 +119,11 @@ def new_comment_lines_python(
 def new_comment_lines_sql(
     source: str, changed_lines: frozenset[int] | None
 ) -> list[int]:
-    """Line numbers of every non-pragma ``--`` comment inside ``changed_lines``."""
     lines: list[int] = []
     for line_number, line in enumerate(source.splitlines(), start=1):
         if changed_lines is not None and line_number not in changed_lines:
             continue
-        index = _unquoted_comment_index(line)
+        index = _unquoted_dash_index(line)
         if index is None:
             continue
         if _SQL_PRAGMA.match(line[index:].strip()):
@@ -157,8 +132,25 @@ def new_comment_lines_sql(
     return lines
 
 
-def _unquoted_comment_index(content: str) -> int | None:
-    """Index of an unquoted ``--`` in ``content``, or ``None`` if there isn't one."""
+def new_comment_lines_hash(
+    source: str, changed_lines: frozenset[int] | None
+) -> list[int]:
+    lines: list[int] = []
+    for line_number, line in enumerate(source.splitlines(), start=1):
+        if changed_lines is not None and line_number not in changed_lines:
+            continue
+        if line_number == 1 and line.startswith("#!"):
+            continue
+        index = _unquoted_hash_index(line)
+        if index is None:
+            continue
+        if _HASH_PRAGMA.match(line[index:].strip()):
+            continue
+        lines.append(line_number)
+    return lines
+
+
+def _unquoted_dash_index(content: str) -> int | None:
     in_single = in_double = False
     i, n = 0, len(content)
     while i < n:
@@ -175,6 +167,28 @@ def _unquoted_comment_index(content: str) -> int | None:
         elif char == '"':
             in_double = True
         elif char == "-" and i + 1 < n and content[i + 1] == "-":
+            return i
+        i += 1
+    return None
+
+
+def _unquoted_hash_index(content: str) -> int | None:
+    in_single = in_double = False
+    i, n = 0, len(content)
+    while i < n:
+        char = content[i]
+        if in_single:
+            in_single = char != "'"
+        elif in_double:
+            if char == "\\":
+                i += 1
+            else:
+                in_double = char != '"'
+        elif char == "'":
+            in_single = True
+        elif char == '"':
+            in_double = True
+        elif char == "#":
             return i
         i += 1
     return None
