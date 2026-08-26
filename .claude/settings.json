@@ -1,17 +1,4 @@
 {
-  "permissions": {
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./uv.lock)",
-      "Read(./CHANGELOG.md)",
-      "Read(./build/**)",
-      "Read(./.venv/**)",
-      "Read(./.cache/**)",
-      "Read(./migrations/**/*.sql.bak)",
-      "Read(./tests/data/**)"
-    ]
-  },
   "hooks": {
     "PreToolUse": [
       {
