@@ -37,7 +37,7 @@ flowchart LR
     FastAPI --> ErrorHandler("Error Handler")
     FastAPI --> AuthRouter("Auth Router")
     FastAPI --> CNPJRouter("CNPJ Router")
-    FastAPI --> ExpansionRouters("CNEP / CEIS Routers")
+    FastAPI --> ExpansionRouters("CNEP / CEIS / CEPIM / CEAF Routers")
     FastAPI --> CPFRouter("CPF Router")
     FastAPI --> GraphHistoryRouter("Graph History Router")
     FastAPI --> CredentialsRouter("Credentials Router")
@@ -51,7 +51,7 @@ flowchart LR
     CNPJRouter --> GetCNPJ("GET /cnpj/{cnpj}")
     ExpansionRouters --> JwtGuard("JWT Guard")
     ExpansionRouters --> ExpansionRateLimit
-    ExpansionRouters --> GetExpansion("GET /cnep · /ceis")
+    ExpansionRouters --> GetExpansion("GET /cnep · /ceis · /cepim · /ceaf")
     CPFRouter --> RoleGuard
     CPFRouter --> ExpansionRateLimit
     CPFRouter --> GetCPF("GET /cpf/{cpf}")
@@ -357,6 +357,8 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 | `GET /graphs/{root_id}/history` | 100 / min  | Shared per-route bucket |
 | `GET /cnep/{cpf_or_cnpj}`       | 100 / min  | Shared per-route bucket |
 | `GET /ceis/{cpf_or_cnpj}`       | 100 / min  | Shared per-route bucket |
+| `GET /cepim/{cnpj}`             | 100 / min  | Shared per-route bucket |
+| `GET /ceaf/{cpf}`               | 100 / min  | Shared per-route bucket |
 | `GET /text-ingestion/patterns`  | 100 / min  | Shared per-route bucket |
 | `POST /text-ingestion`          | 100 / min  | Shared per-route bucket |
 

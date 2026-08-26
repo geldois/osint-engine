@@ -30,6 +30,18 @@
   yet would mean guessing its shape; when that adapter lands, `list_all_revisions` is the one method to replace, and
   `ListGraphCatalog` is its only caller
 
+## feat(sanctions)
+
+- CEPIM's `convenio` (`DimConvenioDTO`: `codigo`/`objeto`/`numero`) and CEAF's `cargoEfetivo`/`codigoCargoComissao`/
+  `cargoComissao`/`punicao.portaria`/`punicao.paginaDOU`/`punicao.secaoDOU` are real fields in the upstream payload with
+  no matching field on the `Sanction` node — mapping them would mean extending the entity for a case specific to only
+  two of the four sanction sources; not done, dropped silently by `cepim_mapper.py`/`ceaf_mapper.py`
+- `cepim_mapper.py`/`ceaf_mapper.py` are tested only against synthetic payloads matching the official `CepimDTO`/
+  `CeafDTO` schema (`v3/api-docs`) — unlike `ceis_mapper.py`/`cnep_mapper.py`, there's no real API snapshot fixture
+  (`responses/portal_transparencia_{cepim,ceaf}.json`) backing a `TestMapGraphWithRealAPISnapshot`-equivalent test,
+  since capturing one needs an authenticated call not made for this feature. Capture one and add the mirroring test the
+  next time a valid `PORTAL_TRANSPARENCIA_API_KEY` call against `/cepim` or `/ceaf` happens for any other reason
+
 ## feat(spreadsheet-ingestion)
 
 - `_read_csv` splits rows on a fixed `,` delimiter with no `;`-sniffing; a `;`-delimited export (common from PT-BR
@@ -61,10 +73,10 @@
 ## fix(rate-limit)
 
 - expansion buckets are a flat 100/min per route, but Portal da Transparência's token ceiling is 90/min from 06:00–23:59
-  (higher overnight); with two Portal-backed routes (`/cnep`, `/ceis`) the aggregate can still exceed that ceiling, so
-  the per-route limiter protects this server but not the shared upstream token — Portal may `429` the token first under
-  load. Deliberate for the visitor-only demo; tighten to a combined cross-route Portal bucket under 90/min if real
-  traffic trips it
+  (higher overnight); with four Portal-backed routes (`/cnep`, `/ceis`, `/cepim`, `/ceaf`) the aggregate can still
+  exceed that ceiling, so the per-route limiter protects this server but not the shared upstream token — Portal may
+  `429` the token first under load. Deliberate for the visitor-only demo; tighten to a combined cross-route Portal
+  bucket under 90/min if real traffic trips it
 
 ## fix(text-ingestion)
 
