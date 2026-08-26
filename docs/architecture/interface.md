@@ -55,6 +55,24 @@ Within a single response the same provenance is repeated on the graph and on eve
 when read alone and stops being redundant the moment a caller accumulates several responses into one view — the point at
 which knowing which fetch each part arrived from is the only thing that makes the accumulated view interpretable.
 
-A handler that enriches a graph after the workflow returns — attaching advisory cross-entity links computed at read time
-— rebuilds the provenance wrapper around the enriched result rather than reporting the stored one, so the
+A handler that augments a graph after the workflow returns — attaching advisory cross-entity links computed at read time
+— rebuilds the provenance wrapper around the augmented result rather than reporting the stored one, so the
 content-derived identifier in a response always describes what that response actually contains.
+
+## Consequences
+
+Any future route added to this layer inherits the same authentication/authorization split automatically, rather than
+needing its own hand-rolled check — a new workflow only has to declare which role may call it, not reimplement how that
+gets enforced.
+
+Publishing the content-derived identifier commits this layer to deriving it the same deterministic way indefinitely: a
+caller may already depend on two fetches of unchanged content producing the same value, so changing how that identifier
+is computed later is a breaking change for any such caller, not an internal refactor.
+
+Because provenance is repeated on every entity inside a response rather than stated once for the whole payload, the
+response grows by one small, fixed set of fields per entity — accepted since stating it once stops working the moment a
+caller merges several responses into one accumulated view and needs to tell which part came from which fetch.
+
+A future read-time step that adds its own cross-entity links has to follow the same rule the existing one does — rebuild
+the provenance wrapper around whatever it actually returns — or the content-derived identifier in that response would
+describe something other than what the caller actually received.

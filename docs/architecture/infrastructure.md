@@ -72,3 +72,23 @@ as exhaustive for a file format understood by a third-party library, not authore
 keeps both properties at once: every failure mode already reproduced and confirmed stays named explicitly, so the code
 documents exactly what's actually been seen and tested, while one final, deliberately broad catch underneath guarantees
 nothing from that same boundary can still escape unclassified.
+
+## Consequences
+
+Replacing the in-memory store with a real graph database later is adapter work against contracts already proven correct,
+not a redesign of anything above this layer — the layers above never see which concrete store answers a lookup, so that
+migration's own risk stays contained entirely to this one.
+
+Because the pacing state lives in one process with no persistence of its own, restarting the process resets every
+credential's own window back to full — a caller loses no paid work, since each completed expansion already committed,
+but also loses whatever wait a batch estimate had already promised, so an estimate given just before a restart can
+undercount the true wait afterward.
+
+Staying on hand-written queries and plain migration files means every future schema change or query is written and
+reviewed by hand, with nothing generated to fall out of sync with the schema — the tradeoff is that no tool catches a
+query still referencing a column a migration already renamed; that stays a manual discipline, not a mechanical
+guarantee.
+
+The closed list of named spreadsheet-corruption failures is exactly what has actually been reproduced and confirmed so
+far, not a claim of completeness — a new corruption shape a future file exhibits falls through to the broad catch
+underneath rather than a specific, documented one, until someone reproduces it and gives it its own name.

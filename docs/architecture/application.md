@@ -27,7 +27,7 @@ it, not just which combination was requested, so provenance stays precise even w
 the same text.
 
 A separate, best-effort workflow runs after any expansion or ingestion produces a fresh batch of people: it compares
-each newly seen `Person`'s CPF against every `Person` already known, overlapping the visible digits of a masked value
+each newly seen person's CPF against every person already known, overlapping the visible digits of a masked value
 against another value's corresponding digits, and records a **possible match** where two carry distinct identities but
 an overlapping CPF. This is deliberately separate from ingestion's own resolution rule, which stays
 exact-identifier-only; the two solve different problems. An official identifier can itself be inconsistent across
@@ -76,15 +76,15 @@ history-navigation work, not this layer's.
 
 A workflow that reaches a paid provider guards against paying twice for the same identifier by checking, before it ever
 calls out, whether any revision already stored for that identifier came from that same provider — a caller who repeats
-the same expansion without asking to pays nothing extra, and only an explicit `force` bypasses the check. This reused
-the revision history a `merge()` already keeps rather than introducing a separate record of what's been paid for: the
-provider name already travels with every revision, so the check is a lookup, not new state to keep consistent. The lock
-is scoped per provider, not per identifier, because a revision that arrived from ingestion or a different provider
-carries no information about whether the paid one has ever run. Merging the fetched result into the graph alone isn't
-enough to arm the lock: a graph merge only cascades a node revision when the node's content is actually new, so a paid
-result that happens to carry the exact content something else already recorded would leave no trace of which provider
-paid for it. The workflow records that node's revision a second time, directly and unconditionally, purely so the
-provider name is never lost to that optimization.
+the same expansion without asking to pays nothing extra, and only an explicit override flag bypasses the check. This
+reused the revision history that merging already keeps rather than introducing a separate record of what's been paid
+for: the provider name already travels with every revision, so the check is a lookup, not new state to keep consistent.
+The lock is scoped per provider, not per identifier, because a revision that arrived from ingestion or a different
+provider carries no information about whether the paid one has ever run. Merging the fetched result into the graph alone
+isn't enough to arm the lock: a graph merge only cascades a node revision when the node's content is actually new, so a
+paid result that happens to carry the exact content something else already recorded would leave no trace of which
+provider paid for it. The workflow records that node's revision a second time, directly and unconditionally, purely so
+the provider name is never lost to that optimization.
 
 Ingestion's recognition criteria were split from one fixed combination into individually addressable pieces once a
 concrete gap showed up: a document appearing as bare digits with no punctuation and no textual label next to it —
@@ -96,10 +96,33 @@ whoever already depends on it. The one accepted cost is the same one a loose, la
 occasionally match something that merely happens to satisfy the checksum by chance, so it stays opt-in per request
 rather than folded into any existing default combination.
 
-The catalog that lists every root ever fetched groups its entries by `root_id`, not by `Graph.id`, even though
-`Graph.id` is the identity `merge()` already keys storage by. `Graph.id` is derived from the exact set of node and edge
-ids it holds, so an expansion that discovers one new node under an already-known root produces a different `Graph.id`
-from the one before it — grouping by that id would split a single root's timeline into two unrelated entries the moment
-it grew, silently losing the earlier revision from view. Grouping by `root_id` instead means the aggregation can't live
-in the repository, which only ever indexes by an entity's own id; it has to walk every stored revision and bucket it by
-the root each one points to, in the use case, where it stays trivial to test without a storage double.
+The catalog that lists every root ever fetched groups its entries by the root identifier, not by the graph's own
+content-derived identity, even though that content-derived identity is what storage is already keyed by when merging.
+The graph's own identity is derived from the exact set of node and edge ids it holds, so an expansion that discovers one
+new node under an already-known root produces a different graph identity from the one before it — grouping by that
+identity would split a single root's timeline into two unrelated entries the moment it grew, silently losing the earlier
+revision from view. Grouping by the root identifier instead means the aggregation can't live in the repository, which
+only ever indexes by an entity's own identity; it has to walk every stored revision and bucket it by the root each one
+points to, in the use case, where it stays trivial to test without a storage double.
+
+## Consequences
+
+A provider guard scoped per provider rather than per identifier means a second paid provider ever added for the same
+kind of identifier needs its own guard, arrived at the same way — nothing about an existing one generalizes
+automatically to a new source. The atomicity gap across the two kinds of storage stays a standing obligation rather than
+a closed question: the moment any future workflow writes to both in one unit of work, that workflow inherits the gap and
+has to close it, not merely notice it.
+
+Because the merge policy's default now keeps every incoming revision exactly as it arrived, any future workflow that
+genuinely wants a single synthesized view has to explicitly reach for the older reconciling policy — it stays available,
+but nothing wires it in automatically, so that choice has to be made deliberately each time, not inherited for free.
+
+Splitting recognition criteria into individually addressable pieces means a future provider's own format is added as a
+new piece rather than a redefinition of an existing combination, but a caller only gets a newly added piece's coverage
+by naming it, or an updated combination, explicitly — an existing default combination never grows silently underneath
+whoever already depends on it.
+
+Grouping the catalog by the root identifier rather than the graph's own content-derived identity means that aggregation
+cannot be answered by the same identity-keyed lookup every other stored entity supports; a future storage backend has to
+support walking and bucketing by root the same way, or the catalog's own grouping logic has to be re-derived for it
+specifically.

@@ -62,3 +62,25 @@ the older one instead of stacking both, undermining the very "distinct, stacked 
 history relies on. The fix makes the composite's content-id derive from its constituents' own content-ids while its
 stable identity keeps deriving from their identities alone, restoring the same separation every other entity already
 has, one level removed.
+
+## Consequences
+
+Every new concrete entity inherits the fail-fast check for free, so a namespace or identifier-type mistake surfaces at
+import time on the very first run that loads the module — a benefit that costs nothing extra to keep as the set of
+entity kinds grows, since the check lives in the one shared base every concrete kind already builds on.
+
+Keeping every relationship its own dedicated type means a future kind of relationship is one more type to add, never a
+case folded into an existing one just because the shape happens to match — the repeated shape between similar
+relationships stays an ongoing, accepted cost of this choice, not a one-time one.
+
+Because normalization is decided per entity kind rather than by one universal rule, a future identifying field with its
+own quirks needs its own case written where that entity's identity is computed — there is no shared normalization step
+to extend, or to accidentally break for every other kind at once.
+
+Two genuinely identical real-world subjects, revealed with a hidden portion in different positions by different sources,
+stay recognized as separate identities until something else explicitly relinks them; nothing in identity computation
+ever converges them on its own, by design.
+
+The separation now enforced between a composite entity's own stable identity and its content-derived identity is the
+same shape every other entity already had; any future composite entity has to preserve that same separation
+deliberately, since collapsing the two again would silently reintroduce the same lost-revision failure this fix closed.

@@ -11,3 +11,8 @@ that exact request.
 
 Nothing in this area has required an actively weighed trade-off yet; its setup is straightforward configuration, not a
 decision under real alternatives.
+
+## Consequences
+
+None yet, for the same reason: nothing here was built against a real alternative, so nothing has a downstream cost worth
+tracking. Revisit this section the moment that changes.

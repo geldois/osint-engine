@@ -10,3 +10,9 @@ language runtime, kept entirely separate from the application's own code.
 A schema-migration approach with no coupling to any particular ORM or Python migration DSL was chosen deliberately,
 consistent with staying close to hand-written, inspectable SQL everywhere else this store is touched, rather than
 adopting whichever migration tool happened to ship bundled with a broader persistence framework.
+
+## Consequences
+
+Every schema change stays reviewable as plain SQL the same way any other source file is, and reverting one is always the
+matching, already-written file — no future contributor needs the migration tool's own runtime installed just to read or
+reason about what a past change actually did to the schema.
