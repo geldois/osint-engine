@@ -36,11 +36,6 @@
   `cargoComissao`/`punicao.portaria`/`punicao.paginaDOU`/`punicao.secaoDOU` are real fields in the upstream payload with
   no matching field on the `Sanction` node — mapping them would mean extending the entity for a case specific to only
   two of the four sanction sources; not done, dropped silently by `cepim_mapper.py`/`ceaf_mapper.py`
-- `cepim_mapper.py`/`ceaf_mapper.py` are tested only against synthetic payloads matching the official `CepimDTO`/
-  `CeafDTO` schema (`v3/api-docs`) — unlike `ceis_mapper.py`/`cnep_mapper.py`, there's no real API snapshot fixture
-  (`responses/portal_transparencia_{cepim,ceaf}.json`) backing a `TestMapGraphWithRealAPISnapshot`-equivalent test,
-  since capturing one needs an authenticated call not made for this feature. Capture one and add the mirroring test the
-  next time a valid `PORTAL_TRANSPARENCIA_API_KEY` call against `/cepim` or `/ceaf` happens for any other reason
 
 ## feat(spreadsheet-ingestion)
 

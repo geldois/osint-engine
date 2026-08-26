@@ -14,6 +14,7 @@ from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cepim_
 )
 
 if TYPE_CHECKING:
+    from osint_engine.infrastructure.providers.payload import Payload
     from tests.test_src.test_infrastructure.test_providers.conftest import MakePayload
 
 _SANCTION_DATA: dict[str, object] = {
@@ -142,3 +143,10 @@ class TestMapGraph:
         )
 
         assert len(graph.nodes) == 2
+
+
+class TestMapGraphWithRealAPISnapshot:
+    def test_does_not_raise_with_real_api_snapshot(
+        self, portal_transparencia_cepim_valid_payload: Payload
+    ) -> None:
+        map_graph(payload=portal_transparencia_cepim_valid_payload)
