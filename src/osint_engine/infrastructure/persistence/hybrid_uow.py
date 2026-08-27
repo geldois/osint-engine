@@ -50,6 +50,7 @@ class HybridUoW(UoW):
             hasattr(self, attribute)
             for attribute in (
                 "edges",
+                "entity_records",
                 "external_credentials",
                 "graphs",
                 "nodes",
@@ -69,6 +70,7 @@ class HybridUoW(UoW):
         await self._mem_uow._prepare()  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
 
         self.edges = self._mem_uow.edges
+        self.entity_records = self._mem_uow.entity_records
         self.external_credentials = external_credentials
         self.graphs = self._mem_uow.graphs
         self.nodes = self._mem_uow.nodes
@@ -83,6 +85,7 @@ class HybridUoW(UoW):
         await self._mem_uow._finish()  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
 
         del self.edges
+        del self.entity_records
         del self.external_credentials
         del self.graphs
         del self.nodes

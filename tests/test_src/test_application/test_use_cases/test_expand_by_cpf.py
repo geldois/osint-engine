@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING, override
 
 import pytest
@@ -15,6 +16,8 @@ from osint_engine.domain.entities.nodes.person import Person
 from tests.fakes.fetchers import FakeCPFFetcher
 
 if TYPE_CHECKING:
+    from uuid import UUID
+
     from osint_engine.application.auth.external_credential import ExternalCredential
     from osint_engine.application.revision.entity_revision import EntityRevision
     from tests.conftest import (
@@ -57,7 +60,7 @@ def _make_stub(*, cpf: str = _CPF) -> Person:
     )
 
 
-def _stub_id() -> object:
+def _stub_id() -> UUID:
     return _make_stub().id
 
 
@@ -320,3 +323,215 @@ class TestExpandByCPFReuseLock:
                 cpf=_CPF,
                 username="alice",
             ).execute()
+
+
+class TestExpandByCPFEntityRecords:
+    @pytest.mark.asyncio
+    async def test_already_fetched_records_the_blocked_attempt_with_the_previous_ref(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_external_credential: MakeExternalCredential,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        credential = make_external_credential(
+            username="alice", provider=Provider.KIPFLOW
+        )
+        previous = make_entity_revision(entity=_make_stub(), provider="kipflow")
+        mem_storage = make_mem_storage(
+            external_credentials=[credential], nodes=[previous]
+        )
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+        cpf_fetcher = _CountingCPFFetcher(
+            revision=make_entity_revision(entity=make_graph())
+        )
+
+        with pytest.raises(AlreadyFetchedError):
+            await ExpandByCPF(
+                uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+                cpf_fetcher=cpf_fetcher,
+                cpf=_CPF,
+                username="alice",
+            ).execute()
+
+        (record,) = mem_storage.entity_records
+
+        assert record.outcome == "already_fetched"
+        assert record.entity_id == _stub_id()
+        assert record.entity_ref == previous.ref
+        assert record.username == "alice"
+
+    @pytest.mark.asyncio
+    async def test_already_fetched_record_survives_after_the_error_propagates(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_external_credential: MakeExternalCredential,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        credential = make_external_credential(
+            username="alice", provider=Provider.KIPFLOW
+        )
+        previous = make_entity_revision(entity=_make_stub(), provider="kipflow")
+        mem_storage = make_mem_storage(
+            external_credentials=[credential], nodes=[previous]
+        )
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+        cpf_fetcher = _CountingCPFFetcher(
+            revision=make_entity_revision(entity=make_graph())
+        )
+        use_case = ExpandByCPF(
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            cpf_fetcher=cpf_fetcher,
+            cpf=_CPF,
+            username="alice",
+        )
+
+        with contextlib.suppress(AlreadyFetchedError):
+            await use_case.execute()
+
+        assert len(mem_storage.entity_records) == 1
+
+    @pytest.mark.asyncio
+    async def test_missing_credential_records_a_failed_attempt(
+        self,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        mem_storage = make_mem_storage()
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+        cpf_fetcher = FakeCPFFetcher(revision=None)
+        use_case = ExpandByCPF(
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            cpf_fetcher=cpf_fetcher,
+            cpf=_CPF,
+            username="unknown_user",
+        )
+
+        with pytest.raises(ExternalCredentialNotFoundError):
+            await use_case.execute()
+
+        (record,) = mem_storage.entity_records
+
+        assert record.outcome == "failed"
+        assert record.entity_id == _stub_id()
+        assert record.entity_ref is None
+
+    @pytest.mark.asyncio
+    async def test_empty_fetch_records_an_empty_attempt_without_raising(
+        self,
+        make_external_credential: MakeExternalCredential,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        credential = make_external_credential(
+            username="alice", provider=Provider.KIPFLOW
+        )
+        mem_storage = make_mem_storage(external_credentials=[credential])
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+        cpf_fetcher = FakeCPFFetcher(revision=None)
+        use_case = ExpandByCPF(
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            cpf_fetcher=cpf_fetcher,
+            cpf=_CPF,
+            username="alice",
+        )
+
+        result = await use_case.execute()
+
+        assert result is None
+
+        (record,) = mem_storage.entity_records
+
+        assert record.outcome == "empty"
+        assert record.entity_id == _stub_id()
+        assert record.entity_ref is None
+
+    @pytest.mark.asyncio
+    async def test_expanded_records_an_attempt_with_the_merged_nodes_ref(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_external_credential: MakeExternalCredential,
+        make_fake_cpf_fetcher: MakeFakeCPFFetcher,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        revision = make_entity_revision(entity=_make_kipflow_graph())
+        credential = make_external_credential(
+            username="alice", provider=Provider.KIPFLOW
+        )
+        mem_storage = make_mem_storage(external_credentials=[credential])
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+        cpf_fetcher = make_fake_cpf_fetcher(revision=revision)
+        use_case = ExpandByCPF(
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            cpf_fetcher=cpf_fetcher,
+            cpf=_CPF,
+            username="alice",
+        )
+
+        await use_case.execute()
+
+        (record,) = mem_storage.entity_records
+
+        entity_ref = record.entity_ref
+
+        assert record.outcome == "expanded"
+        assert record.entity_id == _stub_id()
+        assert entity_ref is not None
+        assert entity_ref.id == _stub_id()
+
+        stored_node = mem_storage.nodes[_stub_id()][entity_ref.content_id]
+
+        assert stored_node.entity.id == _stub_id()
+
+    @pytest.mark.asyncio
+    async def test_force_true_records_a_second_attempt_even_with_identical_content(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_external_credential: MakeExternalCredential,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        credential = make_external_credential(
+            username="alice", provider=Provider.KIPFLOW
+        )
+        mem_storage = make_mem_storage(external_credentials=[credential])
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+        mem_uow_factory = make_mem_uow_factory(mem_uow=mem_uow)
+        identical_graph = _make_kipflow_graph()
+
+        for _ in range(2):
+            cpf_fetcher = FakeCPFFetcher(
+                revision=make_entity_revision(entity=identical_graph)
+            )
+            await ExpandByCPF(
+                uow_factory=mem_uow_factory,
+                cpf_fetcher=cpf_fetcher,
+                cpf=_CPF,
+                force=True,
+                username="alice",
+            ).execute()
+
+        records = [
+            record
+            for record in mem_storage.entity_records
+            if record.outcome == "expanded"
+        ]
+
+        assert len(records) == 2
+
+        first_ref, second_ref = records[0].entity_ref, records[1].entity_ref
+
+        assert first_ref is not None
+        assert second_ref is not None
+        assert first_ref.content_id == second_ref.content_id
+        assert len(mem_storage.nodes[_stub_id()]) == 1

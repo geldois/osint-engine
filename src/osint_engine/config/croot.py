@@ -12,6 +12,12 @@ from osint_engine.application.revision.policies.revision_selection_policy import
 from osint_engine.application.use_cases.authentication.authenticate_user import (
     AuthenticateUser,
 )
+from osint_engine.application.use_cases.consumption.list_entity_record_catalog import (
+    ListEntityRecordCatalog,
+)
+from osint_engine.application.use_cases.consumption.list_entity_records_by_cpf import (
+    ListEntityRecordsByCPF,
+)
 from osint_engine.application.use_cases.credentials.list_credentials import (
     ListExternalCredentials,
 )
@@ -200,6 +206,12 @@ def build_container(  # noqa: PLR0913
         find_possibly_matches=partial(FindPossiblyMatches, uow_factory=uow_factory),
         ingest_text=partial(IngestText, uow_factory=uow_factory),
         list_edge_history=partial(ListEdgeHistory, uow_factory=uow_factory),
+        list_entity_record_catalog=partial(
+            ListEntityRecordCatalog, uow_factory=uow_factory
+        ),
+        list_entity_records_by_cpf=partial(
+            ListEntityRecordsByCPF, uow_factory=uow_factory
+        ),
         list_external_credentials=partial(
             ListExternalCredentials, uow_factory=uow_factory
         ),

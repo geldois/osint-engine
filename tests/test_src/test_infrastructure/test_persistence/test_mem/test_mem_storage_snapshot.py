@@ -9,6 +9,7 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import (
 
 if TYPE_CHECKING:
     from tests.conftest import (
+        MakeEntityRecord,
         MakeEntityRevision,
         MakeFakeEdge,
         MakeFakeNode,
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
 
 def _seeded_storage(
     *,
+    make_entity_record: MakeEntityRecord,
     make_entity_revision: MakeEntityRevision,
     make_fake_edge: MakeFakeEdge,
     make_graph: MakeGraph,
@@ -34,6 +36,7 @@ def _seeded_storage(
 
     return make_mem_storage(
         edges=[make_entity_revision(entity=edge)],
+        entity_records=[make_entity_record()],
         graphs=[make_entity_revision(entity=graph)],
         nodes=[
             make_entity_revision(entity=node_a),
@@ -51,6 +54,7 @@ class TestMemStorageSnapshotSubclassContract:
 class TestMemStorageSnapshotSnapshot:
     def test_isolates_containers_while_sharing_leaf_revisions(
         self,
+        make_entity_record: MakeEntityRecord,
         make_entity_revision: MakeEntityRevision,
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
@@ -59,6 +63,7 @@ class TestMemStorageSnapshotSnapshot:
         make_mem_storage: MakeMemStorage,
     ) -> None:
         mem_storage = _seeded_storage(
+            make_entity_record=make_entity_record,
             make_entity_revision=make_entity_revision,
             make_fake_edge=make_fake_edge,
             make_graph=make_graph,
@@ -71,6 +76,8 @@ class TestMemStorageSnapshotSnapshot:
 
         assert mem_storage.edges is not snapshot.edges
 
+        assert mem_storage.entity_records is not snapshot.entity_records
+
         assert mem_storage.graphs is not snapshot.graphs
 
         assert mem_storage.nodes is not snapshot.nodes
@@ -82,8 +89,11 @@ class TestMemStorageSnapshotSnapshot:
 
         assert snapshot.nodes[node_id][content_id] is revision
 
+        assert snapshot.entity_records[0] is mem_storage.entity_records[0]
+
     def test_clear_empties_every_inner_storage(
         self,
+        make_entity_record: MakeEntityRecord,
         make_entity_revision: MakeEntityRevision,
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
@@ -93,6 +103,7 @@ class TestMemStorageSnapshotSnapshot:
     ) -> None:
         snapshot = MemStorageSnapshot(
             mem_storage=_seeded_storage(
+                make_entity_record=make_entity_record,
                 make_entity_revision=make_entity_revision,
                 make_fake_edge=make_fake_edge,
                 make_graph=make_graph,
@@ -106,6 +117,8 @@ class TestMemStorageSnapshotSnapshot:
 
         assert not snapshot.edges
 
+        assert not snapshot.entity_records
+
         assert not snapshot.graphs
 
         assert not snapshot.nodes
@@ -116,6 +129,7 @@ class TestMemStorageSnapshotSnapshot:
 class TestMemStorageSnapshotCommit:
     def test_commit_merges_a_new_entry_written_on_the_snapshot_into_the_backing_storage(
         self,
+        make_entity_record: MakeEntityRecord,
         make_entity_revision: MakeEntityRevision,
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
@@ -124,6 +138,7 @@ class TestMemStorageSnapshotCommit:
         make_mem_storage: MakeMemStorage,
     ) -> None:
         mem_storage = _seeded_storage(
+            make_entity_record=make_entity_record,
             make_entity_revision=make_entity_revision,
             make_fake_edge=make_fake_edge,
             make_graph=make_graph,
@@ -143,6 +158,7 @@ class TestMemStorageSnapshotCommit:
 
     def test_commit_does_not_erase_an_entry_a_concurrent_transaction_committed_first(
         self,
+        make_entity_record: MakeEntityRecord,
         make_entity_revision: MakeEntityRevision,
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
@@ -151,6 +167,7 @@ class TestMemStorageSnapshotCommit:
         make_mem_storage: MakeMemStorage,
     ) -> None:
         mem_storage = _seeded_storage(
+            make_entity_record=make_entity_record,
             make_entity_revision=make_entity_revision,
             make_fake_edge=make_fake_edge,
             make_graph=make_graph,
@@ -175,3 +192,45 @@ class TestMemStorageSnapshotCommit:
         assert (
             mem_storage.graphs[new_graph.id][new_graph.content_id] == new_graph_revision
         )
+
+    def test_commit_appends_a_new_entity_record_written_on_the_snapshot(
+        self,
+        make_entity_record: MakeEntityRecord,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_edge: MakeFakeEdge,
+        make_graph: MakeGraph,
+        make_fake_node: MakeFakeNode,
+        make_user: MakeUser,
+        make_mem_storage: MakeMemStorage,
+    ) -> None:
+        mem_storage = _seeded_storage(
+            make_entity_record=make_entity_record,
+            make_entity_revision=make_entity_revision,
+            make_fake_edge=make_fake_edge,
+            make_graph=make_graph,
+            make_fake_node=make_fake_node,
+            make_user=make_user,
+            make_mem_storage=make_mem_storage,
+        )
+        preexisting = mem_storage.entity_records[0]
+        snapshot = MemStorageSnapshot(mem_storage=mem_storage)
+        new_record = make_entity_record()
+        snapshot.entity_records.append(new_record)
+
+        snapshot.commit_to_storage()
+
+        assert mem_storage.entity_records == [preexisting, new_record]
+
+    def test_commit_never_drops_a_record_written_earlier_in_the_same_transaction(
+        self,
+        make_entity_record: MakeEntityRecord,
+        make_mem_storage: MakeMemStorage,
+    ) -> None:
+        mem_storage = make_mem_storage()
+        snapshot = MemStorageSnapshot(mem_storage=mem_storage)
+        blocked_attempt = make_entity_record(outcome="already_fetched")
+        snapshot.entity_records.append(blocked_attempt)
+
+        snapshot.commit_to_storage()
+
+        assert mem_storage.entity_records == [blocked_attempt]

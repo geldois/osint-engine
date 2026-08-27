@@ -63,6 +63,14 @@ history relies on. The fix makes the composite's content-id derive from its cons
 stable identity keeps deriving from their identities alone, restoring the same separation every other entity already
 has, one level removed.
 
+A value object carrying an entity's stable identity paired with its content-derived one is now a first-class domain
+concept, not an ad hoc tuple assembled at each call site. It exists because a consuming layer sometimes needs to point
+at a specific entity revision — not the entity's current state, one exact version of it — without owning a copy of that
+version's full content. Two same-typed UUIDs sitting next to each other invites the one mistake that matters here:
+silent transposition, a caller passing the stable id where the content id belongs or the reverse, with nothing at the
+type level catching it because both are the same type. The fields are therefore keyword-only by construction, so a
+transposed pair can only ever be written by naming the wrong field explicitly, never by getting the position wrong.
+
 ## Consequences
 
 Every new concrete entity inherits the fail-fast check for free, so a namespace or identifier-type mistake surfaces at

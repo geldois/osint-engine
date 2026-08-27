@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from osint_engine.application.auth.user import User
+    from osint_engine.application.consumption.entity_record import EntityRecord
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.graph import Graph
@@ -23,10 +24,17 @@ if TYPE_CHECKING:
 class TestMemStorageInitialization:
     def test_creates_empty_dicts_when_no_storages_are_injected(self) -> None:
         mem_storage = MemStorage(
-            edges=None, graphs=None, nodes=None, pattern_sets=None, users=None
+            edges=None,
+            entity_records=None,
+            graphs=None,
+            nodes=None,
+            pattern_sets=None,
+            users=None,
         )
 
         assert not (mem_storage.edges and mem_storage.edges is None)
+
+        assert not (mem_storage.entity_records and mem_storage.entity_records is None)
 
         assert not (mem_storage.graphs and mem_storage.graphs is None)
 
@@ -40,6 +48,7 @@ class TestMemStorageInitialization:
         edges: defaultdict[UUID, dict[UUID, EntityRevision[Edge[UUID, UUID, UUID]]]] = (
             defaultdict(dict)
         )
+        entity_records: list[EntityRecord] = []
         graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]] = defaultdict(dict)
         nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]] = defaultdict(
             dict
@@ -49,6 +58,7 @@ class TestMemStorageInitialization:
 
         mem_storage = MemStorage(
             edges=edges,
+            entity_records=entity_records,
             graphs=graphs,
             nodes=nodes,
             pattern_sets=pattern_sets,
@@ -56,6 +66,8 @@ class TestMemStorageInitialization:
         )
 
         assert mem_storage.edges is edges
+
+        assert mem_storage.entity_records is entity_records
 
         assert mem_storage.graphs is graphs
 
@@ -78,6 +90,9 @@ class TestMemStorageProperties:
 
         with pytest.raises(FrozenInstanceError):
             del mem_storage.edges
+
+        with pytest.raises(FrozenInstanceError):
+            del mem_storage.entity_records
 
         with pytest.raises(FrozenInstanceError):
             del mem_storage.graphs

@@ -17,6 +17,9 @@ from osint_engine.interface.http.fastapi.routers.ceis_router import build_ceis_r
 from osint_engine.interface.http.fastapi.routers.cepim_router import build_cepim_router
 from osint_engine.interface.http.fastapi.routers.cnep_router import build_cnep_router
 from osint_engine.interface.http.fastapi.routers.cnpj_router import build_cnpj_router
+from osint_engine.interface.http.fastapi.routers.consumption_router import (
+    build_consumption_router,
+)
 from osint_engine.interface.http.fastapi.routers.cpf_router import build_cpf_router
 from osint_engine.interface.http.fastapi.routers.credentials_router import (
     build_credentials_router,
@@ -56,6 +59,7 @@ def build_fastapi_app(*, container: Container) -> FastAPI:
     fastapi_app.include_router(router=build_cepim_router(container=container))
     fastapi_app.include_router(router=build_cnep_router(container=container))
     fastapi_app.include_router(router=build_cnpj_router(container=container))
+    fastapi_app.include_router(router=build_consumption_router(container=container))
     fastapi_app.include_router(router=build_cpf_router(container=container))
     fastapi_app.include_router(router=build_credentials_router(container=container))
     fastapi_app.include_router(router=build_edge_router(container=container))

@@ -30,6 +30,12 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.authentication.authenticate_user import (
         AuthenticateUser,
     )
+    from osint_engine.application.use_cases.consumption.list_entity_record_catalog import (  # noqa: E501
+        ListEntityRecordCatalog,
+    )
+    from osint_engine.application.use_cases.consumption.list_entity_records_by_cpf import (  # noqa: E501
+        ListEntityRecordsByCPF,
+    )
     from osint_engine.application.use_cases.credentials.list_credentials import (
         ListExternalCredentials,
     )
@@ -119,6 +125,8 @@ class UseCases:
     find_possibly_matches: partial[FindPossiblyMatches]
     ingest_text: partial[IngestText]
     list_edge_history: partial[ListEdgeHistory]
+    list_entity_record_catalog: partial[ListEntityRecordCatalog]
+    list_entity_records_by_cpf: partial[ListEntityRecordsByCPF]
     list_external_credentials: partial[ListExternalCredentials]
     list_graph_catalog: partial[ListGraphCatalog]
     list_graph_history: partial[ListGraphHistory]

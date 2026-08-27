@@ -22,6 +22,15 @@
 
 ## feat(persistence)
 
+- `Graph.nodes`/`Graph.edges` hold full `Node`/`Edge` content, not references — every stored `GraphRevision` re-embeds
+  the complete content of every node and edge it holds, even ones unchanged since the previous revision. Node/edge
+  repositories already dedupe correctly by `content_id`; the graph repository doesn't reuse that, so it's the one place
+  in this system's storage doing more work than it needs to. A reference-based redesign (`Graph` holding an `EntityRef`
+  per node/edge, resolved against the node/edge repositories at read time, behind a new application-layer value object
+  so no interface-layer code ever touches a repository) was fully specified but deferred: it touches every one of the 9
+  expansion use cases (`ExpandByCPF`, `ExpandByCPFBatch`, `ExpandByCNPJ`, `ExpandByCEAF`, `ExpandByCEIS`,
+  `ExpandByCEPIM`, `ExpandByCNEP`, `IngestText`, `FindPossiblyMatches`), every fetcher, every graph-shaped presenter,
+  the mem seeder, and the full domain test suite for `Graph` — not a narrow, single-path change
 - make commits atomic across PostgreSQL credentials and the in-memory graph/user snapshot; `HybridUoW` intentionally
   persists credentials during repository `save()` and only coordinates the in-memory snapshot during `commit()`
 - `GraphRepository.list_all_revisions()` is a full scan; in `MemStorage` it costs the same as `list_revisions_by_root`

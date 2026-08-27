@@ -16,6 +16,7 @@ from osint_engine.application.auth.external_credential import (
     Provider,
 )
 from osint_engine.application.auth.user import Role, User
+from osint_engine.application.consumption.entity_record import EntityRecord
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.application.revision.policies.revision_merge_policy import (
     keep_incoming_policy,
@@ -42,6 +43,7 @@ if TYPE_CHECKING:
 
     from asyncpg import Pool
 
+    from osint_engine.application.consumption.entity_record import ConsumptionOutcome
     from osint_engine.application.revision.policies.revision_merge_policy import (
         RevisionMergePolicy,
     )
@@ -50,6 +52,7 @@ if TYPE_CHECKING:
     )
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.node import Node
+    from osint_engine.domain.value_objects.entity_ref import EntityRef
     from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
 hypothesis_settings.register_profile(
@@ -69,6 +72,7 @@ class MakeEntityRevision(Protocol):
     ) -> EntityRevision[Entity_]: ...
 
 
+type MakeEntityRecord = Callable[..., EntityRecord]
 type MakeFakeEdge = Callable[..., FakeEdge]
 type MakeFakeNode = Callable[..., FakeNode]
 type MakeExternalCredential = Callable[..., ExternalCredential]
@@ -161,6 +165,32 @@ def make_entity_revision() -> MakeEntityRevision:
 
 
 @pytest.fixture
+def make_entity_record() -> MakeEntityRecord:
+    datetime_ = datetime(year=2026, month=1, day=1, tzinfo=UTC)
+
+    def entity_record(
+        *,
+        entity_id: UUID | None = None,
+        entity_ref: EntityRef | None = None,
+        outcome: ConsumptionOutcome = "expanded",
+        provider: str = "test_provider",
+        requested_at: datetime | None = None,
+        username: str = "test_user",
+    ) -> EntityRecord:
+        return EntityRecord(
+            id=uuid4(),
+            entity_id=entity_id if entity_id is not None else uuid4(),
+            entity_ref=entity_ref,
+            outcome=outcome,
+            provider=provider,
+            requested_at=requested_at if requested_at is not None else datetime_,
+            username=username,
+        )
+
+    return entity_record
+
+
+@pytest.fixture
 def make_fake_edge() -> MakeFakeEdge:
 
     def fake_edge(
@@ -230,6 +260,7 @@ def make_mem_storage() -> MakeMemStorage:
     def mem_storage(
         *,
         edges: Iterable[EntityRevision[Edge[UUID, UUID, UUID]]] | None = None,
+        entity_records: Iterable[EntityRecord] | None = None,
         external_credentials: Iterable[ExternalCredential] | None = None,
         graphs: Iterable[EntityRevision[Graph]] | None = None,
         nodes: Iterable[EntityRevision[Node[UUID]]] | None = None,
@@ -238,6 +269,7 @@ def make_mem_storage() -> MakeMemStorage:
     ) -> MemStorage:
         return MemStorage(
             edges=_entity_store(edges),
+            entity_records=list(entity_records) if entity_records is not None else None,
             external_credentials={
                 (credential.username, credential.provider): credential
                 for credential in external_credentials

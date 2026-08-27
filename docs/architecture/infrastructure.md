@@ -41,6 +41,14 @@ underlying file-reading library itself failing on content that only looks like a
 one of a small, closed set of errors at this boundary, so nothing about a third-party library's own exception surface
 ever reaches the layers above.
 
+The consumption-attempt log lives in the same in-memory snapshot as everything else, as a plain append-only list rather
+than the identity-keyed nested dict every other stored kind uses — its entries have no identity to key by beyond their
+own generated one, and nothing about them is ever looked up by content. The transactional snapshot copies and restores
+it the same way it does every other container, except a list has no per-key idempotent merge the way a dict's `update`
+gives the others; committing instead clears the backing list and replaces it wholesale with the snapshot's own
+(pre-existing entries plus whatever the transaction appended), which is safe under the same single-writer assumption
+every other in-memory container here already accepts.
+
 ## Decisions
 
 The production persistence target is a proper graph database; the in-memory snapshot is a deliberate, explicit MVP

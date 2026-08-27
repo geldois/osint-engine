@@ -36,6 +36,16 @@ can end up recorded under two identities with no shared identifier to resolve th
 digits is the only signal left in that situation, so it stays explicitly probabilistic and advisory rather than folded
 into the identifier-based resolution everything else relies on.
 
+A separate append-only log now records every attempt a caller makes to expand a CPF, regardless of outcome — blocked by
+the reuse lock, no external credential on file, the provider returning nothing, or a genuine successful expansion. This
+does not replace the reuse lock's own reasoning that revision history is enough to decide *whether to pay again*; it
+answers a different question the revision history structurally cannot: a full audit trail of every attempt, including
+the ones the lock stopped before they ever reached the provider. An entity's own revisions are deliberately deduplicated
+by content — searching for the same person twice with identical results collapses to one revision, which is correct for
+"what do we currently know," but wrong for "how many times was this looked up." The log's own entries are never
+deduplicated by content for exactly that reason; each is stamped with a non-deterministic identity of its own, unlike
+every other record in this system, because it represents an event, not a piece of content that can recur.
+
 ## Decisions
 
 Where a revision gets stamped was revisited once: stamping it in the orchestrating workflow was the fast, narrow fix at
@@ -95,6 +105,13 @@ new loose-matching piece cover that gap without touching or redefining what any 
 whoever already depends on it. The one accepted cost is the same one a loose, label-free match always carries: it will
 occasionally match something that merely happens to satisfy the checksum by chance, so it stays opt-in per request
 rather than folded into any existing default combination.
+
+Recording a blocked attempt's log entry required moving where the reuse lock's error is actually raised. The
+transactional boundary only persists what a workflow wrote once the boundary closes without an exception escaping it;
+raising inline, from inside that boundary, discarded whatever had just been written on the way out, silently losing the
+very attempt the log exists to capture. The workflow now captures which error to raise, if any, as a local decision,
+lets the boundary close normally so the write survives, and only then raises — the caller still sees the exact same
+error, but the audit trail no longer depends on nobody having actually blocked.
 
 The catalog that lists every root ever fetched groups its entries by the root identifier, not by the graph's own
 content-derived identity, even though that content-derived identity is what storage is already keyed by when merging.

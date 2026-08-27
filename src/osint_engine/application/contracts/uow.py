@@ -10,6 +10,9 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.repositories.edge_repository import (
         EdgeRepository,
     )
+    from osint_engine.application.contracts.repositories.entity_record_repository import (  # noqa: E501
+        EntityRecordRepository,
+    )
     from osint_engine.application.contracts.repositories.external_credential_repository import (  # noqa: E501
         ExternalCredentialRepository,
     )
@@ -29,6 +32,7 @@ if TYPE_CHECKING:
 
 class UoW(AbstractAsyncContextManager["UoW"]):
     edges: EdgeRepository
+    entity_records: EntityRecordRepository
     external_credentials: ExternalCredentialRepository
     graphs: GraphRepository
     nodes: NodeRepository

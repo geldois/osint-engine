@@ -14,6 +14,7 @@ if TYPE_CHECKING:
         Provider,
     )
     from osint_engine.application.auth.user import User
+    from osint_engine.application.consumption.entity_record import EntityRecord
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.graph import Graph
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
 
 class MemStorage:
     edges: defaultdict[UUID, dict[UUID, EntityRevision[Edge[UUID, UUID, UUID]]]]
+    entity_records: list[EntityRecord]
     external_credentials: dict[tuple[str, Provider], ExternalCredential]
     graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]]
     nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]]
@@ -35,6 +37,7 @@ class MemStorage:
         *,
         edges: defaultdict[UUID, dict[UUID, EntityRevision[Edge[UUID, UUID, UUID]]]]
         | None = None,
+        entity_records: list[EntityRecord] | None = None,
         external_credentials: dict[tuple[str, Provider], ExternalCredential]
         | None = None,
         graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]] | None = None,
@@ -44,6 +47,9 @@ class MemStorage:
     ) -> None:
         object.__setattr__(
             self, "edges", edges if edges is not None else defaultdict(dict)
+        )
+        object.__setattr__(
+            self, "entity_records", entity_records if entity_records is not None else []
         )
         object.__setattr__(
             self,
@@ -79,6 +85,7 @@ class MemStorageSnapshot(MemStorage):
 
         super().__init__(
             edges=self.deepcopy_entity_storage(mem_storage.edges),
+            entity_records=copy(mem_storage.entity_records),
             external_credentials=copy(mem_storage.external_credentials),
             graphs=self.deepcopy_entity_storage(mem_storage.graphs),
             nodes=self.deepcopy_entity_storage(mem_storage.nodes),
@@ -100,6 +107,7 @@ class MemStorageSnapshot(MemStorage):
 
     def clear_snapshot(self) -> None:
         self.edges.clear()
+        self.entity_records.clear()
         self.external_credentials.clear()
         self.graphs.clear()
         self.nodes.clear()
@@ -117,6 +125,8 @@ class MemStorageSnapshot(MemStorage):
 
     def commit_to_storage(self) -> None:
         self._merge_entity_storage(into=self._mem_storage.edges, from_=self.edges)
+        self._mem_storage.entity_records.clear()
+        self._mem_storage.entity_records.extend(self.entity_records)
         self._mem_storage.external_credentials.update(self.external_credentials)
         self._merge_entity_storage(into=self._mem_storage.graphs, from_=self.graphs)
         self._merge_entity_storage(into=self._mem_storage.nodes, from_=self.nodes)

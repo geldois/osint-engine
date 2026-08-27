@@ -26,6 +26,10 @@ hand, when the process starts, rather than resolved automatically per request. T
 place and keeps every layer below this one completely free of any framework dependency, testable in complete isolation
 from an actual running web server.
 
+The consumption log's own routes are restricted to the privileged role, the same guard the paid CPF route itself uses,
+rather than the plain-authenticated guard most read routes accept — an entry names which CPF a specific caller looked up
+and when, which is exactly the kind of data the rest of this layer treats as sensitive enough to gate.
+
 ## Decisions
 
 Two competing rate-limiting libraries were tried; the first, more popular one was dropped after it conflicted with this

@@ -8,6 +8,9 @@ import pytest
 from osint_engine.infrastructure.persistence.mem.repositories.mem_edge_repository import (  # noqa: E501
     MemEdgeRepository,
 )
+from osint_engine.infrastructure.persistence.mem.repositories.mem_entity_record_repository import (  # noqa: E501
+    MemEntityRecordRepository,
+)
 from osint_engine.infrastructure.persistence.mem.repositories.mem_graph_repository import (  # noqa: E501
     MemGraphRepository,
 )
@@ -22,6 +25,7 @@ if TYPE_CHECKING:
 
 type MakeMemNodeRepository = Callable[..., MemNodeRepository]
 type MakeMemEdgeRepository = Callable[..., MemEdgeRepository]
+type MakeMemEntityRecordRepository = Callable[..., MemEntityRecordRepository]
 type MakeMemGraphRepository = Callable[..., MemGraphRepository]
 
 
@@ -57,6 +61,17 @@ def make_mem_edge_repository(policies: Policies) -> MakeMemEdgeRepository:
         )
 
     return mem_edge_repository
+
+
+@pytest.fixture
+def make_mem_entity_record_repository() -> MakeMemEntityRecordRepository:
+
+    def mem_entity_record_repository(
+        *, mem_storage: MemStorage
+    ) -> MemEntityRecordRepository:
+        return MemEntityRecordRepository(mem_storage=mem_storage)
+
+    return mem_entity_record_repository
 
 
 @pytest.fixture

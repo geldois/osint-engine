@@ -14,6 +14,9 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import (
 from osint_engine.infrastructure.persistence.mem.repositories.mem_edge_repository import (  # noqa: E501
     MemEdgeRepository,
 )
+from osint_engine.infrastructure.persistence.mem.repositories.mem_entity_record_repository import (  # noqa: E501
+    MemEntityRecordRepository,
+)
 from osint_engine.infrastructure.persistence.mem.repositories.mem_external_credential_repository import (  # noqa: E501
     MemExternalCredentialRepository,
 )
@@ -58,6 +61,7 @@ class MemUoW(UoW):
             for attribute in (
                 "_snapshot",
                 "edges",
+                "entity_records",
                 "external_credentials",
                 "graphs",
                 "nodes",
@@ -78,6 +82,7 @@ class MemUoW(UoW):
             revision_merge_policy=self.revision_merge_policy,
             revision_selection_policy=self.revision_selection_policy,
         )
+        self.entity_records = MemEntityRecordRepository(mem_storage=self._snapshot)
         self.external_credentials = MemExternalCredentialRepository(
             mem_storage=self._snapshot
         )
@@ -106,6 +111,8 @@ class MemUoW(UoW):
         del self._snapshot
 
         del self.edges
+
+        del self.entity_records
 
         del self.external_credentials
 

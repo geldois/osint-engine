@@ -39,6 +39,7 @@ flowchart LR
     FastAPI --> CNPJRouter("CNPJ Router")
     FastAPI --> ExpansionRouters("CNEP / CEIS / CEPIM / CEAF Routers")
     FastAPI --> CPFRouter("CPF Router")
+    FastAPI --> ConsumptionRouter("Consumption Router")
     FastAPI --> GraphHistoryRouter("Graph History Router")
     FastAPI --> CredentialsRouter("Credentials Router")
     FastAPI --> HealthRouter("Health Router")
@@ -57,6 +58,9 @@ flowchart LR
     CPFRouter --> GetCPF("GET /cpf/{cpf}")
     CPFRouter --> PostCPFBatch("POST /cpf/batch · /cpf/batch/estimate")
     CPFRouter --> BatchRateLimit("Batch Rate Limit · 10 per min, shared")
+    ConsumptionRouter --> RoleGuard
+    ConsumptionRouter --> ExpansionRateLimit
+    ConsumptionRouter --> GetConsumption("GET /consumption · /consumption/{cpf}")
     GraphHistoryRouter --> JwtGuard
     GraphHistoryRouter --> ExpansionRateLimit
     GraphHistoryRouter --> GetGraphHistory("GET /graphs/{root_id}/history")
@@ -285,6 +289,24 @@ Returns every `Graph` revision ever stored for that `root_id`, as a `GraphSchema
 ascending (oldest first). Available to both `ADMIN` and `VIEWER` tokens. `200 []` for a `root_id` never seen — an empty
 history is a valid state, not an error.
 
+```http
+GET /consumption
+Authorization: Bearer <token>
+```
+
+Every CPF-expansion attempt ever recorded, regardless of outcome (`already_fetched`, `empty`, `expanded`, `failed`) —
+including one the reuse lock blocked before it ever reached the paid provider. Ordered by `requested_at` descending
+(newest first). `ADMIN` only, since an entry names which CPF a specific caller looked up and when.
+
+```http
+GET /consumption/{cpf}
+Authorization: Bearer <token>
+```
+
+Same shape, scoped to one CPF, ordered by `requested_at` ascending. Each entry carries `entity_id` (always present),
+`entity_ref` (`id`/`content_id`, present only for `already_fetched`/`expanded`), `outcome`, `provider`, `requested_at`
+and `username`. `200 []` for a CPF never attempted. `ADMIN` only.
+
 ### Text ingestion
 
 ```http
@@ -355,6 +377,8 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 | `POST /cpf/batch`               | 10 / min   | Shared per-route bucket |
 | `POST /cpf/batch/estimate`      | 10 / min   | Shared per-route bucket |
 | `GET /graphs/{root_id}/history` | 100 / min  | Shared per-route bucket |
+| `GET /consumption`              | 100 / min  | Shared per-route bucket |
+| `GET /consumption/{cpf}`        | 100 / min  | Shared per-route bucket |
 | `GET /cnep/{cpf_or_cnpj}`       | 100 / min  | Shared per-route bucket |
 | `GET /ceis/{cpf_or_cnpj}`       | 100 / min  | Shared per-route bucket |
 | `GET /cepim/{cnpj}`             | 100 / min  | Shared per-route bucket |

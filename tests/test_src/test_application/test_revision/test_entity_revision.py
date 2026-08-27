@@ -11,10 +11,20 @@ from osint_engine.application.errors.revision_error import (
     NonUTCAttributeError,
 )
 from osint_engine.application.revision.entity_revision import EntityRevision
+from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.value_objects.entity_ref import EntityRef
 from tests.fakes.domain import FakeNode
 
 _NODE = FakeNode(content="entity-revision-subject")
 _OTHER_NODE = FakeNode(content="other-entity")
+_PERSON = Person(
+    age_range="31 a 40 anos",
+    birthdate="1990-01-01",
+    cpf="123.456.789-09",
+    name="João Silva",
+    registration_date="2010-05-20",
+    registration_status="REGULAR",
+)
 
 _UTC = datetime(2026, 1, 1, tzinfo=UTC)
 _LATER_UTC = datetime(2026, 6, 1, tzinfo=UTC)
@@ -185,3 +195,28 @@ class TestEntityRevisionValueSemantics:
         )
 
         assert base != other
+
+
+class TestEntityRevisionRef:
+    def test_ref_carries_the_entitys_own_id_and_content_id(self) -> None:
+        assert _PERSON.id != _PERSON.content_id
+
+        revision = EntityRevision(
+            entity=_PERSON, fetched_at=_UTC, merged_at=None, provider="test_provider"
+        )
+
+        assert revision.ref == EntityRef(id=_PERSON.id, content_id=_PERSON.content_id)
+
+    def test_ref_never_swaps_id_and_content_id(self) -> None:
+        revision = EntityRevision(
+            entity=_PERSON, fetched_at=_UTC, merged_at=None, provider="test_provider"
+        )
+
+        assert revision.ref.id == _PERSON.id
+        assert revision.ref.content_id == _PERSON.content_id
+        assert revision.ref.id != revision.ref.content_id
+
+    def test_ref_is_not_a_dataclass_field(self) -> None:
+        assert "ref" not in {
+            field.name for field in EntityRevision.__dataclass_fields__.values()
+        }

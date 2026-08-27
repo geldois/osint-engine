@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import replace
-from typing import TYPE_CHECKING, Literal, override
+from typing import TYPE_CHECKING, override
 
 from structlog.stdlib import get_logger
 
@@ -20,6 +20,7 @@ from osint_engine.domain.services.sanitization import sanitize_cpf
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from osint_engine.application.consumption.entity_record import ConsumptionOutcome
     from osint_engine.application.contracts.fetchers.cpf_fetcher import CPFFetcher
     from osint_engine.application.contracts.services.kipflow_rate_limiter import (
         KipFlowRateLimiter,
@@ -31,9 +32,7 @@ _logger = get_logger()
 _KIPFLOW_PROVIDER = "kipflow"
 _MAX_CONCURRENT_EXPANSIONS = 5
 
-type BatchOutcomeStatus = Literal[
-    "already_fetched", "empty", "expanded", "failed", "invalid"
-]
+type BatchOutcomeStatus = ConsumptionOutcome
 
 type BatchOutcome = tuple[str, BatchOutcomeStatus, str | None]
 
