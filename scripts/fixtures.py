@@ -57,7 +57,7 @@ class _PortalTransparencia:
     CASES: dict[str, list[tuple[str, str]]] = {
         "cnep/": [(f"{API_NAME}_cnep.json", "359510")],
         "ceis/": [(f"{API_NAME}_ceis.json", "314300")],
-        "cepim/": [(f"{API_NAME}_cepim.json", "143029437")],
+        "cepim/": [(f"{API_NAME}_cepim.json", "143031101")],
         "ceaf/": [(f"{API_NAME}_ceaf.json", "141911")],
     }
 
