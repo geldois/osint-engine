@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.infrastructure.providers.brasilapi.endpoints.cep_v2_mapper import (
     map_address,
@@ -50,6 +52,7 @@ class TestMapAddress:
         assert address.complement is None
 
 
+@pytest.mark.real_api_snapshot
 class TestMapAddressWithRealAPISnapshot:
     def test_does_not_raise_with_real_api_snapshot(
         self, brasilapi_cep_v2_valid_payload: Payload

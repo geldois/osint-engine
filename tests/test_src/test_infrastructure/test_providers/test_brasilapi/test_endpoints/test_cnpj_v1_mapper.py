@@ -685,6 +685,7 @@ class TestMapGraph:
         assert any(isinstance(edge, CompanyOwnsCompany) for edge in graph.edges)
 
 
+@pytest.mark.real_api_snapshot
 class TestMapGraphWithRealAPISnapshot:
     def test_does_not_raise_with_real_api_snapshot(
         self, brasilapi_cnpj_v1_valid_payload: Payload
