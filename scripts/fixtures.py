@@ -4,9 +4,21 @@ import json
 import re
 from os import getenv
 from pathlib import Path
+from typing import Protocol
 
 from dotenv import load_dotenv
 from httpx2 import URL, Client, Timeout
+
+
+class _FixtureResponse(Protocol):
+    @property
+    def status_code(self) -> int: ...
+
+    @property
+    def text(self) -> str: ...
+
+    def json(self) -> object: ...
+
 
 SOURCES_DIR = Path("tests/test_src/test_infrastructure/test_providers")
 
@@ -64,6 +76,23 @@ def _build_http_client() -> Client:
     return Client(timeout=timeout)
 
 
+def _write_or_skip(
+    *, response: _FixtureResponse, out_dir: Path, filename: str, url: URL
+) -> str:
+    if not response.text.strip():
+        return (
+            f"skipped '{out_dir}/{filename}' — {url} answered "
+            f"{response.status_code} with an empty body, "
+            f"leaving the existing fixture untouched"
+        )
+
+    (out_dir / filename).write_text(
+        json.dumps(response.json(), ensure_ascii=False, indent=2)
+    )
+
+    return f"saved '{out_dir}/{filename}'"
+
+
 def main() -> None:
     load_dotenv(dotenv_path=".env", interpolate=False)
 
@@ -85,11 +114,14 @@ def main() -> None:
                     response = client.get(url, headers=api.headers())
                     response.raise_for_status()
 
-                    (out_dir / filename).write_text(
-                        json.dumps(response.json(), ensure_ascii=False, indent=2)
+                    print(
+                        _write_or_skip(
+                            response=response,
+                            out_dir=out_dir,
+                            filename=filename,
+                            url=url,
+                        )
                     )
-
-                    print(f"saved '{out_dir}/{filename}'")
 
 
 if __name__ == "__main__":
