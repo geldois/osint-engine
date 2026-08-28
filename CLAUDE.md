@@ -21,6 +21,9 @@ periodic and manual, never a hook. Needs Docker and a local `.env` (the runner l
 run it by hand after changing either, same periodic-manual footing as `mutation`. Never run bare `sqlc generate` (leaves
 an unusable generated querier file behind) and never hand-edit that directory.
 
+`scripts fixtures verify` refreshes the live-API golden snapshots then runs the tests marked `real_api_snapshot` against
+them — same periodic-manual footing as `mutation`, never part of `check`/CI. Those tests catch a free provider changing
+its response *shape*; a case's hardcoded id going stale (its record aging out, e.g.) instead needs a live id swapped in.
 A new fetcher against a free provider (KipFlow is paid, excluded on purpose) needs a matching case in
 `scripts/fixtures.py` — `.claude/hooks/report_fixtures_coverage.py` nudges when its `url_suffix` isn't referenced there.
 

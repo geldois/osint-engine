@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from os import getenv
 from pathlib import Path
 from typing import Protocol
@@ -122,6 +123,17 @@ def main() -> None:
                             url=url,
                         )
                     )
+
+
+def run_verify() -> int:
+    main()
+
+    result = subprocess.run(
+        ["uv", "run", "--no-sync", "pytest", "-m", "real_api_snapshot", "-v"],
+        check=False,
+    )
+
+    return result.returncode
 
 
 if __name__ == "__main__":

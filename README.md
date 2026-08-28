@@ -541,19 +541,21 @@ uv run python -m scripts sqlc-generate
 
 ### Test
 
-`tests/**/responses/` (golden HTTP fixtures for the BrasilAPI/Portal da Transparência provider tests) is untracked and
-regenerated on demand, not committed — run this once before testing, and again whenever the fixtures need refreshing:
-
-```bash
-uv run python -m scripts fixtures refresh
-```
-
-Portal da Transparência's fixtures require a real, working `PORTAL_TRANSPARENCIA_API_KEY` in `.env` — request one at
-<https://api.portaldatransparencia.gov.br/>.
-
 ```bash
 uv run pytest --cov --cov-branch
 ```
+
+`tests/**/responses/` (golden HTTP fixtures for the BrasilAPI/Portal da Transparência provider tests) is untracked, not
+needed for the run above — the tests that consume it are hand-crafted, not fixture-backed. A separate, periodic-manual
+check (never part of `pytest`/CI) regenerates those fixtures and re-verifies the real API's response shape against the
+mapper:
+
+```bash
+uv run python -m scripts fixtures verify
+```
+
+Requires a real, working `PORTAL_TRANSPARENCIA_API_KEY` in `.env` — request one at
+<https://api.portaldatransparencia.gov.br/>.
 
 `tests/test_infrastructure/test_persistence/test_pg/` spins up a real Postgres via `testcontainers`, pulling the
 `postgres:18` and `testcontainers/ryuk:0.8.1` images from Docker Hub on first run (cached locally afterward). If pulls

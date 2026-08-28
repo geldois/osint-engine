@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      PORTAL_TRANSPARENCIA_API_KEY: ${{ secrets.PORTAL_TRANSPARENCIA_API_KEY }}
 
     steps:
       - name: Checkout
@@ -28,10 +27,6 @@ jobs:
 
       - name: Install dependencies
         run: uv sync
-
-      - name: Refresh test fixtures
-        if: ${{ env.PORTAL_TRANSPARENCIA_API_KEY != '' }}
-        run: uv run python -m scripts fixtures refresh
 
       - name: Log in to Docker Hub
         if: ${{ env.DOCKERHUB_USERNAME != '' }}

@@ -53,5 +53,11 @@ def fixtures_refresh() -> None:
     fixtures.main()
 
 
+@fixtures_app.command("verify")
+def fixtures_verify() -> None:
+    """Refresh live-API snapshots, then run the real_api_snapshot contract tests (periodic; never a hook)."""  # noqa: E501
+    raise typer.Exit(fixtures.run_verify())
+
+
 if __name__ == "__main__":
     app()

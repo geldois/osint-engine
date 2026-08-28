@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from osint_engine.domain.entities.edges.company_received_sanction import (
     CompanyReceivedSanction,
 )
@@ -145,6 +147,7 @@ class TestMapGraph:
         assert len(graph.nodes) == 2
 
 
+@pytest.mark.real_api_snapshot
 class TestMapGraphWithRealAPISnapshot:
     def test_does_not_raise_with_real_api_snapshot(
         self, portal_transparencia_cepim_valid_payload: Payload

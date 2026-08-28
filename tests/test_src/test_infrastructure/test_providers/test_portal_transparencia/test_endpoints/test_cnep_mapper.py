@@ -242,6 +242,7 @@ class TestMapGraphDiscriminator:
         assert len(graph.nodes) == 2
 
 
+@pytest.mark.real_api_snapshot
 class TestMapGraphWithRealAPISnapshot:
     def test_does_not_raise_with_real_api_snapshot(
         self, portal_transparencia_cnep_valid_payload: Payload

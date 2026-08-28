@@ -80,9 +80,13 @@ packages = ["src/osint_engine"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "tests", "."]
+addopts = "-m 'not real_api_snapshot'"
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "session"
 cache_dir = ".cache/pytest"
+markers = [
+  "real_api_snapshot: needs a live external API plus PORTAL_TRANSPARENCIA_API_KEY; periodic-manual only, run via 'scripts fixtures verify'",
+]
 
 [tool.pytest-language-server]
 exclude = ["build/**", "dist/**", ".tox/**", ".cache/**"]
