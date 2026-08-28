@@ -13,21 +13,29 @@ if TYPE_CHECKING:
     from osint_engine.infrastructure.providers.payload import Payload
 
 
+def _stripped(*, payload: Payload, key: str) -> str:
+    return payload.require(key=key, expected_type=str).strip()
+
+
+def _stripped_or_none(*, payload: Payload, key: str) -> str | None:
+    value = payload.optional(key=key, expected_type=str)
+
+    return value.strip() or None if value is not None else None
+
+
 def _map_political_exposure(*, payload: Payload) -> PoliticalExposure:
     return PoliticalExposure(
         cpf=payload.require(key="cpf", expected_type=str),
-        exercise_end_date=payload.optional(key="dt_fim_exercicio", expected_type=str),
-        exercise_start_date=payload.optional(
-            key="dt_inicio_exercicio", expected_type=str
+        exercise_end_date=_stripped_or_none(payload=payload, key="dt_fim_exercicio"),
+        exercise_start_date=_stripped_or_none(
+            payload=payload, key="dt_inicio_exercicio"
         ),
-        function_acronym=payload.optional(key="sigla_funcao", expected_type=str),
-        function_description=payload.require(key="descricao_funcao", expected_type=str),
-        function_level=payload.optional(key="nivel_funcao", expected_type=str),
-        government_body_code=payload.optional(key="cod_orgao", expected_type=str),
-        government_body_name=payload.require(key="nome_orgao", expected_type=str),
-        grace_period_end_date=payload.optional(
-            key="dt_fim_carencia", expected_type=str
-        ),
+        function_acronym=_stripped_or_none(payload=payload, key="sigla_funcao"),
+        function_description=_stripped(payload=payload, key="descricao_funcao"),
+        function_level=_stripped_or_none(payload=payload, key="nivel_funcao"),
+        government_body_code=_stripped_or_none(payload=payload, key="cod_orgao"),
+        government_body_name=_stripped(payload=payload, key="nome_orgao"),
+        grace_period_end_date=_stripped_or_none(payload=payload, key="dt_fim_carencia"),
     )
 
 
@@ -36,7 +44,7 @@ def _map_person_stub(*, payload: Payload) -> Person:
         age_range=None,
         birthdate=None,
         cpf=payload.require(key="cpf", expected_type=str),
-        name=payload.require(key="nome", expected_type=str),
+        name=_stripped(payload=payload, key="nome"),
         registration_date=None,
         registration_status=None,
     )

@@ -46,6 +46,7 @@ class _BrasilAPI:
         "cnpj/v1/": [(f"{API_NAME}_cnpj_v1.json", "00.000.000/0001-91")],
         "cep/v2/": [(f"{API_NAME}_cep_v2.json", "70040912")],
     }
+    QUERY_CASES: dict[str, list[tuple[str, str, str]]] = {}
 
     @staticmethod
     def headers() -> dict[str, str]:
@@ -60,6 +61,9 @@ class _PortalTransparencia:
         "ceis/": [(f"{API_NAME}_ceis.json", "314300")],
         "cepim/": [(f"{API_NAME}_cepim.json", "143031101")],
         "ceaf/": [(f"{API_NAME}_ceaf.json", "141911")],
+    }
+    QUERY_CASES: dict[str, list[tuple[str, str, str]]] = {
+        "peps": [(f"{API_NAME}_pep.json", "descricaoFuncao", "MINISTRO DE ESTADO")],
     }
 
     @staticmethod
@@ -87,9 +91,11 @@ def _write_or_skip(
             f"leaving the existing fixture untouched"
         )
 
-    (out_dir / filename).write_text(
-        json.dumps(response.json(), ensure_ascii=False, indent=2)
-    )
+    return _write(content=response.json(), out_dir=out_dir, filename=filename)
+
+
+def _write(*, content: object, out_dir: Path, filename: str) -> str:
+    (out_dir / filename).write_text(json.dumps(content, ensure_ascii=False, indent=2))
 
     return f"saved '{out_dir}/{filename}'"
 
@@ -122,6 +128,30 @@ def main() -> None:
                             filename=filename,
                             url=url,
                         )
+                    )
+
+            for endpoint, query_cases in api.QUERY_CASES.items():
+                url = api.BASE_URL.join(url=endpoint)
+
+                for filename, query_key, query_value in query_cases:
+                    response = client.get(
+                        url,
+                        params={query_key: query_value, "pagina": "1"},
+                        headers=api.headers(),
+                    )
+                    response.raise_for_status()
+
+                    records = response.json()
+
+                    if not records:
+                        print(
+                            f"skipped '{out_dir}/{filename}' — {url} answered "
+                            f"with no records, leaving the existing fixture untouched"
+                        )
+                        continue
+
+                    print(
+                        _write(content=records[0], out_dir=out_dir, filename=filename)
                     )
 
 

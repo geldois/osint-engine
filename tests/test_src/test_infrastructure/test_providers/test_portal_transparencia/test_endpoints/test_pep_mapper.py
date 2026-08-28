@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import pytest
+
 from osint_engine.domain.entities.edges.person_has_political_exposure import (
     PersonHasPoliticalExposure,
 )
@@ -14,19 +16,20 @@ from osint_engine.infrastructure.providers.portal_transparencia.endpoints.pep_ma
 )
 
 if TYPE_CHECKING:
+    from osint_engine.infrastructure.providers.payload import Payload
     from tests.test_src.test_infrastructure.test_providers.conftest import MakePayload
 
 _PEP_DATA: dict[str, object] = {
     "cpf": "100.000.000-00",
-    "nome": "FULANO DE TAL",
-    "sigla_funcao": "MIN",
+    "nome": "FULANO DE TAL                    ",
+    "sigla_funcao": "MIN   ",
     "descricao_funcao": "MINISTRO DE ESTADO",
     "nivel_funcao": "1",
     "cod_orgao": "26000",
-    "nome_orgao": "MINISTERIO DA FAZENDA",
+    "nome_orgao": "MINISTERIO DA FAZENDA        ",
     "dt_inicio_exercicio": "2023-01-01",
-    "dt_fim_exercicio": None,
-    "dt_fim_carencia": None,
+    "dt_fim_exercicio": "",
+    "dt_fim_carencia": "",
 }
 
 
@@ -106,3 +109,11 @@ class TestMapGraph:
         )
 
         assert len(graph.nodes) == 2
+
+
+@pytest.mark.real_api_snapshot
+class TestMapGraphWithRealAPISnapshot:
+    def test_does_not_raise_with_real_api_snapshot(
+        self, portal_transparencia_pep_valid_payload: Payload
+    ) -> None:
+        map_graph(payload=portal_transparencia_pep_valid_payload)

@@ -176,3 +176,19 @@ def portal_transparencia_ceaf_valid_payload(
     return make_payload(
         provider="portal_transparencia", data=portal_transparencia_ceaf_valid_path
     )
+
+
+@pytest.fixture
+def portal_transparencia_pep_valid_path() -> Path:
+
+    return Path(__file__).parent / "responses" / "portal_transparencia_pep.json"
+
+
+@pytest.fixture
+def portal_transparencia_pep_valid_payload(
+    make_payload: MakePayload, portal_transparencia_pep_valid_path: Path
+) -> Payload:
+
+    return make_payload(
+        provider="portal_transparencia", data=portal_transparencia_pep_valid_path
+    )
