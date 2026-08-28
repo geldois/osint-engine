@@ -13,3 +13,7 @@ class ExternalCredentialSchema(BaseModel):
 class ExternalCredentialStatusSchema(BaseModel):
     configured: bool
     provider: Provider
+
+
+class ExternalCredentialRevealSchema(BaseModel):
+    api_key: str

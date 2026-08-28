@@ -17,7 +17,7 @@ class EntityRefSchema(BaseModel):
 
 class EntityRecordSchema(BaseModel):
     id: UUID
-    entity_id: UUID
+    entity_id: UUID | None
     entity_ref: EntityRefSchema | None
     outcome: ConsumptionOutcome
     provider: str

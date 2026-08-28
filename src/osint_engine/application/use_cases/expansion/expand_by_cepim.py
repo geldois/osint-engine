@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, override
 
 from structlog.stdlib import get_logger
 
 from osint_engine.application.auth.external_credential import Provider
+from osint_engine.application.consumption.ensure_entity_logged import (
+    ensure_company_logged,
+)
 from osint_engine.application.contracts.use_case import Query
 from osint_engine.application.errors.external_credential_error import (
     ExternalCredentialNotFoundError,
@@ -19,6 +23,8 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.uow import UoW
 
 _logger = get_logger()
+
+_PROVIDER = "cepim"
 
 
 class ExpandByCEPIM(Query[EntityRevision[Graph] | None]):
@@ -50,6 +56,9 @@ class ExpandByCEPIM(Query[EntityRevision[Graph] | None]):
     async def execute(self) -> EntityRevision[Graph] | None:
         _logger.info("cepim.expansion.start", cnpj=self.cnpj)
 
+        requested_at = datetime.now(tz=UTC)
+        stored: EntityRevision[Graph] | None = None
+
         async with self.uow_factory() as uow:
             credential = await uow.external_credentials.find(
                 username=self.username, provider=Provider.PORTAL_TRANSPARENCIA
@@ -66,13 +75,21 @@ class ExpandByCEPIM(Query[EntityRevision[Graph] | None]):
                 credential=credential,
             )
 
-            if revision is None:
+            if revision is not None:
+                stored = await uow.graphs.merge(revision=revision)
+            else:
                 _logger.info("cepim.expansion.empty", cnpj=self.cnpj)
 
-                return None
+            await ensure_company_logged(
+                uow=uow,
+                cnpj=self.cnpj,
+                provider=_PROVIDER,
+                username=self.username,
+                requested_at=requested_at,
+                revision=revision,
+            )
 
-            stored = await uow.graphs.merge(revision=revision)
-
-        _logger.info("cepim.expansion.success", cnpj=self.cnpj)
+        if stored is not None:
+            _logger.info("cepim.expansion.success", cnpj=self.cnpj)
 
         return stored

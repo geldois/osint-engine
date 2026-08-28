@@ -451,7 +451,8 @@ class TestExpandByCPFEntityRecords:
 
         assert record.outcome == "empty"
         assert record.entity_id == _stub_id()
-        assert record.entity_ref is None
+        assert record.entity_ref is not None
+        assert record.entity_ref.id == _stub_id()
 
     @pytest.mark.asyncio
     async def test_expanded_records_an_attempt_with_the_merged_nodes_ref(

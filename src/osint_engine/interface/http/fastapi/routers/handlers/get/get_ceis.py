@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import Depends, Response
 
+from osint_engine.domain.errors.sanitization_error import SanitizationError
 from osint_engine.domain.services.sanitization import sanitize_cpf_or_cnpj
 from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_jwt_guard
 from osint_engine.interface.http.presenters.graph_presenter import graph_to_schema
@@ -26,8 +27,15 @@ def build_get_ceis_handler(
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
         ceis_id: int | None = None,
     ) -> GraphSchema | Response:
-        cpf_or_cnpj = sanitize_cpf_or_cnpj(cpf_or_cnpj)
         username = str(payload["sub"])
+
+        try:
+            cpf_or_cnpj = sanitize_cpf_or_cnpj(cpf_or_cnpj)
+        except SanitizationError:
+            await container.use_cases.record_invalid_attempt(
+                provider="ceis", raw_input=cpf_or_cnpj, username=username
+            ).execute()
+            raise
 
         use_case = container.use_cases.expand_by_ceis(
             cpf_or_cnpj=cpf_or_cnpj, ceis_id=ceis_id, username=username

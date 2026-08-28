@@ -18,8 +18,14 @@ from osint_engine.application.use_cases.consumption.list_entity_record_catalog i
 from osint_engine.application.use_cases.consumption.list_entity_records_by_cpf import (
     ListEntityRecordsByCPF,
 )
+from osint_engine.application.use_cases.consumption.record_invalid_attempt import (
+    RecordInvalidAttempt,
+)
 from osint_engine.application.use_cases.credentials.list_credentials import (
     ListExternalCredentials,
+)
+from osint_engine.application.use_cases.credentials.reveal_credential import (
+    RevealExternalCredential,
 )
 from osint_engine.application.use_cases.credentials.save_credential import (
     SaveExternalCredential,
@@ -241,6 +247,10 @@ def build_container(  # noqa: PLR0913
         list_graph_history=partial(ListGraphHistory, uow_factory=uow_factory),
         list_node_history=partial(ListNodeHistory, uow_factory=uow_factory),
         list_text_patterns=partial(ListTextPatterns, uow_factory=uow_factory),
+        record_invalid_attempt=partial(RecordInvalidAttempt, uow_factory=uow_factory),
+        reveal_external_credential=partial(
+            RevealExternalCredential, uow_factory=uow_factory
+        ),
         save_external_credential=partial(
             SaveExternalCredential, uow_factory=uow_factory
         ),

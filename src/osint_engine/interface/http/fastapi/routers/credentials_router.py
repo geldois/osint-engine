@@ -9,6 +9,9 @@ from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_rol
 from osint_engine.interface.http.fastapi.routers.handlers.get.get_credentials import (
     build_get_credentials_handler,
 )
+from osint_engine.interface.http.fastapi.routers.handlers.get.get_reveal_credential import (  # noqa: E501
+    build_get_reveal_credential_handler,
+)
 from osint_engine.interface.http.fastapi.routers.handlers.post.post_credential import (
     build_post_credential_handler,
 )
@@ -29,5 +32,9 @@ def build_credentials_router(*, container: Container) -> APIRouter:
     )
 
     router.get(path="")(build_get_credentials_handler(container=container))
+
+    router.get(path="/{provider}/reveal")(
+        build_get_reveal_credential_handler(container=container)
+    )
 
     return router

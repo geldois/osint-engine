@@ -7,6 +7,9 @@ from uuid import uuid4
 from structlog.stdlib import get_logger
 
 from osint_engine.application.auth.external_credential import Provider
+from osint_engine.application.consumption.ensure_entity_logged import (
+    ensure_person_logged,
+)
 from osint_engine.application.consumption.entity_record import EntityRecord
 from osint_engine.application.contracts.use_case import Query
 from osint_engine.application.errors.entity_fetch_error import (
@@ -138,16 +141,13 @@ class ExpandByCPF(Query[EntityRevision[Graph] | None]):
                 if revision is None:
                     _logger.info("cpf.expansion.empty", cpf=self.cpf)
 
-                    await uow.entity_records.save(
-                        record=EntityRecord(
-                            id=uuid4(),
-                            entity_id=stub.id,
-                            entity_ref=None,
-                            outcome="empty",
-                            provider=_KIPFLOW_PROVIDER,
-                            requested_at=requested_at,
-                            username=self.username,
-                        )
+                    await ensure_person_logged(
+                        uow=uow,
+                        cpf=self.cpf,
+                        provider=_KIPFLOW_PROVIDER,
+                        username=self.username,
+                        requested_at=requested_at,
+                        revision=None,
                     )
                 else:
                     stored = await uow.graphs.merge(revision=revision)

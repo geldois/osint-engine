@@ -17,7 +17,7 @@ type ConsumptionOutcome = Literal[
 @dataclass(eq=True, frozen=True, kw_only=True)
 class EntityRecord:
     id: UUID
-    entity_id: UUID
+    entity_id: UUID | None
     entity_ref: EntityRef | None
     outcome: ConsumptionOutcome
     provider: str

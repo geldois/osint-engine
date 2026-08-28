@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from fastapi import Depends, Response
 
+from osint_engine.domain.errors.sanitization_error import SanitizationError
 from osint_engine.domain.services.sanitization import sanitize_cpf
 from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_jwt_guard
 from osint_engine.interface.http.presenters.graph_presenter import graph_to_schema
@@ -26,8 +27,15 @@ def build_get_ceaf_handler(
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
         ceaf_id: int | None = None,
     ) -> GraphSchema | Response:
-        cpf = sanitize_cpf(cpf)
         username = str(payload["sub"])
+
+        try:
+            cpf = sanitize_cpf(cpf)
+        except SanitizationError:
+            await container.use_cases.record_invalid_attempt(
+                provider="ceaf", raw_input=cpf, username=username
+            ).execute()
+            raise
 
         use_case = container.use_cases.expand_by_ceaf(
             cpf=cpf, ceaf_id=ceaf_id, username=username

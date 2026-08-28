@@ -40,8 +40,14 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.consumption.list_entity_records_by_cpf import (  # noqa: E501
         ListEntityRecordsByCPF,
     )
+    from osint_engine.application.use_cases.consumption.record_invalid_attempt import (
+        RecordInvalidAttempt,
+    )
     from osint_engine.application.use_cases.credentials.list_credentials import (
         ListExternalCredentials,
+    )
+    from osint_engine.application.use_cases.credentials.reveal_credential import (
+        RevealExternalCredential,
     )
     from osint_engine.application.use_cases.credentials.save_credential import (
         SaveExternalCredential,
@@ -144,4 +150,6 @@ class UseCases:
     list_graph_history: partial[ListGraphHistory]
     list_node_history: partial[ListNodeHistory]
     list_text_patterns: partial[ListTextPatterns]
+    record_invalid_attempt: partial[RecordInvalidAttempt]
+    reveal_external_credential: partial[RevealExternalCredential]
     save_external_credential: partial[SaveExternalCredential]
