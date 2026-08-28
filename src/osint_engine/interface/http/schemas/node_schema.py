@@ -13,8 +13,10 @@ from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.domain.entities.nodes.cnae import Cnae
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.entities.nodes.email import Email
+from osint_engine.domain.entities.nodes.legal_process import LegalProcess
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.domain.entities.nodes.phone import Phone
+from osint_engine.domain.entities.nodes.political_exposure import PoliticalExposure
 from osint_engine.domain.entities.nodes.sanction import Sanction
 from osint_engine.domain.entities.nodes.text_source import TextSource
 from osint_engine.interface.http.errors.schema_error import (
@@ -111,6 +113,27 @@ class EmailSchema(NodeSchema[Email]):
         return Email
 
 
+class LegalProcessSchema(NodeSchema[LegalProcess]):
+    type: Literal["legal_process"] = "legal_process"
+
+    court: str | None
+    current_status: str | None
+    distribution_date: str | None
+    execution_value: Decimal | None
+    is_secret_of_justice: bool | None
+    lawsuit_value: Decimal | None
+    lawsuit_value_currency: str | None
+    process_class: str | None
+    process_number: str
+    process_url: str | None
+    state: str | None
+
+    @classmethod
+    @override
+    def domain(cls) -> type[LegalProcess]:
+        return LegalProcess
+
+
 class PersonSchema(NodeSchema[Person]):
     type: Literal["person"] = "person"
 
@@ -136,6 +159,25 @@ class PhoneSchema(NodeSchema[Phone]):
     @override
     def domain(cls) -> type[Phone]:
         return Phone
+
+
+class PoliticalExposureSchema(NodeSchema[PoliticalExposure]):
+    type: Literal["political_exposure"] = "political_exposure"
+
+    cpf: str
+    exercise_end_date: str | None
+    exercise_start_date: str | None
+    function_acronym: str | None
+    function_description: str
+    function_level: str | None
+    government_body_code: str | None
+    government_body_name: str
+    grace_period_end_date: str | None
+
+    @classmethod
+    @override
+    def domain(cls) -> type[PoliticalExposure]:
+        return PoliticalExposure
 
 
 class SanctionSchema(NodeSchema[Sanction]):
@@ -175,8 +217,10 @@ NodeSchemaUnion = (
     | CnaeSchema
     | CompanySchema
     | EmailSchema
+    | LegalProcessSchema
     | PersonSchema
     | PhoneSchema
+    | PoliticalExposureSchema
     | SanctionSchema
     | TextSourceSchema
 )
@@ -212,7 +256,9 @@ NodeSchemaRegistry.register(AddressSchema)
 NodeSchemaRegistry.register(CnaeSchema)
 NodeSchemaRegistry.register(CompanySchema)
 NodeSchemaRegistry.register(EmailSchema)
+NodeSchemaRegistry.register(LegalProcessSchema)
 NodeSchemaRegistry.register(PersonSchema)
 NodeSchemaRegistry.register(PhoneSchema)
+NodeSchemaRegistry.register(PoliticalExposureSchema)
 NodeSchemaRegistry.register(SanctionSchema)
 NodeSchemaRegistry.register(TextSourceSchema)

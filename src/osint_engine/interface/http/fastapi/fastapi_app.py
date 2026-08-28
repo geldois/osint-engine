@@ -29,7 +29,11 @@ from osint_engine.interface.http.fastapi.routers.graph_router import build_graph
 from osint_engine.interface.http.fastapi.routers.health_router import (
     build_health_router,
 )
+from osint_engine.interface.http.fastapi.routers.legal_process_router import (
+    build_legal_process_router,
+)
 from osint_engine.interface.http.fastapi.routers.node_router import build_node_router
+from osint_engine.interface.http.fastapi.routers.pep_router import build_pep_router
 from osint_engine.interface.http.fastapi.routers.text_ingestion_router import (
     build_text_ingestion_router,
 )
@@ -65,7 +69,9 @@ def build_fastapi_app(*, container: Container) -> FastAPI:
     fastapi_app.include_router(router=build_edge_router(container=container))
     fastapi_app.include_router(router=build_graph_router(container=container))
     fastapi_app.include_router(router=build_health_router(container=container))
+    fastapi_app.include_router(router=build_legal_process_router(container=container))
     fastapi_app.include_router(router=build_node_router(container=container))
+    fastapi_app.include_router(router=build_pep_router(container=container))
     fastapi_app.include_router(router=build_text_ingestion_router(container=container))
 
     error_handler = build_error_handler(container=container)

@@ -9,6 +9,9 @@ from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
 from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
 from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
 from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
+from osint_engine.domain.entities.edges.company_is_party_in_legal_process import (
+    CompanyIsPartyInLegalProcess,
+)
 from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
 from osint_engine.domain.entities.edges.company_mentioned_in_text import (
     CompanyMentionedInText,
@@ -19,6 +22,12 @@ from osint_engine.domain.entities.edges.company_received_sanction import (
 )
 from osint_engine.domain.entities.edges.person_has_email import PersonHasEmail
 from osint_engine.domain.entities.edges.person_has_phone import PersonHasPhone
+from osint_engine.domain.entities.edges.person_has_political_exposure import (
+    PersonHasPoliticalExposure,
+)
+from osint_engine.domain.entities.edges.person_is_party_in_legal_process import (
+    PersonIsPartyInLegalProcess,
+)
 from osint_engine.domain.entities.edges.person_mentioned_in_text import (
     PersonMentionedInText,
 )
@@ -38,6 +47,7 @@ from osint_engine.interface.http.schemas.edge_schema import (
     CompanyHasEmailSchema,
     CompanyHasMemberSchema,
     CompanyHasPhoneSchema,
+    CompanyIsPartyInLegalProcessSchema,
     CompanyLocatedAtSchema,
     CompanyMentionedInTextSchema,
     CompanyOwnsCompanySchema,
@@ -45,6 +55,8 @@ from osint_engine.interface.http.schemas.edge_schema import (
     EdgeSchemaUnion,
     PersonHasEmailSchema,
     PersonHasPhoneSchema,
+    PersonHasPoliticalExposureSchema,
+    PersonIsPartyInLegalProcessSchema,
     PersonMentionedInTextSchema,
     PersonOwnsCompanySchema,
     PersonReceivedSanctionSchema,
@@ -175,6 +187,18 @@ def company_received_sanction_to_schema(
     )
 
 
+def company_is_party_in_legal_process_to_schema(
+    *, edge: CompanyIsPartyInLegalProcess, revision: RevisionSchema
+) -> CompanyIsPartyInLegalProcessSchema:
+    return CompanyIsPartyInLegalProcessSchema(
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
+    )
+
+
 def person_has_email_to_schema(
     *, edge: PersonHasEmail, revision: RevisionSchema
 ) -> PersonHasEmailSchema:
@@ -191,6 +215,30 @@ def person_has_phone_to_schema(
     *, edge: PersonHasPhone, revision: RevisionSchema
 ) -> PersonHasPhoneSchema:
     return PersonHasPhoneSchema(
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
+    )
+
+
+def person_has_political_exposure_to_schema(
+    *, edge: PersonHasPoliticalExposure, revision: RevisionSchema
+) -> PersonHasPoliticalExposureSchema:
+    return PersonHasPoliticalExposureSchema(
+        content_id=edge.content_id,
+        id=edge.id,
+        revision=revision,
+        source_id=edge.source_id,
+        target_id=edge.target_id,
+    )
+
+
+def person_is_party_in_legal_process_to_schema(
+    *, edge: PersonIsPartyInLegalProcess, revision: RevisionSchema
+) -> PersonIsPartyInLegalProcessSchema:
+    return PersonIsPartyInLegalProcessSchema(
         content_id=edge.content_id,
         id=edge.id,
         revision=revision,
@@ -272,10 +320,13 @@ _EDGE_MAP: dict[type[Edge[UUID, UUID, UUID]], Callable[..., EdgeSchemaUnion]] = 
     CompanyHasPhone: company_has_phone_to_schema,
     CompanyLocatedAt: company_located_at_to_schema,
     CompanyMentionedInText: company_mentioned_in_text_to_schema,
+    CompanyIsPartyInLegalProcess: company_is_party_in_legal_process_to_schema,
     CompanyOwnsCompany: company_owns_company_to_schema,
     CompanyReceivedSanction: company_received_sanction_to_schema,
     PersonHasEmail: person_has_email_to_schema,
     PersonHasPhone: person_has_phone_to_schema,
+    PersonHasPoliticalExposure: person_has_political_exposure_to_schema,
+    PersonIsPartyInLegalProcess: person_is_party_in_legal_process_to_schema,
     PersonMentionedInText: person_mentioned_in_text_to_schema,
     PersonOwnsCompany: person_owns_company_to_schema,
     PersonReceivedSanction: person_received_sanction_to_schema,

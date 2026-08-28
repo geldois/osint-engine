@@ -16,6 +16,9 @@ from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
 from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
 from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
 from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
+from osint_engine.domain.entities.edges.company_is_party_in_legal_process import (
+    CompanyIsPartyInLegalProcess,
+)
 from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
 from osint_engine.domain.entities.edges.company_mentioned_in_text import (
     CompanyMentionedInText,
@@ -26,6 +29,12 @@ from osint_engine.domain.entities.edges.company_received_sanction import (
 )
 from osint_engine.domain.entities.edges.person_has_email import PersonHasEmail
 from osint_engine.domain.entities.edges.person_has_phone import PersonHasPhone
+from osint_engine.domain.entities.edges.person_has_political_exposure import (
+    PersonHasPoliticalExposure,
+)
+from osint_engine.domain.entities.edges.person_is_party_in_legal_process import (
+    PersonIsPartyInLegalProcess,
+)
 from osint_engine.domain.entities.edges.person_mentioned_in_text import (
     PersonMentionedInText,
 )
@@ -160,6 +169,17 @@ class CompanyReceivedSanctionSchema(EdgeSchema[CompanyReceivedSanction]):
         return CompanyReceivedSanction
 
 
+class CompanyIsPartyInLegalProcessSchema(EdgeSchema[CompanyIsPartyInLegalProcess]):
+    type: Literal["company_is_party_in_legal_process"] = (
+        "company_is_party_in_legal_process"
+    )
+
+    @classmethod
+    @override
+    def domain(cls) -> type[CompanyIsPartyInLegalProcess]:
+        return CompanyIsPartyInLegalProcess
+
+
 class PersonHasEmailSchema(EdgeSchema[PersonHasEmail]):
     type: Literal["person_has_email"] = "person_has_email"
 
@@ -188,6 +208,26 @@ class PersonMentionedInTextSchema(EdgeSchema[PersonMentionedInText]):
     @override
     def domain(cls) -> type[PersonMentionedInText]:
         return PersonMentionedInText
+
+
+class PersonHasPoliticalExposureSchema(EdgeSchema[PersonHasPoliticalExposure]):
+    type: Literal["person_has_political_exposure"] = "person_has_political_exposure"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[PersonHasPoliticalExposure]:
+        return PersonHasPoliticalExposure
+
+
+class PersonIsPartyInLegalProcessSchema(EdgeSchema[PersonIsPartyInLegalProcess]):
+    type: Literal["person_is_party_in_legal_process"] = (
+        "person_is_party_in_legal_process"
+    )
+
+    @classmethod
+    @override
+    def domain(cls) -> type[PersonIsPartyInLegalProcess]:
+        return PersonIsPartyInLegalProcess
 
 
 class PersonOwnsCompanySchema(EdgeSchema[PersonOwnsCompany]):
@@ -239,10 +279,13 @@ EdgeSchemaUnion = (
     | CompanyHasPhoneSchema
     | CompanyLocatedAtSchema
     | CompanyMentionedInTextSchema
+    | CompanyIsPartyInLegalProcessSchema
     | CompanyOwnsCompanySchema
     | CompanyReceivedSanctionSchema
     | PersonHasEmailSchema
     | PersonHasPhoneSchema
+    | PersonHasPoliticalExposureSchema
+    | PersonIsPartyInLegalProcessSchema
     | PersonMentionedInTextSchema
     | PersonOwnsCompanySchema
     | PersonReceivedSanctionSchema
@@ -286,10 +329,13 @@ EdgeSchemaRegistry.register(CompanyHasMemberSchema)
 EdgeSchemaRegistry.register(CompanyHasPhoneSchema)
 EdgeSchemaRegistry.register(CompanyLocatedAtSchema)
 EdgeSchemaRegistry.register(CompanyMentionedInTextSchema)
+EdgeSchemaRegistry.register(CompanyIsPartyInLegalProcessSchema)
 EdgeSchemaRegistry.register(CompanyOwnsCompanySchema)
 EdgeSchemaRegistry.register(CompanyReceivedSanctionSchema)
 EdgeSchemaRegistry.register(PersonHasEmailSchema)
 EdgeSchemaRegistry.register(PersonHasPhoneSchema)
+EdgeSchemaRegistry.register(PersonHasPoliticalExposureSchema)
+EdgeSchemaRegistry.register(PersonIsPartyInLegalProcessSchema)
 EdgeSchemaRegistry.register(PersonMentionedInTextSchema)
 EdgeSchemaRegistry.register(PersonOwnsCompanySchema)
 EdgeSchemaRegistry.register(PersonReceivedSanctionSchema)

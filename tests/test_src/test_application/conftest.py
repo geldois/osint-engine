@@ -12,6 +12,8 @@ from tests.fakes.fetchers import (
     FakeCNEPFetcher,
     FakeCNPJFetcher,
     FakeCPFFetcher,
+    FakeLegalProcessFetcher,
+    FakePEPFetcher,
 )
 
 if TYPE_CHECKING:
@@ -26,6 +28,8 @@ type MakeFakeCEPIMFetcher = Callable[..., FakeCEPIMFetcher]
 type MakeFakeCNEPFetcher = Callable[..., FakeCNEPFetcher]
 type MakeFakeCNPJFetcher = Callable[..., FakeCNPJFetcher]
 type MakeFakeCPFFetcher = Callable[..., FakeCPFFetcher]
+type MakeFakeLegalProcessFetcher = Callable[..., FakeLegalProcessFetcher]
+type MakeFakePEPFetcher = Callable[..., FakePEPFetcher]
 type MakeMemUoWFactory = Callable[..., MakeMemUoW]
 
 
@@ -140,3 +144,37 @@ def make_fake_ceaf_fetcher(
         )
 
     return fake_ceaf_fetcher
+
+
+@pytest.fixture
+def make_fake_pep_fetcher(
+    make_entity_revision: MakeEntityRevision, make_graph: MakeGraph
+) -> MakeFakePEPFetcher:
+
+    def fake_pep_fetcher(
+        *, revision: EntityRevision[Graph] | None = None
+    ) -> FakePEPFetcher:
+        return FakePEPFetcher(
+            revision=revision
+            if revision is not None
+            else make_entity_revision(entity=make_graph())
+        )
+
+    return fake_pep_fetcher
+
+
+@pytest.fixture
+def make_fake_legal_process_fetcher(
+    make_entity_revision: MakeEntityRevision, make_graph: MakeGraph
+) -> MakeFakeLegalProcessFetcher:
+
+    def fake_legal_process_fetcher(
+        *, revision: EntityRevision[Graph] | None = None
+    ) -> FakeLegalProcessFetcher:
+        return FakeLegalProcessFetcher(
+            revision=revision
+            if revision is not None
+            else make_entity_revision(entity=make_graph())
+        )
+
+    return fake_legal_process_fetcher

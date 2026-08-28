@@ -13,6 +13,10 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.fetchers.cnep_fetcher import CNEPFetcher
     from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
     from osint_engine.application.contracts.fetchers.cpf_fetcher import CPFFetcher
+    from osint_engine.application.contracts.fetchers.legal_process_fetcher import (
+        LegalProcessFetcher,
+    )
+    from osint_engine.application.contracts.fetchers.pep_fetcher import PEPFetcher
     from osint_engine.application.contracts.services.jwt_service import JWTService
     from osint_engine.application.contracts.services.kipflow_rate_limiter import (
         KipFlowRateLimiter,
@@ -54,6 +58,10 @@ if TYPE_CHECKING:
         EstimateCPFBatch,
         ExpandByCPFBatch,
     )
+    from osint_engine.application.use_cases.expansion.expand_by_legal_process import (
+        ExpandByLegalProcess,
+    )
+    from osint_engine.application.use_cases.expansion.expand_by_pep import ExpandByPEP
     from osint_engine.application.use_cases.history.list_edge_history import (
         ListEdgeHistory,
     )
@@ -95,6 +103,8 @@ class Fetchers:
     cnep_fetcher: CNEPFetcher
     cnpj_fetcher: CNPJFetcher
     cpf_fetcher: CPFFetcher
+    legal_process_fetcher: LegalProcessFetcher
+    pep_fetcher: PEPFetcher
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -121,6 +131,8 @@ class UseCases:
     expand_by_cnpj: partial[ExpandByCNPJ]
     expand_by_cpf: partial[ExpandByCPF]
     expand_by_cpf_batch: partial[ExpandByCPFBatch]
+    expand_by_legal_process: partial[ExpandByLegalProcess]
+    expand_by_pep: partial[ExpandByPEP]
     estimate_cpf_batch: partial[EstimateCPFBatch]
     find_possibly_matches: partial[FindPossiblyMatches]
     ingest_text: partial[IngestText]

@@ -34,6 +34,10 @@ from osint_engine.application.use_cases.expansion.expand_by_cpf_batch import (
     EstimateCPFBatch,
     ExpandByCPFBatch,
 )
+from osint_engine.application.use_cases.expansion.expand_by_legal_process import (
+    ExpandByLegalProcess,
+)
+from osint_engine.application.use_cases.expansion.expand_by_pep import ExpandByPEP
 from osint_engine.application.use_cases.history.list_edge_history import (
     ListEdgeHistory,
 )
@@ -72,6 +76,9 @@ from osint_engine.infrastructure.providers.brasilapi.endpoints.cnpj_v1_fetcher i
 from osint_engine.infrastructure.providers.kipflow.endpoints.cpf_fetcher import (
     KipFlowCPFFetcher,
 )
+from osint_engine.infrastructure.providers.kipflow.endpoints.legal_process_fetcher import (  # noqa: E501
+    KipFlowLegalProcessFetcher,
+)
 from osint_engine.infrastructure.providers.kipflow.in_memory_rate_limiter import (
     InMemoryKipFlowRateLimiter,
 )
@@ -86,6 +93,9 @@ from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cepim_
 )
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cnep_fetcher import (  # noqa: E501
     PortalTransparenciaCNEPFetcher,
+)
+from osint_engine.infrastructure.providers.portal_transparencia.endpoints.pep_fetcher import (  # noqa: E501
+    PortalTransparenciaPEPFetcher,
 )
 from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
 from osint_engine.infrastructure.text_ingestion.spreadsheet_reader import (
@@ -128,6 +138,10 @@ def build_container(  # noqa: PLR0913
         cpf_fetcher=KipFlowCPFFetcher(
             http_client=http_client, rate_limiter=kipflow_rate_limiter
         ),
+        legal_process_fetcher=KipFlowLegalProcessFetcher(
+            http_client=http_client, rate_limiter=kipflow_rate_limiter
+        ),
+        pep_fetcher=PortalTransparenciaPEPFetcher(http_client=http_client),
     )
 
     pyjwt_service = PyJWTService(settings=settings)
@@ -202,6 +216,14 @@ def build_container(  # noqa: PLR0913
             EstimateCPFBatch,
             uow_factory=uow_factory,
             rate_limiter=kipflow_rate_limiter,
+        ),
+        expand_by_legal_process=partial(
+            ExpandByLegalProcess,
+            uow_factory=uow_factory,
+            legal_process_fetcher=fetchers.legal_process_fetcher,
+        ),
+        expand_by_pep=partial(
+            ExpandByPEP, uow_factory=uow_factory, pep_fetcher=fetchers.pep_fetcher
         ),
         find_possibly_matches=partial(FindPossiblyMatches, uow_factory=uow_factory),
         ingest_text=partial(IngestText, uow_factory=uow_factory),

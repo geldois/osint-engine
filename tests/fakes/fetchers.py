@@ -8,6 +8,10 @@ from osint_engine.application.contracts.fetchers.cepim_fetcher import CEPIMFetch
 from osint_engine.application.contracts.fetchers.cnep_fetcher import CNEPFetcher
 from osint_engine.application.contracts.fetchers.cnpj_fetcher import CNPJFetcher
 from osint_engine.application.contracts.fetchers.cpf_fetcher import CPFFetcher
+from osint_engine.application.contracts.fetchers.legal_process_fetcher import (
+    LegalProcessFetcher,
+)
+from osint_engine.application.contracts.fetchers.pep_fetcher import PEPFetcher
 
 if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import ExternalCredential
@@ -75,5 +79,27 @@ class FakeCEAFFetcher(CEAFFetcher):
     @override
     async def fetch(
         self, *, cpf: str, ceaf_id: int | None, credential: ExternalCredential
+    ) -> EntityRevision[Graph] | None:
+        return self.revision
+
+
+class FakePEPFetcher(PEPFetcher):
+    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+        self.revision = revision
+
+    @override
+    async def fetch(
+        self, *, cpf: str, credential: ExternalCredential
+    ) -> EntityRevision[Graph] | None:
+        return self.revision
+
+
+class FakeLegalProcessFetcher(LegalProcessFetcher):
+    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+        self.revision = revision
+
+    @override
+    async def fetch(
+        self, *, cpf_or_cnpj: str, credential: ExternalCredential
     ) -> EntityRevision[Graph] | None:
         return self.revision

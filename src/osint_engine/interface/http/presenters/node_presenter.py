@@ -6,8 +6,10 @@ from osint_engine.domain.entities.nodes.address import Address
 from osint_engine.domain.entities.nodes.cnae import Cnae
 from osint_engine.domain.entities.nodes.company import Company
 from osint_engine.domain.entities.nodes.email import Email
+from osint_engine.domain.entities.nodes.legal_process import LegalProcess
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.domain.entities.nodes.phone import Phone
+from osint_engine.domain.entities.nodes.political_exposure import PoliticalExposure
 from osint_engine.domain.entities.nodes.sanction import Sanction
 from osint_engine.domain.entities.nodes.text_source import TextSource
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
@@ -19,9 +21,11 @@ from osint_engine.interface.http.schemas.node_schema import (
     CnaeSchema,
     CompanySchema,
     EmailSchema,
+    LegalProcessSchema,
     NodeSchemaUnion,
     PersonSchema,
     PhoneSchema,
+    PoliticalExposureSchema,
     SanctionSchema,
     TextSourceSchema,
 )
@@ -88,6 +92,27 @@ def email_to_schema(*, node: Email, revision: RevisionSchema) -> EmailSchema:
     )
 
 
+def legal_process_to_schema(
+    *, node: LegalProcess, revision: RevisionSchema
+) -> LegalProcessSchema:
+    return LegalProcessSchema(
+        content_id=node.content_id,
+        id=node.id,
+        revision=revision,
+        court=node.court,
+        current_status=node.current_status,
+        distribution_date=node.distribution_date,
+        execution_value=node.execution_value,
+        is_secret_of_justice=node.is_secret_of_justice,
+        lawsuit_value=node.lawsuit_value,
+        lawsuit_value_currency=node.lawsuit_value_currency,
+        process_class=node.process_class,
+        process_number=node.process_number,
+        process_url=node.process_url,
+        state=node.state,
+    )
+
+
 def person_to_schema(*, node: Person, revision: RevisionSchema) -> PersonSchema:
     return PersonSchema(
         content_id=node.content_id,
@@ -108,6 +133,25 @@ def phone_to_schema(*, node: Phone, revision: RevisionSchema) -> PhoneSchema:
         id=node.id,
         revision=revision,
         number=node.number,
+    )
+
+
+def political_exposure_to_schema(
+    *, node: PoliticalExposure, revision: RevisionSchema
+) -> PoliticalExposureSchema:
+    return PoliticalExposureSchema(
+        content_id=node.content_id,
+        id=node.id,
+        revision=revision,
+        cpf=node.cpf,
+        exercise_end_date=node.exercise_end_date,
+        exercise_start_date=node.exercise_start_date,
+        function_acronym=node.function_acronym,
+        function_description=node.function_description,
+        function_level=node.function_level,
+        government_body_code=node.government_body_code,
+        government_body_name=node.government_body_name,
+        grace_period_end_date=node.grace_period_end_date,
     )
 
 
@@ -146,8 +190,10 @@ _NODE_MAP: dict[type[Node[UUID]], Callable[..., NodeSchemaUnion]] = {
     Cnae: cnae_to_schema,
     Company: company_to_schema,
     Email: email_to_schema,
+    LegalProcess: legal_process_to_schema,
     Person: person_to_schema,
     Phone: phone_to_schema,
+    PoliticalExposure: political_exposure_to_schema,
     Sanction: sanction_to_schema,
     TextSource: text_source_to_schema,
 }
