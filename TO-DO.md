@@ -20,6 +20,14 @@
   fetcher's actual consumer is still undecided: a manual "enrich this Address stub" endpoint is the likely shape, not
   automatic chaining from `cnpj_v1` (whose `_map_address` already returns a complete `Address`)
 
+## feat(consumption)
+
+- `EntityRecord` is only written by `expand_by_cpf.py` (Kipflow root); the free routes
+  (`expand_by_cnep`/`ceis`/`ceaf`/`pep`/`cepim`) and the CNPJ root (`expand_by_cnpj`, BrasilAPI) return `None`/build
+  the graph without ever persisting a bare stub node or writing a consumption-log entry on an empty/successful
+  response, and no route logs an entry for syntactically invalid input either — spec written and ready:
+  `~/+ME/brain/notes/specs/osint-engine/consumption-log-completeness.md`. Not started this session.
+
 ## feat(persistence)
 
 - `Graph.nodes`/`Graph.edges` hold full `Node`/`Edge` content, not references — every stored `GraphRevision` re-embeds
