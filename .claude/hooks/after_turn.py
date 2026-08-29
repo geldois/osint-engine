@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from _hook_io import context, git_root, read_event, run
+from _hook_io import context, git_root, read_event, run, stop_reinvoked
 
 _SRC_AREAS = frozenset(
     {"domain", "application", "infrastructure", "interface", "config", "observability"},
@@ -24,7 +24,7 @@ _DOCS_NUDGE = (
 
 def main() -> int:
     event = read_event()
-    if event.get("stop_hook_active") is True:
+    if stop_reinvoked(event):
         return 0
 
     root = git_root(Path.cwd())

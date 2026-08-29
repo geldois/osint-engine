@@ -80,12 +80,16 @@ def add_context(context: str) -> None:
     )
 
 
+def stop_reinvoked(event: dict[str, object]) -> bool:
+    return (
+        isinstance(event.get("hook_event_name"), str)
+        and event["hook_event_name"] in ("Stop", "SubagentStop")
+        and event.get("stop_hook_active") is True
+    )
+
+
 def context(hook_event_name: str, text: str, *, once_per_chain: bool = True) -> None:
-    if (
-        once_per_chain
-        and hook_event_name in ("Stop", "SubagentStop")
-        and read_event().get("stop_hook_active") is True
-    ):
+    if once_per_chain and stop_reinvoked(read_event()):
         return
     _emit(
         {
