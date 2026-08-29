@@ -7,7 +7,6 @@ from pathlib import Path
 
 from dotenv import dotenv_values
 
-from scripts._isolation import materialized_snapshot
 from scripts._report import (
     Gate,
     GateOutcome,
@@ -18,7 +17,7 @@ from scripts._report import (
 
 _UV_RUN = ("uv", "run", "--no-sync")
 
-_SHELL_FILES = (
+SHELL_FILES = (
     ".githooks/pre-commit",
     ".githooks/pre-merge-commit",
     "cloud-init.sh",
@@ -33,8 +32,8 @@ _PRE_SYNC: tuple[Gate, ...] = (
     Gate("lock-check", ("uv", "lock", "--check")),
     Gate("dprint", ("mise", "exec", "--", "dprint", "check")),
     Gate("sqruff", ("mise", "exec", "--", "sqruff", "lint", "migrations", "src")),
-    Gate("shellcheck", ("mise", "exec", "--", "shellcheck", *_SHELL_FILES)),
-    Gate("shfmt", ("mise", "exec", "--", "shfmt", "-d", *_SHELL_FILES)),
+    Gate("shellcheck", ("mise", "exec", "--", "shellcheck", *SHELL_FILES)),
+    Gate("shfmt", ("mise", "exec", "--", "shfmt", "-d", *SHELL_FILES)),
     Gate("actionlint", ("mise", "exec", "--", "actionlint", *_WORKFLOW_FILES)),
 )
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
@@ -62,17 +61,13 @@ _SUITE = Gate(
 )
 
 
-def run_check(*, full: bool, staged: bool) -> int:
-    mode = f"{'full' if full else 'fast'}{'/staged' if staged else ''}"
+def run_check(*, full: bool) -> int:
+    mode = "full" if full else "fast"
 
     overlay = _dotenv_overlay(Path.cwd())
 
     with running_ticker():
-        if staged:
-            with materialized_snapshot() as workdir:
-                outcomes = _run_sequence(workdir, full=full, overlay=overlay)
-        else:
-            outcomes = _run_sequence(Path.cwd(), full=full, overlay=overlay)
+        outcomes = _run_sequence(Path.cwd(), full=full, overlay=overlay)
 
     report_path = write_report(outcomes, mode=mode)
     print_verdict(outcomes, report_path)

@@ -573,3 +573,18 @@ then `sudo systemctl restart docker` and re-run the pulls.
 ```bash
 act push
 ```
+
+## Quality gates
+
+`uv run python -m scripts check|fix|precommit` is the single entry point into every linter, formatter, type-checker, and
+test the project owns.
+
+- `fix [paths...]` runs every safe fixer (Ruff's linter fixes then its formatter, dprint, sqruff, shfmt) on the given
+  paths, or the whole repo with none given.
+- `check [--full]` runs every lint/type/format gate; `--full` adds the full pytest suite with coverage.
+- `precommit` re-stages any currently-staged file after fixing it, runs `fix` on the whole repo, then `check --full` —
+  what `.githooks/pre-commit` and `.githooks/pre-merge-commit` both call. If the working tree hasn't changed a single
+  byte since the last time this ran, it skips straight to replaying that run's result instead of doing the work again.
+
+Run any of these yourself at any time — they're exactly what the git hooks run. `scripts mutation`,
+`scripts sqlc-generate`, and `scripts fixtures` stay separate, periodic, manual commands — never part of `check`.

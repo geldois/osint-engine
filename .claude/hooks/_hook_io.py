@@ -24,6 +24,11 @@ def tool_input(event: dict[str, object], key: str) -> str:
     return value if isinstance(value, str) else ""
 
 
+def tool_response(event: dict[str, object]) -> dict[str, object]:
+    raw = event.get("tool_response")
+    return cast("dict[str, object]", raw) if isinstance(raw, dict) else {}
+
+
 def run(
     command: list[str], cwd: Path | None = None
 ) -> subprocess.CompletedProcess[str] | None:

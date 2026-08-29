@@ -7,10 +7,12 @@ silently wrong.
 
 ## Decisions
 
-A per-edit check runs the linter, read-only, and reports back only the violations the linter's own fixer cannot resolve
-on its own — everything auto-fixable is silenced here and left for the gate façade's own fix step to resolve exactly
-once, at commit time. A clean file gets one quiet confirmation line instead of silence, so nothing is re-run just to
-double-check.
+No linter, type-checker, or test ever runs mid-turn, at any point — not per edit, not once at the end of a turn. An
+earlier design ran the linter read-only after every edit and the type-checker once at the end of the turn, on the
+reasoning that a type-checker mid-refactor reports cascading errors from code that doesn't exist yet. That reasoning
+still holds, but there's a simpler reason none of it runs mid-turn anymore: the git hook runs the exact same tools, on
+the whole repo, on every commit and merge attempt, so anything a mid-turn run could catch early, the commit attempt
+catches anyway — one commit later, never earlier.
 
 A comment or docstring is never auto-stripped, here or anywhere else — an AST-level rewrite carries edge cases (a
 command-decorated function's own docstring serving as its help text, an f-string false positive) that could silently
@@ -24,19 +26,22 @@ project's own `CLAUDE.md`, or `CONTEXT.md` instead. A written change is checked 
 predating the edit is left alone until its own line is next touched; a plain file read has nothing to diff against, so
 it is checked whole, surfacing a pre-existing one as a pattern not to imitate rather than as something newly introduced.
 
-A separate check runs before every shell command and nudges — it does not block — away from re-running the gate façade
-or a bare full-suite lint/type/test/mutation tool directly, redirecting to just committing instead: `pre-commit` already
-runs the full gate on every commit and reports any failure inline, so a direct run is pure duplication of a guarantee
-already given. A compound shell statement — chained commands, a subshell, a heredoc body — is split into its parts
-first, so a wrapped or piped call cannot slip past the check; a targeted single-file or single-test run is left alone
-for fast local iteration.
+A separate check runs before every shell command and nudges — it does not block — away from running a linter, formatter,
+type-checker, or test directly, redirecting to just committing instead: `pre-commit` and `pre-merge-commit` both already
+run the full gate (`scripts precommit`) on every attempt and report any failure inline, so a direct run is pure
+duplication of a guarantee already given, with nothing left for it to learn early. A compound shell statement — chained
+commands, a subshell, a heredoc body — is split into its parts first, so a wrapped or piped call cannot slip past the
+check.
 
-The whole-program checks — type-checking above all — are deliberately deferred to the end of the turn rather than run
-per edit: mid-refactor, a type-checker reports cascading errors from code that simply doesn't exist yet, and an agent
-chases them instead of finishing the change; by end of turn the code is complete, and one run there costs a fraction of
-running it after every single edit. The same end-of-turn pass nudges toward updating a touched area's own
-`docs/architecture/<area>.md` and the architecture diagram in `README.md`, leaving the judgment of whether the change
-was actually semantic — versus a rename or a purely mechanical refactor — to whoever is finishing the turn.
+A successful commit or merge doesn't guarantee the working tree is now clean — the fixer may have reformatted a file
+that was never staged, or unrelated work may simply still be in progress. A nudge fires after every commit or merge that
+isn't one the gate itself just blocked, and checks `git status` on its own: if anything is left, it asks whoever is
+finishing the turn to judge whether that's leftover fix output deserving its own commit now, or a deliberate
+work-in-progress being set aside for later — never deciding that automatically.
+
+The end-of-turn pass nudges toward updating a touched area's own `docs/architecture/<area>.md` and the architecture
+diagram in `README.md`, leaving the judgment of whether the change was actually semantic — versus a rename or a purely
+mechanical refactor — to whoever is finishing the turn.
 
 A narrower, project-specific check ties a new endpoint to this project's own recorded test fixtures: a provider fetcher
 against a free source declaring an endpoint with no matching case in the fixture-recording script gets flagged, so a

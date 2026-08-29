@@ -18,9 +18,9 @@ _DEFAULT_MAX_SURVIVAL = 100.0
 
 
 @app.command()
-def check(*, full: bool = False, staged: bool = False) -> None:
+def check(*, full: bool = False) -> None:
     """Run the deterministic gate sequence."""
-    raise typer.Exit(run_check(full=full, staged=staged))
+    raise typer.Exit(run_check(full=full))
 
 
 @app.command()

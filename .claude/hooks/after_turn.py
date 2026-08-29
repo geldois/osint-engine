@@ -5,11 +5,6 @@ from pathlib import Path
 
 from _hook_io import context, git_root, read_event, run
 
-_BASEDPYRIGHT = ("uv", "run", "--no-sync", "basedpyright", "--level", "error")
-_MAX_FILES = 40
-_MAX_OUTPUT_LINES = 40
-
-_TYPED_ROOTS = ("src", "tests", "scripts", ".claude/hooks")
 _SRC_AREAS = frozenset(
     {"domain", "application", "infrastructure", "interface", "config", "observability"},
 )
@@ -40,13 +35,9 @@ def main() -> int:
     if not changed:
         return 0
 
-    sections = [
-        section
-        for section in (_type_errors(changed, root), _docs_nudge(changed))
-        if section
-    ]
-    if sections:
-        context("Stop", "\n\n".join(sections))
+    nudge = _docs_nudge(changed)
+    if nudge:
+        context("Stop", nudge)
 
     return 0
 
@@ -64,23 +55,6 @@ def _changed_files(root: Path) -> list[str]:
         if (root / path).is_file():
             paths.append(path)
     return paths
-
-
-def _type_errors(changed: list[str], root: Path) -> str:
-    targets = [
-        path
-        for path in changed
-        if path.endswith(".py") and path.startswith(_TYPED_ROOTS)
-    ]
-    if not targets or len(targets) > _MAX_FILES:
-        return ""
-
-    result = run([*_BASEDPYRIGHT, *targets], root)
-    if result is None or result.returncode == 0:
-        return ""
-
-    lines = (result.stdout or result.stderr).splitlines()[:_MAX_OUTPUT_LINES]
-    return "── basedpyright ──\n" + "\n".join(lines)
 
 
 def _docs_nudge(changed: list[str]) -> str:

@@ -8,7 +8,7 @@
             "type": "command",
             "command": "python3",
             "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/block_direct_checks.py"
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/nudge_manual_checks.py"
             ],
             "timeout": 10
           }
@@ -19,14 +19,6 @@
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_lint.py"
-            ],
-            "timeout": 30
-          },
           {
             "type": "command",
             "command": "python3",
@@ -47,6 +39,19 @@
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_comments.py"
             ],
             "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_uncommitted.py"
+            ],
+            "timeout": 10
           }
         ]
       }
