@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import subprocess
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from scripts._report import REPORT_PATH
-from scripts.fix import run_precommit
+from scripts.fix import run_fix, run_precommit
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     import pytest
 
 
@@ -19,48 +18,41 @@ def _git(*args: str, cwd: Path) -> str:
     return result.stdout
 
 
-def _fake_check_ok(*, full: bool) -> int:
-    del full
-    return 0
+def _fake_shfmt(targets: list[str]) -> None:
+    for target in targets:
+        Path(target).write_text('echo "fixed"\n', encoding="utf-8")
 
 
-def test_run_precommit_keeps_a_rewritten_file_fully_staged(
+def test_run_fix_keeps_a_rewritten_staged_file_fully_staged(
     git_repo: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    target = git_repo / "a.py"
-    target.write_text("x=1\n", encoding="utf-8")
-    _git("add", "a.py", cwd=git_repo)
+    monkeypatch.setattr("scripts.fix.SHELL_FILES", ("a.sh",))
+    monkeypatch.setattr("scripts.fix._shfmt", _fake_shfmt)
 
-    def _fake_run_fix(paths: tuple[str, ...] = ()) -> int:
-        del paths
-        target.write_text("x = 1\n", encoding="utf-8")
-        return 0
+    target = git_repo / "a.sh"
+    target.write_text("echo hi\n", encoding="utf-8")
+    _git("add", "a.sh", cwd=git_repo)
 
-    monkeypatch.setattr("scripts.fix.run_fix", _fake_run_fix)
-    monkeypatch.setattr("scripts.fix.run_check", _fake_check_ok)
+    run_fix()
 
-    run_precommit()
-
-    assert _git("show", ":a.py", cwd=git_repo) == "x = 1\n"
-    assert _git("diff", "--", "a.py", cwd=git_repo) == ""
+    assert _git("show", ":a.sh", cwd=git_repo) == 'echo "fixed"\n'
+    assert _git("diff", "--", "a.sh", cwd=git_repo) == ""
 
 
-def test_run_precommit_leaves_an_unstaged_rewrite_unstaged(
+def test_run_fix_leaves_an_unstaged_rewrite_unstaged(
     git_repo: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    (git_repo / "seed.txt").write_text("seed\n", encoding="utf-8")
+    monkeypatch.setattr("scripts.fix.SHELL_FILES", ("seed.sh",))
+    monkeypatch.setattr("scripts.fix._shfmt", _fake_shfmt)
 
-    def _fake_run_fix(paths: tuple[str, ...] = ()) -> int:
-        del paths
-        (git_repo / "seed.txt").write_text("rewritten\n", encoding="utf-8")
-        return 0
+    (git_repo / "seed.sh").write_text("echo seed\n", encoding="utf-8")
+    _git("add", "seed.sh", cwd=git_repo)
+    _git("commit", "-m", "seed", cwd=git_repo)
 
-    monkeypatch.setattr("scripts.fix.run_fix", _fake_run_fix)
-    monkeypatch.setattr("scripts.fix.run_check", _fake_check_ok)
-
-    run_precommit()
+    run_fix()
 
     assert _git("diff", "--cached", "--name-only", cwd=git_repo) == ""
+    assert (git_repo / "seed.sh").read_text(encoding="utf-8") == 'echo "fixed"\n'
 
 
 def test_run_precommit_skips_check_when_the_tree_is_unchanged(

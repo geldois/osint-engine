@@ -20,17 +20,22 @@ _TREE_HASH_FILE = Path("build/.gate-tree-hash")
 
 
 def run_fix(paths: tuple[str, ...] = ()) -> int:
+    staged_before = [path for path in _staged_files() if Path(path).is_file()]
+
     if not paths:
         _ruff(["."])
         _dprint([])
         _sqruff(list(_SQL_DIRS))
         _shfmt(list(SHELL_FILES))
-        return 0
+    else:
+        _fix_group([p for p in paths if p.endswith(".py")], _ruff)
+        _fix_group([p for p in paths if p.endswith(_DPRINT_EXTENSIONS)], _dprint)
+        _fix_group([p for p in paths if p.endswith(".sql")], _sqruff)
+        _fix_group([p for p in paths if p in SHELL_FILES or p.endswith(".sh")], _shfmt)
 
-    _fix_group([p for p in paths if p.endswith(".py")], _ruff)
-    _fix_group([p for p in paths if p.endswith(_DPRINT_EXTENSIONS)], _dprint)
-    _fix_group([p for p in paths if p.endswith(".sql")], _sqruff)
-    _fix_group([p for p in paths if p in SHELL_FILES or p.endswith(".sh")], _shfmt)
+    existing = [path for path in staged_before if Path(path).is_file()]
+    if existing:
+        subprocess.run(["git", "add", "--", *existing], check=True)
 
     return 0
 
@@ -58,12 +63,7 @@ def _shfmt(targets: list[str]) -> None:
 
 
 def run_precommit() -> int:
-    staged_before = [path for path in _staged_files() if Path(path).is_file()]
     run_fix()
-    if staged_before:
-        existing = [path for path in staged_before if Path(path).is_file()]
-        if existing:
-            subprocess.run(["git", "add", "--", *existing], check=True)
 
     tree_hash = _tree_hash()
     if tree_hash == _cached_tree_hash():
