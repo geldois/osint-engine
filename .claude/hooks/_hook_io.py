@@ -7,13 +7,18 @@ import sys
 from pathlib import Path
 from typing import cast
 
+_EVENT: list[dict[str, object] | None] = [None]
+
 
 def read_event() -> dict[str, object]:
+    if _EVENT[0] is not None:
+        return _EVENT[0]
     try:
         raw: object = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
         return {}
-    return cast("dict[str, object]", raw) if isinstance(raw, dict) else {}
+    _EVENT[0] = cast("dict[str, object]", raw) if isinstance(raw, dict) else {}
+    return _EVENT[0]
 
 
 def tool_input(event: dict[str, object], key: str) -> str:
@@ -75,7 +80,13 @@ def add_context(context: str) -> None:
     )
 
 
-def context(hook_event_name: str, text: str) -> None:
+def context(hook_event_name: str, text: str, *, once_per_chain: bool = True) -> None:
+    if (
+        once_per_chain
+        and hook_event_name in ("Stop", "SubagentStop")
+        and read_event().get("stop_hook_active") is True
+    ):
+        return
     _emit(
         {
             "hookSpecificOutput": {
