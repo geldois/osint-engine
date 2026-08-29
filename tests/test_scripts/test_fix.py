@@ -55,6 +55,30 @@ def test_run_fix_leaves_an_unstaged_rewrite_unstaged(
     assert (git_repo / "seed.sh").read_text(encoding="utf-8") == 'echo "fixed"\n'
 
 
+def test_run_precommit_unstages_a_rewritten_file_when_check_fails(
+    git_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("scripts.fix.SHELL_FILES", ("a.sh",))
+    monkeypatch.setattr("scripts.fix._shfmt", _fake_shfmt)
+
+    calls: list[bool] = []
+
+    def _fake_check(*, full: bool) -> int:
+        calls.append(full)
+        return 1
+
+    monkeypatch.setattr("scripts.fix.run_check", _fake_check)
+
+    target = git_repo / "a.sh"
+    target.write_text("echo hi\n", encoding="utf-8")
+    _git("add", "a.sh", cwd=git_repo)
+
+    assert run_precommit() == 1
+    assert calls == [True]
+    assert _git("diff", "--cached", "--name-only", cwd=git_repo) == ""
+    assert (git_repo / "a.sh").read_text(encoding="utf-8") == 'echo "fixed"\n'
+
+
 def test_run_precommit_skips_check_when_the_tree_is_unchanged(
     git_repo: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
