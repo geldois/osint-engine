@@ -17,6 +17,7 @@ _DPRINT_EXTENSIONS = (".md", ".json", ".jsonc", ".toml", ".yaml", ".yml")
 _FIX_EXTENSIONS = (".py", ".sql", *_DPRINT_EXTENSIONS)
 _SQL_DIRS = ("migrations", "src")
 _TREE_HASH_FILE = Path("build/.gate-tree-hash")
+_FIXED_PATHS_FILE = Path("build/.gate-fixed-paths")
 
 
 def run_fix(paths: tuple[str, ...] = ()) -> int:
@@ -35,6 +36,8 @@ def run_fix(paths: tuple[str, ...] = ()) -> int:
 
     if staged_before:
         subprocess.run(["git", "add", "--", *staged_before], check=True)
+        _FIXED_PATHS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _FIXED_PATHS_FILE.write_text("\n".join(staged_before) + "\n", encoding="utf-8")
     return 0
 
 

@@ -1,0 +1,9 @@
+#!/bin/sh
+marker="build/.gate-fixed-paths"
+[ -f "$marker" ] || exit 0
+while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    git diff --cached --quiet -- "$path" && continue
+    git diff HEAD --quiet -- "$path" || continue
+    git reset -q -- "$path"
+done <"$marker"

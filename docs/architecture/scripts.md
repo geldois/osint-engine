@@ -33,9 +33,13 @@ leave the index holding the pre-fix version while the working tree moves on to t
 partial-stage split. The fixer re-adds any file that had a staged diff before it ran, so the index always ends up
 holding exactly what the fixer produced. When the gate fails, holding it there would leave content the agent never
 staged sitting in the index, so the runner resets the files it re-added before returning its verdict — a retry starts
-from a clean index and can never commit a stale version of a rewritten file without explicitly re-staging it. A file
-that gets reformatted without having been staged is left alone; it surfaces in `git status` like any other drift and
-gets its own commit whenever that's convenient, never folded silently into whichever commit happens to run next.
+from a clean index and can never commit a stale version of a rewritten file without explicitly re-staging it. A partial
+commit's own select semantics leave the real index holding a rewritten file's pre-hook version even when the commit
+succeeded, so `run_fix` also records the paths it re-added (`build/.gate-fixed-paths`, gitignored) and a `post-commit`
+hook resets exactly those whose worktree content now matches `HEAD` — a stale index is synced without touching a staged
+next version of any other path, no matter which commit form produced the commit. A file that gets reformatted without
+having been staged is left alone; it surfaces in `git status` like any other drift and gets its own commit whenever
+that's convenient, never folded silently into whichever commit happens to run next.
 
 The check gate validates the real, current working tree, not an isolated snapshot of only what's staged. An earlier
 design snapshotted the exact staged tree into a scratch directory before checking it, specifically so an unrelated,
