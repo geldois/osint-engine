@@ -31,9 +31,11 @@ could fix on its own; the commit or merge attempt is the first and only signal.
 Fixing a file that was already staged rewrites its content on disk without touching the index, which would otherwise
 leave the index holding the pre-fix version while the working tree moves on to the fixed one — an invisible
 partial-stage split. The fixer re-adds any file that had a staged diff before it ran, so the index always ends up
-holding exactly what the fixer produced. A file that gets reformatted without having been staged is left alone; it
-surfaces in `git status` like any other drift and gets its own commit whenever that's convenient, never folded silently
-into whichever commit happens to run next.
+holding exactly what the fixer produced. When the gate fails, holding it there would leave content the agent never
+staged sitting in the index, so the runner resets the files it re-added before returning its verdict — a retry starts
+from a clean index and can never commit a stale version of a rewritten file without explicitly re-staging it. A file
+that gets reformatted without having been staged is left alone; it surfaces in `git status` like any other drift and
+gets its own commit whenever that's convenient, never folded silently into whichever commit happens to run next.
 
 The check gate validates the real, current working tree, not an isolated snapshot of only what's staged. An earlier
 design snapshotted the exact staged tree into a scratch directory before checking it, specifically so an unrelated,

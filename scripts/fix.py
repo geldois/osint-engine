@@ -33,10 +33,8 @@ def run_fix(paths: tuple[str, ...] = ()) -> int:
         _fix_group([p for p in paths if p.endswith(".sql")], _sqruff)
         _fix_group([p for p in paths if p in SHELL_FILES or p.endswith(".sh")], _shfmt)
 
-    existing = [path for path in staged_before if Path(path).is_file()]
-    if existing:
-        subprocess.run(["git", "add", "--", *existing], check=True)
-
+    if staged_before:
+        subprocess.run(["git", "add", "--", *staged_before], check=True)
     return 0
 
 
@@ -63,16 +61,28 @@ def _shfmt(targets: list[str]) -> None:
 
 
 def run_precommit() -> int:
+    staged_before = [path for path in _staged_files() if Path(path).is_file()]
+
     run_fix()
 
     tree_hash = _tree_hash()
     if tree_hash == _cached_tree_hash():
-        return _replay_cached_report()
+        status = _replay_cached_report()
+        if status:
+            _reset_index(staged_before)
+        return status
 
     status = run_check(full=True)
+    if status:
+        _reset_index(staged_before)
     _TREE_HASH_FILE.parent.mkdir(parents=True, exist_ok=True)
     _TREE_HASH_FILE.write_text(tree_hash, encoding="utf-8")
     return status
+
+
+def _reset_index(staged_before: list[str]) -> None:
+    if staged_before:
+        subprocess.run(["git", "reset", "-q", "--", *staged_before], check=True)
 
 
 def _staged_files() -> list[str]:
