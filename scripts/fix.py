@@ -22,6 +22,8 @@ _FIXED_PATHS_FILE = Path("build/.gate-fixed-paths")
 
 def run_fix(paths: tuple[str, ...] = ()) -> int:
     staged_before = [path for path in _staged_files() if Path(path).is_file()]
+    blobs = _index_blobs()
+    pre_hash = {path: _hash_object(path) for path in staged_before}
 
     if not paths:
         _ruff(["."])
@@ -36,8 +38,15 @@ def run_fix(paths: tuple[str, ...] = ()) -> int:
 
     if staged_before:
         subprocess.run(["git", "add", "--", *staged_before], check=True)
-        _FIXED_PATHS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        _FIXED_PATHS_FILE.write_text("\n".join(staged_before) + "\n", encoding="utf-8")
+        rewritten = [
+            path for path in staged_before if pre_hash.get(path) != _hash_object(path)
+        ]
+        if rewritten:
+            _FIXED_PATHS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            _FIXED_PATHS_FILE.write_text(
+                "".join(f"{path}\t{blobs.get(path, '')}\n" for path in rewritten),
+                encoding="utf-8",
+            )
     return 0
 
 
@@ -90,6 +99,31 @@ def _reset_index(staged_before: list[str]) -> None:
 
 def _staged_files() -> list[str]:
     return _git_lines("diff", "--name-only", "--cached")
+
+
+def _hash_object(path: str) -> str | None:
+    result = subprocess.run(
+        ["git", "hash-object", path], capture_output=True, text=True, check=False
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+_LS_SHA = 1
+_LS_PATH = 3
+
+
+def _index_blobs() -> dict[str, str]:
+    result = subprocess.run(
+        ["git", "ls-files", "-s"], capture_output=True, text=True, check=False
+    )
+    if result.returncode != 0:
+        return {}
+    blobs: dict[str, str] = {}
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        if len(parts) > _LS_PATH:
+            blobs[parts[_LS_PATH]] = parts[_LS_SHA]
+    return blobs
 
 
 def _tree_hash() -> str:

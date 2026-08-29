@@ -35,11 +35,14 @@ holding exactly what the fixer produced. When the gate fails, holding it there w
 staged sitting in the index, so the runner resets the files it re-added before returning its verdict — a retry starts
 from a clean index and can never commit a stale version of a rewritten file without explicitly re-staging it. A partial
 commit's own select semantics leave the real index holding a rewritten file's pre-hook version even when the commit
-succeeded, so `run_fix` also records the paths it re-added (`build/.gate-fixed-paths`, gitignored) and a `post-commit`
-hook resets exactly those whose worktree content now matches `HEAD` — a stale index is synced without touching a staged
-next version of any other path, no matter which commit form produced the commit. A file that gets reformatted without
-having been staged is left alone; it surfaces in `git status` like any other drift and gets its own commit whenever
-that's convenient, never folded silently into whichever commit happens to run next.
+succeeded, so `run_fix` records the files it actually rewrote — worktree content changed — in a gitignored marker
+(`build/.gate-fixed-paths`, one `path<TAB>blob-sha` line each, the sha naming the pre-fix staged blob as the
+deterministic restore pointer), and a `post-commit` hook resets exactly those whose worktree content now matches `HEAD`.
+A stale index is synced without touching a staged next version of any other path, and a file staged-but-then-reverted in
+the worktree is never in the marker — the fixer did not rewrite it — so no commit form can wipe the only copy of a
+staged-only change. A file that gets reformatted without having been staged is left alone; it surfaces in `git status`
+like any other drift and gets its own commit whenever that's convenient, never folded silently into whichever commit
+happens to run next.
 
 The check gate validates the real, current working tree, not an isolated snapshot of only what's staged. An earlier
 design snapshotted the exact staged tree into a scratch directory before checking it, specifically so an unrelated,
