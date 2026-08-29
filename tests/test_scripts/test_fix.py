@@ -34,12 +34,13 @@ def test_run_fix_keeps_a_rewritten_staged_file_fully_staged(
     target = git_repo / "a.sh"
     target.write_text("echo hi\n", encoding="utf-8")
     _git("add", "a.sh", cwd=git_repo)
+    sha = _git("hash-object", "a.sh", cwd=git_repo).strip()
 
     run_fix()
 
     assert _git("show", ":a.sh", cwd=git_repo) == 'echo "fixed"\n'
     assert _git("diff", "--", "a.sh", cwd=git_repo) == ""
-    assert (git_repo / "build" / ".gate-fixed-paths").read_text() == "a.sh\n"
+    assert (git_repo / "build" / ".gate-fixed-paths").read_text() == f"a.sh\t{sha}\n"
 
 
 def test_run_fix_leaves_an_unstaged_rewrite_unstaged(
@@ -68,7 +69,7 @@ def test_post_commit_syncs_the_index_only_for_a_stale_rewrite(
 
     target.write_text("echo stale\n", encoding="utf-8")
     _git("add", "a.sh", cwd=git_repo)
-    _git("checkout", "HEAD", "--", "a.sh", cwd=git_repo)
+    _git("restore", "--source=HEAD", "--", "a.sh", cwd=git_repo)
     (git_repo / "build").mkdir()
     (git_repo / "build" / ".gate-fixed-paths").write_text("a.sh\n", encoding="utf-8")
 
@@ -88,11 +89,48 @@ def test_post_commit_leaves_a_staged_next_version_alone(
     target.write_text("echo next\n", encoding="utf-8")
     _git("add", "a.sh", cwd=git_repo)
     (git_repo / "build").mkdir()
-    (git_repo / "build" / ".gate-fixed-paths").write_text("a.sh\n", encoding="utf-8")
+    (git_repo / "build" / ".gate-fixed-paths").write_text(
+        "a.sh\t0000\n", encoding="utf-8"
+    )
 
     subprocess.run(["sh", str(_POST_COMMIT)], cwd=git_repo, check=True)
 
     assert _git("diff", "--cached", "--name-only", cwd=git_repo) == "a.sh\n"
+
+
+def test_post_commit_does_not_touch_a_staged_then_reverted_file(
+    git_repo: Path,
+) -> None:
+    target = git_repo / "a.sh"
+    target.write_text('echo "fixed"\n', encoding="utf-8")
+    _git("add", "a.sh", cwd=git_repo)
+    _git("commit", "-m", "fixed", cwd=git_repo)
+
+    target.write_text("echo stale\n", encoding="utf-8")
+    _git("add", "a.sh", cwd=git_repo)
+    _git("restore", "--source=HEAD", "--", "a.sh", cwd=git_repo)
+    (git_repo / "build").mkdir()
+    (git_repo / "build" / ".gate-fixed-paths").write_text(
+        "b.sh\t0000\n", encoding="utf-8"
+    )
+
+    subprocess.run(["sh", str(_POST_COMMIT)], cwd=git_repo, check=True)
+
+    assert _git("diff", "--cached", "--name-only", cwd=git_repo) == "a.sh\n"
+
+
+def test_run_fix_writes_no_marker_when_nothing_was_rewritten(
+    git_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("scripts.fix.SHELL_FILES", ())
+
+    target = git_repo / "a.sh"
+    target.write_text("echo hi\n", encoding="utf-8")
+    _git("add", "a.sh", cwd=git_repo)
+
+    run_fix()
+
+    assert not (git_repo / "build" / ".gate-fixed-paths").exists()
 
 
 def test_run_precommit_unstages_a_rewritten_file_when_check_fails(
