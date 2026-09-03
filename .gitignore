@@ -126,3 +126,4 @@ mutants/
 .mcp.json
 
 tests/test_src/test_infrastructure/test_providers/*/test_endpoints/responses/*.json
+.hypothesis

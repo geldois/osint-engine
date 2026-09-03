@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from hypothesis import settings as hypothesis_settings
+from hypothesis.configuration import set_hypothesis_home_dir
 from hypothesis.database import DirectoryBasedExampleDatabase
 
 from osint_engine.application.auth.external_credential import (
@@ -55,6 +56,7 @@ if TYPE_CHECKING:
     from osint_engine.domain.value_objects.entity_ref import EntityRef
     from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
+set_hypothesis_home_dir(".cache/hypothesis")
 hypothesis_settings.register_profile(
     "osint_engine", database=DirectoryBasedExampleDatabase(".cache/hypothesis")
 )
