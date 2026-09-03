@@ -24,6 +24,10 @@ _HASH_FILENAMES = frozenset(
     }
 )
 _HUNK_HEADER = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+_EXCLUDED_DIRS = frozenset(
+    {".venv", ".cache", "build", ".hypothesis", ".import_linter_cache", "__pycache__"}
+)
+_MAX_REPORTED_LINES = 20
 
 
 def main() -> int:
@@ -74,6 +78,9 @@ def _resolve_target(file: str) -> tuple[Path, Path, str] | None:
     ):
         return None
 
+    if _EXCLUDED_DIRS & set(Path(rel).parts[:-1]):
+        return None
+
     return path, root, rel
 
 
@@ -86,7 +93,11 @@ def _scan(rel: str, source: str, lines: frozenset[int] | None) -> list[int]:
 
 
 def _report(rel: str, hits: list[int], *, preexisting: bool) -> None:
-    numbers = ", ".join(str(n) for n in hits)
+    shown = hits[:_MAX_REPORTED_LINES]
+    numbers = ", ".join(str(n) for n in shown)
+    extra = len(hits) - len(shown)
+    if extra:
+        numbers += f" (+{extra} mais)"
     lead = "Pre-existing comment(s) in" if preexisting else "New comment on"
     add_context(
         f"{lead} {rel} (this repo allows none, anywhere, except a linter-ignore "
