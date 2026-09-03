@@ -24,9 +24,10 @@ def run_fix(paths: tuple[str, ...] = ()) -> int:
     staged_before = [path for path in _staged_files() if Path(path).is_file()]
     blobs = _index_blobs()
     pre_hash = {path: _hash_object(path) for path in staged_before}
+    _FIXED_PATHS_FILE.unlink(missing_ok=True)
 
     if not paths:
-        _ruff(["."])
+        _fix_group(_git_lines("ls-files", "*.py"), _ruff)
         _dprint([])
         _sqruff(list(_SQL_DIRS))
         _shfmt(list(SHELL_FILES))
@@ -128,7 +129,9 @@ def _index_blobs() -> dict[str, str]:
 
 def _tree_hash() -> str:
     digest = hashlib.sha256()
-    for rel in _git_lines("ls-files"):
+    tracked = _git_lines("ls-files")
+    untracked = _git_lines("ls-files", "--others", "--exclude-standard")
+    for rel in [*tracked, *untracked]:
         digest.update(rel.encode())
         path = Path(rel)
         if path.is_file():

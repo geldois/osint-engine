@@ -5,5 +5,7 @@ while IFS="$(printf '\t')" read -r path sha; do
     [ -n "$path" ] || continue
     git diff --cached --quiet -- "$path" && continue
     git diff HEAD --quiet -- "$path" || continue
+    [ "$(git rev-parse :"$path" 2>/dev/null)" = "$sha" ] || continue
     git reset -q -- "$path"
 done <"$marker"
+rm -f "$marker"

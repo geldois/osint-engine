@@ -69,9 +69,12 @@ def test_post_commit_syncs_the_index_only_for_a_stale_rewrite(
 
     target.write_text("echo stale\n", encoding="utf-8")
     _git("add", "a.sh", cwd=git_repo)
+    sha = _git("hash-object", "a.sh", cwd=git_repo).strip()
     _git("restore", "--source=HEAD", "--", "a.sh", cwd=git_repo)
     (git_repo / "build").mkdir()
-    (git_repo / "build" / ".gate-fixed-paths").write_text("a.sh\n", encoding="utf-8")
+    (git_repo / "build" / ".gate-fixed-paths").write_text(
+        f"a.sh\t{sha}\n", encoding="utf-8"
+    )
 
     subprocess.run(["sh", str(_POST_COMMIT)], cwd=git_repo, check=True)
 
@@ -160,7 +163,7 @@ def test_run_precommit_unstages_a_rewritten_file_when_check_fails(
 def test_run_precommit_skips_check_when_the_tree_is_unchanged(
     git_repo: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    del git_repo
+    (git_repo / ".gitignore").write_text("build/\n", encoding="utf-8")
 
     def _fake_run_fix(paths: tuple[str, ...] = ()) -> int:
         del paths
