@@ -20,6 +20,7 @@ _UV_RUN = ("uv", "run", "--no-sync")
 SHELL_FILES = (
     ".githooks/pre-commit",
     ".githooks/pre-merge-commit",
+    ".githooks/post-commit",
     "cloud-init.sh",
     "docker-entrypoint.sh",
 )
@@ -118,7 +119,6 @@ def _run_sequence(
     env = {
         key: value for key, value in os.environ.items() if not key.startswith("GIT_")
     }
-    env = {**overlay, **env}
     outcomes = [_run_gate(gate, workdir, env) for gate in _PRE_SYNC]
 
     sync = _run_gate(_ENV_SYNC, workdir, env)
@@ -130,6 +130,6 @@ def _run_sequence(
     if not full:
         return outcomes
 
-    outcomes.append(_run_gate(_SUITE, workdir, env))
+    outcomes.append(_run_gate(_SUITE, workdir, {**overlay, **env}))
 
     return outcomes
