@@ -52,10 +52,6 @@ The hooks themselves are standalone scripts, each resolving a shared import from
 project's, since that is how they actually run; the type checker's own configuration points at that directory as its own
 root only so the import resolves, not to relax strictness there.
 
-Read access to a handful of paths — lockfiles, generated changelogs, coverage output, recorded fixtures, every tool's
-own cache directory, every flavor of `.env` — is denied outright: each is either pure token cost with nothing an agent
-would act on, or a genuine secret.
-
 ## Consequences
 
 Because the gate-façade check nudges rather than blocks, an agent that ignores the nudge can still run the full gate

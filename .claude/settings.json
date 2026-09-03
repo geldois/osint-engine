@@ -1,14 +1,4 @@
 {
-  "permissions": {
-    "deny": [
-      "Read(./uv.lock)",
-      "Read(./CHANGELOG.md)",
-      "Read(./.cache/**)",
-      "Read(./tests/**/responses/*.json)",
-      "Read(./.env)",
-      "Read(./.env.*)"
-    ]
-  },
   "hooks": {
     "PreToolUse": [
       {
