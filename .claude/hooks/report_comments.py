@@ -103,7 +103,9 @@ def _report(rel: str, hits: list[int], *, preexisting: bool) -> None:
         f"{lead} {rel} (this repo allows none, anywhere, except a linter-ignore "
         f"pragma — CLAUDE.md). Lines: {numbers}. Remove it, make the name say "
         "what it says, or move the decision into README/TO-DO/docs/architecture/"
-        "CLAUDE/CONTEXT."
+        "CLAUDE/CONTEXT — now, in this turn. Pre-existing is not a reason to leave "
+        "it, and this holds the same whether it surfaced via Read, Edit, MultiEdit, "
+        "or Write."
     )
 
 

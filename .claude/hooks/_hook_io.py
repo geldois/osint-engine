@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
 from typing import cast
 
@@ -78,6 +81,66 @@ def add_context(context: str) -> None:
             },
         },
     )
+
+
+def session_id(event: dict[str, object]) -> str:
+    value = event.get("session_id")
+    return value if isinstance(value, str) else ""
+
+
+_MARKER_STALE_SECONDS = 12 * 60 * 60
+
+
+def set_marker(prefix: str, session: str, value: str = "") -> None:
+    if not session:
+        return
+    try:
+        directory = _marker_dir()
+        directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+        safe_prefix = _safe_marker(prefix)
+        _sweep_stale_markers(directory, safe_prefix)
+        (directory / f"{safe_prefix}-{_safe_marker(session)}").write_text(value)
+    except OSError:
+        return
+
+
+def take_marker(prefix: str, session: str) -> bool:
+    if not session:
+        return False
+    try:
+        (_marker_dir() / f"{_safe_marker(prefix)}-{_safe_marker(session)}").unlink()
+    except OSError:
+        return False
+    return True
+
+
+def marker_value(prefix: str, session: str) -> str | None:
+    if not session:
+        return None
+    try:
+        return (
+            _marker_dir() / f"{_safe_marker(prefix)}-{_safe_marker(session)}"
+        ).read_text()
+    except OSError:
+        return None
+
+
+def _marker_dir() -> Path:
+    return Path(tempfile.gettempdir()) / "osint-engine-claude-hooks"
+
+
+def _safe_marker(prefix: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_-]", "_", prefix)
+
+
+def _sweep_stale_markers(directory: Path, prefix: str) -> None:
+    cutoff = time.time() - _MARKER_STALE_SECONDS
+    for marker in directory.glob(f"{prefix}-*"):
+        try:
+            if marker.stat().st_mtime < cutoff:
+                marker.unlink(missing_ok=True)
+        except OSError:
+            continue
 
 
 def stop_reinvoked(event: dict[str, object]) -> bool:
