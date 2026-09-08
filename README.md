@@ -8,7 +8,7 @@
 Entity relationship graph engine that expands identifiers into a fully traceable network of connections sourced
 exclusively from official public records.
 
-**Live:** [api.osint.angelitochagas.com/docs](https://api.osint.angelitochagas.com/docs)
+**Live:** [osint-engine.duckdns.org/docs](https://osint-engine.duckdns.org/docs)
 
 ## Overview
 
