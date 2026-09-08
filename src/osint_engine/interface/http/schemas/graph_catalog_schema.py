@@ -9,6 +9,7 @@ from osint_engine.interface.http.schemas.node_schema import NodeUnion  # noqa: T
 
 class GraphCatalogEntrySchema(BaseModel):
     first_fetched_at: datetime
+    fetched_routes: list[str]
     last_fetched_at: datetime
     providers: list[str]
     revision_count: int

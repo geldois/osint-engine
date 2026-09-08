@@ -19,13 +19,16 @@ if TYPE_CHECKING:
 
 def build_get_ceaf_handler(
     *, container: Container
-) -> Callable[[str, dict[str, object], int | None], Awaitable[GraphSchema | Response]]:
+) -> Callable[
+    [str, dict[str, object], int | None, bool], Awaitable[GraphSchema | Response]
+]:
     jwt_guard = build_jwt_guard(container=container)
 
     async def get_ceaf(
         cpf: str,
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
         ceaf_id: int | None = None,
+        force: bool = False,  # noqa: FBT001, FBT002
     ) -> GraphSchema | Response:
         username = str(payload["sub"])
 
@@ -38,7 +41,7 @@ def build_get_ceaf_handler(
             raise
 
         use_case = container.use_cases.expand_by_ceaf(
-            cpf=cpf, ceaf_id=ceaf_id, username=username
+            cpf=cpf, ceaf_id=ceaf_id, force=force, username=username
         )
 
         revision = await use_case.execute()

@@ -8,7 +8,11 @@ from structlog.stdlib import get_logger
 from osint_engine.application.consumption.ensure_entity_logged import (
     ensure_company_logged,
 )
-from osint_engine.application.contracts.use_case import Query
+from osint_engine.application.consumption.entity_stub import company_stub
+from osint_engine.application.consumption.guard_reuse_lock import (
+    find_already_fetched_error,
+)
+from osint_engine.application.contracts.use_case import Query, UseCaseRegistry
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.domain.entities.bases.graph import Graph
 
@@ -20,7 +24,6 @@ if TYPE_CHECKING:
 
 _logger = get_logger()
 
-_PROVIDER = "brasilapi"
 _ANONYMOUS_USERNAME = "anonymous"
 
 
@@ -28,18 +31,43 @@ class ExpandByCNPJ(Query[EntityRevision[Graph]]):
     uow_factory: Callable[[], UoW]
     cnpj_fetcher: CNPJFetcher
     cnpj: str
+    force: bool
 
     @override
     def __init__(
-        self, *, uow_factory: Callable[[], UoW], cnpj_fetcher: CNPJFetcher, cnpj: str
+        self,
+        *,
+        uow_factory: Callable[[], UoW],
+        cnpj_fetcher: CNPJFetcher,
+        cnpj: str,
+        force: bool = False,
     ) -> None:
-        super().__init__(uow_factory=uow_factory, cnpj_fetcher=cnpj_fetcher, cnpj=cnpj)
+        super().__init__(
+            uow_factory=uow_factory, cnpj_fetcher=cnpj_fetcher, cnpj=cnpj, force=force
+        )
 
     @override
     async def execute(self) -> EntityRevision[Graph]:
-        _logger.info("cnpj.expansion.start", cnpj=self.cnpj)
+        _logger.info("cnpj.expansion.start", cnpj=self.cnpj, force=self.force)
 
         requested_at = datetime.now(tz=UTC)
+
+        async with self.uow_factory() as uow:
+            to_raise = await find_already_fetched_error(
+                uow=uow,
+                entity_id=company_stub(self.cnpj).id,
+                use_case=type(self),
+                force=self.force,
+                requested_at=requested_at,
+                username=_ANONYMOUS_USERNAME,
+            )
+
+        if to_raise is not None:
+            _logger.info("cnpj.expansion.already_fetched", cnpj=self.cnpj)
+
+            raise to_raise
+
+        provider = UseCaseRegistry.billing_for(type(self)).provider
 
         async with self.uow_factory() as uow:
             revision = await self.cnpj_fetcher.fetch(cnpj=self.cnpj)
@@ -49,7 +77,7 @@ class ExpandByCNPJ(Query[EntityRevision[Graph]]):
             await ensure_company_logged(
                 uow=uow,
                 cnpj=self.cnpj,
-                provider=_PROVIDER,
+                provider=provider,
                 username=_ANONYMOUS_USERNAME,
                 requested_at=requested_at,
                 revision=revision,
@@ -58,3 +86,6 @@ class ExpandByCNPJ(Query[EntityRevision[Graph]]):
         _logger.info("cnpj.expansion.success", cnpj=self.cnpj)
 
         return stored
+
+
+UseCaseRegistry.register(ExpandByCNPJ, provider="brasilapi", billable=False)

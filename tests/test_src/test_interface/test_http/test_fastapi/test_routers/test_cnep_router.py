@@ -176,6 +176,41 @@ class TestGetCnepExpansion:
 
         assert response.status_code == 422
 
+    @pytest.mark.asyncio
+    async def test_repeating_the_same_query_without_force_returns_409(
+        self, client: AsyncClient, valid_token: str
+    ) -> None:
+        first = await client.get(
+            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+        )
+
+        assert first.status_code == 200
+
+        second = await client.get(
+            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+        )
+
+        assert second.status_code == 409
+        assert second.json()["type"] == "ENTITY_ALREADY_FETCHED"
+
+    @pytest.mark.asyncio
+    async def test_repeating_the_same_query_with_force_returns_200_again(
+        self, client: AsyncClient, valid_token: str
+    ) -> None:
+        first = await client.get(
+            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+        )
+
+        assert first.status_code == 200
+
+        second = await client.get(
+            f"/cnep/{CPF_OR_CNPJ}",
+            headers={"Authorization": f"Bearer {valid_token}"},
+            params={"force": "true"},
+        )
+
+        assert second.status_code == 200
+
 
 class TestGetCnepPossiblyMatches:
     @pytest.mark.asyncio

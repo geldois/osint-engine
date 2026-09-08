@@ -19,12 +19,13 @@ if TYPE_CHECKING:
 
 def build_get_pep_handler(
     *, container: Container
-) -> Callable[[str, dict[str, object]], Awaitable[GraphSchema | Response]]:
+) -> Callable[[str, dict[str, object], bool], Awaitable[GraphSchema | Response]]:
     jwt_guard = build_jwt_guard(container=container)
 
     async def get_pep(
         cpf: str,
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
+        force: bool = False,  # noqa: FBT001, FBT002
     ) -> GraphSchema | Response:
         username = str(payload["sub"])
 
@@ -36,7 +37,9 @@ def build_get_pep_handler(
             ).execute()
             raise
 
-        use_case = container.use_cases.expand_by_pep(cpf=cpf, username=username)
+        use_case = container.use_cases.expand_by_pep(
+            cpf=cpf, force=force, username=username
+        )
 
         revision = await use_case.execute()
 

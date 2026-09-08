@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, override
 from structlog.stdlib import get_logger
 
 from osint_engine.application.auth.external_credential import Provider
+from osint_engine.application.consumption.guard_reuse_lock import is_already_fetched
 from osint_engine.application.contracts.use_case import Query
 from osint_engine.application.errors.entity_fetch_error import AlreadyFetchedError
 from osint_engine.application.revision.entity_revision import EntityRevision
@@ -29,7 +30,6 @@ if TYPE_CHECKING:
 
 _logger = get_logger()
 
-_KIPFLOW_PROVIDER = "kipflow"
 _MAX_CONCURRENT_EXPANSIONS = 5
 
 type BatchOutcomeStatus = ConsumptionOutcome
@@ -205,18 +205,11 @@ class EstimateCPFBatch(
                         registration_status=None,
                     )
 
-                    revisions = await uow.nodes.list_revisions(id_=stub.id)
-
-                    previous = next(
-                        (
-                            revision
-                            for revision in revisions
-                            if revision.provider == _KIPFLOW_PROVIDER
-                        ),
-                        None,
+                    fetched = await is_already_fetched(
+                        uow=uow, entity_id=stub.id, use_case=ExpandByCPF
                     )
 
-                    bucket = already_fetched if previous is not None else billable
+                    bucket = already_fetched if fetched else billable
                     bucket.append(raw_cpf)
 
             credential = await uow.external_credentials.find(

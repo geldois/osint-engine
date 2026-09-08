@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from osint_engine.config.container import Policies
     from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
     from tests.conftest import (
+        MakeEntityRecord,
         MakeEntityRevision,
         MakeExternalCredential,
         MakeMemStorage,
@@ -135,15 +136,15 @@ class TestEstimateCPFBatch:
     @pytest.mark.asyncio
     async def test_marks_a_kipflow_fetched_cpf_as_already_fetched(
         self,
-        make_entity_revision: MakeEntityRevision,
+        make_entity_record: MakeEntityRecord,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
         make_mem_uow_factory: MakeMemUoWFactory,
     ) -> None:
-        previous = make_entity_revision(
-            entity=_make_person(cpf=_CPF_1), provider="kipflow"
+        previous = make_entity_record(
+            entity_id=_make_person(cpf=_CPF_1).id, provider="kipflow"
         )
-        mem_storage = make_mem_storage(nodes=[previous])
+        mem_storage = make_mem_storage(entity_records=[previous])
         mem_uow = make_mem_uow(mem_storage=mem_storage)
 
         use_case = EstimateCPFBatch(
@@ -163,15 +164,15 @@ class TestEstimateCPFBatch:
     @pytest.mark.asyncio
     async def test_marks_a_text_ingestion_cpf_as_billable(
         self,
-        make_entity_revision: MakeEntityRevision,
+        make_entity_record: MakeEntityRecord,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
         make_mem_uow_factory: MakeMemUoWFactory,
     ) -> None:
-        previous = make_entity_revision(
-            entity=_make_person(cpf=_CPF_1), provider="text_ingestion"
+        previous = make_entity_record(
+            entity_id=_make_person(cpf=_CPF_1).id, provider="text_ingestion"
         )
-        mem_storage = make_mem_storage(nodes=[previous])
+        mem_storage = make_mem_storage(entity_records=[previous])
         mem_uow = make_mem_uow(mem_storage=mem_storage)
 
         use_case = EstimateCPFBatch(
@@ -191,16 +192,16 @@ class TestEstimateCPFBatch:
     @pytest.mark.asyncio
     async def test_returns_no_billable_when_every_cpf_was_fetched(
         self,
-        make_entity_revision: MakeEntityRevision,
+        make_entity_record: MakeEntityRecord,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
         make_mem_uow_factory: MakeMemUoWFactory,
     ) -> None:
         previous = [
-            make_entity_revision(entity=_make_person(cpf=cpf), provider="kipflow")
+            make_entity_record(entity_id=_make_person(cpf=cpf).id, provider="kipflow")
             for cpf in _CPFS
         ]
-        mem_storage = make_mem_storage(nodes=previous)
+        mem_storage = make_mem_storage(entity_records=previous)
         mem_uow = make_mem_uow(mem_storage=mem_storage)
 
         use_case = EstimateCPFBatch(
@@ -297,20 +298,20 @@ class TestEstimateCPFBatch:
     @pytest.mark.asyncio
     async def test_reports_the_rate_limiter_forecast_for_the_billable_count(
         self,
-        make_entity_revision: MakeEntityRevision,
+        make_entity_record: MakeEntityRecord,
         make_external_credential: MakeExternalCredential,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
         make_mem_uow_factory: MakeMemUoWFactory,
     ) -> None:
-        previous = make_entity_revision(
-            entity=_make_person(cpf=_CPF_1), provider="kipflow"
+        previous = make_entity_record(
+            entity_id=_make_person(cpf=_CPF_1).id, provider="kipflow"
         )
         credential = make_external_credential(
             username="alice", provider=Provider.KIPFLOW
         )
         mem_storage = make_mem_storage(
-            external_credentials=[credential], nodes=[previous]
+            external_credentials=[credential], entity_records=[previous]
         )
         mem_uow = make_mem_uow(mem_storage=mem_storage)
         rate_limiter = _FakeRateLimiter(wait_seconds=7)
@@ -333,20 +334,20 @@ class TestEstimateCPFBatch:
     @pytest.mark.asyncio
     async def test_force_marks_every_valid_cpf_as_billable(
         self,
-        make_entity_revision: MakeEntityRevision,
+        make_entity_record: MakeEntityRecord,
         make_external_credential: MakeExternalCredential,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
         make_mem_uow_factory: MakeMemUoWFactory,
     ) -> None:
-        previous = make_entity_revision(
-            entity=_make_person(cpf=_CPF_1), provider="kipflow"
+        previous = make_entity_record(
+            entity_id=_make_person(cpf=_CPF_1).id, provider="kipflow"
         )
         credential = make_external_credential(
             username="alice", provider=Provider.KIPFLOW
         )
         mem_storage = make_mem_storage(
-            external_credentials=[credential], nodes=[previous]
+            external_credentials=[credential], entity_records=[previous]
         )
         mem_uow = make_mem_uow(mem_storage=mem_storage)
 
@@ -441,19 +442,20 @@ class TestExpandByCPFBatch:
     @pytest.mark.asyncio
     async def test_an_already_fetched_cpf_does_not_spend_an_external_call(
         self,
+        make_entity_record: MakeEntityRecord,
         make_entity_revision: MakeEntityRevision,
         make_external_credential: MakeExternalCredential,
         make_mem_storage: MakeMemStorage,
         policies: Policies,
     ) -> None:
-        previous = make_entity_revision(
-            entity=_make_person(cpf=_CPF_1), provider="kipflow"
+        previous = make_entity_record(
+            entity_id=_make_person(cpf=_CPF_1).id, provider="kipflow"
         )
         credential = make_external_credential(
             username="alice", provider=Provider.KIPFLOW
         )
         mem_storage = make_mem_storage(
-            external_credentials=[credential], nodes=[previous]
+            external_credentials=[credential], entity_records=[previous]
         )
         fetcher = _ProgrammedCPFFetcher(
             results={_CPF_1: make_entity_revision(entity=_make_graph(cpf=_CPF_1))}
@@ -475,19 +477,20 @@ class TestExpandByCPFBatch:
     @pytest.mark.asyncio
     async def test_force_refetches_an_already_fetched_cpf(
         self,
+        make_entity_record: MakeEntityRecord,
         make_entity_revision: MakeEntityRevision,
         make_external_credential: MakeExternalCredential,
         make_mem_storage: MakeMemStorage,
         policies: Policies,
     ) -> None:
-        previous = make_entity_revision(
-            entity=_make_person(cpf=_CPF_1), provider="kipflow"
+        previous = make_entity_record(
+            entity_id=_make_person(cpf=_CPF_1).id, provider="kipflow"
         )
         credential = make_external_credential(
             username="alice", provider=Provider.KIPFLOW
         )
         mem_storage = make_mem_storage(
-            external_credentials=[credential], nodes=[previous]
+            external_credentials=[credential], entity_records=[previous]
         )
         fetcher = _ProgrammedCPFFetcher(
             results={_CPF_1: make_entity_revision(entity=_make_graph(cpf=_CPF_1))}

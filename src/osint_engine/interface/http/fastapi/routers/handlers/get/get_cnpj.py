@@ -18,8 +18,8 @@ _ANONYMOUS_USERNAME = "anonymous"
 
 def build_get_cnpj_handler(
     *, container: Container
-) -> Callable[[str], Awaitable[GraphSchema]]:
-    async def get_cnpj(cnpj: str) -> GraphSchema:
+) -> Callable[[str, bool], Awaitable[GraphSchema]]:
+    async def get_cnpj(cnpj: str, force: bool = False) -> GraphSchema:  # noqa: FBT001, FBT002
         try:
             cnpj = sanitize_cnpj(cnpj)
         except SanitizationError:
@@ -28,7 +28,7 @@ def build_get_cnpj_handler(
             ).execute()
             raise
 
-        use_case = container.use_cases.expand_by_cnpj(cnpj=cnpj)
+        use_case = container.use_cases.expand_by_cnpj(cnpj=cnpj, force=force)
 
         revision = await use_case.execute()
         graph = revision.entity

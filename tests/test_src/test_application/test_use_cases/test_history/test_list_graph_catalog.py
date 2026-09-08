@@ -6,11 +6,13 @@ from typing import TYPE_CHECKING
 import pytest
 
 from osint_engine.application.use_cases.history.list_graph_catalog import (
+    GraphCatalogEntry,
     ListGraphCatalog,
 )
 
 if TYPE_CHECKING:
     from tests.conftest import (
+        MakeEntityRecord,
         MakeEntityRevision,
         MakeFakeNode,
         MakeGraph,
@@ -56,7 +58,9 @@ class TestListGraphCatalogOrchestration:
 
         entries = await use_case.execute()
 
-        assert entries == ((revision,),)
+        assert entries == (
+            GraphCatalogEntry(fetched_routes=frozenset(), revisions=(revision,)),
+        )
 
     @pytest.mark.asyncio
     async def test_groups_revisions_sharing_a_root_even_with_distinct_graph_ids(
@@ -94,7 +98,9 @@ class TestListGraphCatalogOrchestration:
 
         entries = await use_case.execute()
 
-        assert entries == ((first, second),)
+        assert entries == (
+            GraphCatalogEntry(fetched_routes=frozenset(), revisions=(first, second)),
+        )
 
     @pytest.mark.asyncio
     async def test_orders_entries_by_their_latest_revision_descending(
@@ -114,7 +120,10 @@ class TestListGraphCatalogOrchestration:
 
         entries = await use_case.execute()
 
-        assert entries == ((fresh_root,), (stale_root,))
+        assert entries == (
+            GraphCatalogEntry(fetched_routes=frozenset(), revisions=(fresh_root,)),
+            GraphCatalogEntry(fetched_routes=frozenset(), revisions=(stale_root,)),
+        )
 
     @pytest.mark.asyncio
     async def test_a_tie_between_two_roots_latest_revisions_does_not_raise(
@@ -134,7 +143,92 @@ class TestListGraphCatalogOrchestration:
 
         entries = await use_case.execute()
 
-        assert set(entries) == {(first_root,), (second_root,)}
+        assert set(entries) == {
+            GraphCatalogEntry(fetched_routes=frozenset(), revisions=(first_root,)),
+            GraphCatalogEntry(fetched_routes=frozenset(), revisions=(second_root,)),
+        }
+
+    @pytest.mark.asyncio
+    async def test_fetched_routes_collects_distinct_entity_record_providers(
+        self,
+        make_entity_record: MakeEntityRecord,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_node: MakeFakeNode,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        root_node = make_fake_node()
+        graph_revision = make_entity_revision(
+            entity=make_graph(
+                edges=frozenset(), nodes={root_node}, root_id=root_node.id
+            ),
+            fetched_at=_EARLY,
+        )
+        cnep_record = make_entity_record(entity_id=root_node.id, provider="cnep")
+        pep_record = make_entity_record(entity_id=root_node.id, provider="pep")
+        mem_storage = make_mem_storage(
+            graphs=[graph_revision], entity_records=[cnep_record, pep_record]
+        )
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+
+        use_case = ListGraphCatalog(uow_factory=make_mem_uow_factory(mem_uow=mem_uow))
+
+        (entry,) = await use_case.execute()
+
+        assert entry.fetched_routes == frozenset({"cnep", "pep"})
+
+    @pytest.mark.asyncio
+    async def test_fetched_routes_ignores_a_failed_or_invalid_entity_record(
+        self,
+        make_entity_record: MakeEntityRecord,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_node: MakeFakeNode,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        root_node = make_fake_node()
+        graph_revision = make_entity_revision(
+            entity=make_graph(
+                edges=frozenset(), nodes={root_node}, root_id=root_node.id
+            ),
+            fetched_at=_EARLY,
+        )
+        failed_record = make_entity_record(
+            entity_id=root_node.id, outcome="failed", provider="cnep"
+        )
+        mem_storage = make_mem_storage(
+            graphs=[graph_revision], entity_records=[failed_record]
+        )
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+
+        use_case = ListGraphCatalog(uow_factory=make_mem_uow_factory(mem_uow=mem_uow))
+
+        (entry,) = await use_case.execute()
+
+        assert entry.fetched_routes == frozenset()
+
+    @pytest.mark.asyncio
+    async def test_fetched_routes_is_empty_when_no_entity_record_exists_for_the_root(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        revision = make_entity_revision(entity=make_graph(), fetched_at=_EARLY)
+        mem_storage = make_mem_storage(graphs=[revision])
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+
+        use_case = ListGraphCatalog(uow_factory=make_mem_uow_factory(mem_uow=mem_uow))
+
+        (entry,) = await use_case.execute()
+
+        assert entry.fetched_routes == frozenset()
 
 
 class TestListGraphCatalogIntegration:
@@ -180,4 +274,4 @@ class TestListGraphCatalogIntegration:
         entries = await use_case.execute()
 
         assert len(entries) == 1
-        assert len(entries[0]) == 2
+        assert len(entries[0].revisions) == 2

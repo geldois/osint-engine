@@ -4,6 +4,9 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+from osint_engine.application.use_cases.history.list_graph_catalog import (
+    GraphCatalogEntry,
+)
 from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
 from osint_engine.domain.entities.nodes.cnae import Cnae
@@ -161,7 +164,9 @@ class TestGraphCatalogPresenter:
             entity=_GRAPH, fetched_at=datetime(2026, 6, 1, tzinfo=UTC)
         )
 
-        schema = graph_catalog_to_schema(((early, late),))
+        schema = graph_catalog_to_schema(
+            (GraphCatalogEntry(fetched_routes=frozenset(), revisions=(early, late)),)
+        )
 
         assert len(schema.entries) == 1
         entry = schema.entries[0]
@@ -192,9 +197,27 @@ class TestGraphCatalogPresenter:
             ),
         )
 
-        schema = graph_catalog_to_schema((revisions,))
+        schema = graph_catalog_to_schema(
+            (GraphCatalogEntry(fetched_routes=frozenset(), revisions=revisions),)
+        )
 
         assert schema.entries[0].providers == ["kipflow", "text_ingestion"]
+
+    def test_fetched_routes_are_sorted_in_the_response(
+        self, make_entity_revision: MakeEntityRevision
+    ) -> None:
+        revision = make_entity_revision(entity=_GRAPH)
+
+        schema = graph_catalog_to_schema(
+            (
+                GraphCatalogEntry(
+                    fetched_routes=frozenset({"pep", "cnep", "kipflow"}),
+                    revisions=(revision,),
+                ),
+            )
+        )
+
+        assert schema.entries[0].fetched_routes == ["cnep", "kipflow", "pep"]
 
     def test_root_is_the_only_node_when_the_graph_has_a_single_node(
         self, make_entity_revision: MakeEntityRevision
@@ -204,7 +227,9 @@ class TestGraphCatalogPresenter:
         )
         revision = make_entity_revision(entity=lone_graph)
 
-        schema = graph_catalog_to_schema(((revision,),))
+        schema = graph_catalog_to_schema(
+            (GraphCatalogEntry(fetched_routes=frozenset(), revisions=(revision,)),)
+        )
 
         assert schema.entries[0].root.id == _CNAE.id
 
@@ -214,8 +239,13 @@ class TestGraphCatalogPresenter:
         other_graph = Graph(
             nodes=frozenset({_CNAE}), edges=frozenset(), root_id=_CNAE.id
         )
-        entry_a = (make_entity_revision(entity=_GRAPH),)
-        entry_b = (make_entity_revision(entity=other_graph),)
+        entry_a = GraphCatalogEntry(
+            fetched_routes=frozenset(), revisions=(make_entity_revision(entity=_GRAPH),)
+        )
+        entry_b = GraphCatalogEntry(
+            fetched_routes=frozenset(),
+            revisions=(make_entity_revision(entity=other_graph),),
+        )
 
         schema = graph_catalog_to_schema((entry_a, entry_b))
 

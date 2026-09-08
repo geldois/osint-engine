@@ -19,13 +19,16 @@ if TYPE_CHECKING:
 
 def build_get_cepim_handler(
     *, container: Container
-) -> Callable[[str, dict[str, object], int | None], Awaitable[GraphSchema | Response]]:
+) -> Callable[
+    [str, dict[str, object], int | None, bool], Awaitable[GraphSchema | Response]
+]:
     jwt_guard = build_jwt_guard(container=container)
 
     async def get_cepim(
         cnpj: str,
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
         cepim_id: int | None = None,
+        force: bool = False,  # noqa: FBT001, FBT002
     ) -> GraphSchema | Response:
         username = str(payload["sub"])
 
@@ -38,7 +41,7 @@ def build_get_cepim_handler(
             raise
 
         use_case = container.use_cases.expand_by_cepim(
-            cnpj=cnpj, cepim_id=cepim_id, username=username
+            cnpj=cnpj, cepim_id=cepim_id, force=force, username=username
         )
 
         revision = await use_case.execute()

@@ -15,6 +15,9 @@ from osint_engine.interface.http.schemas.graph_schema import GraphSchema
 
 if TYPE_CHECKING:
     from osint_engine.application.revision.entity_revision import EntityRevision
+    from osint_engine.application.use_cases.history.list_graph_catalog import (
+        GraphCatalogEntry,
+    )
     from osint_engine.domain.entities.bases.graph import Graph
 
 
@@ -32,24 +35,23 @@ def graph_to_schema(revision: EntityRevision[Graph], /) -> GraphSchema:
 
 
 def graph_catalog_to_schema(
-    entries: tuple[tuple[EntityRevision[Graph], ...], ...], /
+    entries: tuple[GraphCatalogEntry, ...], /
 ) -> GraphCatalogSchema:
     return GraphCatalogSchema(
         entries=[_catalog_entry_to_schema(entry) for entry in entries]
     )
 
 
-def _catalog_entry_to_schema(
-    entry: tuple[EntityRevision[Graph], ...], /
-) -> GraphCatalogEntrySchema:
-    latest = entry[-1]
+def _catalog_entry_to_schema(entry: GraphCatalogEntry, /) -> GraphCatalogEntrySchema:
+    latest = entry.revisions[-1]
     graph = latest.entity
     root = next(node for node in graph.nodes if node.id == graph.root_id)
 
     return GraphCatalogEntrySchema(
-        first_fetched_at=entry[0].fetched_at,
+        fetched_routes=sorted(entry.fetched_routes),
+        first_fetched_at=entry.revisions[0].fetched_at,
         last_fetched_at=latest.fetched_at,
-        providers=sorted({revision.provider for revision in entry}),
-        revision_count=len(entry),
+        providers=sorted({revision.provider for revision in entry.revisions}),
+        revision_count=len(entry.revisions),
         root=node_to_schema(root, revision=revision_to_schema(latest)),
     )

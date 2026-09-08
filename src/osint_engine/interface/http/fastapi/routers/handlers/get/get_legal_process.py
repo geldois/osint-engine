@@ -18,18 +18,19 @@ if TYPE_CHECKING:
 
 def build_get_legal_process_handler(
     *, container: Container
-) -> Callable[[str, dict[str, object]], Awaitable[GraphSchema | Response]]:
+) -> Callable[[str, dict[str, object], bool], Awaitable[GraphSchema | Response]]:
     jwt_guard = build_jwt_guard(container=container)
 
     async def get_legal_process(
         cpf_or_cnpj: str,
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
+        force: bool = False,  # noqa: FBT001, FBT002
     ) -> GraphSchema | Response:
         cpf_or_cnpj = sanitize_cpf_or_cnpj(cpf_or_cnpj)
         username = str(payload["sub"])
 
         use_case = container.use_cases.expand_by_legal_process(
-            cpf_or_cnpj=cpf_or_cnpj, username=username
+            cpf_or_cnpj=cpf_or_cnpj, force=force, username=username
         )
 
         revision = await use_case.execute()

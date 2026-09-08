@@ -21,9 +21,9 @@ if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import ExternalCredential
     from osint_engine.application.revision.entity_revision import EntityRevision
     from tests.conftest import (
+        MakeEntityRecord,
         MakeEntityRevision,
         MakeExternalCredential,
-        MakeGraph,
         MakeMemStorage,
         MakeMemUoW,
     )
@@ -183,9 +183,8 @@ class TestExpandByCPFReuseLock:
     @pytest.mark.asyncio
     async def test_raises_already_fetched_without_calling_the_fetcher_again(
         self,
-        make_entity_revision: MakeEntityRevision,
+        make_entity_record: MakeEntityRecord,
         make_external_credential: MakeExternalCredential,
-        make_graph: MakeGraph,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
         make_mem_uow_factory: MakeMemUoWFactory,
@@ -193,14 +192,12 @@ class TestExpandByCPFReuseLock:
         credential = make_external_credential(
             username="alice", provider=Provider.KIPFLOW
         )
-        previous = make_entity_revision(entity=_make_stub(), provider="kipflow")
+        previous = make_entity_record(entity_id=_stub_id(), provider="kipflow")
         mem_storage = make_mem_storage(
-            external_credentials=[credential], nodes=[previous]
+            external_credentials=[credential], entity_records=[previous]
         )
         mem_uow = make_mem_uow(mem_storage=mem_storage)
-        cpf_fetcher = _CountingCPFFetcher(
-            revision=make_entity_revision(entity=make_graph())
-        )
+        cpf_fetcher = _CountingCPFFetcher(revision=None)
 
         use_case = ExpandByCPF(
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
@@ -219,6 +216,7 @@ class TestExpandByCPFReuseLock:
     @pytest.mark.asyncio
     async def test_force_true_bypasses_the_lock_and_calls_the_fetcher(
         self,
+        make_entity_record: MakeEntityRecord,
         make_entity_revision: MakeEntityRevision,
         make_external_credential: MakeExternalCredential,
         make_mem_storage: MakeMemStorage,
@@ -228,9 +226,9 @@ class TestExpandByCPFReuseLock:
         credential = make_external_credential(
             username="alice", provider=Provider.KIPFLOW
         )
-        previous = make_entity_revision(entity=_make_stub(), provider="kipflow")
+        previous = make_entity_record(entity_id=_stub_id(), provider="kipflow")
         mem_storage = make_mem_storage(
-            external_credentials=[credential], nodes=[previous]
+            external_credentials=[credential], entity_records=[previous]
         )
         mem_uow = make_mem_uow(mem_storage=mem_storage)
         cpf_fetcher = _CountingCPFFetcher(
@@ -251,8 +249,9 @@ class TestExpandByCPFReuseLock:
         assert cpf_fetcher.call_count == 1
 
     @pytest.mark.asyncio
-    async def test_a_revision_from_a_different_provider_does_not_trigger_the_lock(
+    async def test_a_different_provider_does_not_trigger_the_lock(
         self,
+        make_entity_record: MakeEntityRecord,
         make_entity_revision: MakeEntityRevision,
         make_external_credential: MakeExternalCredential,
         make_mem_storage: MakeMemStorage,
@@ -262,9 +261,9 @@ class TestExpandByCPFReuseLock:
         credential = make_external_credential(
             username="alice", provider=Provider.KIPFLOW
         )
-        previous = make_entity_revision(entity=_make_stub(), provider="text_pattern")
+        previous = make_entity_record(entity_id=_stub_id(), provider="text_pattern")
         mem_storage = make_mem_storage(
-            external_credentials=[credential], nodes=[previous]
+            external_credentials=[credential], entity_records=[previous]
         )
         mem_uow = make_mem_uow(mem_storage=mem_storage)
         cpf_fetcher = _CountingCPFFetcher(
@@ -295,10 +294,7 @@ class TestExpandByCPFReuseLock:
         credential = make_external_credential(
             username="alice", provider=Provider.KIPFLOW
         )
-        previous = make_entity_revision(entity=_make_stub(), provider="text_pattern")
-        mem_storage = make_mem_storage(
-            external_credentials=[credential], nodes=[previous]
-        )
+        mem_storage = make_mem_storage(external_credentials=[credential])
         mem_uow = make_mem_uow(mem_storage=mem_storage)
         cpf_fetcher = FakeCPFFetcher(
             revision=make_entity_revision(
@@ -329,9 +325,8 @@ class TestExpandByCPFEntityRecords:
     @pytest.mark.asyncio
     async def test_already_fetched_records_the_blocked_attempt_with_the_previous_ref(
         self,
-        make_entity_revision: MakeEntityRevision,
+        make_entity_record: MakeEntityRecord,
         make_external_credential: MakeExternalCredential,
-        make_graph: MakeGraph,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
         make_mem_uow_factory: MakeMemUoWFactory,
@@ -339,14 +334,12 @@ class TestExpandByCPFEntityRecords:
         credential = make_external_credential(
             username="alice", provider=Provider.KIPFLOW
         )
-        previous = make_entity_revision(entity=_make_stub(), provider="kipflow")
+        previous = make_entity_record(entity_id=_stub_id(), provider="kipflow")
         mem_storage = make_mem_storage(
-            external_credentials=[credential], nodes=[previous]
+            external_credentials=[credential], entity_records=[previous]
         )
         mem_uow = make_mem_uow(mem_storage=mem_storage)
-        cpf_fetcher = _CountingCPFFetcher(
-            revision=make_entity_revision(entity=make_graph())
-        )
+        cpf_fetcher = _CountingCPFFetcher(revision=None)
 
         with pytest.raises(AlreadyFetchedError):
             await ExpandByCPF(
@@ -356,19 +349,19 @@ class TestExpandByCPFEntityRecords:
                 username="alice",
             ).execute()
 
-        (record,) = mem_storage.entity_records
+        record = next(
+            r for r in mem_storage.entity_records if r.outcome == "already_fetched"
+        )
 
-        assert record.outcome == "already_fetched"
         assert record.entity_id == _stub_id()
-        assert record.entity_ref == previous.ref
+        assert record.entity_ref == previous.entity_ref
         assert record.username == "alice"
 
     @pytest.mark.asyncio
     async def test_already_fetched_record_survives_after_the_error_propagates(
         self,
-        make_entity_revision: MakeEntityRevision,
+        make_entity_record: MakeEntityRecord,
         make_external_credential: MakeExternalCredential,
-        make_graph: MakeGraph,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
         make_mem_uow_factory: MakeMemUoWFactory,
@@ -376,14 +369,12 @@ class TestExpandByCPFEntityRecords:
         credential = make_external_credential(
             username="alice", provider=Provider.KIPFLOW
         )
-        previous = make_entity_revision(entity=_make_stub(), provider="kipflow")
+        previous = make_entity_record(entity_id=_stub_id(), provider="kipflow")
         mem_storage = make_mem_storage(
-            external_credentials=[credential], nodes=[previous]
+            external_credentials=[credential], entity_records=[previous]
         )
         mem_uow = make_mem_uow(mem_storage=mem_storage)
-        cpf_fetcher = _CountingCPFFetcher(
-            revision=make_entity_revision(entity=make_graph())
-        )
+        cpf_fetcher = _CountingCPFFetcher(revision=None)
         use_case = ExpandByCPF(
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
             cpf_fetcher=cpf_fetcher,
@@ -394,7 +385,7 @@ class TestExpandByCPFEntityRecords:
         with contextlib.suppress(AlreadyFetchedError):
             await use_case.execute()
 
-        assert len(mem_storage.entity_records) == 1
+        assert len(mem_storage.entity_records) == 2
 
     @pytest.mark.asyncio
     async def test_missing_credential_records_a_failed_attempt(
