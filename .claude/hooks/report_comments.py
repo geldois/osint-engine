@@ -9,7 +9,7 @@ from _comment_scan import (
     new_comment_lines_python,
     new_comment_lines_sql,
 )
-from _hook_io import context, git_root, read_event, run, tool_input
+from _hook_io import contained_rel, context, project_root, read_event, run, tool_input
 
 _HASH_EXTENSIONS = (".sh", ".yml", ".yaml", ".toml")
 _HASH_FILENAMES = frozenset(
@@ -67,18 +67,17 @@ def main() -> int:
 
 
 def _resolve_target(file: str) -> tuple[Path, Path, str] | None:
-    path = Path(file)
-    if not path.is_absolute():
-        path = Path.cwd() / path
-    if not path.is_file():
-        return None
-
-    root = git_root(path)
+    root = project_root()
     if root is None:
         return None
-    try:
-        rel = path.relative_to(root).as_posix()
-    except ValueError:
+
+    path = Path(file)
+    if not path.is_absolute():
+        path = root / path
+    if not path.is_file():
+        return None
+    rel = contained_rel(path, root)
+    if rel is None:
         return None
 
     if Path(rel).name not in _HASH_FILENAMES and not rel.endswith(

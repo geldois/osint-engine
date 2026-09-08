@@ -48,14 +48,22 @@ target directory itself — following a leading `cd` in the command rather than 
 The end-of-turn pass nudges toward updating a touched area's own `docs/architecture/<area>.md` and the architecture
 diagram in `README.md`, leaving the judgment of whether the change was actually semantic — versus a rename or a purely
 mechanical refactor — to whoever is finishing the turn. What counts as "touched this turn" is a marker, not a live git
-query: a per-edit hook sets it the moment a relevant file is written, recording which relevant paths were touched, and
-the end-of-turn pass only ever consumes that value once, narrowing the areas it names to the ones actually touched — so
-a file dirtied several turns ago and still uncommitted doesn't keep re-firing the same nudge forever. A doc file, a
-generated or vendored path, and the lockfile are the only paths that never count as "touched" for this purpose —
-everything else does, including this project's own root-level configuration, since a tooling decision lives there as
-often as in application source. A change made only through a shell command — a rename, a delete, a code-generation run —
-outside `Edit`/`Write`/`MultiEdit` sets no marker and fires no nudge; only the per-edit hook does, a deliberate gap
-traded for not needing a second, session-scoped snapshot of the whole tree around every shell command.
+query: a per-edit hook sets it the moment a relevant file is written, and the end-of-turn pass only ever consumes that
+value once, narrowing the areas it names to the ones actually touched — so a file dirtied several turns ago and still
+uncommitted doesn't keep re-firing the same nudge forever. A doc file, a generated or vendored path, and the lockfile
+are the only paths that never count as "touched" for this purpose — everything else does, including this project's own
+root-level configuration, since a tooling decision lives there as often as in application source. A change made only
+through a shell command — a rename, a delete, a code-generation run — outside `Edit`/`Write`/`MultiEdit` sets no marker
+and fires no nudge; only the per-edit hook does, a deliberate gap traded for not needing a second, session-scoped
+snapshot of the whole tree around every shell command.
+
+Every hook that resolves a file's own location for this purpose — the per-edit marker, the end-of-turn pass, the comment
+check above, and the endpoint-fixture check below — anchors on `CLAUDE_PROJECT_DIR` directly, never the shell's current
+directory: unlike the post-commit check above, which parses a leading `cd` out of the very command it just saw run, none
+of these four has a command of its own to inspect, and the shell's current directory is a session-persistent value any
+earlier `cd` can leave pointed at another repository — trusting it here would let any of them read, mark, or report
+against the wrong project's tree. A file that resolves outside this project's own root is silently ignored by all four
+alike, one containment check shared rather than duplicated per hook.
 
 The marker mechanism is entirely local to this project's own hook suite: no shared state, directory name, or import
 connects it to any other project's or the wider agent harness's own equivalent, so these hooks keep working unmodified

@@ -4,7 +4,7 @@ import re
 import sys
 from pathlib import Path
 
-from _hook_io import context, git_root, read_event, tool_input
+from _hook_io import contained_rel, context, project_root, read_event, tool_input
 
 _FETCHER_PATH = re.compile(
     r"^src/osint_engine/infrastructure/providers/(?!kipflow/)[^/]+/.*_fetcher\.py$"
@@ -42,18 +42,17 @@ def main() -> int:
 
 
 def _resolve_fetcher(file: str) -> tuple[Path, str, str] | None:
-    path = Path(file)
-    if not path.is_absolute():
-        path = Path.cwd() / path
-    if not path.is_file():
-        return None
-
-    root = git_root(path)
+    root = project_root()
     if root is None:
         return None
-    try:
-        rel = path.relative_to(root).as_posix()
-    except ValueError:
+
+    path = Path(file)
+    if not path.is_absolute():
+        path = root / path
+    if not path.is_file():
+        return None
+    rel = contained_rel(path, root)
+    if rel is None:
         return None
     if not _FETCHER_PATH.match(rel):
         return None

@@ -6,7 +6,7 @@ from pathlib import Path
 from _docs_nudge import docs_nudge_text
 from _hook_io import (
     context,
-    git_root,
+    project_root,
     read_event,
     session_id,
     stop_reinvoked,
@@ -19,7 +19,7 @@ def main() -> int:
     if stop_reinvoked(event):
         return 0
 
-    root = git_root(Path.cwd())
+    root = project_root()
     if root is None:
         return 0
 

@@ -49,14 +49,25 @@ def run(
         return None
 
 
+def project_root() -> Path | None:
+    project_dir = os.environ.get("CLAUDE_PROJECT_DIR")
+    return Path(project_dir) if project_dir else None
+
+
 def git_root(start: Path) -> Path | None:
     cwd = start if start.is_dir() else start.parent
     result = run(["git", "rev-parse", "--show-toplevel"], cwd)
     if result is not None and result.returncode == 0:
         return Path(result.stdout.strip())
 
-    project_dir = os.environ.get("CLAUDE_PROJECT_DIR")
-    return Path(project_dir) if project_dir else None
+    return project_root()
+
+
+def contained_rel(path: Path, root: Path) -> str | None:
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return None
 
 
 _LEADING_CD = re.compile(r"^\s*cd\s+(\S+)\s*(?:&&|;)\s*")

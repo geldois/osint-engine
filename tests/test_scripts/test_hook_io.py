@@ -21,7 +21,9 @@ set_marker = _hook_io.set_marker
 take_marker = _hook_io.take_marker
 marker_value = _hook_io.marker_value
 take_marker_value = _hook_io.take_marker_value
+project_root = _hook_io.project_root
 git_root = _hook_io.git_root
+contained_rel = _hook_io.contained_rel
 command_target_dir = _hook_io.command_target_dir
 strip_heredocs = _hook_io.strip_heredocs
 stop_reinvoked = _hook_io.stop_reinvoked
@@ -205,6 +207,57 @@ def test_command_target_dir_resolves_a_relative_cd(tmp_path: Path) -> None:
 
 def test_command_target_dir_defaults_to_base_with_no_leading_cd(tmp_path: Path) -> None:
     assert command_target_dir("git commit -m x", tmp_path) == tmp_path
+
+
+def test_project_root_reads_the_env_var(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
+    assert project_root() == tmp_path
+
+
+def test_project_root_returns_none_when_unset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+    assert project_root() is None
+
+
+def test_project_root_ignores_a_foreign_repo_at_cwd(
+    git_repo: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(elsewhere))
+    assert project_root() == elsewhere
+    assert project_root() != git_repo
+
+
+def test_contained_rel_accepts_a_path_inside_root(tmp_path: Path) -> None:
+    root = tmp_path / "project"
+    nested = root / "src" / "app.py"
+    nested.parent.mkdir(parents=True)
+    nested.write_text("x")
+    assert contained_rel(nested, root) == "src/app.py"
+
+
+def test_contained_rel_rejects_a_path_outside_root(tmp_path: Path) -> None:
+    root = tmp_path / "project"
+    root.mkdir()
+    outside = tmp_path / "sibling" / "file.py"
+    outside.parent.mkdir()
+    outside.write_text("x")
+    assert contained_rel(outside, root) is None
+
+
+def test_contained_rel_rejects_a_dotdot_escape_out_of_root(tmp_path: Path) -> None:
+    root = tmp_path / "project"
+    root.mkdir()
+    sibling = tmp_path / "sibling"
+    sibling.mkdir()
+    (sibling / "file.py").write_text("x")
+    escaping = root / ".." / "sibling" / "file.py"
+    assert contained_rel(escaping, root) is None
 
 
 def test_git_root_resolves_from_start_over_a_stale_env_var(
