@@ -84,17 +84,43 @@ fields than an earlier one now makes the "current" view look less complete than 
 even though the more complete, older data is still stored underneath; closing that gap is the frontend's own
 history-navigation work, not this layer's.
 
-A workflow that reaches a paid provider guards against paying twice for the same identifier by checking, before it ever
-calls out, whether any revision already stored for that identifier came from that same provider — a caller who repeats
-the same expansion without asking to pays nothing extra, and only an explicit override flag bypasses the check. This
-reused the revision history that merging already keeps rather than introducing a separate record of what's been paid
-for: the provider name already travels with every revision, so the check is a lookup, not new state to keep consistent.
-The lock is scoped per provider, not per identifier, because a revision that arrived from ingestion or a different
-provider carries no information about whether the paid one has ever run. Merging the fetched result into the graph alone
-isn't enough to arm the lock: a graph merge only cascades a node revision when the node's content is actually new, so a
-paid result that happens to carry the exact content something else already recorded would leave no trace of which
-provider paid for it. The workflow records that node's revision a second time, directly and unconditionally, purely so
-the provider name is never lost to that optimization.
+Every expansion workflow guards against repeating the exact same fetch by checking, before it ever calls out, whether a
+successful attempt for that identifier already exists from that same provider — a caller who repeats the same expansion
+without asking to pays nothing extra on a paid route and spares the upstream a redundant call on a free one, and only an
+explicit override flag bypasses the check. The lock is scoped per provider, not per identifier, because an attempt that
+arrived from ingestion or a different provider carries no information about whether this one has ever run; "already ran"
+itself is treated as either outcome that actually reached the provider (a result, or a confirmed empty), never a request
+that failed before it got there or was itself blocked by this same lock.
+
+The check reads the append-only consumption log (`EntityRecord`, `consumption/entity_record.py`), never the node storage
+a successful fetch also writes to — deliberately, after the first version of this lock (checking node revisions instead)
+shipped a real defect: every workflow's "no content beyond the bare identifier" stub carries identical content
+regardless of which route produced it, so two different routes' stub writes collapse to the exact same content-addressed
+storage slot, and the second one's provider tag silently overwrites the first's — the very loss this lock exists to
+prevent, reintroduced by checking a store that deduplicates by content for an unrelated, legitimate reason. The
+consumption log has no such deduplication — each attempt is its own event, keyed by nothing but its own identity — so a
+provider tag written there can never be overwritten by a different route's write. The guard's own write of the blocked
+attempt goes to that same log, for the same reason.
+
+The check-and-record shape above lives in one shared function (`consumption/guard_reuse_lock.py`) that every expansion
+workflow calls, rather than each repeating the same log-lookup-then-compare block inline — a second, inline copy of this
+exact block had already appeared once (the CPF batch estimate use case), the concrete signal that the duplication was
+real, not hypothetical. The shared function never raises what it finds; it returns the error for the caller to raise
+once its own `uow_factory()` block has closed, so the blocked-attempt record the function just wrote survives the commit
+instead of being rolled back by an inline raise — the same defect this file's own decisions already record fixing once
+for the CPF root route, now structural for every route through the shared function rather than a convention each one has
+to remember separately.
+
+Knowing which provider string belongs to which workflow, and whether that route is billable, is itself a registration a
+workflow makes about itself, not a fact the guard infers: `UseCaseRegistry` (`contracts/use_case.py`) holds a declared
+`(provider, billable)` pair per use case class, and the guard looks a workflow up in it by class identity on every call,
+before touching storage. A route whose class was never registered raises immediately (`UnregisteredUseCaseError`) the
+first time it reaches the guard — never a silent no-op, and never a class of bug that waits for a human to notice a
+missing test. The registry's shape mirrors `EdgeSchemaRegistry` (`interface/http/schemas/edge_schema.py`), this
+codebase's existing precedent for the same kind of self-registering, fail-loud-on-miss catalogue; it could not live at
+that same interface layer, though, since the guard it backs needs the transactional `UoW` a fetcher-layer component
+never receives, so it sits in `contracts/use_case.py` instead, next to the base classes every workflow already inherits
+from.
 
 Ingestion's recognition criteria were split from one fixed combination into individually addressable pieces once a
 concrete gap showed up: a document appearing as bare digits with no punctuation and no textual label next to it —
@@ -122,13 +148,24 @@ revision from view. Grouping by the root identifier instead means the aggregatio
 only ever indexes by an entity's own identity; it has to walk every stored revision and bucket it by the root each one
 points to, in the use case, where it stays trivial to test without a storage double.
 
+Each catalog entry's set of already-fetched routes is read from a second, separate query per root — the same consumption
+log the reuse lock itself reads — rather than derived from the graph-level revisions the entry already walks for its
+`providers` field. A graph-level revision is stamped by the fetcher that produced it, and more than one route can share
+the same fetcher (every Portal da Transparência route stamps `"portal_transparencia"` there, every KipFlow route stamps
+`"kipflow"`), so `providers` can never distinguish which specific route ran. The consumption log holds one entry per
+attempt, stamped with the calling workflow's own registered provider string, which is the only place per-route
+granularity actually exists.
+
 ## Consequences
 
-A provider guard scoped per provider rather than per identifier means a second paid provider ever added for the same
-kind of identifier needs its own guard, arrived at the same way — nothing about an existing one generalizes
-automatically to a new source. The atomicity gap across the two kinds of storage stays a standing obligation rather than
-a closed question: the moment any future workflow writes to both in one unit of work, that workflow inherits the gap and
-has to close it, not merely notice it.
+A provider guard scoped per provider rather than per identifier means a workflow reaching a new external source still
+declares its own `(provider, billable)` pair in `UseCaseRegistry` before its first call — registration doesn't
+generalize to a source nobody named yet, by design, since a shared guard function still needs to know which stored
+revisions belong to which route. What does now generalize is the failure mode for skipping that step: a workflow that
+never registers raises `UnregisteredUseCaseError` the moment it reaches the guard, rather than quietly shipping with no
+reuse protection until someone notices the gap by hand. The atomicity gap across the two kinds of storage stays a
+standing obligation rather than a closed question: the moment any future workflow writes to both in one unit of work,
+that workflow inherits the gap and has to close it, not merely notice it.
 
 Because the merge policy's default now keeps every incoming revision exactly as it arrived, any future workflow that
 genuinely wants a single synthesized view has to explicitly reach for the older reconciling policy — it stays available,

@@ -233,7 +233,7 @@ came from. `merged_at` is `null` until a revision has actually been reconciled w
 ### Graph expansion
 
 ```http
-GET /cnpj/{cnpj}
+GET /cnpj/{cnpj}?force=false
 Authorization: Bearer <token>
 ```
 
@@ -247,10 +247,14 @@ Authorization: Bearer <token>
 ```
 
 Returns a `GraphSchema` rooted at the `Person` the CPF resolves to, including `registration_status`/`registration_date`
-when the provider has them. The current provider is [KipFlow](https://kipflow.io), a paid API — a repeated expansion of
-the same CPF returns `409` instead of calling the provider again, unless `force=true` is passed. Returns `204` (empty
-body) when the provider has no record for the CPF. Requires the caller's own saved `KIPFLOW` credential, via
-`POST /credentials`. Available to `ADMIN` tokens only.
+when the provider has them. The current provider is [KipFlow](https://kipflow.io), a paid API. Requires the caller's own
+saved `KIPFLOW` credential, via `POST /credentials`. Available to `ADMIN` tokens only.
+
+Every graph-expansion route above, and every one of `/cnep`, `/ceis`, `/ceaf`, `/cepim`, `/peps`, `/legal-process`,
+carries the same `?force=false` reuse lock: a repeated expansion of the same identifier on the same route returns `409`
+instead of calling the provider again, unless `force=true` is passed — including a repeat after a `204`, since an empty
+result is still a definitive answer from the provider. Returns `204` (empty body) when the provider has no record for
+the identifier.
 
 ```http
 POST /cpf/batch

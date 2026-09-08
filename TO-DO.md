@@ -20,14 +20,6 @@
   fetcher's actual consumer is still undecided: a manual "enrich this Address stub" endpoint is the likely shape, not
   automatic chaining from `cnpj_v1` (whose `_map_address` already returns a complete `Address`)
 
-## feat(consumption)
-
-- `EntityRecord` is only written by `expand_by_cpf.py` (Kipflow root); the free routes
-  (`expand_by_cnep`/`ceis`/`ceaf`/`pep`/`cepim`) and the CNPJ root (`expand_by_cnpj`, BrasilAPI) return `None`/build the
-  graph without ever persisting a bare stub node or writing a consumption-log entry on an empty/successful response, and
-  no route logs an entry for syntactically invalid input either — spec written and ready, covering every free route and
-  the CNPJ root. Not started this session.
-
 ## feat(persistence)
 
 - `Graph.nodes`/`Graph.edges` hold full `Node`/`Edge` content, not references — every stored `GraphRevision` re-embeds
@@ -68,19 +60,6 @@
 - `GET /graphs` has no pagination; `entries` sits in the dozens for a demo. If the catalog grows past a few hundred
   before the Neo4j migration, the route needs `limit`/`cursor` and the studio client needs to handle a partial response
   — not designed ahead of the need, since the shape depends on how the client ends up consuming it
-
-## fix(cpf-reuse-lock)
-
-- `ExpandByCPF`'s reuse lock (see `docs/architecture/application.md`) records a `provider="kipflow"` node revision
-  explicitly, but that record still passes through `NodeRepository.merge()`'s configured merge policy — under the
-  shipped `keep_incoming_policy` this always wins, so the lock is sound in production today.
-  `merge_by_filled_fields_policy` (already implemented, already injectable via `Policies`, just never wired in
-  `croot.py`) can discard the explicit "kipflow" tag back to an older provider's tag when the KipFlow response happens
-  to add no new field beyond what an existing revision from a different provider already had (e.g. a CPF also known as a
-  company's sócio via BrasilAPI, paired with KipFlow's documented bare response shape carrying no field beyond `cpf`
-  itself) — in that specific combination the lock silently never arms, allowing unlimited repeat KipFlow billing for
-  that CPF. Not exploitable while `croot.py` only wires `keep_incoming_policy`; revisit before ever wiring
-  `merge_by_filled_fields_policy` into a deployment that also uses KipFlow
 
 ## fix(rate-limit)
 
