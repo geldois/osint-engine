@@ -14,8 +14,9 @@ Only what no other source holds. Everything else is owned elsewhere — go there
 Never run a linter, formatter, type-checker, or test yourself — not on one file, not on the whole repo. Edit what needs
 editing and attempt the commit or merge directly; the git hook runs everything on the whole repo automatically and
 blocks it if something's wrong. Iterate from the gate's own failure output, never from a manual run. See README.md's
-Quality gates section for what the git hook actually runs and how a human runs it manually. Needs Docker and a local
-`.env` (the runner loads it).
+Quality gates section for what the git hook actually runs and how a human runs it manually. Needs Docker (the Postgres
+persistence tests use `testcontainers`) — no `.env` is required for `check`/`precommit`, only for the periodic
+`scripts fixtures` refresh.
 
 Never hand-edit `infrastructure/persistence/pg/generated/` — see README.md's Run section for how to regenerate it. A new
 fetcher against a free provider needs a matching case in `scripts/fixtures.py` —

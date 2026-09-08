@@ -3,16 +3,9 @@ from __future__ import annotations
 import re
 import sys
 
-from _hook_io import context, read_event, tool_input
+from _hook_io import context, read_event, strip_heredocs, tool_input
 
 _STATEMENT_SPLIT = re.compile(r"&&|[;\n]|\|+|[()]")
-
-_HEREDOC = re.compile(r"<<-?(['\"]?)(\w+)\1\n.*?\n\s*\2(?=\s|$)", re.DOTALL)
-
-
-def _strip_heredocs(command: str) -> str:
-    return _HEREDOC.sub(lambda m: f"<<{m.group(2)}", command)
-
 
 _LEADING = re.compile(r"^(?:uv|uvx|run|python3?|npx|mise|exec|--?\S+)\s+")
 _TOOL = re.compile(
@@ -47,7 +40,7 @@ def main() -> int:
     if not command:
         return 0
 
-    for statement in _STATEMENT_SPLIT.split(_strip_heredocs(command)):
+    for statement in _STATEMENT_SPLIT.split(strip_heredocs(command)):
         normalized = statement.strip()
         while match := _LEADING.match(normalized):
             normalized = normalized[match.end() :]

@@ -25,8 +25,8 @@
 - `EntityRecord` is only written by `expand_by_cpf.py` (Kipflow root); the free routes
   (`expand_by_cnep`/`ceis`/`ceaf`/`pep`/`cepim`) and the CNPJ root (`expand_by_cnpj`, BrasilAPI) return `None`/build the
   graph without ever persisting a bare stub node or writing a consumption-log entry on an empty/successful response, and
-  no route logs an entry for syntactically invalid input either — spec written and ready:
-  `~/+ME/brain/notes/specs/osint-engine/consumption-log-completeness.md`. Not started this session.
+  no route logs an entry for syntactically invalid input either — spec written and ready, covering every free route and
+  the CNPJ root. Not started this session.
 
 ## feat(persistence)
 
@@ -102,8 +102,7 @@
 
 ## test(gates)
 
-- `fail_under` in `[tool.coverage.report]` is a placeholder `90`, not a measured value; run
-  `python -m scripts check
-  --full` (needs Docker + `PORTAL_TRANSPARENCIA_API_KEY`) and `python -m scripts mutation`
-  once, then pin the coverage floor and mutation `--max-survival` ceiling to the measured baseline, ratcheting only (see
-  the Quality gates section in this project's `CLAUDE.md`)
+- `fail_under` in `[tool.coverage.report]` is a placeholder `90`, not a measured value; a human contributor runs
+  `uv run python -m scripts check --full` (needs Docker) and `uv run python -m scripts mutation` once, then pins the
+  coverage floor and mutation `--max-survival` ceiling to the measured baseline, ratcheting only (see the Quality gates
+  section in this project's `README.md`)

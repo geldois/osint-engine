@@ -10,7 +10,7 @@ from _hook_io import (
     read_event,
     session_id,
     stop_reinvoked,
-    take_marker,
+    take_marker_value,
 )
 
 
@@ -27,10 +27,16 @@ def main() -> int:
     if not architecture_dir.is_dir():
         return 0
 
-    if not take_marker("docs-nudge-pending", session_id(event)):
+    raw = take_marker_value("docs-nudge-pending", session_id(event))
+    if raw is None:
         return 0
 
-    areas = sorted(path.stem for path in architecture_dir.glob("*.md"))
+    all_areas = sorted(path.stem for path in architecture_dir.glob("*.md"))
+    touched_dirs = {
+        part for rel in raw.split("\0") if rel for part in Path(rel).parts[:-1]
+    }
+    areas = sorted(area for area in all_areas if area in touched_dirs) or all_areas
+
     context("Stop", docs_nudge_text(areas))
 
     return 0

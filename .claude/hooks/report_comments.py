@@ -9,7 +9,7 @@ from _comment_scan import (
     new_comment_lines_python,
     new_comment_lines_sql,
 )
-from _hook_io import add_context, git_root, read_event, run, tool_input
+from _hook_io import context, git_root, read_event, run, tool_input
 
 _HASH_EXTENSIONS = (".sh", ".yml", ".yaml", ".toml")
 _HASH_FILENAMES = frozenset(
@@ -25,7 +25,15 @@ _HASH_FILENAMES = frozenset(
 )
 _HUNK_HEADER = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 _EXCLUDED_DIRS = frozenset(
-    {".venv", ".cache", "build", ".hypothesis", ".import_linter_cache", "__pycache__"}
+    {
+        ".venv",
+        ".cache",
+        "build",
+        ".hypothesis",
+        ".import_linter_cache",
+        "__pycache__",
+        "generated",
+    }
 )
 _MAX_REPORTED_LINES = 20
 
@@ -99,13 +107,14 @@ def _report(rel: str, hits: list[int], *, preexisting: bool) -> None:
     if extra:
         numbers += f" (+{extra} mais)"
     lead = "Pre-existing comment(s) in" if preexisting else "New comment on"
-    add_context(
+    context(
+        "PostToolUse",
         f"{lead} {rel} (this repo allows none, anywhere, except a linter-ignore "
         f"pragma — CLAUDE.md). Lines: {numbers}. Remove it, make the name say "
         "what it says, or move the decision into README/TO-DO/docs/architecture/"
         "CLAUDE/CONTEXT — now, in this turn. Pre-existing is not a reason to leave "
         "it, and this holds the same whether it surfaced via Read, Edit, MultiEdit, "
-        "or Write."
+        "or Write.",
     )
 
 

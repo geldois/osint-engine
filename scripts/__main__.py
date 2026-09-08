@@ -17,45 +17,47 @@ app.add_typer(fixtures_app, name="fixtures")
 _DEFAULT_MAX_SURVIVAL = 100.0
 
 
-@app.command()
+@app.command(help="Run the deterministic gate sequence.")
 def check(*, full: bool = False) -> None:
-    """Run the deterministic gate sequence."""
     raise typer.Exit(run_check(full=full))
 
 
-@app.command()
+@app.command(help="Apply every safe, idempotent auto-fixer (run before check).")
 def fix(paths: Annotated[list[str] | None, typer.Argument()] = None) -> None:
-    """Apply every safe, idempotent auto-fixer (run before check)."""
     raise typer.Exit(run_fix(tuple(paths or ())))
 
 
-@app.command()
+@app.command(help="Fix fully-staged files, re-stage them, then run the full gate.")
 def precommit() -> None:
-    """Fix fully-staged files, re-stage them, then run the full gate."""
     raise typer.Exit(run_precommit())
 
 
-@app.command()
+@app.command(help="Run the cosmic-ray mutation gate (periodic; never a hook).")
 def mutation(*, max_survival: float = _DEFAULT_MAX_SURVIVAL) -> None:
-    """Run the cosmic-ray mutation gate (periodic; never a hook)."""
     raise typer.Exit(run_mutation(max_survival=max_survival))
 
 
-@app.command("sqlc-generate")
+@app.command(
+    "sqlc-generate",
+    help="Regenerate sqlc models, discarding the unused generated querier.",
+)
 def sqlc_generate() -> None:
-    """Regenerate sqlc models, discarding the unused generated querier."""
     raise typer.Exit(run_sqlc_generate())
 
 
-@fixtures_app.command("refresh")
+@fixtures_app.command("refresh", help="Regenerate live-API golden snapshots.")
 def fixtures_refresh() -> None:
-    """Regenerate live-API golden snapshots."""
     fixtures.main()
 
 
-@fixtures_app.command("verify")
+@fixtures_app.command(
+    "verify",
+    help=(
+        "Refresh live-API snapshots, then run the real_api_snapshot contract "
+        "tests (periodic; never a hook)."
+    ),
+)
 def fixtures_verify() -> None:
-    """Refresh live-API snapshots, then run the real_api_snapshot contract tests (periodic; never a hook)."""  # noqa: E501
     raise typer.Exit(fixtures.run_verify())
 
 

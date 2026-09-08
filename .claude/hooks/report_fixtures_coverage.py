@@ -4,11 +4,10 @@ import re
 import sys
 from pathlib import Path
 
-from _hook_io import add_context, git_root, read_event, tool_input
+from _hook_io import context, git_root, read_event, tool_input
 
 _FETCHER_PATH = re.compile(
-    r"^src/osint_engine/infrastructure/providers/"
-    r"(?:brasilapi|portal_transparencia)/.*_fetcher\.py$"
+    r"^src/osint_engine/infrastructure/providers/(?!kipflow/)[^/]+/.*_fetcher\.py$"
 )
 _URL_SUFFIX = re.compile(r'url_suffix="([^"]+)"')
 _FIXTURES_SCRIPT = "scripts/fixtures.py"
@@ -30,12 +29,13 @@ def main() -> int:
     )
 
     found = _URL_SUFFIX.findall(source)
-    missing = [suffix for suffix in found if suffix not in fixtures_source]
+    missing = [suffix for suffix in found if f'"{suffix}"' not in fixtures_source]
     if missing:
-        add_context(
+        context(
+            "PostToolUse",
             f"{rel} declares url_suffix {', '.join(missing)} with no matching "
             f"case in {_FIXTURES_SCRIPT} (CLAUDE.md). Add one, or confirm this "
-            "endpoint is excluded on purpose (e.g. a paid provider)."
+            "endpoint is excluded on purpose (e.g. a paid provider).",
         )
 
     return 0

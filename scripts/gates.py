@@ -65,7 +65,7 @@ _SUITE = Gate(
 def run_check(*, full: bool) -> int:
     mode = "full" if full else "fast"
 
-    overlay = _dotenv_overlay(Path.cwd())
+    overlay = _dotenv_overlay(Path.cwd()) if full else {}
 
     with running_ticker():
         outcomes = _run_sequence(Path.cwd(), full=full, overlay=overlay)
@@ -130,6 +130,6 @@ def _run_sequence(
     if not full:
         return outcomes
 
-    outcomes.append(_run_gate(_SUITE, workdir, {**overlay, **env}))
+    outcomes.append(_run_gate(_SUITE, workdir, {**env, **overlay}))
 
     return outcomes

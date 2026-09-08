@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import cast
 
@@ -49,38 +50,31 @@ def run(
 
 
 def git_root(start: Path) -> Path | None:
-    project_dir = os.environ.get("CLAUDE_PROJECT_DIR")
-    if project_dir:
-        return Path(project_dir)
-
     cwd = start if start.is_dir() else start.parent
     result = run(["git", "rev-parse", "--show-toplevel"], cwd)
-    if result is None or result.returncode != 0:
-        return None
-    return Path(result.stdout.strip())
+    if result is not None and result.returncode == 0:
+        return Path(result.stdout.strip())
+
+    project_dir = os.environ.get("CLAUDE_PROJECT_DIR")
+    return Path(project_dir) if project_dir else None
 
 
-def deny(reason: str) -> None:
-    _emit(
-        {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "deny",
-                "permissionDecisionReason": reason,
-            },
-        },
-    )
+_LEADING_CD = re.compile(r"^\s*cd\s+(\S+)\s*(?:&&|;)\s*")
 
 
-def add_context(context: str) -> None:
-    _emit(
-        {
-            "hookSpecificOutput": {
-                "hookEventName": "PostToolUse",
-                "additionalContext": context,
-            },
-        },
-    )
+def command_target_dir(command: str, base: Path) -> Path:
+    match = _LEADING_CD.match(command)
+    if not match:
+        return base
+    target = Path(match.group(1).strip("'\""))
+    return target if target.is_absolute() else base / target
+
+
+_HEREDOC = re.compile(r"<<-?(['\"]?)(\w+)\1\n.*?\n\s*\2(?=\s|$)", re.DOTALL)
+
+
+def strip_heredocs(command: str) -> str:
+    return _HEREDOC.sub(lambda m: f"<<{m.group(2)}", command)
 
 
 def session_id(event: dict[str, object]) -> str:
@@ -117,12 +111,26 @@ def take_marker(prefix: str, session: str) -> bool:
 def marker_value(prefix: str, session: str) -> str | None:
     if not session:
         return None
+    path = _marker_dir() / f"{_safe_marker(prefix)}-{_safe_marker(session)}"
     try:
-        return (
-            _marker_dir() / f"{_safe_marker(prefix)}-{_safe_marker(session)}"
-        ).read_text()
+        value = path.read_text()
     except OSError:
         return None
+    with suppress(OSError):
+        os.utime(path)
+    return value
+
+
+def take_marker_value(prefix: str, session: str) -> str | None:
+    if not session:
+        return None
+    path = _marker_dir() / f"{_safe_marker(prefix)}-{_safe_marker(session)}"
+    try:
+        value = path.read_text()
+    except OSError:
+        return None
+    path.unlink(missing_ok=True)
+    return value
 
 
 def _marker_dir() -> Path:
@@ -145,14 +153,12 @@ def _sweep_stale_markers(directory: Path, prefix: str) -> None:
 
 def stop_reinvoked(event: dict[str, object]) -> bool:
     return (
-        isinstance(event.get("hook_event_name"), str)
-        and event["hook_event_name"] in ("Stop", "SubagentStop")
-        and event.get("stop_hook_active") is True
+        event.get("hook_event_name") == "Stop" and event.get("stop_hook_active") is True
     )
 
 
-def context(hook_event_name: str, text: str, *, once_per_chain: bool = True) -> None:
-    if once_per_chain and stop_reinvoked(read_event()):
+def context(hook_event_name: str, text: str) -> None:
+    if stop_reinvoked(read_event()):
         return
     _emit(
         {

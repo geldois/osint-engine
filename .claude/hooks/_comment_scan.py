@@ -30,15 +30,6 @@ def _is_shebang(line_number: int, text: str) -> bool:
     return line_number == 1 and text.startswith("#!")
 
 
-def _is_typer_command(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-    return any(
-        isinstance(decorator, ast.Call)
-        and isinstance(decorator.func, ast.Attribute)
-        and decorator.func.attr == "command"
-        for decorator in node.decorator_list
-    )
-
-
 def _docstring_span(
     container: ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef,
 ) -> _Span | None:
@@ -50,12 +41,6 @@ def _docstring_span(
         isinstance(first, ast.Expr)
         and isinstance(first.value, ast.Constant)
         and isinstance(first.value.value, str)
-    ):
-        return None
-    if isinstance(
-        container, ast.FunctionDef | ast.AsyncFunctionDef
-    ) and _is_typer_command(
-        container,
     ):
         return None
     return _Span(first.lineno, first.end_lineno or first.lineno)

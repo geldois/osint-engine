@@ -4,7 +4,14 @@ import sys
 from pathlib import Path
 
 from _docs_nudge import is_relevant_change
-from _hook_io import git_root, read_event, session_id, set_marker, tool_input
+from _hook_io import (
+    git_root,
+    marker_value,
+    read_event,
+    session_id,
+    set_marker,
+    tool_input,
+)
 
 
 def main() -> int:
@@ -28,7 +35,11 @@ def main() -> int:
     if not is_relevant_change(rel):
         return 0
 
-    set_marker("docs-nudge-pending", session_id(event))
+    session = session_id(event)
+    touched = set((marker_value("docs-nudge-pending", session) or "").split("\0"))
+    touched.discard("")
+    touched.add(rel)
+    set_marker("docs-nudge-pending", session, "\0".join(sorted(touched)))
     return 0
 
 

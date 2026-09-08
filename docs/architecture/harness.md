@@ -1,12 +1,11 @@
 # Harness — what it does
 
 This is the editor/agent integration layer under `.claude/` — distinct from the developer-facing gate façade
-`scripts.md` documents, though it calls into that same façade's own tools. Half the hooks only ever read and report;
+`scripts.md` documents, though it calls into that same façade's own tools. Most of the hooks only ever read and report;
 none of them rewrites a file the agent might be holding in context, so a fixer's rewrite can never leave that in-context
-copy silently wrong. The rest touch only their own session-scoped marker files under the system temp directory, entirely
-outside the repository, never a tracked file: one pair records and reads back before/after state around each shell
-command, and a separate marker is set by either that pair or a per-edit hook and consumed exactly once, at the end of
-the turn.
+copy silently wrong. The one exception touches only its own session-scoped marker file under the system temp directory,
+entirely outside the repository, never a tracked file: a per-edit hook sets it, and a separate, end-of-turn hook
+consumes it exactly once.
 
 ## Decisions
 
@@ -17,18 +16,19 @@ still holds, but there's a simpler reason none of it runs mid-turn anymore: the 
 the whole repo, on every commit and merge attempt, so anything a mid-turn run could catch early, the commit attempt
 catches anyway — one commit later, never earlier.
 
-A comment or docstring is never auto-stripped, here or anywhere else — an AST-level rewrite carries edge cases (a
-command-decorated function's own docstring serving as its help text, an f-string false positive) that could silently
-corrupt a file nobody re-reads before it lands, and unlike a formatter this kind of fixer has no idempotency check to
-catch its own mistake. A hook nudges instead, leaving the actual judgment call — remove it, rename instead, or move the
-decision into this project's own documentation — to whoever is editing. This project deliberately widens that check
-beyond the shipped source alone to every tracked, non-generated file in the repository — root configuration, CI
-workflow, and this project's own tooling included — since every comment that used to live in one of those had a real
-decision behind it, and that decision now lives in `README.md`, `TO-DO.md`, one of `docs/architecture/*.md`, this
-project's own `CLAUDE.md`, or `CONTEXT.md` instead. A written change is checked against its own diff, so a comment
-predating the edit is left alone until its own line is next touched; a plain file read has nothing to diff against, so
-it is checked whole instead — either way, the nudge treats a pre-existing hit exactly as insistently as a newly
-introduced one, now, in the same turn, since pre-existing is never a reason to leave one in place.
+A comment or docstring is never auto-stripped, here or anywhere else — an AST-level rewrite carries edge cases (an
+f-string false positive, a multi-line span) that could silently corrupt a file nobody re-reads before it lands, and
+unlike a formatter this kind of fixer has no idempotency check to catch its own mistake. A hook nudges instead, leaving
+the actual judgment call — remove it, rename instead, or move the decision into this project's own documentation — to
+whoever is editing; a Typer command's own docstring is no exception, since its help text belongs in the command
+decorator's `help=` argument, not a docstring. This project deliberately widens that check beyond the shipped source
+alone to every tracked, non-generated file in the repository — root configuration, CI workflow, and this project's own
+tooling included — since every comment that used to live in one of those had a real decision behind it, and that
+decision now lives in `README.md`, `TO-DO.md`, one of `docs/architecture/*.md`, this project's own `CLAUDE.md`, or
+`CONTEXT.md` instead. A written change is checked against its own diff, so a comment predating the edit is left alone
+until its own line is next touched; a plain file read has nothing to diff against, so it is checked whole instead —
+either way, the nudge treats a pre-existing hit exactly as insistently as a newly introduced one, now, in the same turn,
+since pre-existing is never a reason to leave one in place.
 
 A separate check runs before every shell command and nudges — it does not block — away from running a linter, formatter,
 type-checker, or test directly, redirecting to just committing instead: `pre-commit` and `pre-merge-commit` both already
@@ -41,27 +41,21 @@ A successful commit or merge doesn't guarantee the working tree is now clean —
 that was never staged, or unrelated work may simply still be in progress. A nudge fires after every commit or merge that
 isn't one the gate itself just blocked, and checks `git status` on its own: if anything is left, it asks whoever is
 finishing the turn to judge whether that's leftover fix output deserving its own commit now, or a deliberate
-work-in-progress being set aside for later — never deciding that automatically.
+work-in-progress being set aside for later — never deciding that automatically. That check resolves the commit's real
+target directory itself — following a leading `cd` in the command rather than trusting the agent's own launch directory
+— so a commit made after changing into a different repository is never checked against the wrong tree.
 
 The end-of-turn pass nudges toward updating a touched area's own `docs/architecture/<area>.md` and the architecture
 diagram in `README.md`, leaving the judgment of whether the change was actually semantic — versus a rename or a purely
 mechanical refactor — to whoever is finishing the turn. What counts as "touched this turn" is a marker, not a live git
-query: a per-edit hook sets it the moment a relevant file is written, and the end-of-turn pass only ever consumes it
-once, so a file dirtied several turns ago and still uncommitted doesn't keep re-firing the same nudge forever. A doc
-file, a generated or vendored path, and the lockfile are the only paths that never count as "touched" for this purpose —
+query: a per-edit hook sets it the moment a relevant file is written, recording which relevant paths were touched, and
+the end-of-turn pass only ever consumes that value once, narrowing the areas it names to the ones actually touched — so
+a file dirtied several turns ago and still uncommitted doesn't keep re-firing the same nudge forever. A doc file, a
+generated or vendored path, and the lockfile are the only paths that never count as "touched" for this purpose —
 everything else does, including this project's own root-level configuration, since a tooling decision lives there as
-often as in application source.
-
-A shell command has no per-file signal to hook into the way an edit does, so catching one that changes something
-relevant — deleting a file, a package-manager or codegen rewrite — needs its own mechanism: a check immediately before
-the command records every currently-dirty path's own modification time, and a check immediately after compares the same
-paths' modification times against that record, marking the turn only for whichever paths actually moved. Comparing
-modification times rather than the command's own git-status text is what tells a file that was already dirty and
-rewritten again apart from one that was already dirty and left alone — the two would otherwise be indistinguishable
-text, and conflating them either re-fires on old, already-handled drift or misses a real further edit to it. Git's own
-path-quoting for unusual filenames is turned off at the source (a machine-readable status form) rather than parsed back
-out, so a modification time is always looked up under the real name, never a quoted, escaped stand-in for it that can
-never exist on disk.
+often as in application source. A change made only through a shell command — a rename, a delete, a code-generation run —
+outside `Edit`/`Write`/`MultiEdit` sets no marker and fires no nudge; only the per-edit hook does, a deliberate gap
+traded for not needing a second, session-scoped snapshot of the whole tree around every shell command.
 
 The marker mechanism is entirely local to this project's own hook suite: no shared state, directory name, or import
 connects it to any other project's or the wider agent harness's own equivalent, so these hooks keep working unmodified
@@ -85,7 +79,14 @@ carry, not something the tool chain enforces by itself.
 Widening the comment check to the whole repository, beyond this project's own general default of the shipped source
 alone, means any future root-level configuration or workflow file that needs real explanatory prose has nowhere left to
 put it inline — that decision has to be written down in one of this project's own documentation surfaces before the file
-is touched, not alongside the line it would have explained.
+is touched, not alongside the line it would have explained. The same widening reaches every Typer command: none of them
+may hold a docstring for its own sake, so its user-facing help text has to be written into the decorator's `help=`
+argument instead.
+
+Not tracking a change made only through a shell command means a `mv`, `rm`, or code-generation run that touches a
+relevant path in the same turn as other, edit-driven changes can end up bundled under whichever areas those edits
+already named, or missed entirely if nothing else in the turn touched a relevant path at all — the judgment call this
+nudge exists to prompt still depends on the person finishing the turn noticing the shell-only change themselves.
 
 The endpoint-fixture check only ever compares a literal value against the fixture-recording script's own text, so a
 future rewrite of how that script names or looks up its own cases has to keep that literal recognizable there, or the

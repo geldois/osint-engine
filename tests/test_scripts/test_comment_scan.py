@@ -66,12 +66,8 @@ _PYTHON_CASES: dict[str, tuple[str, list[int]]] = {
         'def f():\n    """\n    Multi-line doc.\n    """\n    return 1\n',
         [2],
     ),
-    "typer_command_docstring_survives": (
+    "typer_command_docstring_flagged": (
         '@app.command()\ndef check() -> None:\n    """Run the gate."""\n    pass\n',
-        [],
-    ),
-    "non_typer_decorator_docstring_flagged": (
-        '@app.other()\ndef check() -> None:\n    """Not exempt."""\n    pass\n',
         [3],
     ),
     "syntax_error_yields_nothing": ("def f(:\n", []),

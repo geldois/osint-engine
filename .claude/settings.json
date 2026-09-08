@@ -11,14 +11,6 @@
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/nudge_manual_checks.py"
             ],
             "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/mark_docs_nudge_bash_pre.py"
-            ],
-            "timeout": 10
           }
         ]
       }
@@ -66,14 +58,6 @@
             "command": "python3",
             "args": [
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_uncommitted.py"
-            ],
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/mark_docs_nudge_bash.py"
             ],
             "timeout": 10
           }
