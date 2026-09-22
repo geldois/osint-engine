@@ -43,7 +43,9 @@ flowchart LR
     FastAPI --> PepRouter("PEP Router")
     FastAPI --> LegalProcessRouter("Legal Process Router")
     FastAPI --> ConsumptionRouter("Consumption Router")
-    FastAPI --> GraphHistoryRouter("Graph History Router")
+    FastAPI --> GraphRouter("Graph Router")
+    FastAPI --> NodeRouter("Node Router")
+    FastAPI --> EdgeRouter("Edge Router")
     FastAPI --> CredentialsRouter("Credentials Router")
     FastAPI --> HealthRouter("Health Router")
     FastAPI --> TextIngestionRouter("Text Ingestion Router")
@@ -70,9 +72,16 @@ flowchart LR
     ConsumptionRouter --> RoleGuard
     ConsumptionRouter --> ExpansionRateLimit
     ConsumptionRouter --> GetConsumption("GET /consumption · /consumption/{cpf}")
-    GraphHistoryRouter --> JwtGuard
-    GraphHistoryRouter --> ExpansionRateLimit
-    GraphHistoryRouter --> GetGraphHistory("GET /graphs/{root_id}/history")
+    GraphRouter --> JwtGuard
+    GraphRouter --> ExpansionRateLimit
+    GraphRouter --> GetGraphCatalog("GET /graphs")
+    GraphRouter --> GetGraphHistory("GET /graphs/{root_id}/history")
+    NodeRouter --> JwtGuard
+    NodeRouter --> ExpansionRateLimit
+    NodeRouter --> GetNodeHistory("GET /nodes/{node_id}/history")
+    EdgeRouter --> JwtGuard
+    EdgeRouter --> ExpansionRateLimit
+    EdgeRouter --> GetEdgeHistory("GET /edges/{edge_id}/history")
     CredentialsRouter --> RoleGuard
     CredentialsRouter --> PostCredential("POST /credentials")
     CredentialsRouter --> GetCredentials("GET /credentials")
@@ -101,7 +110,10 @@ flowchart LR
     UseCases --> ExpandByPEP("ExpandByPEP")
     UseCases --> ExpandByLegalProcess("ExpandByLegalProcess")
     UseCases --> FindPossiblyMatches("FindPossiblyMatches")
+    UseCases --> ListGraphCatalog("ListGraphCatalog")
     UseCases --> ListGraphHistory("ListGraphHistory")
+    UseCases --> ListNodeHistory("ListNodeHistory")
+    UseCases --> ListEdgeHistory("ListEdgeHistory")
     UseCases --> CredentialUseCases("List / Save ExternalCredential")
     UseCases --> IngestText("IngestText")
     UseCases --> ListPatternSets("ListTextPatterns")
@@ -128,7 +140,10 @@ flowchart LR
     GetLegalProcess --> FindPossiblyMatches
     PostIngestion --> FindPossiblyMatches
     PostIngestionFile --> FindPossiblyMatches
+    GetGraphCatalog --> ListGraphCatalog
     GetGraphHistory --> ListGraphHistory
+    GetNodeHistory --> ListNodeHistory
+    GetEdgeHistory --> ListEdgeHistory
     PostCredential --> CredentialUseCases
     GetCredentials --> CredentialUseCases
     GetPatterns --> ListPatternSets
@@ -160,7 +175,10 @@ flowchart LR
     ExpandByLegalProcess --> UoWFactory
     ExpandByLegalProcess --> KipFlowFetcher
     FindPossiblyMatches --> UoWFactory
+    ListGraphCatalog --> UoWFactory
     ListGraphHistory --> UoWFactory
+    ListNodeHistory --> UoWFactory
+    ListEdgeHistory --> UoWFactory
     CNPJFetcher --> BrasilAPI("BrasilAPI")
     KipFlowFetcher --> KipFlowAPI("KipFlow")
     PortalFetchers --> PortalAPI("Portal da Transparência")
@@ -208,7 +226,9 @@ flowchart LR
 
     GetCNPJ --> GraphPresenter("Graph Presenter")
     GetGraphHistory --> GraphPresenter
+    GetGraphCatalog --> GraphPresenter
     GraphPresenter --> GraphSchema("GraphSchema")
+    GraphPresenter --> GraphCatalogSchema("GraphCatalogSchema")
     PostToken --> TokenSchema("TokenSchema")
 ```
 
@@ -321,6 +341,15 @@ counting anything already queued ahead. `0` when nothing is billable or the call
 calls on them. `ADMIN` only.
 
 ```http
+GET /graphs
+Authorization: Bearer <token>
+```
+
+Returns a `GraphCatalogSchema` — one entry per distinct root `root_id` ever fetched, each carrying
+`first_fetched_at`/`last_fetched_at`, every `provider` and `fetched_routes` involved, a `revision_count`, and the root
+`Node` itself. Available to both `ADMIN` and `VIEWER` tokens.
+
+```http
 GET /graphs/{root_id}/history
 Authorization: Bearer <token>
 ```
@@ -328,6 +357,22 @@ Authorization: Bearer <token>
 Returns every `Graph` revision ever stored for that `root_id`, as a `GraphSchema` array ordered by `fetched_at`
 ascending (oldest first). Available to both `ADMIN` and `VIEWER` tokens. `200 []` for a `root_id` never seen — an empty
 history is a valid state, not an error.
+
+```http
+GET /nodes/{node_id}/history
+Authorization: Bearer <token>
+```
+
+Returns every stored revision of that node, oldest first, as a plain array of the node's own schema — not wrapped in a
+`GraphSchema`, since one node's history has no edges or root of its own. Available to both `ADMIN` and `VIEWER` tokens.
+
+```http
+GET /edges/{edge_id}/history
+Authorization: Bearer <token>
+```
+
+Same shape as `/nodes/{node_id}/history`, for one edge's own history instead. Available to both `ADMIN` and `VIEWER`
+tokens.
 
 ```http
 GET /consumption
@@ -416,7 +461,10 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 | `GET /cpf/{cpf}`                   | 100 / min  | Shared per-route bucket |
 | `POST /cpf/batch`                  | 10 / min   | Shared per-route bucket |
 | `POST /cpf/batch/estimate`         | 10 / min   | Shared per-route bucket |
+| `GET /graphs`                      | 100 / min  | Shared per-route bucket |
 | `GET /graphs/{root_id}/history`    | 100 / min  | Shared per-route bucket |
+| `GET /nodes/{node_id}/history`     | 100 / min  | Shared per-route bucket |
+| `GET /edges/{edge_id}/history`     | 100 / min  | Shared per-route bucket |
 | `GET /consumption`                 | 100 / min  | Shared per-route bucket |
 | `GET /consumption/{cpf}`           | 100 / min  | Shared per-route bucket |
 | `GET /cnep/{cpf_or_cnpj}`          | 100 / min  | Shared per-route bucket |
@@ -461,7 +509,8 @@ response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `403` means 
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
 - **Tooling:** uv, Ruff, basedpyright (strict), import-linter, cosmic-ray
-- **Testing:** pytest, pytest-asyncio, testcontainers
+- **Testing:** pytest, pytest-asyncio, testcontainers, hypothesis (property-based tests, see
+  `docs/architecture/tests.md`)
 
 ## Design
 
