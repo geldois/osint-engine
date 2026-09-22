@@ -603,6 +603,11 @@ copy .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and 
 > `--network host` in `.actrc` is Linux-only and has no effect on Docker Desktop. Internet access works via Docker
 > Desktop's default networking — the first run downloads dependencies from PyPI, subsequent runs use the uv cache.
 
+> `EXTERNAL_CREDENTIAL_ENCRYPTION_KEY` needs a real Fernet key, not the example value already in `.env.example` —
+> generate one with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`.
+> `PORTAL_TRANSPARENCIA_API_KEY` is dev/CI tooling only (`uv run osint-engine refresh-fixtures`) — the running app reads
+> Portal da Transparência credentials from Postgres per user, never from env.
+
 ### Run
 
 `osint-engine migrate` needs the `migrate` CLI on `PATH` (installed by `mise install`, pinned to the same version the
