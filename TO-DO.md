@@ -59,9 +59,9 @@
 ## fix(rate-limit)
 
 - expansion buckets are a flat 100/min per route, but Portal da Transparência's token ceiling is 90/min from 06:00–23:59
-  (higher overnight); with four Portal-backed routes (`/cnep`, `/ceis`, `/cepim`, `/ceaf`) the aggregate can still
-  exceed that ceiling, so the per-route limiter protects this server but not the shared upstream token — Portal may
-  `429` the token first under load. Deliberate for the visitor-only demo; tighten to a combined cross-route Portal
+  (higher overnight); with five Portal-backed routes (`/cnep`, `/ceis`, `/cepim`, `/ceaf`, `/peps`) the aggregate can
+  still exceed that ceiling, so the per-route limiter protects this server but not the shared upstream token — Portal
+  may `429` the token first under load. Deliberate for the visitor-only demo; tighten to a combined cross-route Portal
   bucket under 90/min if real traffic trips it
 
 ## fix(text-ingestion)

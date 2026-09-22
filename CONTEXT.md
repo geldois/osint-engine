@@ -15,13 +15,13 @@ inside free text.
 - **Namespace**: The per-kind UUID5 namespace an entity's id is computed under (`EntityNAMESPACE`). Two different kinds
   carrying the same value never collide. *Avoid*: type tag
 - **Node**: An entity that is a thing rather than a connection: Person, Company, Address, Phone, Email, Cnae, Sanction,
-  TextSource. *Avoid*: vertex
+  TextSource, LegalProcess, PoliticalExposure. *Avoid*: vertex
 - **Edge**: A typed connection between two nodes, one dedicated class per kind of connection (`PersonOwnsCompany`,
   `CompanyLocatedAt`). Which node kind may sit on each end is fixed at the type level. *Avoid*: relation, association
 - **Graph**: A root node with the nodes and edges reachable from it, validated whole at construction — a self-loop or an
   edge pointing outside the node set is rejected there, never later. *Avoid*: result set
-- **Expansion**: The workflow that takes one official identifier (CPF, CNPJ, CEIS, CNEP, CEPIM, CEAF) and returns a
-  graph of everything connected to it. *Avoid*: enrichment, crawl, search
+- **Expansion**: The workflow that takes one official identifier (CPF, CNPJ, CEIS, CNEP, CEPIM, CEAF, PEP, Legal
+  Process) and returns a graph of everything connected to it. *Avoid*: enrichment, crawl, search
 - **Batch**: One request expanding many CPFs at once, every expansion in its own transaction with its own outcome, so
   one item's failure never discards another's paid fetch. *Avoid*: bulk
 - **Estimate**: The read-only pre-flight that sorts a batch's CPFs into three buckets — already fetched, billable or
@@ -62,8 +62,8 @@ inside free text.
   Service has no interface and nothing to inject, and lives in `domain/`, never `application/contracts/`. *Avoid*:
   helper, util
 - **Fetcher**: The application-layer contract for one external endpoint (`CPFFetcher`, `CNPJFetcher`, `CEISFetcher`,
-  `CNEPFetcher`, `CEPIMFetcher`, `CEAFFetcher`, `CEPFetcher`). The concrete client lives in infrastructure and this
-  layer never names it. *Avoid*: gateway, api wrapper
+  `CNEPFetcher`, `CEPIMFetcher`, `CEAFFetcher`, `CEPFetcher`, `PEPFetcher`, `LegalProcessFetcher`). The concrete client
+  lives in infrastructure and this layer never names it. *Avoid*: gateway, api wrapper
 - **Provider**: The external organization an identifier is fetched from — BrasilAPI, Portal da Transparência, KipFlow.
   *Avoid*: data source, vendor
 - **External credential**: A caller's stored key for reaching a paid provider.

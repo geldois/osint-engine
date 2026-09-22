@@ -6,14 +6,14 @@ concrete adapter directly; each one exists only to satisfy a contract defined in
 can be swapped for another implementing the same contract without the layers above noticing.
 
 Three independent providers are integrated today: one unauthenticated aggregator for company registration data, one that
-requires a caller-supplied API key for public-sanction records, and one that requires a caller-supplied API key for CPF
-lookups. All three share the same shape — each concrete endpoint declares only its own path and how to translate its
-response into domain entities, while the shared base every endpoint builds on handles composing the full request and
-turning a failed HTTP call into a single, consistent error every endpoint reports the same way. Every provider gets this
-shared base from the moment it's integrated, even the one with a single endpoint today: the base itself carries no
-per-endpoint knowledge, so there's nothing to wait for a second endpoint to justify, and every provider looking the same
-way keeps the pattern predictable instead of conditional on how many endpoints a given provider happens to have right
-now.
+requires a caller-supplied API key for public-sanction and political-exposure records, and one that requires a
+caller-supplied API key for CPF and legal-process lookups. All three share the same shape — each concrete endpoint
+declares only its own path and how to translate its response into domain entities, while the shared base every endpoint
+builds on handles composing the full request and turning a failed HTTP call into a single, consistent error every
+endpoint reports the same way. Every provider gets this shared base from the moment it's integrated, even the one with a
+single endpoint today: the base itself carries no per-endpoint knowledge, so there's nothing to wait for a second
+endpoint to justify, and every provider looking the same way keeps the pattern predictable instead of conditional on how
+many endpoints a given provider happens to have right now.
 
 Persistence today is split two ways depending on what's being stored. Every entity, relationship, and user account lives
 in a plain in-memory snapshot with no framework and no external dependency — appropriate for a demo-scale deployment

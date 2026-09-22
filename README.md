@@ -14,8 +14,9 @@ exclusively from official public records.
 
 A **CNPJ** enters the engine as a root identifier. The engine queries official public records, constructs a typed
 immutable graph, and returns it — ready to traverse. Each **Node** represents a real-world entity: a company, a person,
-an address, a CNAE classification, a phone, or an email. Each **Edge** names the relationship between two nodes:
-`company_has_member`, `person_owns_company`, `company_located_at`, and so on.
+an address, a CNAE classification, a phone, an email, a sanction record, an ingested text source, a legal process, or a
+political-exposure record. Each **Edge** names the relationship between two nodes: `company_has_member`,
+`person_owns_company`, `company_located_at`, and so on.
 
 Every node and edge carries a stable, deterministic identity derived exclusively from its content. The same CNPJ
 expanded on different machines at different times always produces the same graph with the same IDs — making the
@@ -39,6 +40,8 @@ flowchart LR
     FastAPI --> CNPJRouter("CNPJ Router")
     FastAPI --> ExpansionRouters("CNEP / CEIS / CEPIM / CEAF Routers")
     FastAPI --> CPFRouter("CPF Router")
+    FastAPI --> PepRouter("PEP Router")
+    FastAPI --> LegalProcessRouter("Legal Process Router")
     FastAPI --> ConsumptionRouter("Consumption Router")
     FastAPI --> GraphHistoryRouter("Graph History Router")
     FastAPI --> CredentialsRouter("Credentials Router")
@@ -58,6 +61,12 @@ flowchart LR
     CPFRouter --> GetCPF("GET /cpf/{cpf}")
     CPFRouter --> PostCPFBatch("POST /cpf/batch · /cpf/batch/estimate")
     CPFRouter --> BatchRateLimit("Batch Rate Limit · 10 per min, shared")
+    PepRouter --> JwtGuard
+    PepRouter --> ExpansionRateLimit
+    PepRouter --> GetPep("GET /peps/{cpf}")
+    LegalProcessRouter --> RoleGuard
+    LegalProcessRouter --> ExpansionRateLimit
+    LegalProcessRouter --> GetLegalProcess("GET /legal-process/{cpf_or_cnpj}")
     ConsumptionRouter --> RoleGuard
     ConsumptionRouter --> ExpansionRateLimit
     ConsumptionRouter --> GetConsumption("GET /consumption · /consumption/{cpf}")
@@ -88,7 +97,10 @@ flowchart LR
     UseCases --> ExpandByCPF("ExpandByCPF")
     UseCases --> ExpandByCPFBatch("ExpandByCPFBatch")
     UseCases --> EstimateCPFBatch("EstimateCPFBatch")
-    UseCases --> ExpandByPortal("ExpandBy CNEP / CEIS")
+    UseCases --> ExpandByPortal("ExpandBy CNEP / CEIS / CEPIM / CEAF")
+    UseCases --> ExpandByPEP("ExpandByPEP")
+    UseCases --> ExpandByLegalProcess("ExpandByLegalProcess")
+    UseCases --> FindPossiblyMatches("FindPossiblyMatches")
     UseCases --> ListGraphHistory("ListGraphHistory")
     UseCases --> CredentialUseCases("List / Save ExternalCredential")
     UseCases --> IngestText("IngestText")
@@ -105,8 +117,17 @@ flowchart LR
     GetCNPJ --> ExpandByCNPJ
     GetExpansion --> ExpandByPortal
     GetCPF --> ExpandByCPF
+    GetPep --> ExpandByPEP
+    GetLegalProcess --> ExpandByLegalProcess
     PostCPFBatch --> ExpandByCPFBatch
     PostCPFBatch --> EstimateCPFBatch
+    GetCNPJ --> FindPossiblyMatches
+    GetCPF --> FindPossiblyMatches
+    GetExpansion --> FindPossiblyMatches
+    GetPep --> FindPossiblyMatches
+    GetLegalProcess --> FindPossiblyMatches
+    PostIngestion --> FindPossiblyMatches
+    PostIngestionFile --> FindPossiblyMatches
     GetGraphHistory --> ListGraphHistory
     PostCredential --> CredentialUseCases
     GetCredentials --> CredentialUseCases
@@ -134,6 +155,11 @@ flowchart LR
     ExpandByCPF --> KipFlowFetcher
     ExpandByPortal --> UoWFactory
     ExpandByPortal --> PortalFetchers
+    ExpandByPEP --> UoWFactory
+    ExpandByPEP --> PortalFetchers
+    ExpandByLegalProcess --> UoWFactory
+    ExpandByLegalProcess --> KipFlowFetcher
+    FindPossiblyMatches --> UoWFactory
     ListGraphHistory --> UoWFactory
     CNPJFetcher --> BrasilAPI("BrasilAPI")
     KipFlowFetcher --> KipFlowAPI("KipFlow")
@@ -249,6 +275,16 @@ Authorization: Bearer <token>
 Returns a `GraphSchema` rooted at the `Person` the CPF resolves to, including `registration_status`/`registration_date`
 when the provider has them. The current provider is [KipFlow](https://kipflow.io), a paid API. Requires the caller's own
 saved `KIPFLOW` credential, via `POST /credentials`. Available to `ADMIN` tokens only.
+
+```http
+GET /legal-process/{cpf_or_cnpj}?force=false
+Authorization: Bearer <token>
+```
+
+Returns a `GraphSchema` rooted at the `LegalProcess` nodes tied to that identifier. Same paid-provider shape as
+`/cpf/{cpf}`: the current provider is [KipFlow](https://kipflow.io), requires the caller's own saved `KIPFLOW`
+credential, `ADMIN` tokens only. `/peps/{cpf}` returns political-exposure `GraphSchema`s the same way as every other
+Portal da Transparência-backed route below — free, both `ADMIN` and `VIEWER` tokens.
 
 Every graph-expansion route above, and every one of `/cnep`, `/ceis`, `/ceaf`, `/cepim`, `/peps`, `/legal-process`,
 carries the same `?force=false` reuse lock: a repeated expansion of the same identifier on the same route returns `409`
@@ -372,23 +408,25 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 
 ### Rate limiting
 
-| Endpoint                        | Limit      | Keyed by                |
-| ------------------------------- | ---------- | ----------------------- |
-| `POST /auth/token`              | 5 / 15 min | Client IP               |
-| `POST /auth/viewer-token`       | 20 / min   | Client IP               |
-| `GET /cnpj/{cnpj}`              | 100 / min  | Shared per-route bucket |
-| `GET /cpf/{cpf}`                | 100 / min  | Shared per-route bucket |
-| `POST /cpf/batch`               | 10 / min   | Shared per-route bucket |
-| `POST /cpf/batch/estimate`      | 10 / min   | Shared per-route bucket |
-| `GET /graphs/{root_id}/history` | 100 / min  | Shared per-route bucket |
-| `GET /consumption`              | 100 / min  | Shared per-route bucket |
-| `GET /consumption/{cpf}`        | 100 / min  | Shared per-route bucket |
-| `GET /cnep/{cpf_or_cnpj}`       | 100 / min  | Shared per-route bucket |
-| `GET /ceis/{cpf_or_cnpj}`       | 100 / min  | Shared per-route bucket |
-| `GET /cepim/{cnpj}`             | 100 / min  | Shared per-route bucket |
-| `GET /ceaf/{cpf}`               | 100 / min  | Shared per-route bucket |
-| `GET /text-ingestion/patterns`  | 100 / min  | Shared per-route bucket |
-| `POST /text-ingestion`          | 100 / min  | Shared per-route bucket |
+| Endpoint                           | Limit      | Keyed by                |
+| ---------------------------------- | ---------- | ----------------------- |
+| `POST /auth/token`                 | 5 / 15 min | Client IP               |
+| `POST /auth/viewer-token`          | 20 / min   | Client IP               |
+| `GET /cnpj/{cnpj}`                 | 100 / min  | Shared per-route bucket |
+| `GET /cpf/{cpf}`                   | 100 / min  | Shared per-route bucket |
+| `POST /cpf/batch`                  | 10 / min   | Shared per-route bucket |
+| `POST /cpf/batch/estimate`         | 10 / min   | Shared per-route bucket |
+| `GET /graphs/{root_id}/history`    | 100 / min  | Shared per-route bucket |
+| `GET /consumption`                 | 100 / min  | Shared per-route bucket |
+| `GET /consumption/{cpf}`           | 100 / min  | Shared per-route bucket |
+| `GET /cnep/{cpf_or_cnpj}`          | 100 / min  | Shared per-route bucket |
+| `GET /ceis/{cpf_or_cnpj}`          | 100 / min  | Shared per-route bucket |
+| `GET /cepim/{cnpj}`                | 100 / min  | Shared per-route bucket |
+| `GET /ceaf/{cpf}`                  | 100 / min  | Shared per-route bucket |
+| `GET /peps/{cpf}`                  | 100 / min  | Shared per-route bucket |
+| `GET /legal-process/{cpf_or_cnpj}` | 100 / min  | Shared per-route bucket |
+| `GET /text-ingestion/patterns`     | 100 / min  | Shared per-route bucket |
+| `POST /text-ingestion`             | 100 / min  | Shared per-route bucket |
 
 A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
 `Access-Control-Expose-Headers`. See `docs/architecture/interface.md`. Each expansion route has one global bucket shared
