@@ -1,10 +1,5 @@
 # TO-DO
 
-## chore(ci)
-
-- install Renovate GitHub App on geldois/osint-engine and push `renovate.json` to enable automated dependency updates
-  for actions and uv
-
 ## chore(persistence)
 
 - `migrate.py`'s `-path migrations` is relative to the current working directory; it only resolves correctly because the
