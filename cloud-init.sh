@@ -56,8 +56,8 @@ POSTGRES_PASSWORD=${POSTGRES_PASSWORD_GENERATED}
 POSTGRES_DB=osint_engine
 DATABASE_URL=postgresql://osint_engine:${POSTGRES_PASSWORD_GENERATED}@postgres:5432/osint_engine?sslmode=disable
 ADMIN_PASSWORD=${ADMIN_PASSWORD_GENERATED}
-CORS_ORIGINS=https://osint.angelitochagas.com
-API_DOMAIN=api.osint.angelitochagas.com
+CORS_ORIGINS=https://osint-studio.duckdns.org
+API_DOMAIN=osint-engine.duckdns.org
 IMAGE_TAG=
 EOF
 chown ubuntu:ubuntu .env
