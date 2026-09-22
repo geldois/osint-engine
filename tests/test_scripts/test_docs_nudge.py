@@ -18,16 +18,14 @@ def test_excludes_docs_dir() -> None:
     assert is_relevant_change("docs/architecture/tooling.md") is False
 
 
-def test_excludes_named_root_docs_and_lockfile() -> None:
-    for rel in (
-        "README.md",
-        "TO-DO.md",
-        "CLAUDE.md",
-        "CONTEXT.md",
-        "CHANGELOG.md",
-        "uv.lock",
-    ):
+def test_excludes_named_root_docs() -> None:
+    for rel in ("README.md", "TO-DO.md", "CLAUDE.md", "CONTEXT.md"):
         assert is_relevant_change(rel) is False
+
+
+def test_includes_changelog_and_lockfile() -> None:
+    assert is_relevant_change("CHANGELOG.md") is True
+    assert is_relevant_change("uv.lock") is True
 
 
 def test_excludes_generated_persistence_prefix() -> None:
@@ -45,11 +43,13 @@ def test_includes_application_source() -> None:
     assert is_relevant_change("src/osint_engine/domain/foo.py") is True
 
 
-def test_docs_nudge_text_lists_areas() -> None:
-    text = docs_nudge_text(["config", "harness", "tests"])
-    assert "(existing: config, harness, tests)" in text
+def test_docs_nudge_text_always_names_whole_docs_surface() -> None:
+    text = docs_nudge_text()
+    assert "every docs/architecture/*.md" in text
+    assert "README.md, CONTEXT.md, and TO-DO.md" in text
 
 
-def test_docs_nudge_text_omits_parenthetical_when_empty() -> None:
-    text = docs_nudge_text([])
-    assert "(existing:" not in text
+def test_docs_nudge_text_names_sibling_only_when_path_given() -> None:
+    assert "osint-studio" not in docs_nudge_text()
+    text = docs_nudge_text("/home/x/osint-studio")
+    assert "osint-studio at /home/x/osint-studio" in text

@@ -6,7 +6,6 @@ from pathlib import Path
 from _docs_nudge import is_relevant_change
 from _hook_io import (
     contained_rel,
-    marker_value,
     project_root,
     read_event,
     session_id,
@@ -35,11 +34,7 @@ def main() -> int:
     if not is_relevant_change(rel):
         return 0
 
-    session = session_id(event)
-    touched = set((marker_value("docs-nudge-pending", session) or "").split("\0"))
-    touched.discard("")
-    touched.add(rel)
-    set_marker("docs-nudge-pending", session, "\0".join(sorted(touched)))
+    set_marker("docs-nudge-pending", session_id(event))
     return 0
 
 

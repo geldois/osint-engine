@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
-from _docs_nudge import docs_nudge_text
+from _docs_nudge import SIBLING_REPO_NAME, docs_nudge_text
 from _hook_io import (
     context,
     project_root,
     read_event,
     session_id,
     stop_reinvoked,
-    take_marker_value,
+    take_marker,
 )
 
 
@@ -27,17 +26,13 @@ def main() -> int:
     if not architecture_dir.is_dir():
         return 0
 
-    raw = take_marker_value("docs-nudge-pending", session_id(event))
-    if raw is None:
+    if not take_marker("docs-nudge-pending", session_id(event)):
         return 0
 
-    all_areas = sorted(path.stem for path in architecture_dir.glob("*.md"))
-    touched_dirs = {
-        part for rel in raw.split("\0") if rel for part in Path(rel).parts[:-1]
-    }
-    areas = sorted(area for area in all_areas if area in touched_dirs) or all_areas
+    sibling_dir = root.parent / SIBLING_REPO_NAME
+    sibling_path = str(sibling_dir) if sibling_dir.is_dir() else None
 
-    context("Stop", docs_nudge_text(areas))
+    context("Stop", docs_nudge_text(sibling_path))
 
     return 0
 

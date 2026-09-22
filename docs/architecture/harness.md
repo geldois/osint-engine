@@ -45,17 +45,26 @@ work-in-progress being set aside for later — never deciding that automatically
 target directory itself — following a leading `cd` in the command rather than trusting the agent's own launch directory
 — so a commit made after changing into a different repository is never checked against the wrong tree.
 
-The end-of-turn pass nudges toward updating a touched area's own `docs/architecture/<area>.md` and the architecture
-diagram in `README.md`, leaving the judgment of whether the change was actually semantic — versus a rename or a purely
-mechanical refactor — to whoever is finishing the turn. What counts as "touched this turn" is a marker, not a live git
-query: a per-edit hook sets it the moment a relevant file is written, and the end-of-turn pass only ever consumes that
-value once, narrowing the areas it names to the ones actually touched — so a file dirtied several turns ago and still
-uncommitted doesn't keep re-firing the same nudge forever. A doc file, a generated or vendored path, and the lockfile
-are the only paths that never count as "touched" for this purpose — everything else does, including this project's own
-root-level configuration, since a tooling decision lives there as often as in application source. A change made only
-through a shell command — a rename, a delete, a code-generation run — outside `Edit`/`Write`/`MultiEdit` sets no marker
-and fires no nudge; only the per-edit hook does, a deliberate gap traded for not needing a second, session-scoped
-snapshot of the whole tree around every shell command.
+The end-of-turn pass nudges toward checking the whole docs surface, not one matched area: every `docs/architecture/*.md`
+in this repo, plus `README.md`, `CONTEXT.md`, and `TO-DO.md`, since a change can invalidate a doc's claim without living
+in that doc's own matching directory — an earlier design narrowed the nudge to the areas its marker recorded as touched,
+which meant a change with cross-doc fallout still only ever named one file. When `osint-studio` sits beside this repo on
+disk, the nudge names it too, since the two share this system's contract and a backend-only change can leave the
+frontend's own docs silently wrong, or the reverse from that repo's own hook — a plain existence check, not shared
+state, so the nudge still says nothing about the sibling on a machine or clone where it isn't there. The judgment of
+whether any of it was actually semantic — versus a rename or a purely mechanical refactor — still belongs to whoever is
+finishing the turn; the hook only ever names the surface, never reads or rewrites it. What counts as "touched this turn"
+is still a marker, not a live git query: a per-edit hook sets it the moment a relevant file is written, and the
+end-of-turn pass only ever consumes it once, so a file dirtied several turns ago and still uncommitted doesn't keep
+re-firing the same nudge forever — the marker no longer needs to record which files, only that one did, now that the
+nudge names the whole surface regardless. Only a named root doc — `README.md`, `TO-DO.md`, `CLAUDE.md`, `CONTEXT.md` —
+or a path under `docs/`, generated, or vendored never counts as "touched" for this purpose; the lockfile and
+`CHANGELOG.md` do, deliberately, since a lockfile change is itself the "a new library" signal the nudge text already
+asks about, and lumping either in with the real docs traded that signal away for no reason — everything else counts too,
+including this project's own root-level configuration, since a tooling decision lives there as often as in application
+source. A change made only through a shell command — a rename, a delete, a code-generation run — outside
+`Edit`/`Write`/`MultiEdit` sets no marker and fires no nudge; only the per-edit hook does, a deliberate gap traded for
+not needing a second, session-scoped snapshot of the whole tree around every shell command.
 
 Every hook that resolves a file's own location for this purpose — the per-edit marker, the end-of-turn pass, the comment
 check above, and the endpoint-fixture check below — anchors on `CLAUDE_PROJECT_DIR` directly, never the shell's current
@@ -91,10 +100,10 @@ is touched, not alongside the line it would have explained. The same widening re
 may hold a docstring for its own sake, so its user-facing help text has to be written into the decorator's `help=`
 argument instead.
 
-Not tracking a change made only through a shell command means a `mv`, `rm`, or code-generation run that touches a
-relevant path in the same turn as other, edit-driven changes can end up bundled under whichever areas those edits
-already named, or missed entirely if nothing else in the turn touched a relevant path at all — the judgment call this
-nudge exists to prompt still depends on the person finishing the turn noticing the shell-only change themselves.
+Not tracking a change made only through a shell command means a `mv`, `rm`, or code-generation run in the same turn as
+other, edit-driven changes is missed entirely if nothing else in the turn touched a relevant path at all — the judgment
+call this nudge exists to prompt still depends on the person finishing the turn noticing the shell-only change
+themselves.
 
 The endpoint-fixture check only ever compares a literal value against the fixture-recording script's own text, so a
 future rewrite of how that script names or looks up its own cases has to keep that literal recognizable there, or the
