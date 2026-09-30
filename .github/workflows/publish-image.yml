@@ -94,6 +94,24 @@ jobs:
     needs: merge
     runs-on: ubuntu-24.04
     steps:
+      - name: Verify vars.API_DOMAIN matches the deployed .env
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        env:
+          EXPECTED_API_DOMAIN: ${{ vars.API_DOMAIN }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ubuntu
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: EXPECTED_API_DOMAIN
+          script: |
+            set -e
+            cd /opt/osint-engine
+            declared=$(grep -m1 '^API_DOMAIN=' .env | cut -d= -f2-)
+            if [ "$declared" != "$EXPECTED_API_DOMAIN" ]; then
+              echo "::error::vars.API_DOMAIN is '${EXPECTED_API_DOMAIN}' but /opt/osint-engine/.env declares '${declared}'; the health check would probe a domain Caddy does not serve"
+              exit 1
+            fi
+
       - uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.DEPLOY_HOST }}
