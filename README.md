@@ -670,6 +670,18 @@ then `sudo systemctl restart docker` and re-run the pulls.
 act push
 ```
 
+## Deploy
+
+`.github/workflows/publish-image.yml` builds both architectures, merges them into one multi-arch manifest on ghcr.io,
+then deploys over SSH to the host `cloud-init.sh` provisions. Its last step probes
+`https://${{ vars.API_DOMAIN }}/health` from the runner rather than from the host, so the check still reports a host
+that is itself the broken half — the probe therefore reaches Caddy by the name CI believes in, which Caddy only answers
+if the host serves that same name.
+
+`vars.API_DOMAIN` (repository Settings, Secrets and variables, Actions, Variables) must mirror the `API_DOMAIN` line
+`cloud-init.sh` writes into the host's `.env`. It is repository-side state that no push updates, so migrating a domain
+edits both; the workflow compares the two and fails before restarting any container when they disagree.
+
 ## Quality gates
 
 `uv run python -m scripts check|fix|precommit` is the single entry point into every linter, formatter, type-checker, and
