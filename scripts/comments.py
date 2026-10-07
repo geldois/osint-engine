@@ -31,7 +31,6 @@ _HASH_FILENAMES = frozenset(
         ".gitignore",
         ".dockerignore",
         ".editorconfig",
-        ".actrc",
         "pre-commit",
     }
 )

@@ -202,6 +202,8 @@ and `username`. `200 []` for a CPF never attempted. `ADMIN` only.
 
 ### Text ingestion
 
+All three routes are `ADMIN`-only.
+
 ```http
 GET /text-ingestion/patterns
 Authorization: Bearer <token>
@@ -310,6 +312,7 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 | `GET /legal-process/{cpf_or_cnpj}` | 100 / min  | Shared per-route bucket |
 | `GET /text-ingestion/patterns`     | 100 / min  | Shared per-route bucket |
 | `POST /text-ingestion`             | 100 / min  | Shared per-route bucket |
+| `POST /text-ingestion/file`        | 100 / min  | Shared per-route bucket |
 
 A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
 `Access-Control-Expose-Headers`. See `docs/architecture/interface.md`. Each expansion route has one global bucket shared
@@ -344,7 +347,7 @@ response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `403` means 
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
 - **Tooling:** uv, Ruff, basedpyright (strict), import-linter, dprint, sqruff, shellcheck, shfmt, actionlint, sqlc,
-  cosmic-ray, python-semantic-release; mise only for `migrate` and `act`
+  cosmic-ray, python-semantic-release; mise only for `migrate`
 - **Testing:** pytest, pytest-asyncio, testcontainers, hypothesis (property-based tests, see
   `docs/architecture/tests.md`)
 
@@ -406,7 +409,7 @@ cd osint-engine
 ### Linux
 
 1. Install [Docker Engine](https://docs.docker.com/engine/install/) and start the daemon.
-2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (the project requires `>=0.11.21,<0.12`).
 3. Install the dependencies and activate the versioned git config:
 
 ```bash
@@ -420,7 +423,7 @@ cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EX
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend enabled.
 2. Install [Git for Windows](https://gitforwindows.org) — the git hooks and the Claude Code hooks are `sh`/`bash`
    scripts it provides.
-3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (the project requires `>=0.11.21,<0.12`).
 4. Install the dependencies and activate the versioned git config:
 
 ```powershell
@@ -438,7 +441,7 @@ copy .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and 
 
 ### Configuration
 
-Read from the environment, or from `.env` in the working directory. The first five have no default and the process
+Read from the environment, or from `.env` in the working directory. The first four have no default and the process
 refuses to start without them.
 
 | Variable                              | Default                 | Meaning                                                              |
@@ -479,9 +482,9 @@ The production image runs this sequence: its entrypoint chains `wait-db`, `migra
 deploy needs no manual migration step — the commands above are only for running against a local Postgres outside the
 container.
 
-`infrastructure/persistence/pg/generated/` is [sqlc](https://sqlc.dev)-generated from `migrations/` and `queries/*.sql`,
-committed to the repo. Regenerate it by hand after changing either — never run bare `sqlc generate`, which also emits an
-unused, unresolvable querier file that this command discards:
+`infrastructure/persistence/pg/generated/` is [sqlc](https://sqlc.dev)-generated from `migrations/` and
+`infrastructure/persistence/pg/queries/*.sql`, committed to the repo. Regenerate it by hand after changing either —
+never run bare `sqlc generate`, which also emits an unused, unresolvable querier file that this command discards:
 
 ```bash
 uv run python -m scripts sqlc-generate
@@ -517,14 +520,6 @@ known-good resolver in `/etc/docker/daemon.json`:
 ```
 
 then `sudo systemctl restart docker` and re-run the pulls.
-
-### Local CI
-
-`act` comes from `mise install`:
-
-```bash
-act push
-```
 
 ## Deploy
 

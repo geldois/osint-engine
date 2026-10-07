@@ -30,6 +30,8 @@
       "Bash(uv run --no-sync python -m pytest *)",
       "Bash(uv run python -m scripts check *)",
       "Bash(uv run python -m scripts comments *)",
+      "Bash(uv run --no-sync python -m scripts check *)",
+      "Bash(uv run --no-sync python -m scripts comments *)",
       "Bash(python -m pytest *)",
       "Bash(python3 -m pytest *)"
     ]

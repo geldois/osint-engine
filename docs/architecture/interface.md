@@ -10,16 +10,16 @@ Authentication is a signed, self-contained token a caller presents on every requ
 on the server between requests, so any instance handling a request can verify it alone, with no shared state to
 coordinate. A second, separate check — layered on top of authentication, not merged into it — decides whether the
 authenticated caller's role permits the specific route being called at all; some routes are open to a public,
-credential-free caller for read-only access, while any route that changes data stays restricted to a privileged caller
-only. Both checks fail with a distinct, clearly different status so a caller (or whoever's debugging a failure) can tell
-"you're not who you say you are" apart from "you're allowed in, but not to this."
+credential-free caller for read-only access, while routes that call a paid provider or hold user-scoped data stay
+restricted to a privileged caller only. Both checks fail with a distinct, clearly different status so a caller (or
+whoever's debugging a failure) can tell "you're not who you say you are" apart from "you're allowed in, but not to
+this."
 
-Every route that could be hit by unauthenticated or lightly-authenticated traffic is rate-limited in-memory, with a
-different allowance for a privileged caller versus a public one on the very same route — protecting both a paid upstream
-quota and the login route itself from being hammered. Every error that reaches this layer, regardless of which layer
-actually raised it, is translated into one consistent response shape carrying a machine-readable error code and a
-correlation id, so a caller never sees a raw stack trace or an inconsistent error format depending on which internal
-component failed.
+Every route that could be hit by unauthenticated or lightly-authenticated traffic is rate-limited in-memory, with a flat
+allowance per route (or per client address on the login routes), not per role — protecting both a paid upstream quota
+and the login route itself from being hammered. Every error that reaches this layer, regardless of which layer actually
+raised it, is translated into one consistent response shape carrying a machine-readable error code and a correlation id,
+so a caller never sees a raw stack trace or an inconsistent error format depending on which internal component failed.
 
 Every request handler is an ordinary function whose dependencies are visible in its own signature — assembled once, by
 hand, when the process starts, rather than resolved automatically per request. That keeps the wiring traceable in one

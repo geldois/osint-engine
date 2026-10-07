@@ -30,9 +30,10 @@ the same commit; a gap closed comes out in the same commit.
   `GET /graphs` request. The projection was not designed up front because it would mean guessing a storage that does not
   exist yet. When that adapter lands, `list_all_revisions` is the one method to replace, and `ListGraphCatalog` is its
   only caller
-- **The committed `generated/` sqlc models can drift from `migrations/` and `queries/*.sql`.** `scripts sqlc-generate`
-  is manual and not part of `check`, so nothing fails if someone changes a query or a migration and forgets to
-  regenerate. A gate that regenerates into a temporary directory and diffs would close it
+- **The committed `generated/` sqlc models can drift from `migrations/` and
+  `infrastructure/persistence/pg/queries/*.sql`.** `scripts sqlc-generate` is manual and not part of `check`, so nothing
+  fails if someone changes a query or a migration and forgets to regenerate. A gate that regenerates into a temporary
+  directory and diffs would close it
 
 ## feat(cep)
 
@@ -116,9 +117,8 @@ the same commit; a gap closed comes out in the same commit.
 - **`scripts mutation --max-survival` defaults to `100.0`, so the mutation gate can never fail today**, and no workflow
   runs it. After measuring the baseline: set the ceiling, then add a scheduled (weekly) and manual CI job for it. Until
   the ceiling is real, a scheduled job would be a false green
-- **`cosmic-ray.toml` was pointing at test directories that do not exist** (fixed to `tests/test_src/test_domain` and
-  `tests/test_src/test_application`); the mutation run itself has never been exercised since, so expect a first run to
-  need adjustments
+- **The mutation run has never been exercised against `cosmic-ray.toml`** (its test paths were fixed to
+  `tests/test_src/test_domain` and `tests/test_src/test_application`), so expect a first run to need adjustments
 
 ## chore(gates)
 
@@ -145,16 +145,15 @@ the same commit; a gap closed comes out in the same commit.
   "Require status checks to pass" and add the check `test`, "Require linear history", "Block force pushes" and "Restrict
   deletions", and leave bypass empty so admins are bound too. The check name `test` comes from the job in `test.yml` and
   should be confirmed in a real run before relying on it
-- **`vars.API_DOMAIN` is still set to a stale domain** (`api.osint.angelitochagas.com`) while the host serves
-  `osint-engine.duckdns.org`; the deploy job fails fast and says so until
-  `gh variable set API_DOMAIN --body osint-engine.duckdns.org -R geldois/osint-engine` is run
 - **`test.yml` runs the whole gate on a single runner and architecture** (`ubuntu-24.04`), while the image is built for
   amd64 and arm64; nothing exercises the arm64 image beyond the build
 
 ## chore(deployment)
 
 - **Automatic reboot is disabled**, so a pending kernel update stays pending until someone reboots the host by hand
-- **`IMAGE_TAG` is left empty by provisioning**, so the first `docker compose up` on every new host is manual
+- **A new host needs one-time GitHub-side setup before its first deploy**: the `DEPLOY_HOST` and `DEPLOY_SSH_KEY`
+  secrets and the `API_DOMAIN` variable, then a first pipeline run. Provisioning leaves `IMAGE_TAG` empty on purpose and
+  the deploy supplies it inline on every run, so no manual `compose up` is needed
 - **The `app`-to-Postgres link has TLS off** (`sslmode=disable`), safe only while the database stays on the
   compose-internal network
 - **The generated admin password must be reviewed and rotated by hand** in the same session as the first deploy
@@ -176,8 +175,3 @@ the same commit; a gap closed comes out in the same commit.
   other's mark
 - **The shared contract with `osint-studio` is written down nowhere.** The review prompt asks to check that repo's docs
   when the contract moves, but no document says what the contract is or where its source of truth lives
-
-## chore(config)
-
-- **`.env.example` sets `FETCHER_CONNECT_TIMEOUT=30.0`, while the code default is `15.0`.** Decide which is intended and
-  align them

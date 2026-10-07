@@ -24,10 +24,10 @@ The generated database URL disables the driver's default requirement of a TLS co
 Postgres driver requires one unless told otherwise, and the compose-internal database it connects to has no TLS
 configured at all; leaving the default in place fails every migration on first boot.
 
-The published container image's tag is left unset by provisioning on purpose: cloud-init brings the host up to the point
-of having Docker, the cloned repository, and a generated environment file, and deliberately stops there — the first
-`compose up` with an actually-published tag, and the review of the generated admin password, are a manual step in the
-same session, not something a provisioning script should do unattended.
+The published container image's tag is left unset by provisioning on purpose: cloud-init stops once the host has Docker,
+the cloned repository and a generated environment file. The first pipeline run supplies the tag inline and brings the
+stack up; the review of the generated admin password and the one-time repository secrets and variable the pipeline needs
+are the manual part, done in the same session, not something a provisioning script should do unattended.
 
 The application is never exposed directly: a reverse proxy container owns ports 80 and 443, obtains and renews the
 certificate for the configured domain by itself, and forwards to the application on the compose-internal network only.
@@ -38,8 +38,10 @@ base file still serves local development unchanged.
 The image is built per architecture and pushed by digest, then a second job joins the digests into one multi-arch
 manifest tagged both with the branch and with the commit SHA. The SHA tag is what the deploy pulls, so the running
 container is always the exact commit the verification gate passed, never whatever a moving tag points at when the host
-happens to pull. The host also runs an intrusion-banning service for SSH, since it is exposed to the internet and nobody
-watches its logs.
+happens to pull. The host's own checkout, which supplies the compose files, is fast-forwarded to that same commit, so
+the files can never be ahead of or behind the image; a host that has diverged makes the deploy fail instead of guessing.
+The host also runs an intrusion-banning service for SSH, since it is exposed to the internet and nobody watches its
+logs.
 
 ## Consequences
 
@@ -55,6 +57,7 @@ Since the internal database connection has TLS explicitly disabled, that connect
 compose-internal, never exposed beyond this host's own private network — extending this setup to a database reachable
 from outside this host needs TLS revisited first, not inherited from this configuration as-is.
 
-The manual step this script deliberately stops before — publishing an image tag and bringing the stack up — is a
-standing prerequisite for every future provisioning of a new host from this same script, not a one-time bootstrapping
-quirk: whoever runs it again for a new host still has to complete that same manual step themselves.
+The manual steps this script deliberately leaves — setting the pipeline's repository secrets and variable for the new
+host, triggering the first run, and reviewing the generated admin password — are a standing prerequisite for every
+future provisioning of a new host from this same script, not a one-time bootstrapping quirk: whoever runs it again still
+has to complete them themselves.
