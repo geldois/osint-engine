@@ -9,6 +9,9 @@ permissions:
   contents: read
   packages: write
 
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
 concurrency:
   group: publish-image
   cancel-in-progress: false
@@ -51,7 +54,7 @@ jobs:
         with:
           context: .
           platforms: ${{ matrix.platform }}
-          outputs: type=image,name=ghcr.io/geldois/osint-engine,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -89,11 +92,11 @@ jobs:
         run: |
           digests=()
           for f in *; do
-            digests+=("ghcr.io/geldois/osint-engine@sha256:$f")
+            digests+=("${IMAGE}@sha256:$f")
           done
           docker buildx imagetools create \
-            -t ghcr.io/geldois/osint-engine:${{ github.ref_name }} \
-            -t ghcr.io/geldois/osint-engine:${{ github.sha }} \
+            -t "${IMAGE}:${{ github.ref_name }}" \
+            -t "${IMAGE}:${{ github.sha }}" \
             "${digests[@]}"
 
   deploy:
@@ -125,7 +128,8 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             cd /opt/osint-engine
-            git pull
+            git fetch --quiet origin
+            git merge --ff-only ${{ github.sha }}
             IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml -f compose.prod.yml pull
             IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml -f compose.prod.yml up -d
 
