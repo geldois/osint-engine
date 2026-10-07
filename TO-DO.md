@@ -103,11 +103,9 @@ same commit; a gap closed comes out in the same commit.
 
 ## chore(gates)
 
-- **The uv version lives in three places**: `required-version` in `[tool.uv]` (a range, `>=0.11.21,<0.12`, so a
-  distro-packaged uv still works and the workflows float within 0.11), the `build` extra that lets semantic-release
-  install uv (`==0.11.25`), and the `Dockerfile`'s uv image tag (0.11.25). uv refuses to run outside the range, so a
-  drifted copy fails loudly, but the two exact pins still move together. Whether `setup-uv` accepts the range syntax is
-  unconfirmed until the first CI run
+- **The uv version lives in three places**, all exactly `0.11.21`: `required-version` in `[tool.uv]` (the one the
+  workflows read and that uv enforces everywhere it runs), the `build` extra that lets semantic-release install uv, and
+  the `Dockerfile`'s uv image tag and digest. A drifted copy fails loudly, but the three still move together
 
 ## chore(ci)
 

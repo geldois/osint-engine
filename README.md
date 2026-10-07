@@ -409,7 +409,7 @@ cd osint-engine
 ### Linux
 
 1. Install [Docker Engine](https://docs.docker.com/engine/install/) and start the daemon.
-2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (the project requires `>=0.11.21,<0.12`).
+2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (the project requires exactly `0.11.21`).
 3. Install the dependencies and activate the versioned git config:
 
 ```bash
@@ -423,7 +423,7 @@ cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EX
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend enabled.
 2. Install [Git for Windows](https://gitforwindows.org) — the git hooks and the Claude Code hooks are `sh`/`bash`
    scripts it provides.
-3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (the project requires `>=0.11.21,<0.12`).
+3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (the project requires exactly `0.11.21`).
 4. Install the dependencies and activate the versioned git config:
 
 ```powershell

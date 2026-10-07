@@ -44,13 +44,13 @@ a closed allowlist for linter-suppression pragmas, shell directives, shebangs, p
 annotations the SQL query loader requires. A comment marker only counts when it starts a word, so shell argument-count
 and length expansions are never mistaken for one.
 
-The uv version is a range in the project manifest, read by the workflows and enforced by uv itself wherever it runs, so
-a stale install fails loudly instead of drifting; the two exact copies (the container image and the release helper) are
-edited together. The runner syncs the environment once and then runs every tool without re-syncing, so no gate can
-change the environment under another. Every linter, formatter and type-checker is a pinned development dependency
-installed with that environment, so the only prerequisites of the gate are the package manager and the container runtime
-the test suite already needs. The workflow linter is the one exception: its Python wrapper downloads a binary at install
-time, so it runs from its pinned container image instead.
+The uv version is pinned exactly in the project manifest, read by the workflows and enforced by uv itself wherever it
+runs, so a stale install fails loudly instead of drifting; the container image's tag and the release helper's pin are
+the two other copies and are edited together. The runner syncs the environment once and then runs every tool without
+re-syncing, so no gate can change the environment under another. Every linter, formatter and type-checker is a pinned
+development dependency installed with that environment, so the only prerequisites of the gate are the package manager
+and the container runtime the test suite already needs. The workflow linter is the one exception: its Python wrapper
+downloads a binary at install time, so it runs from its pinned container image instead.
 
 Within the fixer, whatever can rewrite logic or structure always runs before whatever only reformats: a fixer that
 introduces new code (an import rewrite, a lint autofix) can leave text that doesn't match the project's own formatting,
