@@ -570,12 +570,11 @@ cd osint-engine
 ### Linux
 
 1. Install [Docker Engine](https://docs.docker.com/engine/install/) and start the daemon.
-2. Install [mise](https://mise.jdx.dev) and activate it in your shell (see
-   [getting started](https://mise.jdx.dev/getting-started.html)).
-3. Install the project toolchain and activate the versioned git config:
+2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+3. Install the dependencies and activate the versioned git config:
 
 ```bash
-mise install
+uv sync
 git config --local include.path ../.gitconfig
 cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
 ```
@@ -583,38 +582,31 @@ cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EX
 ### Windows
 
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend enabled.
-2. Install [mise](https://mise.jdx.dev) via PowerShell and activate it in your shell (see
-   [getting started](https://mise.jdx.dev/getting-started.html)).
-3. Install the project toolchain and activate the versioned git config:
+2. Install [Git for Windows](https://gitforwindows.org) — the git hooks and the Claude Code hooks are `sh`/`bash`
+   scripts it provides.
+3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+4. Install the dependencies and activate the versioned git config:
 
 ```powershell
-mise install
+uv sync
 git config --local include.path ../.gitconfig
 copy .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
 ```
 
-> `.gitconfig` points `core.hooksPath` at the versioned `.githooks/`, so the hooks are whatever is committed — nothing
-> is generated into `.git/`. The hooks and the `uv run python -m scripts …` dev runner call `uv` directly, so `mise`
-> must be active on the `PATH` of the shell you commit from — `mise` provides the pinned `uv`, `dprint`, `shellcheck`
-> and `shfmt`. If `uv` isn't found, the hook prints how to fix it (activate mise, or `git commit --no-verify` to bypass
-> once). No editor or Claude Code is required: the quality gates run entirely from these git hooks and CI, identically
-> for every contributor, and there is no `pre-push` — pushing is never blocked.
-
-> `--network host` in `.actrc` is Linux-only and has no effect on Docker Desktop. Internet access works via Docker
-> Desktop's default networking — the first run downloads dependencies from PyPI, subsequent runs use the uv cache.
-
-> `EXTERNAL_CREDENTIAL_ENCRYPTION_KEY` needs a real Fernet key, not the example value already in `.env.example` —
-> generate one with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`.
-> `PORTAL_TRANSPARENCIA_API_KEY` is dev/CI tooling only (`uv run osint-engine refresh-fixtures`) — the running app reads
-> Portal da Transparência credentials from Postgres per user, never from env.
+> `.gitconfig` points `core.hooksPath` at the versioned `.githooks/` and forbids merge commits (`merge.ff = only`), so
+> the hooks are whatever is committed — nothing is generated into `.git/` — and every commit is born through the
+> `pre-commit` hook. The only prerequisites of the quality gates are `uv` and Docker: every linter, formatter and
+> type-checker is a pinned dev dependency installed by `uv sync`. If `uv` isn't found, the hook says so (or bypass once
+> with `git commit --no-verify`). No editor or Claude Code is required: the gates run from the git hook and CI,
+> identically for every contributor, and there is no `pre-push` — pushing is never blocked.
 
 ### Run
 
-`osint-engine migrate` needs the `migrate` CLI on `PATH` (installed by `mise install`, pinned to the same version the
-Dockerfile uses) and a running Postgres reachable at `DATABASE_URL` — unlike the test suite, `serve`/`migrate` don't
-spin one up for you. `docker-compose.yml` starts a persistent local Postgres matching `.env.example`'s credentials, and
-`osint-engine wait-db` blocks until it actually accepts connections (Postgres reports the container as "started" well
-before it's ready to accept connections — polling avoids a race against it):
+`osint-engine migrate` needs the `migrate` CLI on `PATH` (install [mise](https://mise.jdx.dev) and run `mise install`;
+pinned to the same version the Dockerfile uses) and a running Postgres reachable at `DATABASE_URL` — unlike the test
+suite, `serve`/`migrate` don't spin one up for you. `docker-compose.yml` starts a persistent local Postgres matching
+`.env.example`'s credentials, and `osint-engine wait-db` blocks until it actually accepts connections (Postgres reports
+the container as "started" well before it's ready to accept connections — polling avoids a race against it):
 
 ```bash
 docker compose up -d
@@ -684,16 +676,16 @@ edits both; the workflow compares the two and fails before restarting any contai
 
 ## Quality gates
 
-`uv run python -m scripts check|fix|precommit` is the single entry point into every linter, formatter, type-checker, and
-test the project owns.
+`uv run python -m scripts check|fix` is the single entry point into every linter, formatter, type-checker, and test the
+project owns.
 
-- `fix [paths...]` runs every safe fixer (Ruff's linter fixes then its formatter, dprint, sqruff, shfmt) on the given
-  paths, or the whole repo with none given.
-- `check [--full]` runs every lint/type/format gate; `--full` adds the full pytest suite with coverage.
-- `precommit` runs `fix` on the whole repo, re-stages any file that was already staged, then runs `check --full` — what
-  `.githooks/pre-commit` and `.githooks/pre-merge-commit` both call. `fix` always runs; only `check --full` is skipped,
-  replaying the last recorded result, when the working tree hasn't changed a single byte since then.
+- `fix` runs every safe fixer (Ruff's linter fixes then its formatter, dprint, sqruff, shfmt) on the whole repo. It is
+  never part of the commit: run it before committing, and the commit finds nothing left to complain about.
+- `check` runs every gate on the working tree: lockfile, comment ban, Ruff format and lint, import-linter, basedpyright
+  (warnings fail), dprint, sqruff, shellcheck, shfmt, actionlint (via its pinned Docker image) and the full pytest suite
+  with coverage (warnings fail). `.githooks/pre-commit` and CI both run exactly this, and the hook first refuses a
+  commit when anything is unstaged or untracked, so what the gate tested is exactly what is committed. A partial commit
+  therefore needs the rest stashed.
 
-A human contributor may run any of these directly at any time — they're exactly what the git hooks run. The assistant
-never does (see this project's `CLAUDE.md`). `scripts mutation`, `scripts sqlc-generate`, and `scripts fixtures` stay
-separate, periodic, manual commands — never part of `check`.
+`scripts mutation`, `scripts sqlc-generate`, and `scripts fixtures` stay separate, periodic, manual commands — never
+part of `check`.

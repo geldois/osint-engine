@@ -5,8 +5,6 @@ import subprocess
 import time
 from pathlib import Path
 
-from dotenv import dotenv_values
-
 from scripts._report import (
     Gate,
     GateOutcome,
@@ -16,29 +14,24 @@ from scripts._report import (
 )
 
 _UV_RUN = ("uv", "run", "--no-sync")
+_ACTIONLINT_IMAGE = "rhysd/actionlint:1.7.12"
 
 SHELL_FILES = (
     ".githooks/pre-commit",
-    ".githooks/pre-merge-commit",
-    ".githooks/post-commit",
+    ".claude/hooks/mark_docs_review.sh",
+    ".claude/hooks/require_docs_review.sh",
     "cloud-init.sh",
     "docker-entrypoint.sh",
 )
-_WORKFLOW_FILES = (
+WORKFLOW_FILES = (
     ".github/workflows/publish-image.yml",
     ".github/workflows/release.yml",
     ".github/workflows/test.yml",
 )
-_PRE_SYNC: tuple[Gate, ...] = (
-    Gate("lock-check", ("uv", "lock", "--check")),
-    Gate("dprint", ("mise", "exec", "--", "dprint", "check")),
-    Gate("sqruff", ("mise", "exec", "--", "sqruff", "lint", "migrations", "src")),
-    Gate("shellcheck", ("mise", "exec", "--", "shellcheck", *SHELL_FILES)),
-    Gate("shfmt", ("mise", "exec", "--", "shfmt", "-d", *SHELL_FILES)),
-    Gate("actionlint", ("mise", "exec", "--", "actionlint", *_WORKFLOW_FILES)),
-)
+_LOCK_CHECK = Gate("lock-check", ("uv", "lock", "--check"))
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
-_POST_SYNC: tuple[Gate, ...] = (
+_GATES: tuple[Gate, ...] = (
+    Gate("comments", (*_UV_RUN, "python", "-m", "scripts", "comments")),
     Gate("ruff-format", (*_UV_RUN, "ruff", "format", "--check", ".")),
     Gate("ruff-check", (*_UV_RUN, "ruff", "check", ".")),
     Gate(
@@ -46,41 +39,48 @@ _POST_SYNC: tuple[Gate, ...] = (
         (*_UV_RUN, "lint-imports", "--cache-dir", ".cache/import-linter"),
     ),
     Gate("basedpyright", (*_UV_RUN, "basedpyright")),
-)
-_SUITE = Gate(
-    "pytest",
-    (
-        *_UV_RUN,
+    Gate("dprint", (*_UV_RUN, "dprint", "check")),
+    Gate("sqruff", (*_UV_RUN, "sqruff", "lint", "migrations", "src")),
+    Gate("shellcheck", (*_UV_RUN, "shellcheck", *SHELL_FILES)),
+    Gate("shfmt", (*_UV_RUN, "shfmt", "-d", *SHELL_FILES)),
+    Gate(
+        "actionlint",
+        (
+            "docker",
+            "run",
+            "--rm",
+            "--volume",
+            f"{Path.cwd()}:/repo:ro",
+            "--workdir",
+            "/repo",
+            _ACTIONLINT_IMAGE,
+            *WORKFLOW_FILES,
+        ),
+    ),
+    Gate(
         "pytest",
-        "-q",
-        "--no-header",
-        "--tb=short",
-        "--cov",
-        "--cov-branch",
-        "--cov-report=xml:.cache/coverage/coverage.xml",
+        (
+            *_UV_RUN,
+            "pytest",
+            "-q",
+            "--no-header",
+            "--tb=short",
+            "--cov",
+            "--cov-branch",
+            "--cov-report=xml:.cache/coverage/coverage.xml",
+        ),
     ),
 )
 
 
-def run_check(*, full: bool) -> int:
-    mode = "full" if full else "fast"
-
-    overlay = _dotenv_overlay(Path.cwd()) if full else {}
-
+def run_check() -> int:
     with running_ticker():
-        outcomes = _run_sequence(Path.cwd(), full=full, overlay=overlay)
+        outcomes = _run_sequence(Path.cwd())
 
-    report_path = write_report(outcomes, mode=mode)
+    report_path = write_report(outcomes, mode="check")
     print_verdict(outcomes, report_path)
 
     return 0 if all(o.passed for o in outcomes) else 1
-
-
-def _dotenv_overlay(project_root: Path) -> dict[str, str]:
-    env_file = project_root / ".env"
-    if not env_file.is_file():
-        return {}
-    return {key: value for key, value in dotenv_values(env_file).items() if value}
 
 
 def _run_gate(gate: Gate, cwd: Path, env: dict[str, str]) -> GateOutcome:
@@ -113,23 +113,17 @@ def _run_gate(gate: Gate, cwd: Path, env: dict[str, str]) -> GateOutcome:
     )
 
 
-def _run_sequence(
-    workdir: Path, *, full: bool, overlay: dict[str, str]
-) -> list[GateOutcome]:
+def _run_sequence(workdir: Path) -> list[GateOutcome]:
     env = {
         key: value for key, value in os.environ.items() if not key.startswith("GIT_")
     }
-    outcomes = [_run_gate(gate, workdir, env) for gate in _PRE_SYNC]
+    outcomes = [_run_gate(_LOCK_CHECK, workdir, env)]
 
     sync = _run_gate(_ENV_SYNC, workdir, env)
     outcomes.append(sync)
     if not sync.passed:
         return outcomes
 
-    outcomes.extend(_run_gate(gate, workdir, env) for gate in _POST_SYNC)
-    if not full:
-        return outcomes
-
-    outcomes.append(_run_gate(_SUITE, workdir, {**env, **overlay}))
+    outcomes.extend(_run_gate(gate, workdir, env) for gate in _GATES)
 
     return outcomes

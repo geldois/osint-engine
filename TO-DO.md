@@ -77,6 +77,6 @@
 ## test(gates)
 
 - `fail_under` in `[tool.coverage.report]` is a placeholder `90`, not a measured value; a human contributor runs
-  `uv run python -m scripts check --full` (needs Docker) and `uv run python -m scripts mutation` once, then pins the
-  coverage floor and mutation `--max-survival` ceiling to the measured baseline, ratcheting only (see the Quality gates
-  section in this project's `README.md`)
+  `uv run python -m scripts check` (needs Docker) and `uv run python -m scripts mutation` once, then pins the coverage
+  floor and mutation `--max-survival` ceiling to the measured baseline, ratcheting only (see the Quality gates section
+  in this project's `README.md`)

@@ -1,64 +1,47 @@
 {
+  "permissions": {
+    "deny": [
+      "Bash(ruff *)",
+      "Bash(pytest *)",
+      "Bash(basedpyright *)",
+      "Bash(lint-imports *)",
+      "Bash(dprint *)",
+      "Bash(sqruff *)",
+      "Bash(shellcheck *)",
+      "Bash(shfmt *)",
+      "Bash(actionlint *)",
+      "Bash(uv run ruff *)",
+      "Bash(uv run pytest *)",
+      "Bash(uv run basedpyright *)",
+      "Bash(uv run lint-imports *)",
+      "Bash(uv run dprint *)",
+      "Bash(uv run sqruff *)",
+      "Bash(uv run shellcheck *)",
+      "Bash(uv run shfmt *)",
+      "Bash(uv run --no-sync ruff *)",
+      "Bash(uv run --no-sync pytest *)",
+      "Bash(uv run --no-sync basedpyright *)",
+      "Bash(uv run --no-sync lint-imports *)",
+      "Bash(uv run --no-sync dprint *)",
+      "Bash(uv run --no-sync sqruff *)",
+      "Bash(uv run --no-sync shellcheck *)",
+      "Bash(uv run --no-sync shfmt *)",
+      "Bash(uv run python -m pytest *)",
+      "Bash(uv run python -m scripts check *)",
+      "Bash(uv run python -m scripts comments *)",
+      "Bash(python -m pytest *)",
+      "Bash(python3 -m pytest *)"
+    ]
+  },
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/nudge_manual_checks.py"
-            ],
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_fixtures_coverage.py"
-            ],
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/mark_docs_nudge.py"
-            ],
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write|MultiEdit|Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_comments.py"
-            ],
-            "timeout": 30
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/report_uncommitted.py"
-            ],
+            "command": "bash",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/mark_docs_review.sh"],
             "timeout": 10
           }
         ]
@@ -66,15 +49,12 @@
     ],
     "Stop": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "python3",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/after_turn.py"
-            ],
-            "timeout": 60
+            "command": "bash",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/require_docs_review.sh"],
+            "timeout": 10
           }
         ]
       }

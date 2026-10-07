@@ -1,6 +1,14 @@
 #!/bin/sh
 command -v uv >/dev/null 2>&1 || {
-    echo "osint-engine: 'uv' not found on PATH — activate mise (see README: Setup), or bypass once with 'git commit --no-verify'." >&2
+    echo "osint-engine: 'uv' not found on PATH — install it (see README: Setup), or bypass once with 'git commit --no-verify'." >&2
     exit 1
 }
-exec uv run python -m scripts precommit
+git diff --quiet || {
+    echo "osint-engine: unstaged changes — stage or stash them so the gate tests exactly this commit." >&2
+    exit 1
+}
+[ -z "$(git ls-files --others --exclude-standard)" ] || {
+    echo "osint-engine: untracked files — stage, ignore or remove them so the gate tests exactly this commit." >&2
+    exit 1
+}
+exec uv run python -m scripts check

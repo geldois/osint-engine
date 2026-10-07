@@ -1,21 +1,20 @@
 from __future__ import annotations
 
-import importlib.util
-from pathlib import Path
+import subprocess
+from typing import TYPE_CHECKING
 
 import pytest
 
-_MODULE_PATH = Path(__file__).parents[2] / ".claude" / "hooks" / "_comment_scan.py"
-_spec = importlib.util.spec_from_file_location("_comment_scan", _MODULE_PATH)
-assert _spec is not None
-assert _spec.loader is not None
-_comment_scan = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_comment_scan)
+from scripts.comments import (
+    hash_comment_lines,
+    is_scanned,
+    python_comment_lines,
+    run_comments,
+    sql_comment_lines,
+)
 
-new_comment_lines_python = _comment_scan.new_comment_lines_python
-new_comment_lines_sql = _comment_scan.new_comment_lines_sql
-new_comment_lines_hash = _comment_scan.new_comment_lines_hash
-is_pragma_comment = _comment_scan.is_pragma_comment
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _PYTHON_CASES: dict[str, tuple[str, list[int]]] = {
     "plain_comment_own_line": ("x = 1\n# just a comment\ny = 2\n", [2]),
@@ -77,20 +76,8 @@ _PYTHON_CASES: dict[str, tuple[str, list[int]]] = {
 @pytest.mark.parametrize(
     ("source", "expected"), _PYTHON_CASES.values(), ids=_PYTHON_CASES.keys()
 )
-def test_new_comment_lines_python(source: str, expected: list[int]) -> None:
-    assert new_comment_lines_python(source, None) == expected
-
-
-def test_new_comment_lines_python_respects_changed_lines() -> None:
-    source = "x = 1  # keep me (not in changed_lines)\ny = 2  # flag me\n"
-
-    assert new_comment_lines_python(source, frozenset({2})) == [2]
-
-
-def test_new_comment_lines_python_changed_lines_empty_set_flags_nothing() -> None:
-    source = "x = 1  # untouched\n"
-
-    assert new_comment_lines_python(source, frozenset()) == []
+def test_python(source: str, expected: list[int]) -> None:
+    assert python_comment_lines(source) == expected
 
 
 _SQL_CASES: dict[str, tuple[str, list[int]]] = {
@@ -115,19 +102,8 @@ _SQL_CASES: dict[str, tuple[str, list[int]]] = {
 @pytest.mark.parametrize(
     ("source", "expected"), _SQL_CASES.values(), ids=_SQL_CASES.keys()
 )
-def test_new_comment_lines_sql(source: str, expected: list[int]) -> None:
-    assert new_comment_lines_sql(source, None) == expected
-
-
-def test_new_comment_lines_sql_respects_changed_lines() -> None:
-    source = "SELECT 1; -- keep\nSELECT 2; -- flag\n"
-
-    assert new_comment_lines_sql(source, frozenset({2})) == [2]
-
-
-def test_is_pragma_comment_rejects_ordinary_comment_mentioning_pragma_word() -> None:
-    comment = "# this used to have a noqa word in it, not a pragma"
-    assert is_pragma_comment(comment) is False
+def test_sql(source: str, expected: list[int]) -> None:
+    assert sql_comment_lines(source) == expected
 
 
 _HASH_CASES: dict[str, tuple[str, list[int]]] = {
@@ -149,6 +125,8 @@ _HASH_CASES: dict[str, tuple[str, list[int]]] = {
     ),
     "hash_inside_single_quoted_string_survives": ("echo 'not # a comment'\n", []),
     "hash_inside_double_quoted_string_survives": ('echo "not # a comment"\n', []),
+    "shell_argument_count_survives": ("echo $#\n", []),
+    "shell_length_expansion_survives": ('echo "${#name}"\n', []),
     "escaped_double_quote_inside_string_handled": (
         'echo "she said \\"hi\\" # still a string"\n',
         [],
@@ -159,11 +137,61 @@ _HASH_CASES: dict[str, tuple[str, list[int]]] = {
 @pytest.mark.parametrize(
     ("source", "expected"), _HASH_CASES.values(), ids=_HASH_CASES.keys()
 )
-def test_new_comment_lines_hash(source: str, expected: list[int]) -> None:
-    assert new_comment_lines_hash(source, None) == expected
+def test_hash(source: str, expected: list[int]) -> None:
+    assert hash_comment_lines(source) == expected
 
 
-def test_new_comment_lines_hash_respects_changed_lines() -> None:
-    source = "echo hi  # keep\necho bye  # flag\n"
+def test_pragma_word_inside_ordinary_comment_is_still_flagged() -> None:
+    source = "x = 1  # this used to have a noqa word in it, not a pragma\n"
 
-    assert new_comment_lines_hash(source, frozenset({2})) == [2]
+    assert python_comment_lines(source) == [1]
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [
+        "src/osint_engine/x.py",
+        "migrations/001.sql",
+        ".githooks/pre-commit",
+        "pyproject.toml",
+        "Dockerfile",
+    ],
+)
+def test_is_scanned_covers_code_and_config(rel: str) -> None:
+    assert is_scanned(rel)
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [
+        "src/osint_engine/infrastructure/persistence/pg/generated/models.py",
+        "README.md",
+        "dprint.json",
+    ],
+)
+def test_is_scanned_skips_generated_and_prose(rel: str) -> None:
+    assert not is_scanned(rel)
+
+
+def test_run_comments_reports_offending_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    (tmp_path / "bad.py").write_text("x = 1  # why\n", encoding="utf-8")
+    (tmp_path / "good.py").write_text("x = 1\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    monkeypatch.chdir(tmp_path)
+
+    assert run_comments() == 1
+    assert "bad.py:1" in capsys.readouterr().err
+
+
+def test_run_comments_passes_on_a_clean_repo(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    (tmp_path / "good.py").write_text("x = 1\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    monkeypatch.chdir(tmp_path)
+
+    assert run_comments() == 0

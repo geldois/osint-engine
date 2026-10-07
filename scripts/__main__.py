@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Annotated
-
 import typer
 
 from scripts import fixtures
-from scripts.fix import run_fix, run_precommit
+from scripts.comments import run_comments
+from scripts.fix import run_fix
 from scripts.gates import run_check
 from scripts.mutation import run_mutation
 from scripts.sqlc import run_sqlc_generate
@@ -17,19 +16,19 @@ app.add_typer(fixtures_app, name="fixtures")
 _DEFAULT_MAX_SURVIVAL = 100.0
 
 
-@app.command(help="Run the deterministic gate sequence.")
-def check(*, full: bool = False) -> None:
-    raise typer.Exit(run_check(full=full))
+@app.command(help="Run every gate on the working tree, tests included.")
+def check() -> None:
+    raise typer.Exit(run_check())
 
 
-@app.command(help="Apply every safe, idempotent auto-fixer (run before check).")
-def fix(paths: Annotated[list[str] | None, typer.Argument()] = None) -> None:
-    raise typer.Exit(run_fix(tuple(paths or ())))
+@app.command(help="Apply every safe, idempotent auto-fixer to the whole repo.")
+def fix() -> None:
+    raise typer.Exit(run_fix())
 
 
-@app.command(help="Fix fully-staged files, re-stage them, then run the full gate.")
-def precommit() -> None:
-    raise typer.Exit(run_precommit())
+@app.command(help="Fail on any comment or docstring outside a linter pragma.")
+def comments() -> None:
+    raise typer.Exit(run_comments())
 
 
 @app.command(help="Run the cosmic-ray mutation gate (periodic; never a hook).")

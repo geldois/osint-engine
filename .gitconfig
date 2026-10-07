@@ -1,2 +1,6 @@
 [core]
 	hooksPath = .githooks
+[merge]
+	ff = only
+[pull]
+	ff = only

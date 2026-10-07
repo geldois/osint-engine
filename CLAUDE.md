@@ -11,21 +11,26 @@ Only what no other source holds. Everything else is owned elsewhere — go there
 
 ## Gates
 
-Never run a linter, formatter, type-checker, or test yourself — not on one file, not on the whole repo. Edit what needs
-editing and attempt the commit or merge directly; the git hook runs everything on the whole repo automatically and
-blocks it if something's wrong. Iterate from the gate's own failure output, never from a manual run. See README.md's
-Quality gates section for what the git hook actually runs and how a human runs it manually. Needs Docker (the Postgres
-persistence tests use `testcontainers`) — no `.env` is required for `check`/`precommit`, only for the periodic
+Every commit, by anyone, runs the full gate through `.githooks/pre-commit` and is refused if anything fails. So: edit,
+review the docs against the change and edit those too, run `uv run python -m scripts fix` (the only tool you run), stage
+everything, commit — code and docs together. Never run a linter, formatter, type-checker or test yourself, not on one
+file and not on the whole repo; iterate from the hook's own failure output. The hook also refuses a dirty tree, so
+nothing may be left unstaged or untracked at commit time. See README.md's Quality gates section for what it runs. Needs
+Docker (the Postgres persistence tests use `testcontainers`) — no `.env` is required for `check`, only for the periodic
 `scripts fixtures` refresh.
 
+Docs are the only place a decision lives: after every change, check README.md, CONTEXT.md, TO-DO.md and each
+`docs/architecture/*.md` against it and fix whatever no longer tells the truth, in natural language, never citing a
+function, class or type name. A stop hook asks for this review after any turn that edited a file.
+
 Never hand-edit `infrastructure/persistence/pg/generated/` — see README.md's Run section for how to regenerate it. A new
-fetcher against a free provider needs a matching case in `scripts/fixtures.py` —
-`.claude/hooks/report_fixtures_coverage.py` nudges when its `url_suffix` isn't referenced there.
+fetcher against a free provider needs a matching case in `scripts/fixtures.py` — a test fails the commit when its
+`url_suffix` isn't referenced there.
 
 ## Code
 
-No comments and no docstrings anywhere in this repository, ever — not `src/`, `tests/`, `scripts/`, `migrations/`, not
-`.claude/hooks/`, `.github/`, nor any root-level config — the name says it, or the code is wrong, or the decision
-belongs in `README.md`/`TO-DO.md`/`docs/architecture/*.md`/this file/`CONTEXT.md`. Nothing strips one automatically:
-writing it is the mistake, not leaving it in the file. `.claude/hooks/report_comments.py` nudges on any one introduced
-this turn, or already sitting in a file just read, outside an allowlisted linter-suppression pragma.
+No comments and no docstrings anywhere in this repository, ever — not `src/`, `tests/`, `scripts/`, `migrations/`,
+`.githooks/`, `.claude/`, `.github/`, nor any root-level config — the name says it, or the code is wrong, or the
+decision belongs in `README.md`/`TO-DO.md`/`docs/architecture/*.md`/this file/`CONTEXT.md`. The only exceptions are
+linter pragmas, shell directives, shebangs, pinned-action version tags and the SQL loader's `-- name:` lines. The gate
+scans every tracked file and fails the commit on any other.

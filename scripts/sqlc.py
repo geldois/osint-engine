@@ -8,7 +8,7 @@ _KEEP = {"models.py", "__init__.py"}
 
 
 def run_sqlc_generate() -> int:
-    result = subprocess.run(["mise", "exec", "--", "sqlc", "generate"], check=False)
+    result = subprocess.run(["uv", "run", "--no-sync", "sqlc", "generate"], check=False)
     if result.returncode != 0:
         return result.returncode
 
