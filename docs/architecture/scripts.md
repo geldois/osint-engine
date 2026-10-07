@@ -79,6 +79,9 @@ in this repository's own history — but it also means a fresh clone that skips 
 silently runs no hook at all. Continuous integration running the same command is what closes that gap, along with the
 bypass flag, the rebase and the cherry-pick, none of which run the hook.
 
+The documentation formatter downloads its plugins on first use, so the very first gate on a fresh machine needs network
+access beyond the package index.
+
 Refusing a dirty tree makes every commit a whole-tree event: unrelated half-finished work has to be stashed before an
 unrelated commit can land.
 

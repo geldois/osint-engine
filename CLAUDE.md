@@ -27,9 +27,9 @@ The README's mermaid diagram stays brutally summarized, semantic and lean: rough
 and stores, never one node per route, use case, class or repository. If a change needs more than a node or an edge to
 appear there, it belongs in prose, not in the graph.
 
-`TO-DO.md` is the complete, current map of what remains — every deferral, workaround, accepted limit, placeholder and
-unwired piece, each with the file it lives in, the cost of leaving it and the trigger to revisit. A gap found while
-working goes there in the same commit; a gap closed comes out in the same commit.
+`TO-DO.md` holds open problems only — each with the file it lives in, the cost of leaving it and the trigger to revisit;
+a limit accepted by design belongs in `docs/architecture/` instead. A gap found while working goes there in the same
+commit; a gap closed comes out in the same commit.
 
 Never hand-edit `infrastructure/persistence/pg/generated/` — see README.md's Run section for how to regenerate it. A new
 fetcher against a free provider needs a matching case in `scripts/fixtures.py` — a test fails the commit when its

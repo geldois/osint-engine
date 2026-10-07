@@ -61,3 +61,8 @@ The manual steps this script deliberately leaves — setting the pipeline's repo
 host, triggering the first run, and reviewing the generated admin password — are a standing prerequisite for every
 future provisioning of a new host from this same script, not a one-time bootstrapping quirk: whoever runs it again still
 has to complete them themselves.
+
+The schema-migration command resolves its migrations directory relative to the working directory, which only works
+because the image sets that directory and copies the migrations into it; an installation from a built wheel run outside
+the repository or container root cannot find them, since they are not package data. That is fine for a deployment target
+that is only ever the container, and needs revisiting the day another install path appears.
