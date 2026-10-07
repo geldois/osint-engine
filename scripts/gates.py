@@ -2,16 +2,11 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 
-from scripts._report import (
-    Gate,
-    GateOutcome,
-    print_verdict,
-    running_ticker,
-    write_report,
-)
+from scripts._report import Gate, GateOutcome, print_verdict
 
 _UV_RUN = ("uv", "run", "--no-sync")
 _ACTIONLINT_IMAGE = "rhysd/actionlint:1.7.12"
@@ -74,11 +69,9 @@ _GATES: tuple[Gate, ...] = (
 
 
 def run_check() -> int:
-    with running_ticker():
-        outcomes = _run_sequence(Path.cwd())
-
-    report_path = write_report(outcomes, mode="check")
-    print_verdict(outcomes, report_path)
+    sys.stderr.write("running quality gates…\n")
+    outcomes = _run_sequence(Path.cwd())
+    print_verdict(outcomes)
 
     return 0 if all(o.passed for o in outcomes) else 1
 

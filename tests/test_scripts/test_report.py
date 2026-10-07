@@ -1,56 +1,51 @@
 from __future__ import annotations
 
-import json
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-from scripts._report import GateOutcome, write_report
+from scripts._report import GateOutcome, print_verdict
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     import pytest
 
 
-def _read(path: Path) -> dict[str, object]:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def test_write_report_maps_each_status(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.chdir(tmp_path)
+def test_passing_run_prints_one_line(capsys: pytest.CaptureFixture[str]) -> None:
     outcomes = [
-        GateOutcome("a", passed=True, duration_s=0.1, output="ok"),
-        GateOutcome("b", passed=False, duration_s=0.2, output="boom"),
+        GateOutcome("a", passed=True, duration_s=0.1, output="noise"),
+        GateOutcome("b", passed=True, duration_s=0.2, output="noise"),
     ]
 
-    report = _read(write_report(outcomes, mode="fast"))
+    print_verdict(outcomes)
 
-    gates = cast("list[dict[str, object]]", report["gates"])
-    assert [g["status"] for g in gates] == ["pass", "fail"]
-    assert report["mode"] == "fast"
+    err = capsys.readouterr().err
+    assert err.count("\n") == 1
+    assert "passed · 2 gates" in err
+    assert "noise" not in err
 
 
-def test_write_report_passed_is_false_when_any_gate_fails(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_failing_run_names_failed_gates_and_prints_only_their_output(
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    monkeypatch.chdir(tmp_path)
     outcomes = [
-        GateOutcome("a", passed=True, duration_s=0.1, output=""),
-        GateOutcome("b", passed=False, duration_s=0.2, output=""),
+        GateOutcome("good", passed=True, duration_s=0.1, output="fine"),
+        GateOutcome("bad", passed=False, duration_s=0.2, output="boom"),
     ]
 
-    assert _read(write_report(outcomes, mode="fast"))["passed"] is False
+    print_verdict(outcomes)
+
+    err = capsys.readouterr().err
+    assert "FAILED — bad" in err
+    assert "── bad ──\nboom" in err
+    assert "fine" not in err
 
 
-def test_write_report_is_always_written_even_on_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_long_failure_output_keeps_only_the_tail(
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    monkeypatch.chdir(tmp_path)
+    output = "\n".join(f"line {n}" for n in range(200))
 
-    path = write_report(
-        [GateOutcome("a", passed=False, duration_s=0.1, output="")],
-        mode="full",
-    )
+    print_verdict([GateOutcome("bad", passed=False, duration_s=0.1, output=output)])
 
-    assert path.exists()
+    err = capsys.readouterr().err
+    assert "line 199" in err
+    assert "line 0\n" not in err
+    assert "earlier lines omitted" in err

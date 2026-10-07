@@ -4,11 +4,15 @@ command -v uv >/dev/null 2>&1 || {
     exit 1
 }
 git diff --quiet || {
-    echo "osint-engine: unstaged changes — stage or stash them so the gate tests exactly this commit." >&2
+    echo "osint-engine: unstaged changes, so the gate would not test exactly this commit." >&2
+    echo "  commit everything:      git add -A, then commit again" >&2
+    echo "  commit only the staged: git stash push --keep-index --include-untracked, commit, git stash pop" >&2
     exit 1
 }
 [ -z "$(git ls-files --others --exclude-standard)" ] || {
-    echo "osint-engine: untracked files — stage, ignore or remove them so the gate tests exactly this commit." >&2
+    echo "osint-engine: untracked files, so the gate would not test exactly this commit." >&2
+    echo "  commit them too:        git add -A, then commit again" >&2
+    echo "  leave them out:         git stash push --keep-index --include-untracked, commit, git stash pop" >&2
     exit 1
 }
 exec uv run python -m scripts check
