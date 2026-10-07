@@ -7,7 +7,12 @@ permissions:
   contents: read
 
 jobs:
+  verify:
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
   release:
+    needs: verify
     runs-on: ubuntu-24.04
     concurrency:
       group: ${{ github.workflow }}-release-${{ github.ref_name }}

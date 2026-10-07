@@ -14,7 +14,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify:
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+
   build:
+    needs: verify
     strategy:
       fail-fast: false
       matrix:
@@ -88,6 +93,7 @@ jobs:
           done
           docker buildx imagetools create \
             -t ghcr.io/geldois/osint-engine:${{ github.ref_name }} \
+            -t ghcr.io/geldois/osint-engine:${{ github.sha }} \
             "${digests[@]}"
 
   deploy:
@@ -120,8 +126,8 @@ jobs:
           script: |
             cd /opt/osint-engine
             git pull
-            IMAGE_TAG=${{ github.ref_name }} docker compose -f docker-compose.yml -f compose.prod.yml pull
-            IMAGE_TAG=${{ github.ref_name }} docker compose -f docker-compose.yml -f compose.prod.yml up -d
+            IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml -f compose.prod.yml pull
+            IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml -f compose.prod.yml up -d
 
       - name: Wait for health check
         run: |
