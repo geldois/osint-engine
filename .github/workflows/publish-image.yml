@@ -130,7 +130,7 @@ jobs:
             set -e
             cd /opt/osint-engine
             git fetch --quiet origin
-            git merge --ff-only ${{ github.sha }}
+            git reset --hard ${{ github.sha }}
             IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml -f compose.prod.yml pull
             IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml -f compose.prod.yml up -d
 
