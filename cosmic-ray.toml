@@ -2,7 +2,7 @@
 module-path = "src/osint_engine"
 timeout = 30.0
 excluded-modules = []
-test-command = "uv run --no-sync pytest tests/test_domain tests/test_application -x -q"
+test-command = "uv run --no-sync pytest tests/test_src/test_domain tests/test_src/test_application -x -q"
 
 [cosmic-ray.distributor]
 name = "local"
