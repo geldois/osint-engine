@@ -23,13 +23,15 @@ to the nudge after a commit about a dirty tree, which only existed to catch the 
 
 Documentation is reviewed in every turn that changed anything. A hook marks the turn the moment any file inside this
 repository is written (an edit elsewhere, such as the agent's own notes, marks nothing), and a second hook, at the end
-of the turn, consumes that mark exactly once and blocks the stop with an instruction to review every document against
-the change and fix whatever no longer tells the truth, in natural language and without naming code, then commit code and
-documents together. There is no list of paths that count inside the repository: any edit, including to configuration,
-can invalidate a claim, and a list of exclusions is one more thing to go stale. The marker rather than a live query of
-the repository is what makes the review fire even when the agent committed during the turn and left a clean tree. The
-pass the review itself triggers must not trigger another, so the second hook skips when it is already running on behalf
-of a previous block, after clearing the mark that review's own edits set.
+of the turn, consumes that mark exactly once and blocks the stop with an instruction to investigate every document, not
+merely read it: check each claim against the code and configuration, correct or delete whatever is wrong, outdated or
+deprecated (including what the change made stale without adding anything, such as a debt entry it resolved), in natural
+language and without naming code, then commit code and documents together. There is no list of paths that count inside
+the repository: any edit, including to configuration, can invalidate a claim, and a list of exclusions is one more thing
+to go stale. The marker rather than a live query of the repository is what makes the review fire even when the agent
+committed during the turn and left a clean tree. The pass the review itself triggers must not trigger another, so the
+second hook skips when it is already running on behalf of a previous block, after clearing the mark that review's own
+edits set.
 
 Whether a change was semantic or purely mechanical is a judgment the hook never makes; it only guarantees the question
 is asked every time. A change made only through a shell command, such as a rename, a deletion or a code generation,

@@ -18,10 +18,16 @@ dirty tree, so nothing may be left unstaged or untracked at commit time. See REA
 it runs. Needs Docker (the Postgres persistence tests use `testcontainers`) — no `.env` is required for `check`, only
 for the periodic `scripts fixtures` refresh.
 
-Docs are the only place a decision lives: after every change, check README.md, TO-DO.md and each
-`docs/architecture/*.md` against it and fix whatever no longer tells the truth, in natural language, never citing a
-function, class or type name — except in `TO-DO.md`, which exists to point at code and may name files and symbols. A
-stop hook asks for this review after any turn that edited a file in this repo.
+Docs must describe the repo exactly as it is, always — they are the only place a decision lives. After every change,
+however small, investigate every doc, not only the ones the change seems to touch: README.md, TO-DO.md and each
+`docs/architecture/*.md`. Reading is not enough. For each claim a doc makes (a command, path, version, count, route,
+variable, behaviour, limit or rationale) search the code, config and workflows to confirm it still holds, and correct or
+delete whatever is wrong, outdated or deprecated. That includes what the change made stale without adding anything: a
+TO-DO bullet the change resolved comes out in the same commit, a removed file, command or tool is purged from every doc,
+a diagram node for something gone is deleted, a count or list is recounted. A doc left unchanged must be a doc you
+verified, not one you skimmed. Write in natural language, never citing a function, class or type name — except in
+`TO-DO.md`, which exists to point at code and may name files and symbols. A stop hook demands this investigation after
+any turn that edited a file in this repo.
 
 The README's mermaid diagram stays brutally summarized, semantic and lean: roughly a dozen nodes naming the main flows
 and stores, never one node per route, use case, class or repository. If a change needs more than a node or an edge to
