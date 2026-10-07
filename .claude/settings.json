@@ -27,6 +27,7 @@
       "Bash(uv run --no-sync shellcheck *)",
       "Bash(uv run --no-sync shfmt *)",
       "Bash(uv run python -m pytest *)",
+      "Bash(uv run --no-sync python -m pytest *)",
       "Bash(uv run python -m scripts check *)",
       "Bash(uv run python -m scripts comments *)",
       "Bash(python -m pytest *)",

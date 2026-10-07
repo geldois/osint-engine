@@ -46,8 +46,8 @@ information had always been recorded when a fetch happened and had always been u
 observation counted as current, but the layer that shapes a response stripped it out before anything left the process —
 so a caller receiving several observations of the same entity had no way to tell them apart or order them. The
 provenance travels nested under one named object rather than smeared as loose fields across every entity in the payload,
-because the concept already had a name in the project's own vocabulary and repeating four unrelated-looking keys on two
-dozen entity shapes would have obscured it on both sides of the wire.
+because the concept already had a name of its own and repeating four unrelated-looking keys on two dozen entity shapes
+would have obscured it on both sides of the wire.
 
 The identifier derived from an entity's complete content is now published beside the one derived only from its identity
 fields. That exposes a piece of the internal identity model to callers, which was weighed and accepted: it is precisely

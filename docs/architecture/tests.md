@@ -24,10 +24,6 @@ tried and abandoned: a fake can only ever be as correct as its author's own assu
 behaves, and a real, if disposable, instance of the actual engine is the only thing that can catch a genuine query or
 encryption defect — which one already had, going undetected under a fake until the real-engine layer was introduced.
 
-One test file loads its target module by file path rather than importing it normally: that module lives under a
-dot-directory the test runner's own default configuration never collects into the project's package tree, and the module
-it tests only ever runs standalone, never as part of this project's own tooling package.
-
 A free provider's mapper is additionally checked against one real, live API response per source, on top of the
 hand-crafted cases that already cover field mapping, null handling and graph shape — a stand-in built from a developer's
 own understanding of the response can't catch that understanding drifting from what the source actually sends. That

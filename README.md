@@ -1,6 +1,6 @@
 # OSINT Engine
 
-[![CI](https://github.com/geldois/osint-engine/actions/workflows/test.yml/badge.svg)](https://github.com/geldois/osint-engine/actions)
+[![CI](https://github.com/geldois/osint-engine/actions/workflows/publish-image.yml/badge.svg)](https://github.com/geldois/osint-engine/actions)
 [![Release](https://img.shields.io/github/v/release/geldois/osint-engine)](https://github.com/geldois/osint-engine/releases)
 [![Python](https://img.shields.io/badge/python-%E2%89%A53.12-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -26,216 +26,24 @@ structure idempotent by construction, not by convention.
 
 ```mermaid
 flowchart LR
-    subgraph Domain
-        Graph("Graph")
-        Node("Node")
-        Edge("Edge")
-        User("User")
-    end
-
-    Client("HTTP Request") --> FastAPI("FastAPI App")
-    FastAPI --> Logging("Logging Middleware")
-    FastAPI --> ErrorHandler("Error Handler")
-    FastAPI --> AuthRouter("Auth Router")
-    FastAPI --> CNPJRouter("CNPJ Router")
-    FastAPI --> ExpansionRouters("CNEP / CEIS / CEPIM / CEAF Routers")
-    FastAPI --> CPFRouter("CPF Router")
-    FastAPI --> PepRouter("PEP Router")
-    FastAPI --> LegalProcessRouter("Legal Process Router")
-    FastAPI --> ConsumptionRouter("Consumption Router")
-    FastAPI --> GraphRouter("Graph Router")
-    FastAPI --> NodeRouter("Node Router")
-    FastAPI --> EdgeRouter("Edge Router")
-    FastAPI --> CredentialsRouter("Credentials Router")
-    FastAPI --> HealthRouter("Health Router")
-    FastAPI --> TextIngestionRouter("Text Ingestion Router")
-
-    AuthRouter --> PostToken("POST /auth/token")
-    AuthRouter --> PostViewerToken("POST /auth/viewer-token")
-    CNPJRouter --> RoleGuard("Role Guard")
-    CNPJRouter --> ExpansionRateLimit("Expansion Rate Limit · 100 per min per route, shared")
-    CNPJRouter --> GetCNPJ("GET /cnpj/{cnpj}")
-    ExpansionRouters --> JwtGuard("JWT Guard")
-    ExpansionRouters --> ExpansionRateLimit
-    ExpansionRouters --> GetExpansion("GET /cnep · /ceis · /cepim · /ceaf")
-    CPFRouter --> RoleGuard
-    CPFRouter --> ExpansionRateLimit
-    CPFRouter --> GetCPF("GET /cpf/{cpf}")
-    CPFRouter --> PostCPFBatch("POST /cpf/batch · /cpf/batch/estimate")
-    CPFRouter --> BatchRateLimit("Batch Rate Limit · 10 per min, shared")
-    PepRouter --> JwtGuard
-    PepRouter --> ExpansionRateLimit
-    PepRouter --> GetPep("GET /peps/{cpf}")
-    LegalProcessRouter --> RoleGuard
-    LegalProcessRouter --> ExpansionRateLimit
-    LegalProcessRouter --> GetLegalProcess("GET /legal-process/{cpf_or_cnpj}")
-    ConsumptionRouter --> RoleGuard
-    ConsumptionRouter --> ExpansionRateLimit
-    ConsumptionRouter --> GetConsumption("GET /consumption · /consumption/{cpf}")
-    GraphRouter --> JwtGuard
-    GraphRouter --> ExpansionRateLimit
-    GraphRouter --> GetGraphCatalog("GET /graphs")
-    GraphRouter --> GetGraphHistory("GET /graphs/{root_id}/history")
-    NodeRouter --> JwtGuard
-    NodeRouter --> ExpansionRateLimit
-    NodeRouter --> GetNodeHistory("GET /nodes/{node_id}/history")
-    EdgeRouter --> JwtGuard
-    EdgeRouter --> ExpansionRateLimit
-    EdgeRouter --> GetEdgeHistory("GET /edges/{edge_id}/history")
-    CredentialsRouter --> RoleGuard
-    CredentialsRouter --> PostCredential("POST /credentials")
-    CredentialsRouter --> GetCredentials("GET /credentials")
-    HealthRouter --> Liveness("GET /health")
-    HealthRouter --> Readiness("GET /health/ready")
-    TextIngestionRouter --> JwtGuard
-    TextIngestionRouter --> ExpansionRateLimit
-    TextIngestionRouter --> GetPatterns("GET /text-ingestion/patterns")
-    TextIngestionRouter --> PostIngestion("POST /text-ingestion")
-    TextIngestionRouter --> PostIngestionFile("POST /text-ingestion/file")
-
-    Bootstrap("build_container") --> Container("Container")
-    Container --> Fetchers("Fetchers")
-    Container --> Policies("Policies")
-    Container --> Services("Services")
-    Container --> UoWFactory("UoWFactory")
-    Container --> UseCases("UseCases")
-    Container --> ReadinessProbe("readiness_probe")
-
-    UseCases --> AuthenticateUser("AuthenticateUser")
-    UseCases --> ExpandByCNPJ("ExpandByCNPJ")
-    UseCases --> ExpandByCPF("ExpandByCPF")
-    UseCases --> ExpandByCPFBatch("ExpandByCPFBatch")
-    UseCases --> EstimateCPFBatch("EstimateCPFBatch")
-    UseCases --> ExpandByPortal("ExpandBy CNEP / CEIS / CEPIM / CEAF")
-    UseCases --> ExpandByPEP("ExpandByPEP")
-    UseCases --> ExpandByLegalProcess("ExpandByLegalProcess")
-    UseCases --> FindPossiblyMatches("FindPossiblyMatches")
-    UseCases --> ListGraphCatalog("ListGraphCatalog")
-    UseCases --> ListGraphHistory("ListGraphHistory")
-    UseCases --> ListNodeHistory("ListNodeHistory")
-    UseCases --> ListEdgeHistory("ListEdgeHistory")
-    UseCases --> CredentialUseCases("List / Save ExternalCredential")
-    UseCases --> IngestText("IngestText")
-    UseCases --> ListPatternSets("ListTextPatterns")
-    Services --> PyJWTService("PyJWTService")
-    Services --> SpreadsheetReader("read_spreadsheet_text")
-    Services --> KipFlowPacing("KipFlow Pacing · per API key · 5/s · 100/min · 1000/h")
-    Fetchers --> CNPJFetcher("BrasilAPICNPJv1Fetcher")
-    Fetchers --> KipFlowFetcher("KipFlowCPFFetcher")
-    Fetchers --> PortalFetchers("Portal da Transparência Fetchers")
-
-    PostToken --> AuthenticateUser
-    PostViewerToken --> PyJWTService
-    GetCNPJ --> ExpandByCNPJ
-    GetExpansion --> ExpandByPortal
-    GetCPF --> ExpandByCPF
-    GetPep --> ExpandByPEP
-    GetLegalProcess --> ExpandByLegalProcess
-    PostCPFBatch --> ExpandByCPFBatch
-    PostCPFBatch --> EstimateCPFBatch
-    GetCNPJ --> FindPossiblyMatches
-    GetCPF --> FindPossiblyMatches
-    GetExpansion --> FindPossiblyMatches
-    GetPep --> FindPossiblyMatches
-    GetLegalProcess --> FindPossiblyMatches
-    PostIngestion --> FindPossiblyMatches
-    PostIngestionFile --> FindPossiblyMatches
-    GetGraphCatalog --> ListGraphCatalog
-    GetGraphHistory --> ListGraphHistory
-    GetNodeHistory --> ListNodeHistory
-    GetEdgeHistory --> ListEdgeHistory
-    PostCredential --> CredentialUseCases
-    GetCredentials --> CredentialUseCases
-    GetPatterns --> ListPatternSets
-    PostIngestion --> IngestText
-    PostIngestionFile --> SpreadsheetReader
-    PostIngestionFile --> IngestText
-    Readiness --> ReadinessProbe
-    RoleGuard --> PyJWTService
-    JwtGuard --> PyJWTService
-
-    IngestText --> UoWFactory
-    IngestText --> ExtractMatches("extract_matches · regex + mod-11 checksum")
-    IngestText --> TextSourceNode("TextSource")
-    IngestText --> MentionEdges("Person/Company/AddressMentionedInText")
-    ListPatternSets --> UoWFactory
-
-    AuthenticateUser --> UoWFactory
-    AuthenticateUser --> Argon2("Argon2PasswordHasher")
-    AuthenticateUser --> PyJWTService
-
-    ExpandByCNPJ --> UoWFactory
-    ExpandByCNPJ --> CNPJFetcher
-    ExpandByCPF --> UoWFactory
-    ExpandByCPF --> KipFlowFetcher
-    ExpandByPortal --> UoWFactory
-    ExpandByPortal --> PortalFetchers
-    ExpandByPEP --> UoWFactory
-    ExpandByPEP --> PortalFetchers
-    ExpandByLegalProcess --> UoWFactory
-    ExpandByLegalProcess --> KipFlowFetcher
-    FindPossiblyMatches --> UoWFactory
-    ListGraphCatalog --> UoWFactory
-    ListGraphHistory --> UoWFactory
-    ListNodeHistory --> UoWFactory
-    ListEdgeHistory --> UoWFactory
-    CNPJFetcher --> BrasilAPI("BrasilAPI")
-    KipFlowFetcher --> KipFlowAPI("KipFlow")
-    PortalFetchers --> PortalAPI("Portal da Transparência")
-    CNPJFetcher --> Mapper("cnpj_v1_mapper")
-    Mapper --> EntityRevision("EntityRevision")
-    EntityRevision --> Graph
-
-    UoWFactory --> HybridUoW("HybridUoW")
-    HybridUoW --> MemUoW("MemUoW")
-    HybridUoW --> PgCredentials("PgExternalCredentialRepository")
-    CredentialUseCases --> HybridUoW
-    PgCredentials --> Fernet("Fernet encryption")
-    PgCredentials --> Postgres("PostgreSQL")
-    ReadinessProbe --> Postgres
-    MemUoW --> Snapshot("MemStorageSnapshot")
-    MemUoW --> NodeRepo("MemNodeRepository")
-    MemUoW --> EdgeRepo("MemEdgeRepository")
-    MemUoW --> GraphRepo("MemGraphRepository")
-    MemUoW --> PatternSetRepo("MemPatternSetRepository")
-    MemUoW --> UserRepo("MemUserRepository")
-
-    Policies --> MergePolicy("RevisionMergePolicy")
-    Policies --> SelectionPolicy("RevisionSelectionPolicy")
-    MergePolicy --> NodeRepo
-    MergePolicy --> EdgeRepo
-    MergePolicy --> GraphRepo
-    SelectionPolicy --> NodeRepo
-    SelectionPolicy --> EdgeRepo
-    SelectionPolicy --> GraphRepo
-
-    NodeRepo --> Snapshot
-    EdgeRepo --> Snapshot
-    GraphRepo --> Snapshot
-    PatternSetRepo --> Snapshot
-    UserRepo --> Snapshot
-    Snapshot --> MemStorage("MemStorage")
-    MemStorage --> DefaultPatterns("BRAZILIAN_DOCUMENTS_V1 · seeded")
-
-    NodeRepo --> Node
-    EdgeRepo --> Edge
-    GraphRepo --> Graph
-    UserRepo --> User
-    GraphRepo -.cascades new content only.-> NodeRepo
-    GraphRepo -.cascades new content only.-> EdgeRepo
-
-    GetCNPJ --> GraphPresenter("Graph Presenter")
-    GetGraphHistory --> GraphPresenter
-    GetGraphCatalog --> GraphPresenter
-    GraphPresenter --> GraphSchema("GraphSchema")
-    GraphPresenter --> GraphCatalogSchema("GraphCatalogSchema")
-    PostToken --> TokenSchema("TokenSchema")
+    Client("Client") --> Interface("HTTP interface · JWT roles · rate limits")
+    Interface --> Expansion("Expansion by identifier")
+    Interface --> Ingestion("Text and spreadsheet ingestion")
+    Interface --> History("Graph history and catalog")
+    Interface --> Credentials("Credentials")
+    Expansion --> Providers("Providers: BrasilAPI · Portal da Transparência · KipFlow")
+    Expansion --> Graph("Graph: typed nodes and edges, content-addressed ids")
+    Ingestion --> Graph
+    Graph --> Snapshot("In-memory snapshot: graphs, users, consumption")
+    History --> Snapshot
+    Providers -. "API keys" .-> Postgres("PostgreSQL: encrypted credentials")
+    Credentials --> Postgres
 ```
 
 ## API
 
-Every endpoint except `/auth/token` and `/auth/viewer-token` requires a Bearer token. Obtain one first, then use it on
-every subsequent request.
+Every endpoint except `/auth/token`, `/auth/viewer-token` and the two health endpoints requires a Bearer token. Obtain
+one first, then use it on every subsequent request.
 
 ### Authentication
 
@@ -436,6 +244,33 @@ never the formula text. Rejects anything above 10 MB or 50,000 rows in a single 
 or `.csv`, a CSV field past the parser's own size limit, and any file whose content isn't a valid spreadsheet, all as
 `422`. See `docs/architecture/infrastructure.md`.
 
+### Credentials
+
+All three routes are `ADMIN`-only and scoped to the caller's own username, so a `VIEWER` token gets `403`.
+
+```http
+POST /credentials
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "provider": "KIPFLOW", "api_key": "<key>" }
+```
+
+Saves the caller's API key for a provider, encrypted with `EXTERNAL_CREDENTIAL_ENCRYPTION_KEY`, and answers `204`.
+
+```http
+GET /credentials
+```
+
+Lists every provider with whether the caller has a key saved (`{"provider": ..., "configured": true|false}`), never the
+key itself.
+
+```http
+GET /credentials/{provider}/reveal
+```
+
+Returns the caller's decrypted key for that provider (`{"api_key": ...}`) so the studio can show it back to its owner.
+
 ### Health
 
 ```http
@@ -443,7 +278,7 @@ GET /health
 ```
 
 Liveness — always `200 {"status": "ok"}` while the process is up, touching no dependency. Both health endpoints are
-unauthenticated and unthrottled so a hosting platform (Render) can poll them freely.
+unauthenticated and unthrottled so the deploy pipeline and any uptime monitor can poll them freely.
 
 ```http
 GET /health/ready
@@ -497,7 +332,7 @@ response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `403` means 
 
 ## Stack
 
-- **Runtime:** Python 3.12, FastAPI, Uvicorn
+- **Runtime:** Python 3.14 (the image, CI and `.python-version`; the package supports ≥3.12), FastAPI, Uvicorn
 - **CLI:** Typer (`osint-engine serve` / `osint-engine migrate up|down`)
 - **Auth:** PyJWT (HS256 access tokens), argon2-cffi (Argon2id password hashing)
 - **Persistence:** PostgreSQL via asyncpg + aiosql (external credentials), golang-migrate (schema migrations), in-memory
@@ -508,7 +343,8 @@ response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `403` means 
 - **File reading:** openpyxl (`.xlsx`), stdlib `csv` (`.csv`)
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
-- **Tooling:** uv, Ruff, basedpyright (strict), import-linter, cosmic-ray
+- **Tooling:** uv, Ruff, basedpyright (strict), import-linter, dprint, sqruff, shellcheck, shfmt, actionlint, sqlc,
+  cosmic-ray, python-semantic-release; mise only for `migrate` and `act`
 - **Testing:** pytest, pytest-asyncio, testcontainers, hypothesis (property-based tests, see
   `docs/architecture/tests.md`)
 
@@ -600,6 +436,30 @@ copy .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and 
 > with `git commit --no-verify`). No editor or Claude Code is required: the gates run from the git hook and CI,
 > identically for every contributor, and there is no `pre-push` — pushing is never blocked.
 
+### Configuration
+
+Read from the environment, or from `.env` in the working directory. The first five have no default and the process
+refuses to start without them.
+
+| Variable                              | Default                 | Meaning                                                              |
+| ------------------------------------- | ----------------------- | -------------------------------------------------------------------- |
+| `SECRET_KEY`                          | required                | HS256 signing key for access tokens                                  |
+| `ADMIN_PASSWORD`                      | required                | Password of the `admin` user                                         |
+| `DATABASE_URL`                        | required                | PostgreSQL connection string (credentials and migrations)            |
+| `EXTERNAL_CREDENTIAL_ENCRYPTION_KEY`  | required                | Fernet key that encrypts stored provider API keys                    |
+| `ACCESS_TOKEN_EXPIRE_MINUTES`         | `60`                    | `ADMIN` token lifetime                                               |
+| `VIEWER_TOKEN_EXPIRE_MINUTES`         | `20`                    | `VIEWER` token lifetime                                              |
+| `CORS_ORIGINS`                        | `http://localhost:3000` | Comma-separated allowed origins                                      |
+| `DEBUG`                               | `false`                 | Console logging instead of JSON                                      |
+| `LOG_LEVEL`                           | `info`                  | Log level                                                            |
+| `HOST` / `PORT`                       | `127.0.0.1` / `8000`    | Bind address of `serve`                                              |
+| `DOCS_REDIRECT_ROOT`                  | `false`                 | Redirect `/` to `/docs`                                              |
+| `FETCHER_CONNECT_TIMEOUT`             | `15.0`                  | Seconds to connect to an upstream API                                |
+| `FETCHER_READ_TIMEOUT`                | `30.0`                  | Seconds to read an upstream response                                 |
+| `PORTAL_TRANSPARENCIA_API_KEY`        | none                    | Dev and CI tooling only (fixture refresh); the app reads it per user |
+| `POSTGRES_USER` / `_PASSWORD` / `_DB` | none                    | Read by the compose Postgres service                                 |
+| `API_DOMAIN` / `IMAGE_TAG`            | none                    | Read by the production compose overlay (Caddy host, image tag)       |
+
 ### Run
 
 `osint-engine migrate` needs the `migrate` CLI on `PATH` (install [mise](https://mise.jdx.dev) and run `mise install`;
@@ -616,8 +476,8 @@ uv run osint-engine serve
 ```
 
 The production image runs this sequence: its entrypoint chains `wait-db`, `migrate up`, then `serve`, so a container
-deploy (Render) needs no manual migration step — the commands above are only for running against a local Postgres
-outside the container.
+deploy needs no manual migration step — the commands above are only for running against a local Postgres outside the
+container.
 
 `infrastructure/persistence/pg/generated/` is [sqlc](https://sqlc.dev)-generated from `migrations/` and `queries/*.sql`,
 committed to the repo. Regenerate it by hand after changing either — never run bare `sqlc generate`, which also emits an
@@ -628,6 +488,8 @@ uv run python -m scripts sqlc-generate
 ```
 
 ### Test
+
+For a human contributor, outside the gate (the agent never runs it; `scripts check` is the gate):
 
 ```bash
 uv run pytest --cov --cov-branch
@@ -645,10 +507,10 @@ uv run python -m scripts fixtures verify
 Requires a real, working `PORTAL_TRANSPARENCIA_API_KEY` in `.env` — request one at
 <https://api.portaldatransparencia.gov.br/>.
 
-`tests/test_infrastructure/test_persistence/test_pg/` spins up a real Postgres via `testcontainers`, pulling the
-`postgres:18` and `testcontainers/ryuk:0.8.1` images from Docker Hub on first run (cached locally afterward). If pulls
-hang or time out, your DNS resolver may not be resolving Docker Hub reliably — point the Docker daemon at a known-good
-resolver in `/etc/docker/daemon.json`:
+`tests/test_src/test_infrastructure/test_persistence/test_pg/` spins up a real Postgres via `testcontainers`, pulling
+the `postgres:18` and `testcontainers/ryuk:0.8.1` images from Docker Hub on first run (cached locally afterward). If
+pulls hang or time out, your DNS resolver may not be resolving Docker Hub reliably — point the Docker daemon at a
+known-good resolver in `/etc/docker/daemon.json`:
 
 ```json
 { "dns": ["1.1.1.1", "8.8.8.8"] }
@@ -658,14 +520,19 @@ then `sudo systemctl restart docker` and re-run the pulls.
 
 ### Local CI
 
+`act` comes from `mise install`:
+
 ```bash
 act push
 ```
 
 ## Deploy
 
-`.github/workflows/publish-image.yml` builds both architectures, merges them into one multi-arch manifest on ghcr.io,
-then deploys over SSH to the host `cloud-init.sh` provisions. Its last step probes
+`.github/workflows/publish-image.yml` runs on every push to `main`. It first calls `test.yml`, the very same gate as the
+commit hook, on that exact commit; only if it passes does it build both architectures, merge them into one multi-arch
+manifest on ghcr.io tagged with the branch and with the commit SHA, then deploy over SSH to the host `cloud-init.sh`
+provisions, pulling the image by SHA so production runs exactly the commit that was verified. `release.yml`, run by
+hand, is the semantic-release job and likewise waits for the same gate. Its last step probes
 `https://${{ vars.API_DOMAIN }}/health` from the runner rather than from the host, so the check still reports a host
 that is itself the broken half — the probe therefore reaches Caddy by the name CI believes in, which Caddy only answers
 if the host serves that same name.
@@ -681,11 +548,12 @@ project owns.
 
 - `fix` runs every safe fixer (Ruff's linter fixes then its formatter, dprint, sqruff, shfmt) on the whole repo. It is
   never part of the commit: run it before committing, and the commit finds nothing left to complain about.
-- `check` runs every gate on the working tree: lockfile, comment ban, Ruff format and lint, import-linter, basedpyright
-  (warnings fail), dprint, sqruff, shellcheck, shfmt, actionlint (via its pinned Docker image) and the full pytest suite
-  with coverage (warnings fail). `.githooks/pre-commit` and CI both run exactly this, and the hook first refuses a
-  commit when anything is unstaged or untracked, so what the gate tested is exactly what is committed. A partial commit
-  therefore needs the rest stashed.
+- `check` runs every gate on the working tree, after syncing the environment: lockfile, comment ban, Ruff format and
+  lint, import-linter, basedpyright (warnings fail), dprint, sqruff, shellcheck, shfmt, actionlint (via its pinned
+  Docker image) and the full pytest suite with coverage (warnings fail). `.githooks/pre-commit` and CI both run exactly
+  this, and the hook first refuses a commit when anything is unstaged or untracked, so what the gate tested is exactly
+  what is committed. A partial commit therefore needs the rest stashed, and the hook prints the exact commands. A
+  failure prints only the failed gates' output, trimmed to its last 60 lines.
 
 `scripts mutation`, `scripts sqlc-generate`, and `scripts fixtures` stay separate, periodic, manual commands — never
 part of `check`.

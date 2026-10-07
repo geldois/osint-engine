@@ -9,11 +9,11 @@ suite actually catches them, as a check on the tests' own effectiveness rather t
 one is never run as part of an ordinary commit, only on demand.
 
 Every commit is validated in full, automatically, by the git hook, and continuous integration runs the very same
-command, so nothing lands without every check having passed. A warning from any tool counts as a failure, and so does a
-missing required tool, which fails its check outright rather than being silently skipped. When something fails, the
-specific, actionable output of exactly what broke is always shown directly, on every channel, rather than requiring
-anyone to go dig through a separate report by hand — though the complete underlying record is still always written out
-for anything that does want to consume it programmatically.
+command. The release and image-publishing workflows call that same workflow first and do nothing unless it passes, so
+nothing is published or deployed without every check having passed on the exact commit being shipped. A warning from any
+tool counts as a failure, and so does a missing required tool, which fails its check outright rather than being silently
+skipped. When something fails, the output of exactly the gates that broke is shown directly, trimmed to its tail, and
+nothing else: no progress display, no separate report file to dig through, and a passing run is a single line.
 
 ## Decisions
 
@@ -26,9 +26,10 @@ configuration, so a commit is the only way anything enters history and one hook 
 The hook only verifies; it never rewrites anything. An earlier design fixed the whole repo inside the hook, re-staged
 whatever it rewrote, replayed a cached result when the tree was unchanged and needed a second hook plus a marker file to
 undo the residue of partial commits. All of that machinery existed to serve one convenience — never running a fixer by
-hand — and each piece was a place for a subtle bug to hide in the one component whose only job is to be trustworthy.
-Fixing is now a separate, explicit command run before committing, and the commit then finds nothing left to complain
-about. The cost is one extra command per commit; the gain is a gate with no state and nothing to go stale.
+hand — and each piece was a place for a subtle bug to hide in the one component whose only job is to be trustworthy. The
+refusal tells the person the exact commands for both outcomes, commit everything or stash the rest. Fixing is now a
+separate, explicit command run before committing, and the commit then finds nothing left to complain about. The cost is
+one extra command per commit; the gain is a gate with no state and nothing to go stale.
 
 The gate checks the real working tree, so the hook first refuses the commit when anything is unstaged or untracked.
 Without that refusal a forgotten new file, or an edit left unstaged, could make the suite pass against code the commit
@@ -43,10 +44,11 @@ a closed allowlist for linter-suppression pragmas, shell directives, shebangs, p
 annotations the SQL query loader requires. A comment marker only counts when it starts a word, so shell argument-count
 and length expansions are never mistaken for one.
 
-Every linter, formatter and type-checker is a pinned development dependency installed with the environment, so the only
-prerequisites of the gate are the package manager and the container runtime the test suite already needs. The workflow
-linter is the one exception: its Python wrapper downloads a binary at install time, so it runs from its pinned container
-image instead.
+The runner syncs the environment once and then runs every tool without re-syncing, so no gate can change the environment
+under another. Every linter, formatter and type-checker is a pinned development dependency installed with that
+environment, so the only prerequisites of the gate are the package manager and the container runtime the test suite
+already needs. The workflow linter is the one exception: its Python wrapper downloads a binary at install time, so it
+runs from its pinned container image instead.
 
 Within the fixer, whatever can rewrite logic or structure always runs before whatever only reformats: a fixer that
 introduces new code (an import rewrite, a lint autofix) can leave text that doesn't match the project's own formatting,
@@ -58,14 +60,15 @@ test configuration; the replacement isolates every mutant in its own subprocess 
 working reliably here. Its own test command runs only the fast unit layer, no database container, since a mutant only an
 end-to-end test would catch is an acceptable survivor for a check aimed at the pure domain/application logic.
 
-A fixture-refresh step and a container-registry login in continuous integration each depend on a secret a forked
-repository's pull request never receives, and are skipped rather than failed in that one case — the tests relying on
-either then fail on their own instead, rather than the job failing on a secret it was never going to have.
+The container-registry login in continuous integration depends on a secret a forked repository's pull request never
+receives, and is skipped rather than failed in that one case — the tests relying on it then fail on their own instead,
+rather than the job failing on a secret it was never going to have.
 
 Every tool's own cache or working-data directory is redirected under one gitignored root, rather than left at each
 tool's own default location — the repository root otherwise accumulates one dot-directory per tool, none of them meant
 for a person to ever open. The one exception is the project's own environment and its own generated report output,
-neither of which is a third-party tool's cache in the same sense.
+neither of which is a third-party tool's cache in the same sense; the agent-hook marker lives in the same generated
+build directory.
 
 ## Consequences
 

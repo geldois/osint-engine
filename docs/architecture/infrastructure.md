@@ -92,10 +92,10 @@ credential's own window back to full — a caller loses no paid work, since each
 but also loses whatever wait a batch estimate had already promised, so an estimate given just before a restart can
 undercount the true wait afterward.
 
-Staying on hand-written queries and plain migration files means every future schema change or query is written and
-reviewed by hand, with nothing generated to fall out of sync with the schema — the tradeoff is that no tool catches a
-query still referencing a column a migration already renamed; that stays a manual discipline, not a mechanical
-guarantee.
+Queries stay hand-written next to plain migration files, and a code generator turns them into the committed record
+models, validating each query against the migrations while it does — but only when someone runs it by hand, because it
+is not part of the gate. The tradeoff is that the committed generated models can silently fall behind a changed query or
+migration until the next manual regeneration; no mechanical check enforces their freshness.
 
 The closed list of named spreadsheet-corruption failures is exactly what has actually been reproduced and confirmed so
 far, not a claim of completeness — a new corruption shape a future file exhibits falls through to the broad catch

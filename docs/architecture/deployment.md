@@ -16,8 +16,8 @@ a demo is worse than a kernel patch sitting pending until the next manual one.
 The container runtime's own log driver is capped by size and file count — without an explicit limit, container log
 output grows without bound on a host nobody is otherwise rotating logs on.
 
-The generated environment file's encryption key is produced as base64 translated into the URL-safe alphabet, then
-truncated at generation, rather than as hex — the key a stored external credential is encrypted with must be a URL-safe
+The generated environment file's encryption key is produced as base64 translated into the URL-safe alphabet at
+generation, rather than as hex — the key a stored external credential is encrypted with must be a URL-safe
 base64-encoded value of the exact byte length that scheme requires, not an arbitrary secret string.
 
 The generated database URL disables the driver's default requirement of a TLS connection — the schema-migration tool's
@@ -28,6 +28,18 @@ The published container image's tag is left unset by provisioning on purpose: cl
 of having Docker, the cloned repository, and a generated environment file, and deliberately stops there — the first
 `compose up` with an actually-published tag, and the review of the generated admin password, are a manual step in the
 same session, not something a provisioning script should do unattended.
+
+The application is never exposed directly: a reverse proxy container owns ports 80 and 443, obtains and renews the
+certificate for the configured domain by itself, and forwards to the application on the compose-internal network only.
+Production is the base compose file plus an overlay that adds the proxy, pins the application to a published image tag
+passed in at deploy time, and feeds the database service its credentials from the host's environment file, so the same
+base file still serves local development unchanged.
+
+The image is built per architecture and pushed by digest, then a second job joins the digests into one multi-arch
+manifest tagged both with the branch and with the commit SHA. The SHA tag is what the deploy pulls, so the running
+container is always the exact commit the verification gate passed, never whatever a moving tag points at when the host
+happens to pull. The host also runs an intrusion-banning service for SSH, since it is exposed to the internet and nobody
+watches its logs.
 
 ## Consequences
 
