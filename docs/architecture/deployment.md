@@ -35,6 +35,12 @@ Production is the base compose file plus an overlay that adds the proxy, pins th
 passed in at deploy time, and feeds the database service its credentials from the host's environment file, so the same
 base file still serves local development unchanged.
 
+The overlay also makes the application trust the client address the proxy forwards. Without it every request appears to
+come from the proxy itself, so every per-address rate limit — signup and login — collapses into one global bucket that a
+single caller can exhaust for everyone. Trusting that header is safe only because nothing reaches the application except
+through the proxy; exposing the application directly would let a caller forge its address and dodge those limits, which
+makes this the first thing to revisit if that ever changes.
+
 The image is built per architecture and pushed by digest, then a second job joins the digests into one multi-arch
 manifest tagged both with the branch and with the commit SHA. The SHA tag is what the deploy pulls, so the running
 container is always the exact commit the verification gate passed, never whatever a moving tag points at when the host

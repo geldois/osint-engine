@@ -84,6 +84,14 @@ same commit; a gap closed comes out in the same commit.
 
 ## feat(auth)
 
+- **Password verification at login runs on the event loop**
+  (`application/use_cases/authentication/authenticate_user.py`). Registration already hashes in a worker thread, but
+  `AuthenticateUser` still calls the memory-hard verify inline, so a burst of logins stalls every concurrent request
+  until the 5-per-10-minutes limit bites. Move it to the same worker thread when login traffic is more than a demo's
+- **Per-user consumption filtering reads every record first** (`list_entity_record_catalog.py`,
+  `list_entity_records_by_cpf.py`, `guard_reuse_lock.py`). Each call loads every account's records from the in-memory
+  log and keeps the caller's, so cost grows with total users, not the caller's own history. Replace with a repository
+  query by username when the log leaves memory
 - **Accounts have no password reset, no deletion and no email or other proof of ownership**
   (`application/use_cases/authentication/register_user.py`). A forgotten password locks the account and its saved keys
   for good, and open signup is bounded only by the 10-per-15-minutes IP limit and argon2's cost. Add an invite code (an

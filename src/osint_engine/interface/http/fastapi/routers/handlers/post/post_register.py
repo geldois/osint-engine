@@ -22,8 +22,8 @@ def build_post_register_handler(
             username=body.username, password=body.password
         )
 
-        user = await use_case.execute()
-        access_token = jwt_service.create_access_token(username=user.username)
+        await use_case.execute()
+        access_token = jwt_service.create_access_token(username=body.username)
 
         return TokenSchema(access_token=access_token)
 

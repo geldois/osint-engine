@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 class TestRegisterUserExecution:
     @pytest.mark.asyncio
-    async def test_returns_the_new_user_and_stores_it(
+    async def test_stores_the_new_user_and_returns_nothing(
         self,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
@@ -39,10 +39,10 @@ class TestRegisterUserExecution:
             password="correct horse",
         )
 
-        user = await use_case.execute()
+        result = await use_case.execute()
 
-        assert user.username == "alice"
-        assert mem_storage.users == {"alice": user}
+        assert result is None
+        assert set(mem_storage.users) == {"alice"}
 
     @pytest.mark.asyncio
     async def test_never_stores_the_plaintext_password(
@@ -62,7 +62,9 @@ class TestRegisterUserExecution:
             password="correct horse",
         )
 
-        user = await use_case.execute()
+        await use_case.execute()
+
+        user = mem_storage.users["alice"]
 
         assert "correct horse" not in user.hashed_password
         assert user.hashed_password.startswith("$argon2id$")

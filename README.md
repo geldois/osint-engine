@@ -298,9 +298,9 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 
 | Endpoint                           | Limit       | Keyed by                   |
 | ---------------------------------- | ----------- | -------------------------- |
-| `POST /auth/token`                 | 5 / 15 min  | Client IP                  |
+| `POST /auth/token`                 | 5 / 10 min  | Client IP                  |
 | `POST /auth/register`              | 10 / 15 min | Client IP                  |
-| `GET /cnpj/{cnpj}`                 | 100 / min   | Per-user, per-route bucket |
+| `GET /cnpj/{cnpj}`                 | 100 / min   | Shared per-route bucket    |
 | `GET /cpf/{cpf}`                   | 100 / min   | Per-user, per-route bucket |
 | `POST /cpf/batch`                  | 10 / min    | Per-user, per-route bucket |
 | `POST /cpf/batch/estimate`         | 10 / min    | Per-user, per-route bucket |
@@ -323,9 +323,11 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
 `Access-Control-Expose-Headers`. See `docs/architecture/interface.md`. Every limited route has one bucket per
 authenticated user — keyed by the token's username, not by IP — so one account exhausting its allowance never throttles
-another, which fits each account spending its own provider keys against that provider's own per-key quota. The two batch
-routes share their own `cpf_batch` bucket instead of the single-CPF one: one batch request drives up to 50 paid provider
-calls, so the HTTP quota and the outbound quota must not share a counter. Outbound KipFlow traffic is additionally paced
+another, which fits each account spending its own provider keys against that provider's own per-key quota. The one
+exception is `GET /cnpj/{cnpj}`: BrasilAPI needs no key, so every account's requests leave from this deployment's own
+IP, and a single bucket shared by everyone keeps new accounts from multiplying the outbound rate. The two batch routes
+share their own `cpf_batch` bucket instead of the single-CPF one: one batch request drives up to 50 paid provider calls,
+so the HTTP quota and the outbound quota must not share a counter. Outbound KipFlow traffic is additionally paced
 client-side against KipFlow's own documented per-API-key limits — a 5/s burst, a 100/min average and a 1000/hour volume
 — by an in-memory queue keyed per credential: a fetch that would cross any window waits its turn in FIFO order instead
 of dropping or overrunning, and `POST /cpf/batch/estimate` surfaces how long that wait would be before the caller pays

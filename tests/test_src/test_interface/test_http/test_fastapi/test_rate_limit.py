@@ -29,7 +29,10 @@ class TestBuildUserBucketKey:
         key = build_user_bucket_key(container=container, scope="expansion:cnpj")
         token = pyjwt_service.create_access_token(username="alice")
 
-        assert key(_request(authorization=f"Bearer {token}")) == "expansion:cnpj:alice"
+        assert (
+            key(_request(authorization=f"Bearer {token}"))
+            == "expansion:cnpj:user:alice"
+        )
 
     def test_two_users_never_share_a_bucket(
         self, container: Container, pyjwt_service: PyJWTService
@@ -58,7 +61,7 @@ class TestBuildUserBucketKey:
         key = build_user_bucket_key(container=container, scope="s")
         token = pyjwt_service.create_access_token(username="alice")
 
-        assert key(_request(authorization=f"bEaReR {token}")) == "s:alice"
+        assert key(_request(authorization=f"bEaReR {token}")) == "s:user:alice"
 
     @pytest.mark.parametrize(
         "authorization",
@@ -79,3 +82,13 @@ class TestBuildUserBucketKey:
         tampered = token[:-5] + "xxxxx"
 
         assert key(_request(authorization=f"Bearer {tampered}")) == "s:anonymous"
+
+    def test_a_user_named_anonymous_never_shares_the_fallback_bucket(
+        self, container: Container, pyjwt_service: PyJWTService
+    ) -> None:
+        key = build_user_bucket_key(container=container, scope="s")
+        token = pyjwt_service.create_access_token(username="anonymous")
+
+        assert key(_request(authorization=f"Bearer {token}")) != key(
+            _request(authorization=None)
+        )

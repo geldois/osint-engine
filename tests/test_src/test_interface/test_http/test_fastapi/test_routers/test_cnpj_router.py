@@ -262,7 +262,7 @@ class TestCnpjRateLimit:
         assert response.status_code == 429
 
     @pytest.mark.asyncio
-    async def test_exhausting_one_users_bucket_leaves_another_users_untouched(
+    async def test_the_bucket_is_shared_so_new_accounts_cannot_multiply_the_rate(
         self, client: AsyncClient, valid_token: str, pyjwt_service: PyJWTService
     ) -> None:
         headers = {"Authorization": f"Bearer {valid_token}"}
@@ -272,8 +272,6 @@ class TestCnpjRateLimit:
         for _ in range(100):
             await client.get(f"/cnpj/{CNPJ}", headers=headers)
 
-        blocked = await client.get(f"/cnpj/{CNPJ}", headers=headers)
-        untouched = await client.get(f"/cnpj/{CNPJ}", headers=other_headers)
+        response = await client.get(f"/cnpj/{CNPJ}", headers=other_headers)
 
-        assert blocked.status_code == 429
-        assert untouched.status_code == 200
+        assert response.status_code == 429

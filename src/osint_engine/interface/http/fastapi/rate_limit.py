@@ -19,7 +19,7 @@ _FIFTEEN_MINUTES_IN_SECONDS = 15 * 60
 _EXPANSION_REQUESTS_PER_MINUTE = 100
 _BATCH_REQUESTS_PER_MINUTE = 10
 _REGISTRATIONS_PER_WINDOW = 10
-_ANONYMOUS_USERNAME = "anonymous"
+_ANONYMOUS_BUCKET = "anonymous"
 _BEARER_SCHEME = "bearer"
 
 
@@ -47,17 +47,16 @@ def build_user_bucket_key(
 
     def key(request: Request) -> str:
         scheme, _, token = request.headers.get("Authorization", "").partition(" ")
-        username = _ANONYMOUS_USERNAME
 
-        if scheme.lower() == _BEARER_SCHEME and token:
-            try:
-                claims = container.services.jwt_service.decode_access_token(token=token)
-            except OsintError:
-                return f"{scope}:{username}"
+        if scheme.lower() != _BEARER_SCHEME or not token:
+            return f"{scope}:{_ANONYMOUS_BUCKET}"
 
-            username = str(claims.get("sub", _ANONYMOUS_USERNAME))
+        try:
+            claims = container.services.jwt_service.decode_access_token(token=token)
+        except OsintError:
+            return f"{scope}:{_ANONYMOUS_BUCKET}"
 
-        return f"{scope}:{username}"
+        return f"{scope}:user:{claims['sub']}"
 
     return key
 
@@ -87,6 +86,19 @@ def build_expansion_rate_limit(
             key_func=build_user_bucket_key(
                 container=container, scope=f"expansion:{scope}"
             ),
+        )
+    )
+
+
+def build_shared_rate_limit(
+    *, scope: str
+) -> Callable[[Request, Response], Awaitable[None]]:
+
+    return _translate_rate_limit_error(
+        RateLimiter(
+            times=_EXPANSION_REQUESTS_PER_MINUTE,
+            seconds=60,
+            key_func=lambda _request: f"expansion:{scope}",
         )
     )
 

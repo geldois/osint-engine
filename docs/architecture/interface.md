@@ -19,9 +19,11 @@ precondition such as a provider key that was never saved, so a caller (or whoeve
 Every route that could be hit by unauthenticated or lightly-authenticated traffic is rate-limited in-memory, with a flat
 allowance per route that each authenticated caller spends separately (or per client address on the login and account
 creation routes) — protecting each caller's own upstream quota, which is tied to their own key, and the login and signup
-routes themselves from being hammered. Every error that reaches this layer, regardless of which layer actually raised
-it, is translated into one consistent response shape carrying a machine-readable error code and a correlation id, so a
-caller never sees a raw stack trace or an inconsistent error format depending on which internal component failed.
+routes themselves from being hammered. The one route backed by a keyless upstream keeps a single bucket shared by
+everyone instead, because all accounts' requests leave from this deployment's own address and per-account buckets would
+let new accounts multiply the outbound rate. Every error that reaches this layer, regardless of which layer actually
+raised it, is translated into one consistent response shape carrying a machine-readable error code and a correlation id,
+so a caller never sees a raw stack trace or an inconsistent error format depending on which internal component failed.
 
 Every request handler is an ordinary function whose dependencies are visible in its own signature — assembled once, by
 hand, when the process starts, rather than resolved automatically per request. That keeps the wiring traceable in one

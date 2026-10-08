@@ -180,3 +180,25 @@ class TestGetGraphCatalogSmoke:
         assert len(entries) == 1
         assert entries[0]["revision_count"] == 2
         assert entries[0]["root"]["id"] == str(root_id)
+
+
+class TestGraphCatalogRateLimit:
+    @pytest.mark.asyncio
+    async def test_exhausting_one_users_bucket_leaves_another_users_untouched(
+        self,
+        fastapi_app_client: AsyncClient,
+        user_token: str,
+        pyjwt_service: PyJWTService,
+    ) -> None:
+        headers = {"Authorization": f"Bearer {user_token}"}
+        other_token = pyjwt_service.create_access_token(username="bob")
+        other_headers = {"Authorization": f"Bearer {other_token}"}
+
+        for _ in range(100):
+            await fastapi_app_client.get("/graphs", headers=headers)
+
+        blocked = await fastapi_app_client.get("/graphs", headers=headers)
+        untouched = await fastapi_app_client.get("/graphs", headers=other_headers)
+
+        assert blocked.status_code == 429
+        assert untouched.status_code == 200

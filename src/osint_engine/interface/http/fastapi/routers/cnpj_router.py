@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Depends
 
 from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_jwt_guard
-from osint_engine.interface.http.fastapi.rate_limit import build_expansion_rate_limit
+from osint_engine.interface.http.fastapi.rate_limit import build_shared_rate_limit
 from osint_engine.interface.http.fastapi.routers.handlers.get.get_cnpj import (
     build_get_cnpj_handler,
 )
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 def build_cnpj_router(*, container: Container) -> APIRouter:
     jwt_guard = build_jwt_guard(container=container)
-    rate_limit = build_expansion_rate_limit(container=container, scope="cnpj")
+    rate_limit = build_shared_rate_limit(scope="cnpj")
 
     router = APIRouter(
         prefix="/cnpj",

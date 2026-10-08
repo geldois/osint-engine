@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING, override
 
 from structlog.stdlib import get_logger
 
 from osint_engine.application.auth.user import User
-from osint_engine.application.contracts.use_case import Query
+from osint_engine.application.contracts.use_case import Command
 from osint_engine.application.errors.auth_error import UsernameTakenError
 
 if TYPE_CHECKING:
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 _logger = get_logger()
 
 
-class RegisterUser(Query[User]):
+class RegisterUser(Command):
     uow_factory: Callable[[], UoW]
     password_hasher: PasswordHasher
     username: str
@@ -42,13 +43,13 @@ class RegisterUser(Query[User]):
         )
 
     @override
-    async def execute(self) -> User:
+    async def execute(self) -> None:
         _logger.info("user.registration.start", username=self.username)
 
-        user = User(
-            hashed_password=self.password_hasher.hash_(password=self.password),
-            username=self.username,
+        hashed_password = await asyncio.to_thread(
+            self.password_hasher.hash_, password=self.password
         )
+        user = User(hashed_password=hashed_password, username=self.username)
 
         async with self.uow_factory() as uow:
             inserted = await uow.users.save(user=user)
@@ -59,5 +60,3 @@ class RegisterUser(Query[User]):
             raise UsernameTakenError(username=self.username)
 
         _logger.info("user.registration.end", username=self.username)
-
-        return user
