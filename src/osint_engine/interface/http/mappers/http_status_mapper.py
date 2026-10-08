@@ -4,7 +4,6 @@ _CATEGORY_STATUS: dict[ErrorCategory, int] = {
     ErrorCategory.CONFLICT: 409,
     ErrorCategory.NOT_FOUND: 404,
     ErrorCategory.UNAUTHORIZED: 401,
-    ErrorCategory.FORBIDDEN: 403,
     ErrorCategory.RATE_LIMITED: 429,
     ErrorCategory.INVALID_INPUT: 422,
     ErrorCategory.UPSTREAM_FAILURE: 502,

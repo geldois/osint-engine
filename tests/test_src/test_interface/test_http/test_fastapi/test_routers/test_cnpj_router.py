@@ -60,11 +60,6 @@ async def client(
         yield client
 
 
-@pytest.fixture
-def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestGetCnpjAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
@@ -103,30 +98,30 @@ class TestCnpjRouterScope:
 class TestGetCnpjExpansion:
     @pytest.mark.asyncio
     async def test_valid_token_returns_200(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
-            f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_response_includes_correlation_id_header(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
-            f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert "x-correlation-id" in response.headers
 
     @pytest.mark.asyncio
     async def test_correlation_id_header_is_a_valid_uuid(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
-            f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         UUID(response.headers["x-correlation-id"])
@@ -138,7 +133,7 @@ class TestGetCnpjAttribution:
         self,
         make_container: MakeContainer,
         brasilapi_http_client: AsyncClient,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         container = make_container(http_client=brasilapi_http_client)
         app = build_fastapi_app(container=container)
@@ -147,13 +142,12 @@ class TestGetCnpjAttribution:
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             await client.get(
-                f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+                f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {user_token}"}
             )
 
         async with container.uow_factory() as uow:
             records = await uow.entity_records.list_all()
 
-        assert records != ()
         assert {record.username for record in records} == {"alice"}
 
     @pytest.mark.asyncio
@@ -161,12 +155,12 @@ class TestGetCnpjAttribution:
         self,
         make_container: MakeContainer,
         brasilapi_http_client: AsyncClient,
-        valid_token: str,
+        user_token: str,
         pyjwt_service: PyJWTService,
     ) -> None:
         container = make_container(http_client=brasilapi_http_client)
         app = build_fastapi_app(container=container)
-        alice = {"Authorization": f"Bearer {valid_token}"}
+        alice = {"Authorization": f"Bearer {user_token}"}
         bob_token = pyjwt_service.create_access_token(username="bob")
         bob = {"Authorization": f"Bearer {bob_token}"}
 
@@ -186,7 +180,7 @@ class TestGetCnpjAttribution:
         self,
         make_container: MakeContainer,
         brasilapi_http_client: AsyncClient,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         container = make_container(http_client=brasilapi_http_client)
         app = build_fastapi_app(container=container)
@@ -195,7 +189,7 @@ class TestGetCnpjAttribution:
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get(
-                "/cnpj/123", headers={"Authorization": f"Bearer {valid_token}"}
+                "/cnpj/123", headers={"Authorization": f"Bearer {user_token}"}
             )
 
         async with container.uow_factory() as uow:
@@ -215,7 +209,7 @@ class TestGetCnpjPossiblyMatches:
         make_mem_storage: MakeMemStorage,
         make_entity_revision: MakeEntityRevision,
         brasilapi_http_client: AsyncClient,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         partner_cpf = _person_partner_cpf()
         stored = Person(
@@ -236,7 +230,7 @@ class TestGetCnpjPossiblyMatches:
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get(
-                f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+                f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {user_token}"}
             )
 
         assert response.status_code == 200
@@ -249,10 +243,10 @@ class TestGetCnpjPossiblyMatches:
 class TestCnpjRateLimit:
     @pytest.mark.asyncio
     async def test_bucket_returns_429_past_100_requests(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
 
-        headers = {"Authorization": f"Bearer {valid_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
 
         for _ in range(100):
             await client.get(f"/cnpj/{CNPJ}", headers=headers)
@@ -263,9 +257,9 @@ class TestCnpjRateLimit:
 
     @pytest.mark.asyncio
     async def test_the_bucket_is_shared_so_new_accounts_cannot_multiply_the_rate(
-        self, client: AsyncClient, valid_token: str, pyjwt_service: PyJWTService
+        self, client: AsyncClient, user_token: str, pyjwt_service: PyJWTService
     ) -> None:
-        headers = {"Authorization": f"Bearer {valid_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
         other_token = pyjwt_service.create_access_token(username="bob")
         other_headers = {"Authorization": f"Bearer {other_token}"}
 

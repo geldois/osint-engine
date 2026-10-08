@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 import pytest
-from jwt import decode  # pyright: ignore[reportUnknownVariableType]
+from jwt import (  # pyright: ignore[reportUnknownVariableType]
+    decode,
+    encode,
+)
 
 from osint_engine.infrastructure.errors.token_error import InvalidTokenError
 
@@ -18,26 +21,8 @@ class TestPyJWTServiceAlgorithmProperty:
     ) -> None:
         assert pyjwt_service.algorithm == "HS256"
 
-    def test_algorithm_property_returns_string(
-        self, pyjwt_service: PyJWTService
-    ) -> None:
-        algorithm = pyjwt_service.algorithm
-
-        assert isinstance(algorithm, str)
-
-        assert len(algorithm) > 0
-
 
 class TestPyJWTServiceCreateAccessToken:
-    def test_create_access_token_returns_string(
-        self, pyjwt_service: PyJWTService
-    ) -> None:
-        token = pyjwt_service.create_access_token(username="alice")
-
-        assert isinstance(token, str)
-
-        assert len(token) > 0
-
     def test_create_access_token_with_correct_data_produces_decodable_token(
         self, pyjwt_service: PyJWTService
     ) -> None:
@@ -77,56 +62,8 @@ class TestPyJWTServiceCreateAccessToken:
 
         assert 0 < time_diff < pyjwt_service.access_token_expire_minutes * 60 + 5
 
-    def test_create_access_token_includes_username_as_sub_claim(
-        self, pyjwt_service: PyJWTService
-    ) -> None:
-        username = "charlie"
-
-        token = pyjwt_service.create_access_token(username=username)
-
-        decoded = decode(
-            jwt=token,
-            key=pyjwt_service.secret_key,
-            algorithms=[pyjwt_service.algorithm],
-        )
-
-        assert decoded["sub"] == username
-
 
 class TestPyJWTServiceDecodeAccessToken:
-    def test_decode_access_token_with_valid_token_returns_dict(
-        self, pyjwt_service: PyJWTService
-    ) -> None:
-        token = pyjwt_service.create_access_token(username="eve")
-
-        decoded = pyjwt_service.decode_access_token(token=token)
-
-        assert isinstance(decoded, dict)
-
-    def test_decode_access_token_returns_sub_field(
-        self, pyjwt_service: PyJWTService
-    ) -> None:
-        username = "frank"
-
-        token = pyjwt_service.create_access_token(username=username)
-
-        decoded = pyjwt_service.decode_access_token(token=token)
-
-        assert "sub" in decoded
-
-        assert decoded["sub"] == username
-
-    def test_decode_access_token_returns_exp_field(
-        self, pyjwt_service: PyJWTService
-    ) -> None:
-        token = pyjwt_service.create_access_token(username="henry")
-
-        decoded = pyjwt_service.decode_access_token(token=token)
-
-        assert "exp" in decoded
-
-        assert isinstance(decoded["exp"], int)
-
     def test_decode_access_token_returns_valid_dict_with_all_fields(
         self, pyjwt_service: PyJWTService
     ) -> None:
@@ -171,9 +108,11 @@ class TestPyJWTServiceDecodeAccessToken:
     def test_decode_access_token_with_token_signed_with_different_key_raises_error(
         self, pyjwt_service: PyJWTService
     ) -> None:
-        token = pyjwt_service.create_access_token(username="kate")
-
-        modified_token = token[:-5] + "xxxxx"
+        foreign_token = encode(
+            payload={"sub": "kate", "exp": datetime.now(tz=UTC) + timedelta(hours=1)},
+            key="a-different-secret-key-with-at-least-32-bytes",
+            algorithm=pyjwt_service.algorithm,
+        )
 
         with pytest.raises(InvalidTokenError):
-            pyjwt_service.decode_access_token(token=modified_token)
+            pyjwt_service.decode_access_token(token=foreign_token)

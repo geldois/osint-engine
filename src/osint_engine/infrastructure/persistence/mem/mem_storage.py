@@ -13,7 +13,6 @@ if TYPE_CHECKING:
         ExternalCredential,
         Provider,
     )
-    from osint_engine.application.auth.user import User
     from osint_engine.application.consumption.entity_record import EntityRecord
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.edge import Edge
@@ -30,7 +29,6 @@ class MemStorage:
     graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]]
     nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]]
     pattern_sets: dict[PatternSetID, TextPatternSet]
-    users: dict[str, User]
 
     def __init__(  # noqa: PLR0913
         self,
@@ -43,7 +41,6 @@ class MemStorage:
         graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]] | None = None,
         nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]] | None = None,
         pattern_sets: dict[PatternSetID, TextPatternSet] | None = None,
-        users: dict[str, User] | None = None,
     ) -> None:
         object.__setattr__(
             self, "edges", edges if edges is not None else defaultdict(dict)
@@ -65,7 +62,6 @@ class MemStorage:
         object.__setattr__(
             self, "pattern_sets", pattern_sets if pattern_sets is not None else {}
         )
-        object.__setattr__(self, "users", users if users is not None else {})
 
     @final
     def __setattr__(self, name: str, value: object, /) -> None:
@@ -90,7 +86,6 @@ class MemStorageSnapshot(MemStorage):
             graphs=self.deepcopy_entity_storage(mem_storage.graphs),
             nodes=self.deepcopy_entity_storage(mem_storage.nodes),
             pattern_sets=copy(mem_storage.pattern_sets),
-            users=copy(mem_storage.users),
         )
 
     @staticmethod
@@ -112,7 +107,6 @@ class MemStorageSnapshot(MemStorage):
         self.graphs.clear()
         self.nodes.clear()
         self.pattern_sets.clear()
-        self.users.clear()
 
     @staticmethod
     def _merge_entity_storage[Entity_: Entity[UUID]](
@@ -131,4 +125,3 @@ class MemStorageSnapshot(MemStorage):
         self._merge_entity_storage(into=self._mem_storage.graphs, from_=self.graphs)
         self._merge_entity_storage(into=self._mem_storage.nodes, from_=self.nodes)
         self._mem_storage.pattern_sets.update(self.pattern_sets)
-        self._mem_storage.users.update(self.users)

@@ -244,7 +244,6 @@ class TestHybridUoWUsersRepository:
 
         assert inserted is True
         assert fake_pg_pool.users == {user.username: user.hashed_password}
-        assert user.username not in mem_storage.users
 
     @pytest.mark.asyncio
     async def test_a_user_saved_by_one_uow_is_found_by_the_next(

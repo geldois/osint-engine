@@ -70,14 +70,15 @@ same commit; a gap closed comes out in the same commit.
 
 - **Every authenticated account reads every stored graph.** `GET /graphs`, `/graphs/{root_id}/history`,
   `/nodes/{node_id}/history` and `/edges/{edge_id}/history` return whatever any account ever expanded, with no owner and
-  no pagination, because `MemStorage` never records which user originated a revision. Signup is now open, so a second
+  no pagination, because `MemStorage` never records which user originated a revision. Signup is open, so a second
   account sees the CPF data a first account paid KipFlow for, and ids are deterministic from the CPF, so they can be
   guessed. Fix before opening signup to anyone untrusted: record the owner on each revision (or on a per-user index of
   root ids), filter every history route by it, and add `limit` and `cursor` once the catalog passes a few hundred
   entries, with the studio client handling a partial response
 - **`GET /credentials/{provider}/reveal` returns a stored API key decrypted over HTTP** to its owner. The trade-off (the
   studio can show a key back, at the price of exposing it in a response body and any log in front of it) is not recorded
-  in `docs/architecture/`; decide whether to keep it, mask it, or write the decision down
+  in `docs/architecture/`; the route is throttled per account, but decide whether to keep it, mask it, or write the
+  decision down
 - **`/health` and `/health/ready` do not report which commit is running.** After a deploy the pipeline proves the
   process answers, not that it is the verified commit. Exposing the build SHA would let the pipeline compare it to
   `${{ github.sha }}`

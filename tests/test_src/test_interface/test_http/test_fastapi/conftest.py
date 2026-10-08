@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     )
     from osint_engine.config.container import Container, Policies
     from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
+    from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
     from tests.conftest import MakeMemStorage
 
 type MakeContainer = Callable[..., Container]
@@ -145,6 +146,12 @@ def make_container(
         )
 
     return container_
+
+
+@pytest.fixture
+def user_token(pyjwt_service: PyJWTService) -> str:
+
+    return pyjwt_service.create_access_token(username="alice")
 
 
 @pytest.fixture

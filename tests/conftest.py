@@ -265,7 +265,6 @@ def make_mem_storage() -> MakeMemStorage:
         graphs: Iterable[EntityRevision[Graph]] | None = None,
         nodes: Iterable[EntityRevision[Node[UUID]]] | None = None,
         pattern_sets: Iterable[TextPatternSet] | None = None,
-        users: Iterable[User] | None = None,
     ) -> MemStorage:
         return MemStorage(
             edges=_entity_store(edges),
@@ -280,9 +279,6 @@ def make_mem_storage() -> MakeMemStorage:
             nodes=_entity_store(nodes),
             pattern_sets={pattern_set.id: pattern_set for pattern_set in pattern_sets}
             if pattern_sets is not None
-            else None,
-            users={user.username: user for user in users}
-            if users is not None
             else None,
         )
 

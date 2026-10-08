@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from osint_engine.config.container import Container
-    from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
     from tests.conftest import MakeMemStorage
     from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
         MakeContainer,
@@ -83,11 +82,6 @@ async def client(
         yield client
 
 
-@pytest.fixture
-def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestGetLegalProcessAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
@@ -99,11 +93,11 @@ class TestGetLegalProcessAuthentication:
 class TestGetLegalProcessExpansion:
     @pytest.mark.asyncio
     async def test_valid_token_and_known_credential_returns_graph_schema(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
             f"/legal-process/{CPF}",
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 200
@@ -114,7 +108,7 @@ class TestGetLegalProcessExpansion:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(200, json={"success": True, "data": []})
@@ -137,7 +131,7 @@ class TestGetLegalProcessExpansion:
             ) as client:
                 response = await client.get(
                     f"/legal-process/{CPF}",
-                    headers={"Authorization": f"Bearer {valid_token}"},
+                    headers={"Authorization": f"Bearer {user_token}"},
                 )
 
         assert response.status_code == 204

@@ -14,15 +14,6 @@ if TYPE_CHECKING:
 
 class TestJwtGuardWithValidToken:
     @pytest.mark.asyncio
-    async def test_valid_token_passes_without_error(
-        self, container: Container, pyjwt_service: PyJWTService
-    ) -> None:
-        token = pyjwt_service.create_access_token(username="alice")
-        guard = build_jwt_guard(container=container)
-
-        await guard(token)
-
-    @pytest.mark.asyncio
     async def test_valid_token_returns_decoded_claims_without_a_role(
         self, container: Container, pyjwt_service: PyJWTService
     ) -> None:

@@ -21,7 +21,6 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from osint_engine.config.container import Container
-    from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
     from tests.conftest import MakeMemStorage
     from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
         MakeContainer,
@@ -93,11 +92,6 @@ async def client(pep_container: Container) -> AsyncGenerator[AsyncClient, None]:
         yield client
 
 
-@pytest.fixture
-def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestGetPEPAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
@@ -109,10 +103,10 @@ class TestGetPEPAuthentication:
 class TestGetPEPExpansion:
     @pytest.mark.asyncio
     async def test_valid_token_and_known_credential_returns_graph_schema(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
-            f"/peps/{CPF}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/peps/{CPF}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert response.status_code == 200
@@ -123,7 +117,7 @@ class TestGetPEPExpansion:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(200, json=[])
@@ -148,7 +142,7 @@ class TestGetPEPExpansion:
             ) as client:
                 response = await client.get(
                     f"/peps/{CPF}",
-                    headers={"Authorization": f"Bearer {valid_token}"},
+                    headers={"Authorization": f"Bearer {user_token}"},
                 )
 
         assert response.status_code == 204
@@ -158,10 +152,10 @@ class TestGetPEPExpansion:
         self,
         captured_request_url: dict[str, str],
         client: AsyncClient,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         response = await client.get(
-            f"/peps/{CPF}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/peps/{CPF}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert response.status_code == 200

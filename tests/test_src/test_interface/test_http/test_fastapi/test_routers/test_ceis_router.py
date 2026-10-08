@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from osint_engine.config.container import Container
-    from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
     from tests.conftest import MakeEntityRevision, MakeMemStorage
     from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
         MakeContainer,
@@ -114,11 +113,6 @@ async def client(ceis_container: Container) -> AsyncGenerator[AsyncClient, None]
         yield client
 
 
-@pytest.fixture
-def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestGetCEISAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
@@ -130,10 +124,10 @@ class TestGetCEISAuthentication:
 class TestGetCEISExpansion:
     @pytest.mark.asyncio
     async def test_valid_token_and_known_credential_returns_graph_schema(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
-            f"/ceis/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/ceis/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert response.status_code == 200
@@ -144,7 +138,7 @@ class TestGetCEISExpansion:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(200, json=[])
@@ -169,7 +163,7 @@ class TestGetCEISExpansion:
             ) as client:
                 response = await client.get(
                     f"/ceis/{CPF_OR_CNPJ}",
-                    headers={"Authorization": f"Bearer {valid_token}"},
+                    headers={"Authorization": f"Bearer {user_token}"},
                 )
 
         assert response.status_code == 204
@@ -179,12 +173,12 @@ class TestGetCEISExpansion:
         self,
         captured_request_url: dict[str, str],
         client: AsyncClient,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         response = await client.get(
             f"/ceis/{CPF_OR_CNPJ}",
             params={"ceis_id": 42},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 200
@@ -198,7 +192,7 @@ class TestGetCeisPossiblyMatches:
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
         make_entity_revision: MakeEntityRevision,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(200, json=[_PF_CEIS_RECORD_DATA])
@@ -235,7 +229,7 @@ class TestGetCeisPossiblyMatches:
             ) as client:
                 response = await client.get(
                     f"/ceis/{PERSON_CPF}",
-                    headers={"Authorization": f"Bearer {valid_token}"},
+                    headers={"Authorization": f"Bearer {user_token}"},
                 )
 
         assert response.status_code == 200

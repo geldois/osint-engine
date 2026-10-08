@@ -23,11 +23,6 @@ if TYPE_CHECKING:
 CPF = "10000000000"
 
 
-@pytest.fixture
-def user_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestGetGraphHistoryAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(

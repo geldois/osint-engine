@@ -3,9 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from fastapi import HTTPException, Response
 from starlette.requests import Request
 
-from osint_engine.interface.http.fastapi.rate_limit import build_user_bucket_key
+from osint_engine.interface.errors.rate_limit_error import RateLimitExceededError
+from osint_engine.interface.http.fastapi.rate_limit import (
+    _translate_rate_limit_error,  # pyright: ignore[reportPrivateUsage]
+    build_shared_rate_limit,
+    build_user_bucket_key,
+)
 
 if TYPE_CHECKING:
     from osint_engine.config.container import Container
@@ -92,3 +98,67 @@ class TestBuildUserBucketKey:
         assert key(_request(authorization=f"Bearer {token}")) != key(
             _request(authorization=None)
         )
+
+
+class _RejectingLimiter:
+    def __init__(self, headers: dict[str, str] | None) -> None:
+        self._headers = headers
+
+    async def __call__(self, request: Request, response: Response) -> None:  # noqa: ARG002
+        raise HTTPException(status_code=429, headers=self._headers)
+
+
+class TestTranslateRateLimitError:
+    @pytest.mark.asyncio
+    async def test_forwards_the_retry_after_the_limiter_reported(self) -> None:
+        guarded = _translate_rate_limit_error(
+            _RejectingLimiter({"Retry-After": "17"})  # pyright: ignore[reportArgumentType]
+        )
+
+        with pytest.raises(RateLimitExceededError) as exception:
+            await guarded(_request(authorization=None), Response())
+
+        assert exception.value.retry_after_seconds == 17
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("headers", [None, {}, {"X-Other": "1"}])
+    async def test_falls_back_to_sixty_seconds_without_a_retry_after_header(
+        self, headers: dict[str, str] | None
+    ) -> None:
+        guarded = _translate_rate_limit_error(
+            _RejectingLimiter(headers)  # pyright: ignore[reportArgumentType]
+        )
+
+        with pytest.raises(RateLimitExceededError) as exception:
+            await guarded(_request(authorization=None), Response())
+
+        assert exception.value.retry_after_seconds == 60
+
+
+class TestBuildSharedRateLimit:
+    @pytest.mark.asyncio
+    async def test_every_caller_spends_the_same_hundred_request_allowance(
+        self, pyjwt_service: PyJWTService
+    ) -> None:
+        limit = build_shared_rate_limit(scope="shared-test")
+        alice_token = pyjwt_service.create_access_token(username="alice")
+        bob_token = pyjwt_service.create_access_token(username="bob")
+        alice = _request(authorization=f"Bearer {alice_token}")
+        bob = _request(authorization=f"Bearer {bob_token}")
+
+        for _ in range(100):
+            await limit(alice, Response())
+
+        with pytest.raises(RateLimitExceededError):
+            await limit(bob, Response())
+
+    @pytest.mark.asyncio
+    async def test_two_scopes_never_share_an_allowance(self) -> None:
+        first = build_shared_rate_limit(scope="first")
+        second = build_shared_rate_limit(scope="second")
+        request = _request(authorization=None)
+
+        for _ in range(100):
+            await first(request, Response())
+
+        await second(request, Response())

@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from osint_engine.config.container import Container
-    from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
     from tests.conftest import MakeEntityRevision, MakeMemStorage
     from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
         MakeContainer,
@@ -88,11 +87,6 @@ async def client(cpf_container: Container) -> AsyncGenerator[AsyncClient, None]:
         yield client
 
 
-@pytest.fixture
-def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestGetCPFAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
@@ -104,10 +98,10 @@ class TestGetCPFAuthentication:
 class TestGetCPFExpansion:
     @pytest.mark.asyncio
     async def test_valid_token_and_known_credential_returns_graph_schema(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
-            f"/cpf/{CPF}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/cpf/{CPF}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert response.status_code == 200
@@ -115,10 +109,10 @@ class TestGetCPFExpansion:
 
     @pytest.mark.asyncio
     async def test_returns_422_for_a_malformed_cpf(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
-            "/cpf/123", headers={"Authorization": f"Bearer {valid_token}"}
+            "/cpf/123", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert response.status_code == 422
@@ -129,7 +123,7 @@ class TestGetCPFExpansion:
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
         kipflow_http_client: AsyncClient,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         container = make_container(
             http_client=kipflow_http_client,
@@ -141,7 +135,7 @@ class TestGetCPFExpansion:
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get(
-                f"/cpf/{CPF}", headers={"Authorization": f"Bearer {valid_token}"}
+                f"/cpf/{CPF}", headers={"Authorization": f"Bearer {user_token}"}
             )
 
         assert response.status_code == 404
@@ -152,7 +146,7 @@ class TestGetCPFExpansion:
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
         kipflow_not_found_http_client: AsyncClient,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         container = make_container(
             http_client=kipflow_not_found_http_client,
@@ -171,7 +165,7 @@ class TestGetCPFExpansion:
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get(
-                f"/cpf/{CPF}", headers={"Authorization": f"Bearer {valid_token}"}
+                f"/cpf/{CPF}", headers={"Authorization": f"Bearer {user_token}"}
             )
 
         assert response.status_code == 204
@@ -181,9 +175,9 @@ class TestGetCPFExpansion:
 class TestGetCPFReuseLock:
     @pytest.mark.asyncio
     async def test_second_expansion_without_force_returns_409(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
-        headers = {"Authorization": f"Bearer {valid_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
 
         first = await client.get(f"/cpf/{CPF}", headers=headers)
         second = await client.get(f"/cpf/{CPF}", headers=headers)
@@ -194,9 +188,9 @@ class TestGetCPFReuseLock:
 
     @pytest.mark.asyncio
     async def test_second_expansion_with_force_returns_200(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
-        headers = {"Authorization": f"Bearer {valid_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
 
         first = await client.get(f"/cpf/{CPF}", headers=headers)
         second = await client.get(f"/cpf/{CPF}?force=true", headers=headers)
@@ -213,7 +207,7 @@ class TestGetCPFPossiblyMatches:
         make_mem_storage: MakeMemStorage,
         make_entity_revision: MakeEntityRevision,
         kipflow_http_client: AsyncClient,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         stored = Person(
             age_range="Entre 41 a 50 anos",
@@ -240,7 +234,7 @@ class TestGetCPFPossiblyMatches:
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             response = await client.get(
-                f"/cpf/{CPF}", headers={"Authorization": f"Bearer {valid_token}"}
+                f"/cpf/{CPF}", headers={"Authorization": f"Bearer {user_token}"}
             )
 
         assert response.status_code == 200

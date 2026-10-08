@@ -15,7 +15,6 @@ if TYPE_CHECKING:
         MakeFakeNode,
         MakeGraph,
         MakeMemStorage,
-        MakeUser,
     )
 
 
@@ -26,7 +25,6 @@ def _seeded_storage(
     make_fake_edge: MakeFakeEdge,
     make_graph: MakeGraph,
     make_fake_node: MakeFakeNode,
-    make_user: MakeUser,
     make_mem_storage: MakeMemStorage,
 ) -> MemStorage:
     node_a = make_fake_node()
@@ -42,7 +40,6 @@ def _seeded_storage(
             make_entity_revision(entity=node_a),
             make_entity_revision(entity=node_b),
         ],
-        users=[make_user()],
     )
 
 
@@ -59,7 +56,6 @@ class TestMemStorageSnapshotSnapshot:
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
-        make_user: MakeUser,
         make_mem_storage: MakeMemStorage,
     ) -> None:
         mem_storage = _seeded_storage(
@@ -68,7 +64,6 @@ class TestMemStorageSnapshotSnapshot:
             make_fake_edge=make_fake_edge,
             make_graph=make_graph,
             make_fake_node=make_fake_node,
-            make_user=make_user,
             make_mem_storage=make_mem_storage,
         )
 
@@ -81,8 +76,6 @@ class TestMemStorageSnapshotSnapshot:
         assert mem_storage.graphs is not snapshot.graphs
 
         assert mem_storage.nodes is not snapshot.nodes
-
-        assert mem_storage.users is not snapshot.users
 
         (node_id, revisions), *_ = mem_storage.nodes.items()
         (content_id, revision), *_ = revisions.items()
@@ -98,7 +91,6 @@ class TestMemStorageSnapshotSnapshot:
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
-        make_user: MakeUser,
         make_mem_storage: MakeMemStorage,
     ) -> None:
         snapshot = MemStorageSnapshot(
@@ -108,7 +100,6 @@ class TestMemStorageSnapshotSnapshot:
                 make_fake_edge=make_fake_edge,
                 make_graph=make_graph,
                 make_fake_node=make_fake_node,
-                make_user=make_user,
                 make_mem_storage=make_mem_storage,
             )
         )
@@ -123,8 +114,6 @@ class TestMemStorageSnapshotSnapshot:
 
         assert not snapshot.nodes
 
-        assert not snapshot.users
-
 
 class TestMemStorageSnapshotCommit:
     def test_commit_merges_a_new_entry_written_on_the_snapshot_into_the_backing_storage(
@@ -134,7 +123,6 @@ class TestMemStorageSnapshotCommit:
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
-        make_user: MakeUser,
         make_mem_storage: MakeMemStorage,
     ) -> None:
         mem_storage = _seeded_storage(
@@ -143,7 +131,6 @@ class TestMemStorageSnapshotCommit:
             make_fake_edge=make_fake_edge,
             make_graph=make_graph,
             make_fake_node=make_fake_node,
-            make_user=make_user,
             make_mem_storage=make_mem_storage,
         )
         snapshot = MemStorageSnapshot(mem_storage=mem_storage)
@@ -163,7 +150,6 @@ class TestMemStorageSnapshotCommit:
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
-        make_user: MakeUser,
         make_mem_storage: MakeMemStorage,
     ) -> None:
         mem_storage = _seeded_storage(
@@ -172,7 +158,6 @@ class TestMemStorageSnapshotCommit:
             make_fake_edge=make_fake_edge,
             make_graph=make_graph,
             make_fake_node=make_fake_node,
-            make_user=make_user,
             make_mem_storage=make_mem_storage,
         )
 
@@ -200,7 +185,6 @@ class TestMemStorageSnapshotCommit:
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
-        make_user: MakeUser,
         make_mem_storage: MakeMemStorage,
     ) -> None:
         mem_storage = _seeded_storage(
@@ -209,7 +193,6 @@ class TestMemStorageSnapshotCommit:
             make_fake_edge=make_fake_edge,
             make_graph=make_graph,
             make_fake_node=make_fake_node,
-            make_user=make_user,
             make_mem_storage=make_mem_storage,
         )
         preexisting = mem_storage.entity_records[0]

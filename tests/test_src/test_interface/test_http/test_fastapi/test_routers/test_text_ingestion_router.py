@@ -16,7 +16,6 @@ from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-    from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
     from tests.conftest import MakeEntityRevision, MakeMemStorage
     from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
         MakeContainer,
@@ -37,11 +36,6 @@ async def client(make_container: MakeContainer) -> AsyncGenerator[AsyncClient, N
         yield client
 
 
-@pytest.fixture
-def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestPostTextIngestionAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
@@ -56,12 +50,12 @@ class TestPostTextIngestionAuthentication:
 class TestPostTextIngestion:
     @pytest.mark.asyncio
     async def test_valid_cpf_returns_200_with_graph_schema(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.post(
             "/text-ingestion",
             json={"text": _VALID_CPF_TEXT, "patterns": [_BUNDLE_ID]},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 200
@@ -69,7 +63,7 @@ class TestPostTextIngestion:
 
     @pytest.mark.asyncio
     async def test_mixed_bundle_and_atomic_names_return_200(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.post(
             "/text-ingestion",
@@ -77,7 +71,7 @@ class TestPostTextIngestion:
                 "text": "Empresa CNPJ 11.222.333/0001-81 registrada",
                 "patterns": [_BUNDLE_ID, "CNPJ_LOOSE"],
             },
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 200
@@ -88,24 +82,24 @@ class TestPostTextIngestion:
 
     @pytest.mark.asyncio
     async def test_returns_422_when_no_pattern_matches(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.post(
             "/text-ingestion",
             json={"text": "nada relevante aqui", "patterns": [_BUNDLE_ID]},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_returns_422_for_an_unknown_pattern_name(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.post(
             "/text-ingestion",
             json={"text": _VALID_CPF_TEXT, "patterns": ["does_not_exist"]},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 422
@@ -122,11 +116,11 @@ class TestGetTextPatterns:
 class TestGetTextPatternsSuccess:
     @pytest.mark.asyncio
     async def test_returns_200_with_the_atomic_catalog_and_default_bundle(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
             "/text-ingestion/patterns",
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 200
@@ -150,7 +144,7 @@ class TestPostTextIngestionPossiblyMatches:
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
         make_entity_revision: MakeEntityRevision,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         stored = Person(
             age_range="Entre 41 a 50 anos",
@@ -171,7 +165,7 @@ class TestPostTextIngestionPossiblyMatches:
             response = await client.post(
                 "/text-ingestion",
                 json={"text": _VALID_CPF_TEXT, "patterns": [_BUNDLE_ID]},
-                headers={"Authorization": f"Bearer {valid_token}"},
+                headers={"Authorization": f"Bearer {user_token}"},
             )
 
         assert response.status_code == 200
@@ -183,10 +177,10 @@ class TestPostTextIngestionPossiblyMatches:
 
 class TestTextIngestionRateLimit:
     @pytest.mark.asyncio
-    async def test_shared_bucket_returns_429_past_100_requests(
-        self, client: AsyncClient, valid_token: str
+    async def test_bucket_returns_429_past_100_requests(
+        self, client: AsyncClient, user_token: str
     ) -> None:
-        headers = {"Authorization": f"Bearer {valid_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
         body = {"text": _VALID_CPF_TEXT, "patterns": [_BUNDLE_ID]}
 
         for _ in range(100):

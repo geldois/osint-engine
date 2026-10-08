@@ -8,13 +8,6 @@ import pytest
 if TYPE_CHECKING:
     from httpx2 import AsyncClient
 
-    from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
-
-
-@pytest.fixture
-def user_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
 
 class TestGetNodeHistoryAuthentication:
     @pytest.mark.asyncio

@@ -67,11 +67,6 @@ async def batch_client(
             yield client, kipflow_calls
 
 
-@pytest.fixture
-def user_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestBatchEstimateValidation:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -271,6 +266,71 @@ class TestCpfRouteAccess:
             response = await getattr(client, method)(path, json=body, headers=headers)
 
         assert response.status_code == 200
+
+
+class TestBatchRateLimit:
+    @pytest.mark.asyncio
+    async def test_the_eleventh_batch_request_in_a_minute_returns_429(
+        self, batch_client: tuple[AsyncClient, list[str]], user_token: str
+    ) -> None:
+        client, _ = batch_client
+        headers = {"Authorization": f"Bearer {user_token}"}
+
+        for _ in range(10):
+            response = await client.post(
+                "/cpf/batch/estimate", json={"cpfs": [CPF_1]}, headers=headers
+            )
+
+            assert response.status_code == 200
+
+        blocked = await client.post(
+            "/cpf/batch/estimate", json={"cpfs": [CPF_1]}, headers=headers
+        )
+
+        assert blocked.status_code == 429
+        assert int(blocked.headers["retry-after"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_estimate_and_batch_share_one_bucket_per_user(
+        self, batch_client: tuple[AsyncClient, list[str]], user_token: str
+    ) -> None:
+        client, _ = batch_client
+        headers = {"Authorization": f"Bearer {user_token}"}
+
+        for _ in range(10):
+            await client.post(
+                "/cpf/batch/estimate", json={"cpfs": [CPF_1]}, headers=headers
+            )
+
+        blocked = await client.post(
+            "/cpf/batch", json={"cpfs": [CPF_1]}, headers=headers
+        )
+
+        assert blocked.status_code == 429
+
+    @pytest.mark.asyncio
+    async def test_another_users_batch_bucket_is_untouched(
+        self,
+        batch_client: tuple[AsyncClient, list[str]],
+        user_token: str,
+        pyjwt_service: PyJWTService,
+    ) -> None:
+        client, _ = batch_client
+        headers = {"Authorization": f"Bearer {user_token}"}
+        other_token = pyjwt_service.create_access_token(username="bob")
+
+        for _ in range(11):
+            await client.post(
+                "/cpf/batch/estimate", json={"cpfs": [CPF_1]}, headers=headers
+            )
+
+        untouched = await client.post(
+            "/cpf/batch/estimate",
+            json={"cpfs": [CPF_1]},
+            headers={"Authorization": f"Bearer {other_token}"},
+        )
+
+        assert untouched.status_code == 200
 
 
 class TestBatchExpansion:

@@ -19,7 +19,6 @@ from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-    from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
     from tests.conftest import MakeEntityRevision, MakeMemStorage
     from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
         MakeContainer,
@@ -48,11 +47,6 @@ async def client(make_container: MakeContainer) -> AsyncGenerator[AsyncClient, N
         yield client
 
 
-@pytest.fixture
-def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestPostTextIngestionFileAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
@@ -68,13 +62,13 @@ class TestPostTextIngestionFileAuthentication:
 class TestPostTextIngestionFile:
     @pytest.mark.asyncio
     async def test_valid_xlsx_returns_200_with_a_person_stub_per_cpf(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.post(
             "/text-ingestion/file",
             files={"file": ("data.xlsx", _xlsx_bytes(cell_value=_VALID_CPF_DIGITS))},
             data={"patterns": ["CPF_LOOSE"]},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 200
@@ -85,9 +79,9 @@ class TestPostTextIngestionFile:
 
     @pytest.mark.asyncio
     async def test_matches_the_json_endpoint_result_for_the_same_text(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
-        headers = {"Authorization": f"Bearer {valid_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
 
         file_response = await client.post(
             "/text-ingestion/file",
@@ -112,20 +106,20 @@ class TestPostTextIngestionFile:
 class TestPostTextIngestionFileErrors:
     @pytest.mark.asyncio
     async def test_unsupported_file_type_returns_422(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.post(
             "/text-ingestion/file",
             files={"file": ("data.txt", b"irrelevant")},
             data={"patterns": ["CPF_LOOSE"]},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_oversized_file_returns_422(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         content = b"x" * (10 * 1024 * 1024 + 1)
 
@@ -133,27 +127,27 @@ class TestPostTextIngestionFileErrors:
             "/text-ingestion/file",
             files={"file": ("data.csv", content)},
             data={"patterns": ["CPF_LOOSE"]},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_corrupted_xlsx_returns_422(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.post(
             "/text-ingestion/file",
             files={"file": ("data.xlsx", b"not a zip file")},
             data={"patterns": ["CPF_LOOSE"]},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_csv_field_above_the_csv_module_limit_returns_422(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         content = b"a," + b"x" * 200_000
 
@@ -161,7 +155,7 @@ class TestPostTextIngestionFileErrors:
             "/text-ingestion/file",
             files={"file": ("data.csv", content)},
             data={"patterns": ["CPF_LOOSE"]},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 422
@@ -170,7 +164,7 @@ class TestPostTextIngestionFileErrors:
     async def test_too_many_rows_returns_422(
         self,
         client: AsyncClient,
-        valid_token: str,
+        user_token: str,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setattr(spreadsheet_reader, "_MAX_ROWS_PER_SHEET", 1)
@@ -179,7 +173,7 @@ class TestPostTextIngestionFileErrors:
             "/text-ingestion/file",
             files={"file": ("data.csv", b"a\nb\nc")},
             data={"patterns": ["CPF_LOOSE"]},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 422
@@ -192,7 +186,7 @@ class TestPostTextIngestionFilePossiblyMatches:
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
         make_entity_revision: MakeEntityRevision,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         stored = Person(
             age_range="Entre 41 a 50 anos",
@@ -216,7 +210,7 @@ class TestPostTextIngestionFilePossiblyMatches:
                     "file": ("data.xlsx", _xlsx_bytes(cell_value=_VALID_CPF_DIGITS))
                 },
                 data={"patterns": ["CPF_LOOSE"]},
-                headers={"Authorization": f"Bearer {valid_token}"},
+                headers={"Authorization": f"Bearer {user_token}"},
             )
 
         assert response.status_code == 200

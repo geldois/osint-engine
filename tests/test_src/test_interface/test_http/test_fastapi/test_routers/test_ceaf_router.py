@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from osint_engine.config.container import Container
-    from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
     from tests.conftest import MakeEntityRevision, MakeMemStorage
     from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
         MakeContainer,
@@ -100,11 +99,6 @@ async def client(ceaf_container: Container) -> AsyncGenerator[AsyncClient, None]
         yield client
 
 
-@pytest.fixture
-def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestGetCEAFAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
@@ -116,10 +110,10 @@ class TestGetCEAFAuthentication:
 class TestGetCEAFExpansion:
     @pytest.mark.asyncio
     async def test_valid_token_and_known_credential_returns_graph_schema(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
-            f"/ceaf/{CPF}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/ceaf/{CPF}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert response.status_code == 200
@@ -130,7 +124,7 @@ class TestGetCEAFExpansion:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(200, json=[])
@@ -155,7 +149,7 @@ class TestGetCEAFExpansion:
             ) as client:
                 response = await client.get(
                     f"/ceaf/{CPF}",
-                    headers={"Authorization": f"Bearer {valid_token}"},
+                    headers={"Authorization": f"Bearer {user_token}"},
                 )
 
         assert response.status_code == 204
@@ -165,12 +159,12 @@ class TestGetCEAFExpansion:
         self,
         captured_request_url: dict[str, str],
         client: AsyncClient,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         response = await client.get(
             f"/ceaf/{CPF}",
             params={"ceaf_id": 42},
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 200
@@ -184,7 +178,7 @@ class TestGetCeafPossiblyMatches:
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
         make_entity_revision: MakeEntityRevision,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(200, json=[_CEAF_RECORD_DATA])
@@ -221,7 +215,7 @@ class TestGetCeafPossiblyMatches:
             ) as client:
                 response = await client.get(
                     f"/ceaf/{CPF}",
-                    headers={"Authorization": f"Bearer {valid_token}"},
+                    headers={"Authorization": f"Bearer {user_token}"},
                 )
 
         assert response.status_code == 200

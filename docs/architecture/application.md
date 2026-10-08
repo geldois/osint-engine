@@ -7,8 +7,8 @@ or a concrete external API client. Anything above this layer supplies a concrete
 layer never knows or cares which one.
 
 Every workflow that touches storage goes through a single transactional boundary that exposes every kind of stored
-entity, plus credentials and users, uniformly, whether the underlying storage is an in-memory snapshot or a real
-database. The moment data crosses in from a provider it becomes a **revision**, so provenance travels with the data
+entity and the consumption log (held in an in-memory snapshot), plus credentials and users (held in a real database),
+uniformly. The moment data crosses in from a provider it becomes a **revision**, so provenance travels with the data
 itself instead of being reconstructed later; the revision is stamped at the boundary that actually performed the fetch,
 not in the orchestrating workflow, so the workflow stays pure sequencing with nothing to fake or freeze in a test.
 

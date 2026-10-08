@@ -29,9 +29,6 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_node_repositor
 from osint_engine.infrastructure.persistence.mem.repositories.mem_pattern_set_repository import (  # noqa: E501
     MemPatternSetRepository,
 )
-from osint_engine.infrastructure.persistence.mem.repositories.mem_user_repository import (  # noqa: E501
-    MemUserRepository,
-)
 
 if TYPE_CHECKING:
     from osint_engine.application.revision.policies.revision_merge_policy import (
@@ -66,7 +63,6 @@ class MemUoW(UoW):
                 "graphs",
                 "nodes",
                 "pattern_sets",
-                "users",
             )
         )
 
@@ -99,7 +95,6 @@ class MemUoW(UoW):
             edge_repository=self.edges,
         )
         self.pattern_sets = MemPatternSetRepository(mem_storage=self._snapshot)
-        self.users = MemUserRepository(mem_storage=self._snapshot)
 
     @override
     async def _finish(self) -> None:
@@ -121,8 +116,6 @@ class MemUoW(UoW):
         del self.nodes
 
         del self.pattern_sets
-
-        del self.users
 
     @override
     async def commit(self) -> None:

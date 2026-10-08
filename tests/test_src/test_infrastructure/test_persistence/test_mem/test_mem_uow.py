@@ -17,7 +17,6 @@ if TYPE_CHECKING:
         MakeGraph,
         MakeMemStorage,
         MakeMemUoW,
-        MakeUser,
     )
 
 _LIFECYCLE_ATTRIBUTES = (
@@ -27,7 +26,6 @@ _LIFECYCLE_ATTRIBUTES = (
     "graphs",
     "nodes",
     "pattern_sets",
-    "users",
 )
 
 
@@ -57,7 +55,6 @@ class TestMemUoWCommit:
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
-        make_user: MakeUser,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
     ) -> None:
@@ -65,7 +62,6 @@ class TestMemUoWCommit:
         node_b = make_fake_node()
         edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
         graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
-        user = make_user()
         mem_storage = make_mem_storage()
         uow = make_mem_uow(mem_storage=mem_storage)
 
@@ -74,7 +70,6 @@ class TestMemUoWCommit:
             await uow.graphs.merge(revision=make_entity_revision(entity=graph))
             await uow.nodes.merge(revision=make_entity_revision(entity=node_a))
             await uow.nodes.merge(revision=make_entity_revision(entity=node_b))
-            await uow.users.save(user=user)
 
         assert edge.id in mem_storage.edges
 
@@ -83,8 +78,6 @@ class TestMemUoWCommit:
         assert node_a.id in mem_storage.nodes
 
         assert node_b.id in mem_storage.nodes
-
-        assert user.username in mem_storage.users
 
 
 class TestMemUoWRollback:
@@ -95,7 +88,6 @@ class TestMemUoWRollback:
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
-        make_user: MakeUser,
         make_mem_storage: MakeMemStorage,
         make_mem_uow: MakeMemUoW,
     ) -> None:
@@ -103,7 +95,6 @@ class TestMemUoWRollback:
         node_b = make_fake_node()
         edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
         graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
-        user = make_user()
         mem_storage = make_mem_storage()
         uow = make_mem_uow(mem_storage=mem_storage)
 
@@ -113,7 +104,6 @@ class TestMemUoWRollback:
                 await uow.graphs.merge(revision=make_entity_revision(entity=graph))
                 await uow.nodes.merge(revision=make_entity_revision(entity=node_a))
                 await uow.nodes.merge(revision=make_entity_revision(entity=node_b))
-                await uow.users.save(user=user)
 
                 raise RuntimeError
 
@@ -127,8 +117,6 @@ class TestMemUoWRollback:
         assert node_a.id not in mem_storage.nodes
 
         assert node_b.id not in mem_storage.nodes
-
-        assert user.username not in mem_storage.users
 
 
 class TestMemUoWValidation:

@@ -34,7 +34,7 @@ flowchart LR
     Expansion --> Providers("Providers: BrasilAPI · Portal da Transparência · KipFlow")
     Expansion --> Graph("Graph: typed nodes and edges, content-addressed ids")
     Ingestion --> Graph
-    Graph --> Snapshot("In-memory snapshot: graphs, users, consumption")
+    Graph --> Snapshot("In-memory snapshot: graphs, consumption")
     History --> Snapshot
     Providers -. "API keys" .-> Postgres("PostgreSQL: accounts, encrypted credentials")
     Credentials --> Postgres
@@ -162,7 +162,8 @@ Authorization: Bearer <token>
 
 Returns a `GraphCatalogSchema` — one entry per distinct root `root_id` ever fetched, each carrying
 `first_fetched_at`/`last_fetched_at`, every `provider` and `fetched_routes` involved, a `revision_count`, and the root
-`Node` itself. Any authenticated caller.
+`Node` itself. Any authenticated caller. The catalog and every history route below are shared across accounts today: a
+caller sees whatever any account expanded, a known gap recorded in `TO-DO.md`.
 
 ```http
 GET /graphs/{root_id}/history
@@ -316,6 +317,7 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 | `GET /ceaf/{cpf}`                  | 100 / min   | Per-user, per-route bucket |
 | `GET /peps/{cpf}`                  | 100 / min   | Per-user, per-route bucket |
 | `GET /legal-process/{cpf_or_cnpj}` | 100 / min   | Per-user, per-route bucket |
+| `/credentials` (all three routes)  | 100 / min   | Per-user, per-route bucket |
 | `GET /text-ingestion/patterns`     | 100 / min   | Per-user, per-route bucket |
 | `POST /text-ingestion`             | 100 / min   | Per-user, per-route bucket |
 | `POST /text-ingestion/file`        | 100 / min   | Per-user, per-route bucket |
@@ -325,13 +327,15 @@ A `429` response includes a `Retry-After` header (seconds) and is exposed cross-
 authenticated user — keyed by the token's username, not by IP — so one account exhausting its allowance never throttles
 another, which fits each account spending its own provider keys against that provider's own per-key quota. The one
 exception is `GET /cnpj/{cnpj}`: BrasilAPI needs no key, so every account's requests leave from this deployment's own
-IP, and a single bucket shared by everyone keeps new accounts from multiplying the outbound rate. The two batch routes
-share their own `cpf_batch` bucket instead of the single-CPF one: one batch request drives up to 50 paid provider calls,
-so the HTTP quota and the outbound quota must not share a counter. Outbound KipFlow traffic is additionally paced
-client-side against KipFlow's own documented per-API-key limits — a 5/s burst, a 100/min average and a 1000/hour volume
-— by an in-memory queue keyed per credential: a fetch that would cross any window waits its turn in FIFO order instead
-of dropping or overrunning, and `POST /cpf/batch/estimate` surfaces how long that wait would be before the caller pays
-for anything. The health endpoints are unthrottled.
+IP, and a single bucket shared by everyone keeps new accounts from multiplying the outbound rate. Routes mounted on one
+router share a single bucket per user: the three `/credentials` routes, `/graphs` with its history route, `/consumption`
+with its by-CPF route, and the three `/text-ingestion` routes. The two batch routes share their own `cpf_batch` bucket
+instead of the single-CPF one: one batch request drives up to 50 paid provider calls, so the HTTP quota and the outbound
+quota must not share a counter. Outbound KipFlow traffic is additionally paced client-side against KipFlow's own
+documented per-API-key limits — a 5/s burst, a 100/min average and a 1000/hour volume — by an in-memory queue keyed per
+credential: a fetch that would cross any window waits its turn in FIFO order instead of dropping or overrunning, and
+`POST /cpf/batch/estimate` surfaces how long that wait would be before the caller pays for anything. The health
+endpoints are unthrottled.
 
 ### Errors
 
@@ -346,8 +350,8 @@ already done (e.g. `GET /cpf/{cpf}` repeated by the same user without `force=tru
 - **Runtime:** Python 3.14 (the image, CI and `.python-version`; the package supports ≥3.12), FastAPI, Uvicorn
 - **CLI:** Typer (`osint-engine serve` / `osint-engine migrate up|down`)
 - **Auth:** PyJWT (HS256 access tokens), argon2-cffi (Argon2id password hashing)
-- **Persistence:** PostgreSQL via asyncpg + aiosql (external credentials), golang-migrate (schema migrations), in-memory
-  snapshot store (graph/user data)
+- **Persistence:** PostgreSQL via asyncpg + aiosql (user accounts, external credentials), golang-migrate (schema
+  migrations), in-memory snapshot store (graph and consumption data)
 - **Encryption:** cryptography (Fernet, application-layer encryption of stored API keys)
 - **Rate limiting:** fastapi-throttle (in-memory)
 - **HTTP client:** httpx2 (async)
@@ -452,22 +456,23 @@ copy .env.example .env  # then set SECRET_KEY, DATABASE_URL and EXTERNAL_CREDENT
 Read from the environment, or from `.env` in the working directory. The first three have no default and the process
 refuses to start without them.
 
-| Variable                              | Default                 | Meaning                                                              |
-| ------------------------------------- | ----------------------- | -------------------------------------------------------------------- |
-| `SECRET_KEY`                          | required                | HS256 signing key for access tokens                                  |
-| `DATABASE_URL`                        | required                | PostgreSQL connection string (credentials and migrations)            |
-| `EXTERNAL_CREDENTIAL_ENCRYPTION_KEY`  | required                | Fernet key that encrypts stored provider API keys                    |
-| `ACCESS_TOKEN_EXPIRE_MINUTES`         | `60`                    | Access token lifetime                                                |
-| `CORS_ORIGINS`                        | `http://localhost:3000` | Comma-separated allowed origins                                      |
-| `DEBUG`                               | `false`                 | Console logging instead of JSON                                      |
-| `LOG_LEVEL`                           | `info`                  | Log level                                                            |
-| `HOST` / `PORT`                       | `127.0.0.1` / `8000`    | Bind address of `serve`                                              |
-| `DOCS_REDIRECT_ROOT`                  | `false`                 | Redirect `/` to `/docs`                                              |
-| `FETCHER_CONNECT_TIMEOUT`             | `15.0`                  | Seconds to connect to an upstream API                                |
-| `FETCHER_READ_TIMEOUT`                | `30.0`                  | Seconds to read an upstream response                                 |
-| `PORTAL_TRANSPARENCIA_API_KEY`        | none                    | Dev and CI tooling only (fixture refresh); the app reads it per user |
-| `POSTGRES_USER` / `_PASSWORD` / `_DB` | none                    | Read by the compose Postgres service                                 |
-| `API_DOMAIN` / `IMAGE_TAG`            | none                    | Read by the production compose overlay (Caddy host, image tag)       |
+| Variable                              | Default                   | Meaning                                                              |
+| ------------------------------------- | ------------------------- | -------------------------------------------------------------------- |
+| `SECRET_KEY`                          | required                  | HS256 signing key for access tokens                                  |
+| `DATABASE_URL`                        | required                  | PostgreSQL connection string (accounts, credentials, migrations)     |
+| `EXTERNAL_CREDENTIAL_ENCRYPTION_KEY`  | required                  | Fernet key that encrypts stored provider API keys                    |
+| `ACCESS_TOKEN_EXPIRE_MINUTES`         | `60`                      | Access token lifetime                                                |
+| `CORS_ORIGINS`                        | `http://localhost:3000`   | Comma-separated allowed origins                                      |
+| `DEBUG`                               | `false`                   | Console logging instead of JSON                                      |
+| `LOG_LEVEL`                           | `info`                    | Log level                                                            |
+| `HOST` / `PORT`                       | `127.0.0.1` / `8000`      | Bind address of `serve`                                              |
+| `DOCS_REDIRECT_ROOT`                  | `false`                   | Redirect `/` to `/docs`                                              |
+| `FETCHER_CONNECT_TIMEOUT`             | `15.0`                    | Seconds to connect to an upstream API                                |
+| `FETCHER_READ_TIMEOUT`                | `30.0`                    | Seconds to read an upstream response                                 |
+| `PORTAL_TRANSPARENCIA_API_KEY`        | none                      | Dev and CI tooling only (fixture refresh); the app reads it per user |
+| `POSTGRES_USER` / `_PASSWORD` / `_DB` | none                      | Read by the compose Postgres service                                 |
+| `API_DOMAIN` / `IMAGE_TAG`            | none                      | Read by the production compose overlay (Caddy host, image tag)       |
+| `FORWARDED_ALLOW_IPS`                 | `*` in `compose.prod.yml` | Trust the proxy-forwarded client IP, which the per-IP limits need    |
 
 ### Run
 

@@ -95,11 +95,6 @@ async def client(
         yield client
 
 
-@pytest.fixture
-def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="alice")
-
-
 class TestGetCnepAuthentication:
     @pytest.mark.asyncio
     async def test_missing_token_returns_401(self, client: AsyncClient) -> None:
@@ -111,10 +106,10 @@ class TestGetCnepAuthentication:
 class TestGetCnepExpansion:
     @pytest.mark.asyncio
     async def test_valid_token_and_known_credential_returns_200(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
-            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert response.status_code == 200
@@ -124,7 +119,7 @@ class TestGetCnepExpansion:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(200, json=[])
@@ -149,7 +144,7 @@ class TestGetCnepExpansion:
             ) as client:
                 response = await client.get(
                     f"/cnep/{CPF_OR_CNPJ}",
-                    headers={"Authorization": f"Bearer {valid_token}"},
+                    headers={"Authorization": f"Bearer {user_token}"},
                 )
 
         assert response.status_code == 204
@@ -168,26 +163,26 @@ class TestGetCnepExpansion:
 
     @pytest.mark.asyncio
     async def test_invalid_cpf_or_cnpj_returns_422(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         response = await client.get(
-            "/cnep/123", headers={"Authorization": f"Bearer {valid_token}"}
+            "/cnep/123", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert response.status_code == 422
 
     @pytest.mark.asyncio
     async def test_repeating_the_same_query_without_force_returns_409(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         first = await client.get(
-            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert first.status_code == 200
 
         second = await client.get(
-            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert second.status_code == 409
@@ -195,17 +190,17 @@ class TestGetCnepExpansion:
 
     @pytest.mark.asyncio
     async def test_repeating_the_same_query_with_force_returns_200_again(
-        self, client: AsyncClient, valid_token: str
+        self, client: AsyncClient, user_token: str
     ) -> None:
         first = await client.get(
-            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert first.status_code == 200
 
         second = await client.get(
             f"/cnep/{CPF_OR_CNPJ}",
-            headers={"Authorization": f"Bearer {valid_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
             params={"force": "true"},
         )
 
@@ -219,7 +214,7 @@ class TestGetCnepPossiblyMatches:
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
         make_entity_revision: MakeEntityRevision,
-        valid_token: str,
+        user_token: str,
     ) -> None:
         def handler(request: Request) -> Response:  # noqa: ARG001
             return Response(200, json=[_PF_CNEP_RECORD_DATA])
@@ -256,7 +251,7 @@ class TestGetCnepPossiblyMatches:
             ) as client:
                 response = await client.get(
                     f"/cnep/{PERSON_CPF}",
-                    headers={"Authorization": f"Bearer {valid_token}"},
+                    headers={"Authorization": f"Bearer {user_token}"},
                 )
 
         assert response.status_code == 200

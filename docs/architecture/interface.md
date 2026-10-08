@@ -40,12 +40,15 @@ project's own request-logging middleware and was found to depend on an already-d
 fix — the replacement is far less battle-tested but has no such conflict and needed no workarounds to satisfy strict
 type-checking.
 
-Roles were removed along with the seeded operator account and the credential-free visitor token. They existed to keep a
-public demo caller away from routes that spent the operator's shared provider key; once every caller spends only their
-own key there is nothing left for a role to protect, and keeping a privilege level with no distinct power would have
-been complexity without a purpose. Self-service signup is open to anyone, bounded only by a per-address rate limit and
-by the password-hashing cost; a registration code was weighed and left out as one more secret to manage, and is the
-first thing to add if signup abuse ever shows up.
+Roles were removed along with the seeded operator account and the credential-free visitor token, and the forbidden error
+category with its 403 mapping went with them, since nothing raises it any more. They existed to keep a public demo
+caller away from routes that spent the operator's shared provider key; once every caller spends only their own key there
+is nothing left for a role to protect, and keeping a privilege level with no distinct power would have been complexity
+without a purpose. Self-service signup is open to anyone, bounded only by a per-address rate limit and by the
+password-hashing cost; a registration code was weighed and left out as one more secret to manage, and is the first thing
+to add if signup abuse ever shows up. The credentials routes carry their own per-account limit for the same reason as
+the rest: they read and write the one secret each account holds, and one account hammering them (repeated key reveals,
+saves or listings) must never be free to do so without bound.
 
 A response now carries when its data was observed and where it came from, rather than only the data itself. The
 information had always been recorded when a fetch happened and had always been used internally to decide which

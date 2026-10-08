@@ -16,24 +16,20 @@ if TYPE_CHECKING:
     from osint_engine.infrastructure.hashers.argon2_password_hasher import (
         Argon2PasswordHasher,
     )
-    from tests.conftest import MakeMemStorage, MakeMemUoW, MakeUser
-    from tests.test_src.test_application.conftest import MakeMemUoWFactory
+    from tests.fakes.persistence import FakePgPool
+    from tests.test_src.test_application.conftest import MakeHybridUoWFactory
 
 
 class TestRegisterUserExecution:
     @pytest.mark.asyncio
     async def test_stores_the_new_user_and_returns_nothing(
         self,
-        make_mem_storage: MakeMemStorage,
-        make_mem_uow: MakeMemUoW,
-        make_mem_uow_factory: MakeMemUoWFactory,
+        fake_pg_pool: FakePgPool,
+        make_hybrid_uow_factory: MakeHybridUoWFactory,
         argon2_password_hasher: Argon2PasswordHasher,
     ) -> None:
-        mem_storage = make_mem_storage()
-        mem_uow = make_mem_uow(mem_storage=mem_storage)
-
         use_case = RegisterUser(
-            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            uow_factory=make_hybrid_uow_factory(),
             password_hasher=argon2_password_hasher,
             username="alice",
             password="correct horse",
@@ -42,47 +38,35 @@ class TestRegisterUserExecution:
         result = await use_case.execute()
 
         assert result is None
-        assert set(mem_storage.users) == {"alice"}
+        assert set(fake_pg_pool.users) == {"alice"}
 
     @pytest.mark.asyncio
     async def test_never_stores_the_plaintext_password(
         self,
-        make_mem_storage: MakeMemStorage,
-        make_mem_uow: MakeMemUoW,
-        make_mem_uow_factory: MakeMemUoWFactory,
+        fake_pg_pool: FakePgPool,
+        make_hybrid_uow_factory: MakeHybridUoWFactory,
         argon2_password_hasher: Argon2PasswordHasher,
     ) -> None:
-        mem_storage = make_mem_storage()
-        mem_uow = make_mem_uow(mem_storage=mem_storage)
-
-        use_case = RegisterUser(
-            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+        await RegisterUser(
+            uow_factory=make_hybrid_uow_factory(),
             password_hasher=argon2_password_hasher,
             username="alice",
             password="correct horse",
-        )
+        ).execute()
 
-        await use_case.execute()
+        stored = fake_pg_pool.users["alice"]
 
-        user = mem_storage.users["alice"]
-
-        assert "correct horse" not in user.hashed_password
-        assert user.hashed_password.startswith("$argon2id$")
-        assert argon2_password_hasher.verify(
-            hash_=user.hashed_password, password="correct horse"
-        )
+        assert "correct horse" not in stored
+        assert stored.startswith("$argon2id$")
+        assert argon2_password_hasher.verify(hash_=stored, password="correct horse")
 
     @pytest.mark.asyncio
     async def test_the_new_user_can_authenticate_with_the_chosen_password(
         self,
-        make_mem_storage: MakeMemStorage,
-        make_mem_uow: MakeMemUoW,
-        make_mem_uow_factory: MakeMemUoWFactory,
+        make_hybrid_uow_factory: MakeHybridUoWFactory,
         argon2_password_hasher: Argon2PasswordHasher,
     ) -> None:
-        mem_storage = make_mem_storage()
-        mem_uow = make_mem_uow(mem_storage=mem_storage)
-        uow_factory = make_mem_uow_factory(mem_uow=mem_uow)
+        uow_factory = make_hybrid_uow_factory()
 
         await RegisterUser(
             uow_factory=uow_factory,
@@ -103,18 +87,14 @@ class TestRegisterUserExecution:
     @pytest.mark.asyncio
     async def test_raises_username_taken_and_keeps_the_original_hash(
         self,
-        make_user: MakeUser,
-        make_mem_storage: MakeMemStorage,
-        make_mem_uow: MakeMemUoW,
-        make_mem_uow_factory: MakeMemUoWFactory,
+        fake_pg_pool: FakePgPool,
+        make_hybrid_uow_factory: MakeHybridUoWFactory,
         argon2_password_hasher: Argon2PasswordHasher,
     ) -> None:
-        existing = make_user(username="alice", hashed_password="original-hash")
-        mem_storage = make_mem_storage(users=[existing])
-        mem_uow = make_mem_uow(mem_storage=mem_storage)
+        fake_pg_pool.users["alice"] = "original-hash"
 
         use_case = RegisterUser(
-            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            uow_factory=make_hybrid_uow_factory(),
             password_hasher=argon2_password_hasher,
             username="alice",
             password="another password",
@@ -124,4 +104,4 @@ class TestRegisterUserExecution:
             await use_case.execute()
 
         assert exception.value.username == "alice"
-        assert mem_storage.users == {"alice": existing}
+        assert fake_pg_pool.users == {"alice": "original-hash"}

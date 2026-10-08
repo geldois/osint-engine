@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Depends, status
 
 from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_jwt_guard
+from osint_engine.interface.http.fastapi.rate_limit import build_expansion_rate_limit
 from osint_engine.interface.http.fastapi.routers.handlers.get.get_credentials import (
     build_get_credentials_handler,
 )
@@ -22,7 +23,11 @@ if TYPE_CHECKING:
 def build_credentials_router(*, container: Container) -> APIRouter:
     jwt_guard = build_jwt_guard(container=container)
 
-    router = APIRouter(prefix="/credentials", dependencies=[Depends(jwt_guard)])
+    rate_limit = build_expansion_rate_limit(container=container, scope="credentials")
+
+    router = APIRouter(
+        prefix="/credentials", dependencies=[Depends(jwt_guard), Depends(rate_limit)]
+    )
 
     router.post(path="", status_code=status.HTTP_204_NO_CONTENT)(
         build_post_credential_handler(container=container)

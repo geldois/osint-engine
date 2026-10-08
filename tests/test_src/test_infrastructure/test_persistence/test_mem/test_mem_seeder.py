@@ -12,13 +12,6 @@ if TYPE_CHECKING:
 
 
 class TestMemSeederSeedingBehavior:
-    def test_seeds_no_user_of_any_kind(self, make_mem_storage: MakeMemStorage) -> None:
-        mem_storage = make_mem_storage()
-
-        seed_mem_storage(mem_storage=mem_storage)
-
-        assert not mem_storage.users
-
     def test_seeds_mem_storage_with_the_default_pattern_sets(
         self, make_mem_storage: MakeMemStorage
     ) -> None:

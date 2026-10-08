@@ -8,7 +8,6 @@ class ErrorCategory(Enum):
     CONFLICT = "conflict"
     NOT_FOUND = "not_found"
     UNAUTHORIZED = "unauthorized"
-    FORBIDDEN = "forbidden"
     RATE_LIMITED = "rate_limited"
     INVALID_INPUT = "invalid_input"
     UPSTREAM_FAILURE = "upstream_failure"

@@ -11,7 +11,6 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from osint_engine.application.auth.user import User
     from osint_engine.application.consumption.entity_record import EntityRecord
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.edge import Edge
@@ -29,7 +28,6 @@ class TestMemStorageInitialization:
             graphs=None,
             nodes=None,
             pattern_sets=None,
-            users=None,
         )
 
         assert not (mem_storage.edges and mem_storage.edges is None)
@@ -42,8 +40,6 @@ class TestMemStorageInitialization:
 
         assert not (mem_storage.pattern_sets and mem_storage.pattern_sets is None)
 
-        assert not (mem_storage.users and mem_storage.users is None)
-
     def test_references_storages_injected_during_instantiaton(self) -> None:
         edges: defaultdict[UUID, dict[UUID, EntityRevision[Edge[UUID, UUID, UUID]]]] = (
             defaultdict(dict)
@@ -54,7 +50,6 @@ class TestMemStorageInitialization:
             dict
         )
         pattern_sets: dict[PatternSetID, TextPatternSet] = {}
-        users: dict[str, User] = {}
 
         mem_storage = MemStorage(
             edges=edges,
@@ -62,7 +57,6 @@ class TestMemStorageInitialization:
             graphs=graphs,
             nodes=nodes,
             pattern_sets=pattern_sets,
-            users=users,
         )
 
         assert mem_storage.edges is edges
@@ -74,8 +68,6 @@ class TestMemStorageInitialization:
         assert mem_storage.nodes is nodes
 
         assert mem_storage.pattern_sets is pattern_sets
-
-        assert mem_storage.users is users
 
 
 class TestMemStorageProperties:
@@ -102,6 +94,3 @@ class TestMemStorageProperties:
 
         with pytest.raises(FrozenInstanceError):
             del mem_storage.pattern_sets
-
-        with pytest.raises(FrozenInstanceError):
-            del mem_storage.users
