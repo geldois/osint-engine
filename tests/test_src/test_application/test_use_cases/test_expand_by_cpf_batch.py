@@ -162,6 +162,32 @@ class TestEstimateCPFBatch:
         assert wait_seconds == 0
 
     @pytest.mark.asyncio
+    async def test_marks_a_cpf_only_another_user_fetched_as_billable(
+        self,
+        make_entity_record: MakeEntityRecord,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        previous = make_entity_record(
+            entity_id=_make_person(cpf=_CPF_1).id, provider="kipflow", username="bob"
+        )
+        mem_storage = make_mem_storage(entity_records=[previous])
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+
+        use_case = EstimateCPFBatch(
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            rate_limiter=_FakeRateLimiter(),
+            cpfs=_CPFS,
+            username="alice",
+        )
+
+        already_fetched, billable, _, _ = await use_case.execute()
+
+        assert already_fetched == ()
+        assert billable == _CPFS
+
+    @pytest.mark.asyncio
     async def test_marks_a_text_ingestion_cpf_as_billable(
         self,
         make_entity_record: MakeEntityRecord,

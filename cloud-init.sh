@@ -47,7 +47,6 @@ cd /opt/osint-engine
 
 POSTGRES_PASSWORD_GENERATED=$(openssl rand -hex 32)
 FERNET_KEY_GENERATED=$(openssl rand -base64 32 | tr '+/' '-_')
-ADMIN_PASSWORD_GENERATED=$(openssl rand -hex 16)
 cat >.env <<EOF
 SECRET_KEY=$(openssl rand -hex 32)
 EXTERNAL_CREDENTIAL_ENCRYPTION_KEY=${FERNET_KEY_GENERATED}
@@ -55,7 +54,6 @@ POSTGRES_USER=osint_engine
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD_GENERATED}
 POSTGRES_DB=osint_engine
 DATABASE_URL=postgresql://osint_engine:${POSTGRES_PASSWORD_GENERATED}@postgres:5432/osint_engine?sslmode=disable
-ADMIN_PASSWORD=${ADMIN_PASSWORD_GENERATED}
 CORS_ORIGINS=https://osint-studio.duckdns.org
 API_DOMAIN=osint-engine.duckdns.org
 IMAGE_TAG=

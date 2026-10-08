@@ -48,7 +48,9 @@ class TestMemUserRepositorySave:
         mem_storage = make_mem_storage()
         repo = MemUserRepository(mem_storage=mem_storage)
 
-        await repo.save(user=user)
+        inserted = await repo.save(user=user)
+
+        assert inserted is True
 
         assert user.username in mem_storage.users
 
@@ -66,9 +68,9 @@ class TestMemUserRepositorySave:
         mem_storage = MemStorage(users={user_a.username: user_a})
         repo = MemUserRepository(mem_storage=mem_storage)
 
-        await repo.save(user=user_a)
+        assert await repo.save(user=user_a) is False
 
-        await repo.save(user=user_b)
+        assert await repo.save(user=user_b) is False
 
         assert mem_storage.users[user_a.username] is user_a
 

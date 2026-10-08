@@ -218,6 +218,32 @@ class TestFindAlreadyFetchedError:
         assert error is None
 
     @pytest.mark.asyncio
+    async def test_another_users_previous_attempt_does_not_trigger_the_lock(
+        self,
+        make_entity_record: MakeEntityRecord,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+    ) -> None:
+        previous = make_entity_record(
+            entity_id=_make_stub().id, provider="fake_guarded", username="bob"
+        )
+        mem_storage = make_mem_storage(entity_records=[previous])
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+
+        async with mem_uow as uow:
+            error = await find_already_fetched_error(
+                uow=uow,
+                entity_id=_make_stub().id,
+                use_case=_FakeGuardedUseCase,
+                force=False,
+                requested_at=_REQUESTED_AT,
+                username=_USERNAME,
+            )
+
+        assert error is None
+        assert mem_storage.entity_records == [previous]
+
+    @pytest.mark.asyncio
     async def test_raises_unregistered_use_case_error_before_touching_storage(
         self,
         make_mem_storage: MakeMemStorage,
@@ -252,7 +278,10 @@ class TestIsAlreadyFetched:
 
         async with mem_uow as uow:
             fetched = await is_already_fetched(
-                uow=uow, entity_id=_make_stub().id, use_case=_FakeGuardedUseCase
+                uow=uow,
+                entity_id=_make_stub().id,
+                use_case=_FakeGuardedUseCase,
+                username=_USERNAME,
             )
 
         assert fetched is False
@@ -272,11 +301,37 @@ class TestIsAlreadyFetched:
 
         async with mem_uow as uow:
             fetched = await is_already_fetched(
-                uow=uow, entity_id=_make_stub().id, use_case=_FakeGuardedUseCase
+                uow=uow,
+                entity_id=_make_stub().id,
+                use_case=_FakeGuardedUseCase,
+                username=_USERNAME,
             )
 
         assert fetched is True
         assert mem_storage.entity_records == [previous]
+
+    @pytest.mark.asyncio
+    async def test_returns_false_when_only_another_user_fetched_it(
+        self,
+        make_entity_record: MakeEntityRecord,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+    ) -> None:
+        previous = make_entity_record(
+            entity_id=_make_stub().id, provider="fake_guarded", username="bob"
+        )
+        mem_storage = make_mem_storage(entity_records=[previous])
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+
+        async with mem_uow as uow:
+            fetched = await is_already_fetched(
+                uow=uow,
+                entity_id=_make_stub().id,
+                use_case=_FakeGuardedUseCase,
+                username=_USERNAME,
+            )
+
+        assert fetched is False
 
     @pytest.mark.asyncio
     async def test_raises_unregistered_use_case_error(
@@ -293,4 +348,5 @@ class TestIsAlreadyFetched:
                     uow=uow,
                     entity_id=_make_stub().id,
                     use_case=_FakeUnregisteredUseCase,
+                    username=_USERNAME,
                 )

@@ -18,7 +18,7 @@ ALREADY_FETCHED_OUTCOMES = frozenset({"empty", "expanded"})
 
 
 async def _find_previous_attempt(
-    *, uow: UoW, entity_id: UUID, provider: str
+    *, uow: UoW, entity_id: UUID, provider: str, username: str
 ) -> EntityRecord | None:
     records = await uow.entity_records.list_by_entity_id(entity_id=entity_id)
 
@@ -27,6 +27,7 @@ async def _find_previous_attempt(
             record
             for record in records
             if record.provider == provider
+            and record.username == username
             and record.outcome in ALREADY_FETCHED_OUTCOMES
         ),
         None,
@@ -48,7 +49,7 @@ async def find_already_fetched_error(  # noqa: PLR0913
         return None
 
     previous = await _find_previous_attempt(
-        uow=uow, entity_id=entity_id, provider=provider
+        uow=uow, entity_id=entity_id, provider=provider, username=username
     )
 
     if previous is None:
@@ -72,12 +73,12 @@ async def find_already_fetched_error(  # noqa: PLR0913
 
 
 async def is_already_fetched(
-    *, uow: UoW, entity_id: UUID, use_case: type[UseCase[object]]
+    *, uow: UoW, entity_id: UUID, use_case: type[UseCase[object]], username: str
 ) -> bool:
     provider = UseCaseRegistry.billing_for(use_case).provider
 
     previous = await _find_previous_attempt(
-        uow=uow, entity_id=entity_id, provider=provider
+        uow=uow, entity_id=entity_id, provider=provider, username=username
     )
 
     return previous is not None

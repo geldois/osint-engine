@@ -26,9 +26,9 @@ def build_get_entity_record_catalog_handler(
     async def get_entity_record_catalog(
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
     ) -> list[EntityRecordSchema]:
-        del payload
-
-        use_case = container.use_cases.list_entity_record_catalog()
+        use_case = container.use_cases.list_entity_record_catalog(
+            username=str(payload["sub"])
+        )
 
         records = await use_case.execute()
 

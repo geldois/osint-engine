@@ -11,6 +11,9 @@ from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
 from osint_engine.infrastructure.persistence.pg.repositories.pg_external_credential_repository import (  # noqa: E501
     PgExternalCredentialRepository,
 )
+from osint_engine.infrastructure.persistence.pg.repositories.pg_user_repository import (
+    PgUserRepository,
+)
 
 if TYPE_CHECKING:
     from asyncpg import Pool
@@ -75,7 +78,7 @@ class HybridUoW(UoW):
         self.graphs = self._mem_uow.graphs
         self.nodes = self._mem_uow.nodes
         self.pattern_sets = self._mem_uow.pattern_sets
-        self.users = self._mem_uow.users
+        self.users = PgUserRepository(pool=self._pg_pool)
 
     @override
     async def _finish(self) -> None:

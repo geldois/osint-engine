@@ -44,7 +44,9 @@ class TestListEntityRecordsByCPFOrchestration:
         mem_uow = make_mem_uow(mem_storage=make_mem_storage())
 
         use_case = ListEntityRecordsByCPF(
-            uow_factory=make_mem_uow_factory(mem_uow=mem_uow), cpf=_CPF
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            cpf=_CPF,
+            username="alice",
         )
 
         assert await use_case.execute() == ()
@@ -63,7 +65,9 @@ class TestListEntityRecordsByCPFOrchestration:
         mem_uow = make_mem_uow(mem_storage=mem_storage)
 
         use_case = ListEntityRecordsByCPF(
-            uow_factory=make_mem_uow_factory(mem_uow=mem_uow), cpf=_CPF
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            cpf=_CPF,
+            username="alice",
         )
 
         assert await use_case.execute() == (matching,)
@@ -87,7 +91,9 @@ class TestListEntityRecordsByCPFOrchestration:
         mem_uow = make_mem_uow(mem_storage=mem_storage)
 
         use_case = ListEntityRecordsByCPF(
-            uow_factory=make_mem_uow_factory(mem_uow=mem_uow), cpf=_CPF
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            cpf=_CPF,
+            username="alice",
         )
 
         found = await use_case.execute()
@@ -109,9 +115,32 @@ class TestListEntityRecordsByCPFOrchestration:
         mem_uow = make_mem_uow(mem_storage=mem_storage)
 
         use_case = ListEntityRecordsByCPF(
-            uow_factory=make_mem_uow_factory(mem_uow=mem_uow), cpf=_CPF
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            cpf=_CPF,
+            username="alice",
         )
 
         found = await use_case.execute()
 
         assert found == (early, late)
+
+    @pytest.mark.asyncio
+    async def test_excludes_another_users_records_for_the_same_cpf(
+        self,
+        make_entity_record: MakeEntityRecord,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        mine = make_entity_record(entity_id=_stub_id(), username="alice")
+        theirs = make_entity_record(entity_id=_stub_id(), username="bob")
+        mem_storage = make_mem_storage(entity_records=[mine, theirs])
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+
+        use_case = ListEntityRecordsByCPF(
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
+            cpf=_CPF,
+            username="alice",
+        )
+
+        assert await use_case.execute() == (mine,)

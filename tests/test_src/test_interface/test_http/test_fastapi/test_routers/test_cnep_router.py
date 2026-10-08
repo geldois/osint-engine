@@ -76,7 +76,7 @@ async def client(
     credential = ExternalCredential(
         api_key="test-api-key",
         provider=Provider.PORTAL_TRANSPARENCIA,
-        username="admin",
+        username="alice",
     )
     mem_storage = make_mem_storage()
 
@@ -97,7 +97,7 @@ async def client(
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role="admin")
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestGetCnepAuthentication:
@@ -136,7 +136,7 @@ class TestGetCnepExpansion:
             credential = ExternalCredential(
                 api_key="test-api-key",
                 provider=Provider.PORTAL_TRANSPARENCIA,
-                username="admin",
+                username="alice",
             )
 
             async with container.uow_factory() as uow:
@@ -158,7 +158,7 @@ class TestGetCnepExpansion:
     async def test_unknown_credential_returns_404(
         self, client: AsyncClient, pyjwt_service: PyJWTService
     ) -> None:
-        token = pyjwt_service.create_access_token(username="stranger", role="admin")
+        token = pyjwt_service.create_access_token(username="stranger")
 
         response = await client.get(
             f"/cnep/{CPF_OR_CNPJ}", headers={"Authorization": f"Bearer {token}"}
@@ -243,7 +243,7 @@ class TestGetCnepPossiblyMatches:
             credential = ExternalCredential(
                 api_key="test-api-key",
                 provider=Provider.PORTAL_TRANSPARENCIA,
-                username="admin",
+                username="alice",
             )
 
             async with container.uow_factory() as uow:

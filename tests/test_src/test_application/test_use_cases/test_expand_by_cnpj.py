@@ -73,6 +73,7 @@ class TestExpandByCNPJOrchestration:
             uow_factory=make_mem_uow_factory(),
             cnpj_fetcher=cnpj_fetcher,
             cnpj="10000000000000",
+            username="alice",
         )
 
         result = await use_case.execute()
@@ -99,6 +100,7 @@ class TestExpandByCNPJOrchestration:
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
             cnpj_fetcher=cnpj_fetcher,
             cnpj="10000000000000",
+            username="alice",
         )
 
         await use_case.execute()
@@ -137,6 +139,7 @@ class TestExpandByCNPJOrchestration:
             ),
             cnpj_fetcher=make_fake_cnpj_fetcher(revision=incoming),
             cnpj="10000000000000",
+            username="alice",
         )
 
         result = await use_case.execute()
@@ -179,6 +182,7 @@ class TestExpandByCNPJReuseLock:
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
             cnpj_fetcher=cnpj_fetcher,
             cnpj=_CNPJ,
+            username="alice",
         )
 
         with pytest.raises(AlreadyFetchedError) as exception:
@@ -209,6 +213,7 @@ class TestExpandByCNPJReuseLock:
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
             cnpj_fetcher=cnpj_fetcher,
             cnpj=_CNPJ,
+            username="alice",
             force=True,
         )
 
@@ -239,6 +244,7 @@ class TestExpandByCNPJReuseLock:
                 uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
                 cnpj_fetcher=cnpj_fetcher,
                 cnpj=_CNPJ,
+                username="alice",
             ).execute()
 
         record = next(
@@ -247,4 +253,4 @@ class TestExpandByCNPJReuseLock:
 
         assert record.entity_id == _make_stub().id
         assert record.entity_ref == previous.entity_ref
-        assert record.username == "anonymous"
+        assert record.username == "alice"

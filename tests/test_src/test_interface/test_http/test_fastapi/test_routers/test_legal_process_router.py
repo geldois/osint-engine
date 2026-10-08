@@ -10,7 +10,6 @@ from osint_engine.application.auth.external_credential import (
     ExternalCredential,
     Provider,
 )
-from osint_engine.application.auth.user import Role
 from osint_engine.application.use_cases.expansion.expand_by_legal_process import (
     ExpandByLegalProcess,
 )
@@ -70,7 +69,7 @@ async def client(
     legal_process_container: Container,
 ) -> AsyncGenerator[AsyncClient, None]:
     credential = ExternalCredential(
-        api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
+        api_key="test-api-key", provider=Provider.KIPFLOW, username="alice"
     )
 
     async with legal_process_container.uow_factory() as uow:
@@ -86,7 +85,7 @@ async def client(
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role=Role.ADMIN)
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestGetLegalProcessAuthentication:
@@ -95,21 +94,6 @@ class TestGetLegalProcessAuthentication:
         response = await client.get(f"/legal-process/{CPF}")
 
         assert response.status_code == 401
-
-    @pytest.mark.asyncio
-    async def test_viewer_token_is_rejected(
-        self, client: AsyncClient, pyjwt_service: PyJWTService
-    ) -> None:
-        viewer_token = pyjwt_service.create_access_token(
-            username="viewer", role=Role.VIEWER
-        )
-
-        response = await client.get(
-            f"/legal-process/{CPF}",
-            headers={"Authorization": f"Bearer {viewer_token}"},
-        )
-
-        assert response.status_code == 403
 
 
 class TestGetLegalProcessExpansion:
@@ -140,7 +124,7 @@ class TestGetLegalProcessExpansion:
                 http_client=http_client, mem_storage=make_mem_storage()
             )
             credential = ExternalCredential(
-                api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
+                api_key="test-api-key", provider=Provider.KIPFLOW, username="alice"
             )
 
             async with container.uow_factory() as uow:
@@ -169,7 +153,7 @@ class TestLegalProcessCompositionRoot:
         )
 
         use_case = legal_process_container.use_cases.expand_by_legal_process(
-            cpf_or_cnpj=CPF, username="admin"
+            cpf_or_cnpj=CPF, username="alice"
         )
 
         assert isinstance(use_case, ExpandByLegalProcess)

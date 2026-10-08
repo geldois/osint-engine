@@ -81,7 +81,7 @@ async def client(cepim_container: Container) -> AsyncGenerator[AsyncClient, None
     credential = ExternalCredential(
         api_key="test-api-key",
         provider=Provider.PORTAL_TRANSPARENCIA,
-        username="admin",
+        username="alice",
     )
 
     async with cepim_container.uow_factory() as uow:
@@ -97,7 +97,7 @@ async def client(cepim_container: Container) -> AsyncGenerator[AsyncClient, None
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role="admin")
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestGetCEPIMAuthentication:
@@ -137,7 +137,7 @@ class TestGetCEPIMExpansion:
             credential = ExternalCredential(
                 api_key="test-api-key",
                 provider=Provider.PORTAL_TRANSPARENCIA,
-                username="admin",
+                username="alice",
             )
 
             async with container.uow_factory() as uow:
@@ -183,7 +183,7 @@ class TestCEPIMCompositionRoot:
         use_case = cepim_container.use_cases.expand_by_cepim(
             cnpj=CNPJ,
             cepim_id=None,
-            username="admin",
+            username="alice",
         )
 
         assert isinstance(use_case, ExpandByCEPIM)

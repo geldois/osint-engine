@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.config.settings import Settings
-    from tests.conftest import MakeMemStorage, MakeUser
+    from tests.conftest import MakeEntityRecord, MakeMemStorage, MakeUser
 
 _NOOP_MERGE_POLICY_CALLED_MESSAGE = "_noop_merge_policy should not be called"
 _NOOP_SELECTION_POLICY_CALLED_MESSAGE = "_noop_selection_policy should not be called"
@@ -59,11 +59,11 @@ class TestBuildContainerMemStorage:
         http_client: AsyncClient,
         pg_pool: Pool,
         make_mem_storage: MakeMemStorage,
-        make_user: MakeUser,
+        make_entity_record: MakeEntityRecord,
         policies: Policies,
     ) -> None:
-        user = make_user(username="seeded_user")
-        mem_storage = make_mem_storage(users=[user])
+        record = make_entity_record()
+        mem_storage = make_mem_storage(entity_records=[record])
 
         container = build_container(
             settings=settings,
@@ -77,9 +77,9 @@ class TestBuildContainerMemStorage:
         )
 
         async with container.uow_factory() as uow:
-            found = await uow.users.find(username="seeded_user")
+            found = await uow.entity_records.list_all()
 
-        assert found is user, (
+        assert found == (record,), (
             "build_container must reuse the caller-provided mem_storage "
             "instead of discarding it for a fresh one"
         )
@@ -104,12 +104,67 @@ class TestBuildContainerMemStorage:
         )
 
         async with container.uow_factory() as uow:
-            found = await uow.users.find(username="admin")
+            bundles = await uow.pattern_sets.list_bundles()
 
-        assert found is not None, (
-            "build_container must seed a fresh mem_storage when none is given, "
-            "which populates the admin user"
+        assert len(bundles) == 1, (
+            "build_container must seed a fresh mem_storage when none is given"
         )
+
+
+class TestBuildContainerUsers:
+    @pytest.mark.asyncio
+    async def test_starts_with_no_seeded_user(
+        self,
+        settings: Settings,
+        http_client: AsyncClient,
+        pg_pool: Pool,
+        policies: Policies,
+    ) -> None:
+        container = build_container(
+            settings=settings,
+            http_client=http_client,
+            pg_pool=pg_pool,
+            policies=policies,
+        )
+
+        async with container.uow_factory() as uow:
+            admin = await uow.users.find(username="admin")
+            visitor = await uow.users.find(username="visitor")
+
+        assert admin is None
+        assert visitor is None
+
+    @pytest.mark.asyncio
+    async def test_a_registered_user_survives_a_rebuilt_container_on_the_same_pool(
+        self,
+        settings: Settings,
+        http_client: AsyncClient,
+        pg_pool: Pool,
+        make_user: MakeUser,
+        policies: Policies,
+    ) -> None:
+        user = make_user(username="alice")
+        first = build_container(
+            settings=settings,
+            http_client=http_client,
+            pg_pool=pg_pool,
+            policies=policies,
+        )
+
+        async with first.uow_factory() as uow:
+            await uow.users.save(user=user)
+
+        restarted = build_container(
+            settings=settings,
+            http_client=http_client,
+            pg_pool=pg_pool,
+            policies=policies,
+        )
+
+        async with restarted.uow_factory() as uow:
+            found = await uow.users.find(username="alice")
+
+        assert found == user
 
 
 class TestBuildContainerPatternSets:

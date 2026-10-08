@@ -29,7 +29,7 @@ class TestListEntityRecordCatalogOrchestration:
         mem_uow = make_mem_uow(mem_storage=make_mem_storage())
 
         use_case = ListEntityRecordCatalog(
-            uow_factory=make_mem_uow_factory(mem_uow=mem_uow)
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow), username="alice"
         )
 
         assert await use_case.execute() == ()
@@ -48,7 +48,7 @@ class TestListEntityRecordCatalogOrchestration:
         mem_uow = make_mem_uow(mem_storage=mem_storage)
 
         use_case = ListEntityRecordCatalog(
-            uow_factory=make_mem_uow_factory(mem_uow=mem_uow)
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow), username="alice"
         )
 
         found = await use_case.execute()
@@ -69,9 +69,47 @@ class TestListEntityRecordCatalogOrchestration:
         mem_uow = make_mem_uow(mem_storage=mem_storage)
 
         use_case = ListEntityRecordCatalog(
-            uow_factory=make_mem_uow_factory(mem_uow=mem_uow)
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow), username="alice"
         )
 
         found = await use_case.execute()
 
         assert found == (late, early)
+
+    @pytest.mark.asyncio
+    async def test_returns_only_the_requesting_users_records(
+        self,
+        make_entity_record: MakeEntityRecord,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        mine = make_entity_record(username="alice")
+        theirs = make_entity_record(username="bob")
+        mem_storage = make_mem_storage(entity_records=[mine, theirs])
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+
+        use_case = ListEntityRecordCatalog(
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow), username="alice"
+        )
+
+        assert await use_case.execute() == (mine,)
+
+    @pytest.mark.asyncio
+    async def test_returns_nothing_for_a_user_who_never_requested_anything(
+        self,
+        make_entity_record: MakeEntityRecord,
+        make_mem_storage: MakeMemStorage,
+        make_mem_uow: MakeMemUoW,
+        make_mem_uow_factory: MakeMemUoWFactory,
+    ) -> None:
+        mem_storage = make_mem_storage(
+            entity_records=[make_entity_record(username="bob")]
+        )
+        mem_uow = make_mem_uow(mem_storage=mem_storage)
+
+        use_case = ListEntityRecordCatalog(
+            uow_factory=make_mem_uow_factory(mem_uow=mem_uow), username="alice"
+        )
+
+        assert await use_case.execute() == ()

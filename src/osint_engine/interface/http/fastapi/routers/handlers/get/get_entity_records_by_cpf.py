@@ -28,11 +28,11 @@ def build_get_entity_records_by_cpf_handler(
         cpf: str,
         payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
     ) -> list[EntityRecordSchema]:
-        del payload
-
         cpf = sanitize_cpf(cpf)
 
-        use_case = container.use_cases.list_entity_records_by_cpf(cpf=cpf)
+        use_case = container.use_cases.list_entity_records_by_cpf(
+            cpf=cpf, username=str(payload["sub"])
+        )
 
         records = await use_case.execute()
 

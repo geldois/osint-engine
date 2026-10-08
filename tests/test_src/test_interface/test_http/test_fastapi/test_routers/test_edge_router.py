@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def viewer_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="viewer", role="VIEWER")
+def user_token(pyjwt_service: PyJWTService) -> str:
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestGetEdgeHistoryAuthentication:
@@ -28,12 +28,12 @@ class TestGetEdgeHistoryAuthentication:
 
 class TestGetEdgeHistoryReadAccess:
     @pytest.mark.asyncio
-    async def test_viewer_token_returns_200_with_empty_list_for_an_unknown_id(
-        self, fastapi_app_client: AsyncClient, viewer_token: str
+    async def test_authenticated_user_gets_200_with_empty_list_for_an_unknown_id(
+        self, fastapi_app_client: AsyncClient, user_token: str
     ) -> None:
         response = await fastapi_app_client.get(
             f"/edges/{uuid4()}/history",
-            headers={"Authorization": f"Bearer {viewer_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 200

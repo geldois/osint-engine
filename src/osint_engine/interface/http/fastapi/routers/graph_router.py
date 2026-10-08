@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 def build_graph_router(*, container: Container) -> APIRouter:
     jwt_guard = build_jwt_guard(container=container)
-    rate_limit = build_expansion_rate_limit(scope="graph_catalog")
+    rate_limit = build_expansion_rate_limit(container=container, scope="graph_catalog")
 
     router = APIRouter(
         prefix="/graphs", dependencies=[Depends(jwt_guard), Depends(rate_limit)]

@@ -3,8 +3,11 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
+from fastapi import Depends
+
 from osint_engine.domain.errors.sanitization_error import SanitizationError
 from osint_engine.domain.services.sanitization import sanitize_cnpj
+from osint_engine.interface.http.fastapi.dependencies.jwt_guard import build_jwt_guard
 from osint_engine.interface.http.presenters.graph_presenter import graph_to_schema
 from osint_engine.interface.http.schemas.graph_schema import GraphSchema  # noqa: TC001
 
@@ -13,22 +16,30 @@ if TYPE_CHECKING:
 
     from osint_engine.config.container import Container
 
-_ANONYMOUS_USERNAME = "anonymous"
-
 
 def build_get_cnpj_handler(
     *, container: Container
-) -> Callable[[str, bool], Awaitable[GraphSchema]]:
-    async def get_cnpj(cnpj: str, force: bool = False) -> GraphSchema:  # noqa: FBT001, FBT002
+) -> Callable[[str, dict[str, object], bool], Awaitable[GraphSchema]]:
+    jwt_guard = build_jwt_guard(container=container)
+
+    async def get_cnpj(
+        cnpj: str,
+        payload: dict[str, object] = Depends(jwt_guard),  # noqa: B008
+        force: bool = False,  # noqa: FBT001, FBT002
+    ) -> GraphSchema:
+        username = str(payload["sub"])
+
         try:
             cnpj = sanitize_cnpj(cnpj)
         except SanitizationError:
             await container.use_cases.record_invalid_attempt(
-                provider="brasilapi", raw_input=cnpj, username=_ANONYMOUS_USERNAME
+                provider="brasilapi", raw_input=cnpj, username=username
             ).execute()
             raise
 
-        use_case = container.use_cases.expand_by_cnpj(cnpj=cnpj, force=force)
+        use_case = container.use_cases.expand_by_cnpj(
+            cnpj=cnpj, force=force, username=username
+        )
 
         revision = await use_case.execute()
         graph = revision.entity

@@ -8,27 +8,28 @@ shape a caller actually receives over the wire.
 
 Authentication is a signed, self-contained token a caller presents on every request; nothing about a valid session lives
 on the server between requests, so any instance handling a request can verify it alone, with no shared state to
-coordinate. A second, separate check — layered on top of authentication, not merged into it — decides whether the
-authenticated caller's role permits the specific route being called at all; some routes are open to a public,
-credential-free caller for read-only access, while routes that call a paid provider or hold user-scoped data stay
-restricted to a privileged caller only. Both checks fail with a distinct, clearly different status so a caller (or
-whoever's debugging a failure) can tell "you're not who you say you are" apart from "you're allowed in, but not to
-this."
+coordinate. There is no anonymous access and no seeded account: a caller creates their own account by choosing a
+username and a password, receives a token right away, and is the only person who ever holds the provider keys saved
+under that account. Every route except account creation, login and the health checks requires that token, and every
+authenticated caller is allowed on all of them — what a caller can reach depends on which provider keys they saved, not
+on a privilege level. A missing or invalid token fails with a distinct, clearly different status from an unmet
+precondition such as a provider key that was never saved, so a caller (or whoever's debugging a failure) can tell
+"you're not who you say you are" apart from "you're allowed in, but you haven't configured this yet."
 
 Every route that could be hit by unauthenticated or lightly-authenticated traffic is rate-limited in-memory, with a flat
-allowance per route (or per client address on the login routes), not per role — protecting both a paid upstream quota
-and the login route itself from being hammered. Every error that reaches this layer, regardless of which layer actually
-raised it, is translated into one consistent response shape carrying a machine-readable error code and a correlation id,
-so a caller never sees a raw stack trace or an inconsistent error format depending on which internal component failed.
+allowance per route that each authenticated caller spends separately (or per client address on the login and account
+creation routes) — protecting each caller's own upstream quota, which is tied to their own key, and the login and signup
+routes themselves from being hammered. Every error that reaches this layer, regardless of which layer actually raised
+it, is translated into one consistent response shape carrying a machine-readable error code and a correlation id, so a
+caller never sees a raw stack trace or an inconsistent error format depending on which internal component failed.
 
 Every request handler is an ordinary function whose dependencies are visible in its own signature — assembled once, by
 hand, when the process starts, rather than resolved automatically per request. That keeps the wiring traceable in one
 place and keeps every layer below this one completely free of any framework dependency, testable in complete isolation
 from an actual running web server.
 
-The consumption log's own routes are restricted to the privileged role, the same guard the paid CPF route itself uses,
-rather than the plain-authenticated guard most read routes accept — an entry names which CPF a specific caller looked up
-and when, which is exactly the kind of data the rest of this layer treats as sensitive enough to gate.
+The consumption log's own routes only ever return the calling account's own entries — an entry names which CPF a
+specific caller looked up and when, which is exactly the kind of data one caller must never see of another.
 
 ## Decisions
 
@@ -37,9 +38,12 @@ project's own request-logging middleware and was found to depend on an already-d
 fix — the replacement is far less battle-tested but has no such conflict and needed no workarounds to satisfy strict
 type-checking.
 
-Authorization deliberately lives beside authentication as its own dedicated check at this layer rather than inside each
-individual workflow, keeping "is this caller who they claim to be" and "is this caller allowed to do this" as pure
-interface-layer concerns instead of scattering the same role logic across every workflow that happens to need it.
+Roles were removed along with the seeded operator account and the credential-free visitor token. They existed to keep a
+public demo caller away from routes that spent the operator's shared provider key; once every caller spends only their
+own key there is nothing left for a role to protect, and keeping a privilege level with no distinct power would have
+been complexity without a purpose. Self-service signup is open to anyone, bounded only by a per-address rate limit and
+by the password-hashing cost; a registration code was weighed and left out as one more secret to manage, and is the
+first thing to add if signup abuse ever shows up.
 
 A response now carries when its data was observed and where it came from, rather than only the data itself. The
 information had always been recorded when a fetch happened and had always been used internally to decide which
@@ -65,9 +69,9 @@ content-derived identifier in a response always describes what that response act
 
 ## Consequences
 
-Any future route added to this layer inherits the same authentication/authorization split automatically, rather than
-needing its own hand-rolled check — a new workflow only has to declare which role may call it, not reimplement how that
-gets enforced.
+Any future route added to this layer inherits the same authentication check automatically, rather than needing its own
+hand-rolled check — a new workflow only has to be mounted behind the same token check, not reimplement how that gets
+enforced.
 
 Publishing the content-derived identifier commits this layer to deriving it the same deterministic way indefinitely: a
 caller may already depend on two fetches of unchanged content producing the same value, so changing how that identifier

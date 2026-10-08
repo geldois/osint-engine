@@ -63,7 +63,6 @@ def make_settings(settings: Settings) -> MakeSettings:
     def settings_(
         *,
         access_token_expire_minutes: int | None = None,
-        admin_password: str | None = None,
         cors_origins: list[str] | None = None,
         database_url: str | None = None,
         debug: bool | None = None,
@@ -75,15 +74,11 @@ def make_settings(settings: Settings) -> MakeSettings:
         log_level: str | None = None,
         port: int | None = None,
         secret_key: str | None = None,
-        viewer_token_expire_minutes: int | None = None,
     ) -> Settings:
         return Settings(
             access_token_expire_minutes=access_token_expire_minutes
             if access_token_expire_minutes is not None
             else settings.access_token_expire_minutes,
-            admin_password=admin_password
-            if admin_password is not None
-            else settings.admin_password,
             cors_origins=cors_origins
             if cors_origins is not None
             else settings.cors_origins,
@@ -107,9 +102,6 @@ def make_settings(settings: Settings) -> MakeSettings:
             log_level=log_level if log_level is not None else settings.log_level,
             port=port if port is not None else settings.port,
             secret_key=secret_key if secret_key is not None else settings.secret_key,
-            viewer_token_expire_minutes=viewer_token_expire_minutes
-            if viewer_token_expire_minutes is not None
-            else settings.viewer_token_expire_minutes,
         )
 
     return settings_

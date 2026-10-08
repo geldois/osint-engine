@@ -94,7 +94,7 @@ class TestFastAPICORSConfiguration:
 
         response = await fastapi_app_client.post(
             "/auth/token",
-            data={"username": "admin", "password": "wrong_password"},
+            data={"username": "alice", "password": "wrong_password"},
             headers={"Origin": settings.cors_origins[0]},
         )
 

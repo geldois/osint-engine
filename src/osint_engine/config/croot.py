@@ -12,6 +12,9 @@ from osint_engine.application.revision.policies.revision_selection_policy import
 from osint_engine.application.use_cases.authentication.authenticate_user import (
     AuthenticateUser,
 )
+from osint_engine.application.use_cases.authentication.register_user import (
+    RegisterUser,
+)
 from osint_engine.application.use_cases.consumption.list_entity_record_catalog import (
     ListEntityRecordCatalog,
 )
@@ -161,9 +164,7 @@ def build_container(  # noqa: PLR0913
     mem_storage = mem_storage if mem_storage is not None else MemStorage()
     password_hasher = Argon2PasswordHasher()
 
-    seed_mem_storage(
-        settings=settings, mem_storage=mem_storage, password_hasher=password_hasher
-    )
+    seed_mem_storage(mem_storage=mem_storage)
 
     external_credential_encryption_key = (
         external_credential_encryption_key
@@ -248,6 +249,9 @@ def build_container(  # noqa: PLR0913
         list_node_history=partial(ListNodeHistory, uow_factory=uow_factory),
         list_text_patterns=partial(ListTextPatterns, uow_factory=uow_factory),
         record_invalid_attempt=partial(RecordInvalidAttempt, uow_factory=uow_factory),
+        register_user=partial(
+            RegisterUser, uow_factory=uow_factory, password_hasher=password_hasher
+        ),
         reveal_external_credential=partial(
             RevealExternalCredential, uow_factory=uow_factory
         ),

@@ -23,3 +23,17 @@ class InvalidCredentialsError(
     @override
     def _build_message(self) -> str:
         return f"Invalid credentials for user '{self.username}'."
+
+
+class UsernameTakenError(
+    AuthError, error_code="AUTH_USERNAME_TAKEN", category=ErrorCategory.CONFLICT
+):
+    username: str
+
+    @override
+    def __init__(self, *, username: str) -> None:
+        super().__init__(username=username)
+
+    @override
+    def _build_message(self) -> str:
+        return f"Username '{self.username}' is already taken."

@@ -24,14 +24,13 @@ if TYPE_CHECKING:
 
 _logger = get_logger()
 
-_ANONYMOUS_USERNAME = "anonymous"
-
 
 class ExpandByCNPJ(Query[EntityRevision[Graph]]):
     uow_factory: Callable[[], UoW]
     cnpj_fetcher: CNPJFetcher
     cnpj: str
     force: bool
+    username: str
 
     @override
     def __init__(
@@ -41,9 +40,14 @@ class ExpandByCNPJ(Query[EntityRevision[Graph]]):
         cnpj_fetcher: CNPJFetcher,
         cnpj: str,
         force: bool = False,
+        username: str,
     ) -> None:
         super().__init__(
-            uow_factory=uow_factory, cnpj_fetcher=cnpj_fetcher, cnpj=cnpj, force=force
+            uow_factory=uow_factory,
+            cnpj_fetcher=cnpj_fetcher,
+            cnpj=cnpj,
+            force=force,
+            username=username,
         )
 
     @override
@@ -59,7 +63,7 @@ class ExpandByCNPJ(Query[EntityRevision[Graph]]):
                 use_case=type(self),
                 force=self.force,
                 requested_at=requested_at,
-                username=_ANONYMOUS_USERNAME,
+                username=self.username,
             )
 
         if to_raise is not None:
@@ -78,7 +82,7 @@ class ExpandByCNPJ(Query[EntityRevision[Graph]]):
                 uow=uow,
                 cnpj=self.cnpj,
                 provider=provider,
-                username=_ANONYMOUS_USERNAME,
+                username=self.username,
                 requested_at=requested_at,
                 revision=revision,
             )

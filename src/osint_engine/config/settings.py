@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 @dataclass(frozen=True)
 class Settings:
     access_token_expire_minutes: int
-    admin_password: str
     cors_origins: list[str]
     database_url: str
     debug: bool
@@ -21,15 +20,10 @@ class Settings:
     log_level: str
     port: int
     secret_key: str
-    viewer_token_expire_minutes: int
 
     @staticmethod
     def _load_access_token_expire_minutes() -> int:
         return int(getenv(key="ACCESS_TOKEN_EXPIRE_MINUTES", default="60"))
-
-    @staticmethod
-    def _load_admin_password() -> str:
-        return environ["ADMIN_PASSWORD"]
 
     @staticmethod
     def _load_cors_origins() -> list[str]:
@@ -80,17 +74,12 @@ class Settings:
     def _load_secret_key() -> str:
         return environ["SECRET_KEY"]
 
-    @staticmethod
-    def _load_viewer_token_expire_minutes() -> int:
-        return int(getenv(key="VIEWER_TOKEN_EXPIRE_MINUTES", default="20"))
-
     @classmethod
     def from_env(cls) -> Settings:
         load_dotenv(dotenv_path=".env", interpolate=False)
 
         return cls(
             access_token_expire_minutes=cls._load_access_token_expire_minutes(),
-            admin_password=cls._load_admin_password(),
             cors_origins=cls._load_cors_origins(),
             database_url=cls._load_database_url(),
             debug=cls._load_debug(),
@@ -104,5 +93,4 @@ class Settings:
             log_level=cls._load_log_level(),
             port=cls._load_port(),
             secret_key=cls._load_secret_key(),
-            viewer_token_expire_minutes=cls._load_viewer_token_expire_minutes(),
         )

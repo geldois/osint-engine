@@ -6,6 +6,7 @@ from typing import Self
 class FakePgPool:
     def __init__(self) -> None:
         self.external_credentials: dict[tuple[str, str], str] = {}
+        self.users: dict[str, str] = {}
 
     async def acquire(self) -> Self:
         return self
@@ -14,6 +15,9 @@ class FakePgPool:
         assert connection is self
 
     async def fetchrow(self, query: str, *args: object) -> dict[str, str] | None:
+        if "FROM users" in query:
+            return self._fetch_user(args)
+
         assert "FROM external_credentials" in query
         assert len(args) == 2
 
@@ -45,6 +49,9 @@ class FakePgPool:
         if query == "SELECT 1":
             return "SELECT 1"
 
+        if "INSERT INTO users" in query:
+            return self._insert_user(args)
+
         assert "INSERT INTO external_credentials" in query
         assert len(args) == 3
 
@@ -54,5 +61,32 @@ class FakePgPool:
         assert isinstance(api_key, str)
 
         self.external_credentials[(username, provider)] = api_key
+
+        return "INSERT 0 1"
+
+    def _fetch_user(self, args: tuple[object, ...]) -> dict[str, str] | None:
+        assert len(args) == 1
+
+        (username,) = args
+        assert isinstance(username, str)
+
+        hashed_password = self.users.get(username)
+
+        if hashed_password is None:
+            return None
+
+        return {"username": username, "hashed_password": hashed_password}
+
+    def _insert_user(self, args: tuple[object, ...]) -> str:
+        assert len(args) == 2
+
+        username, hashed_password = args
+        assert isinstance(username, str)
+        assert isinstance(hashed_password, str)
+
+        if username in self.users:
+            return "INSERT 0 0"
+
+        self.users[username] = hashed_password
 
         return "INSERT 0 1"

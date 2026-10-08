@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from osint_engine.interface.http.fastapi.rate_limit import (
     build_auth_token_rate_limit,
-    build_viewer_token_rate_limit,
+    build_register_rate_limit,
+)
+from osint_engine.interface.http.fastapi.routers.handlers.post.post_register import (
+    build_post_register_handler,
 )
 from osint_engine.interface.http.fastapi.routers.handlers.post.post_token import (
     build_post_token_handler,
-)
-from osint_engine.interface.http.fastapi.routers.handlers.post.post_viewer_token import (  # noqa: E501
-    build_post_viewer_token_handler,
 )
 
 if TYPE_CHECKING:
@@ -26,7 +26,9 @@ def build_auth_router(*, container: Container) -> APIRouter:
         build_post_token_handler(container=container)
     )
     router.post(
-        path="/viewer-token", dependencies=[Depends(build_viewer_token_rate_limit())]
-    )(build_post_viewer_token_handler(container=container))
+        path="/register",
+        status_code=status.HTTP_201_CREATED,
+        dependencies=[Depends(build_register_rate_limit())],
+    )(build_post_register_handler(container=container))
 
     return router

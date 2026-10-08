@@ -17,5 +17,5 @@ class UserRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def save(self, *, user: User) -> None:
+    async def save(self, *, user: User) -> bool:
         raise NotImplementedError

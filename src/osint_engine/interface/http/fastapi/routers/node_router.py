@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 def build_node_router(*, container: Container) -> APIRouter:
     jwt_guard = build_jwt_guard(container=container)
-    rate_limit = build_expansion_rate_limit(scope="node_history")
+    rate_limit = build_expansion_rate_limit(container=container, scope="node_history")
 
     router = APIRouter(
         prefix="/nodes", dependencies=[Depends(jwt_guard), Depends(rate_limit)]

@@ -16,7 +16,7 @@ from osint_engine.application.auth.external_credential import (
     ExternalCredential,
     Provider,
 )
-from osint_engine.application.auth.user import Role, User
+from osint_engine.application.auth.user import User
 from osint_engine.application.consumption.entity_record import EntityRecord
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.application.revision.policies.revision_merge_policy import (
@@ -117,7 +117,6 @@ def settings() -> Settings:
 
     return Settings(
         access_token_expire_minutes=60,
-        admin_password="admin_password",
         cors_origins=["http://localhost:3000"],
         database_url="postgresql://test:test@localhost:5432/test",
         debug=True,
@@ -131,7 +130,6 @@ def settings() -> Settings:
         log_level="info",
         port=8000,
         secret_key="a-secret-key-with-at-least-32-bytes-for-hs256",
-        viewer_token_expire_minutes=20,
     )
 
 
@@ -177,7 +175,7 @@ def make_entity_record() -> MakeEntityRecord:
         outcome: ConsumptionOutcome = "expanded",
         provider: str = "test_provider",
         requested_at: datetime | None = None,
-        username: str = "test_user",
+        username: str = "alice",
     ) -> EntityRecord:
         return EntityRecord(
             id=uuid4(),
@@ -352,14 +350,12 @@ def make_user() -> MakeUser:
         *,
         username: str | None = None,
         hashed_password: str | None = None,
-        role: Role = Role.VIEWER,
     ) -> User:
         return User(
             username=username if username is not None else str(uuid4()),
             hashed_password=hashed_password
             if hashed_password is not None
             else str(uuid4()),
-            role=role,
         )
 
     return user

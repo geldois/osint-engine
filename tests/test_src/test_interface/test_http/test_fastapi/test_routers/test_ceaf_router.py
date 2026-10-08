@@ -86,7 +86,7 @@ async def client(ceaf_container: Container) -> AsyncGenerator[AsyncClient, None]
     credential = ExternalCredential(
         api_key="test-api-key",
         provider=Provider.PORTAL_TRANSPARENCIA,
-        username="admin",
+        username="alice",
     )
 
     async with ceaf_container.uow_factory() as uow:
@@ -102,7 +102,7 @@ async def client(ceaf_container: Container) -> AsyncGenerator[AsyncClient, None]
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role="admin")
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestGetCEAFAuthentication:
@@ -142,7 +142,7 @@ class TestGetCEAFExpansion:
             credential = ExternalCredential(
                 api_key="test-api-key",
                 provider=Provider.PORTAL_TRANSPARENCIA,
-                username="admin",
+                username="alice",
             )
 
             async with container.uow_factory() as uow:
@@ -208,7 +208,7 @@ class TestGetCeafPossiblyMatches:
             credential = ExternalCredential(
                 api_key="test-api-key",
                 provider=Provider.PORTAL_TRANSPARENCIA,
-                username="admin",
+                username="alice",
             )
 
             async with container.uow_factory() as uow:
@@ -242,7 +242,7 @@ class TestCEAFCompositionRoot:
         use_case = ceaf_container.use_cases.expand_by_ceaf(
             cpf=CPF,
             ceaf_id=None,
-            username="admin",
+            username="alice",
         )
 
         assert isinstance(use_case, ExpandByCEAF)

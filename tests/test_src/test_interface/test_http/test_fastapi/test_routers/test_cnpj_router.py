@@ -7,7 +7,6 @@ import pytest
 import pytest_asyncio
 from httpx2 import ASGITransport, AsyncClient, MockTransport, Request, Response
 
-from osint_engine.application.auth.user import Role
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 from osint_engine.interface.http.schemas.graph_schema import GraphSchema
@@ -63,12 +62,7 @@ async def client(
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role=Role.ADMIN)
-
-
-@pytest.fixture
-def viewer_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="visitor", role=Role.VIEWER)
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestGetCnpjAuthentication:
@@ -137,15 +131,80 @@ class TestGetCnpjExpansion:
 
         UUID(response.headers["x-correlation-id"])
 
-    @pytest.mark.asyncio
-    async def test_viewer_token_also_returns_200(
-        self, client: AsyncClient, viewer_token: str
-    ) -> None:
-        response = await client.get(
-            f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {viewer_token}"}
-        )
 
-        assert response.status_code == 200
+class TestGetCnpjAttribution:
+    @pytest.mark.asyncio
+    async def test_a_lookup_is_recorded_under_the_callers_username(
+        self,
+        make_container: MakeContainer,
+        brasilapi_http_client: AsyncClient,
+        valid_token: str,
+    ) -> None:
+        container = make_container(http_client=brasilapi_http_client)
+        app = build_fastapi_app(container=container)
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            await client.get(
+                f"/cnpj/{CNPJ}", headers={"Authorization": f"Bearer {valid_token}"}
+            )
+
+        async with container.uow_factory() as uow:
+            records = await uow.entity_records.list_all()
+
+        assert records != ()
+        assert {record.username for record in records} == {"alice"}
+
+    @pytest.mark.asyncio
+    async def test_another_user_is_not_blocked_by_the_first_users_reuse_lock(
+        self,
+        make_container: MakeContainer,
+        brasilapi_http_client: AsyncClient,
+        valid_token: str,
+        pyjwt_service: PyJWTService,
+    ) -> None:
+        container = make_container(http_client=brasilapi_http_client)
+        app = build_fastapi_app(container=container)
+        alice = {"Authorization": f"Bearer {valid_token}"}
+        bob_token = pyjwt_service.create_access_token(username="bob")
+        bob = {"Authorization": f"Bearer {bob_token}"}
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            first = await client.get(f"/cnpj/{CNPJ}", headers=alice)
+            repeated = await client.get(f"/cnpj/{CNPJ}", headers=alice)
+            other_user = await client.get(f"/cnpj/{CNPJ}", headers=bob)
+
+        assert first.status_code == 200
+        assert repeated.status_code == 409
+        assert other_user.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_an_invalid_cnpj_attempt_is_recorded_under_the_callers_username(
+        self,
+        make_container: MakeContainer,
+        brasilapi_http_client: AsyncClient,
+        valid_token: str,
+    ) -> None:
+        container = make_container(http_client=brasilapi_http_client)
+        app = build_fastapi_app(container=container)
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            response = await client.get(
+                "/cnpj/123", headers={"Authorization": f"Bearer {valid_token}"}
+            )
+
+        async with container.uow_factory() as uow:
+            records = await uow.entity_records.list_all()
+
+        assert response.status_code == 422
+        assert [(record.outcome, record.username) for record in records] == [
+            ("invalid", "alice")
+        ]
 
 
 class TestGetCnpjPossiblyMatches:
@@ -189,11 +248,11 @@ class TestGetCnpjPossiblyMatches:
 
 class TestCnpjRateLimit:
     @pytest.mark.asyncio
-    async def test_shared_bucket_returns_429_past_100_requests(
-        self, client: AsyncClient, viewer_token: str
+    async def test_bucket_returns_429_past_100_requests(
+        self, client: AsyncClient, valid_token: str
     ) -> None:
 
-        headers = {"Authorization": f"Bearer {viewer_token}"}
+        headers = {"Authorization": f"Bearer {valid_token}"}
 
         for _ in range(100):
             await client.get(f"/cnpj/{CNPJ}", headers=headers)
@@ -201,3 +260,20 @@ class TestCnpjRateLimit:
         response = await client.get(f"/cnpj/{CNPJ}", headers=headers)
 
         assert response.status_code == 429
+
+    @pytest.mark.asyncio
+    async def test_exhausting_one_users_bucket_leaves_another_users_untouched(
+        self, client: AsyncClient, valid_token: str, pyjwt_service: PyJWTService
+    ) -> None:
+        headers = {"Authorization": f"Bearer {valid_token}"}
+        other_token = pyjwt_service.create_access_token(username="bob")
+        other_headers = {"Authorization": f"Bearer {other_token}"}
+
+        for _ in range(100):
+            await client.get(f"/cnpj/{CNPJ}", headers=headers)
+
+        blocked = await client.get(f"/cnpj/{CNPJ}", headers=headers)
+        untouched = await client.get(f"/cnpj/{CNPJ}", headers=other_headers)
+
+        assert blocked.status_code == 429
+        assert untouched.status_code == 200

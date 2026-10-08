@@ -7,7 +7,6 @@ import pytest_asyncio
 from httpx2 import ASGITransport, AsyncClient
 
 from osint_engine.application.auth.external_credential import Provider
-from osint_engine.application.auth.user import Role
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 
 if TYPE_CHECKING:
@@ -39,12 +38,7 @@ async def client(
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role=Role.ADMIN)
-
-
-@pytest.fixture
-def viewer_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="visitor", role=Role.VIEWER)
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestPostCredentialAuthentication:
@@ -56,20 +50,6 @@ class TestPostCredentialAuthentication:
         )
 
         assert response.status_code == 401
-
-
-class TestPostCredentialAuthorization:
-    @pytest.mark.asyncio
-    async def test_viewer_token_returns_403(
-        self, client: AsyncClient, viewer_token: str
-    ) -> None:
-        response = await client.post(
-            "/credentials",
-            json={"api_key": "test-api-key", "provider": "PORTAL_TRANSPARENCIA"},
-            headers={"Authorization": f"Bearer {viewer_token}"},
-        )
-
-        assert response.status_code == 403
 
 
 class TestPostCredentialSubmission:
@@ -97,7 +77,7 @@ class TestPostCredentialSubmission:
 
         async with container.uow_factory() as uow:
             credential = await uow.external_credentials.find(
-                username="admin", provider=Provider.PORTAL_TRANSPARENCIA
+                username="alice", provider=Provider.PORTAL_TRANSPARENCIA
             )
 
         assert credential is not None
@@ -110,18 +90,6 @@ class TestGetCredentialAuthentication:
         response = await client.get("/credentials")
 
         assert response.status_code == 401
-
-
-class TestGetCredentialAuthorization:
-    @pytest.mark.asyncio
-    async def test_viewer_token_returns_403(
-        self, client: AsyncClient, viewer_token: str
-    ) -> None:
-        response = await client.get(
-            "/credentials", headers={"Authorization": f"Bearer {viewer_token}"}
-        )
-
-        assert response.status_code == 403
 
 
 class TestGetCredentialStatus:
@@ -165,9 +133,7 @@ class TestGetCredentialStatus:
         pyjwt_service: PyJWTService,
         valid_token: str,
     ) -> None:
-        other_admin_token = pyjwt_service.create_access_token(
-            username="other-admin", role=Role.ADMIN
-        )
+        other_admin_token = pyjwt_service.create_access_token(username="bob")
 
         await client.post(
             "/credentials",

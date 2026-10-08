@@ -10,7 +10,6 @@ from osint_engine.application.auth.external_credential import (
     ExternalCredential,
     Provider,
 )
-from osint_engine.application.auth.user import Role
 from osint_engine.infrastructure.providers.kipflow.in_memory_rate_limiter import (
     InMemoryKipFlowRateLimiter,
 )
@@ -54,7 +53,7 @@ async def batch_client(
             http_client=kipflow_http_client, mem_storage=make_mem_storage()
         )
         credential = ExternalCredential(
-            api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
+            api_key="test-api-key", provider=Provider.KIPFLOW, username="alice"
         )
 
         async with container.uow_factory() as uow:
@@ -69,13 +68,8 @@ async def batch_client(
 
 
 @pytest.fixture
-def admin_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role=Role.ADMIN)
-
-
-@pytest.fixture
-def viewer_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="viewer", role=Role.VIEWER)
+def user_token(pyjwt_service: PyJWTService) -> str:
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestBatchEstimateValidation:
@@ -92,11 +86,11 @@ class TestBatchEstimateValidation:
     async def test_rejects_out_of_range_batches_without_calling_the_provider(
         self,
         batch_client: tuple[AsyncClient, list[str]],
-        admin_token: str,
+        user_token: str,
         body: dict[str, object],
     ) -> None:
         client, kipflow_calls = batch_client
-        headers = {"Authorization": f"Bearer {admin_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
 
         response = await client.post("/cpf/batch/estimate", json=body, headers=headers)
 
@@ -107,10 +101,10 @@ class TestBatchEstimateValidation:
 class TestBatchEstimate:
     @pytest.mark.asyncio
     async def test_returns_the_three_buckets_for_a_fresh_batch(
-        self, batch_client: tuple[AsyncClient, list[str]], admin_token: str
+        self, batch_client: tuple[AsyncClient, list[str]], user_token: str
     ) -> None:
         client, _ = batch_client
-        headers = {"Authorization": f"Bearer {admin_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
 
         response = await client.post(
             "/cpf/batch/estimate",
@@ -128,10 +122,10 @@ class TestBatchEstimate:
 
     @pytest.mark.asyncio
     async def test_splits_invalid_cpfs_into_their_own_bucket(
-        self, batch_client: tuple[AsyncClient, list[str]], admin_token: str
+        self, batch_client: tuple[AsyncClient, list[str]], user_token: str
     ) -> None:
         client, _ = batch_client
-        headers = {"Authorization": f"Bearer {admin_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
 
         response = await client.post(
             "/cpf/batch/estimate",
@@ -159,11 +153,11 @@ class TestBatchEstimateWait:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        admin_token: str,
+        user_token: str,
     ) -> None:
         limiter = InMemoryKipFlowRateLimiter(now=_FrozenClock().tick)
         credential = ExternalCredential(
-            api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
+            api_key="test-api-key", provider=Provider.KIPFLOW, username="alice"
         )
         container = make_container(
             mem_storage=make_mem_storage(), kipflow_rate_limiter=limiter
@@ -183,7 +177,7 @@ class TestBatchEstimateWait:
             response = await client.post(
                 "/cpf/batch/estimate",
                 json={"cpfs": [CPF_1]},
-                headers={"Authorization": f"Bearer {admin_token}"},
+                headers={"Authorization": f"Bearer {user_token}"},
             )
 
         assert response.status_code == 200
@@ -199,7 +193,7 @@ class TestBatchEstimateWait:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        admin_token: str,
+        user_token: str,
     ) -> None:
         limiter = InMemoryKipFlowRateLimiter(now=_FrozenClock().tick)
         container = make_container(
@@ -213,7 +207,7 @@ class TestBatchEstimateWait:
             response = await client.post(
                 "/cpf/batch/estimate",
                 json={"cpfs": [CPF_1]},
-                headers={"Authorization": f"Bearer {admin_token}"},
+                headers={"Authorization": f"Bearer {user_token}"},
             )
 
         assert response.status_code == 200
@@ -225,7 +219,7 @@ class TestBatchEstimateWait:
         }
 
 
-class TestBatchRoleGuard:
+class TestCpfRouteAccess:
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
         ("method", "path", "body"),
@@ -235,23 +229,21 @@ class TestBatchRoleGuard:
             ("get", f"/cpf/{CPF_1}", None),
         ],
     )
-    async def test_viewer_token_returns_403_on_every_cpf_route(
+    async def test_missing_token_returns_401_on_every_cpf_route(
         self,
         batch_client: tuple[AsyncClient, list[str]],
-        viewer_token: str,
         method: str,
         path: str,
         body: dict[str, object] | None,
     ) -> None:
         client, _ = batch_client
-        headers = {"Authorization": f"Bearer {viewer_token}"}
 
         if body is None:
-            response = await getattr(client, method)(path, headers=headers)
+            response = await getattr(client, method)(path)
         else:
-            response = await getattr(client, method)(path, json=body, headers=headers)
+            response = await getattr(client, method)(path, json=body)
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -262,16 +254,16 @@ class TestBatchRoleGuard:
             ("get", f"/cpf/{CPF_1}", None),
         ],
     )
-    async def test_admin_token_returns_200_on_every_cpf_route(
+    async def test_user_token_returns_200_on_every_cpf_route(
         self,
         batch_client: tuple[AsyncClient, list[str]],
-        admin_token: str,
+        user_token: str,
         method: str,
         path: str,
         body: dict[str, object] | None,
     ) -> None:
         client, _ = batch_client
-        headers = {"Authorization": f"Bearer {admin_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
 
         if body is None:
             response = await getattr(client, method)(path, headers=headers)
@@ -284,10 +276,10 @@ class TestBatchRoleGuard:
 class TestBatchExpansion:
     @pytest.mark.asyncio
     async def test_partial_failure_persists_the_successes_and_reports_per_item(
-        self, batch_client: tuple[AsyncClient, list[str]], admin_token: str
+        self, batch_client: tuple[AsyncClient, list[str]], user_token: str
     ) -> None:
         client, kipflow_calls = batch_client
-        headers = {"Authorization": f"Bearer {admin_token}"}
+        headers = {"Authorization": f"Bearer {user_token}"}
 
         response = await client.post(
             "/cpf/batch", json={"cpfs": [CPF_1, CPF_2, CPF_3]}, headers=headers

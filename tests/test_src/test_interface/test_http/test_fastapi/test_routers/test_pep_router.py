@@ -79,7 +79,7 @@ async def client(pep_container: Container) -> AsyncGenerator[AsyncClient, None]:
     credential = ExternalCredential(
         api_key="test-api-key",
         provider=Provider.PORTAL_TRANSPARENCIA,
-        username="admin",
+        username="alice",
     )
 
     async with pep_container.uow_factory() as uow:
@@ -95,7 +95,7 @@ async def client(pep_container: Container) -> AsyncGenerator[AsyncClient, None]:
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role="admin")
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestGetPEPAuthentication:
@@ -135,7 +135,7 @@ class TestGetPEPExpansion:
             credential = ExternalCredential(
                 api_key="test-api-key",
                 provider=Provider.PORTAL_TRANSPARENCIA,
-                username="admin",
+                username="alice",
             )
 
             async with container.uow_factory() as uow:
@@ -176,6 +176,6 @@ class TestPEPCompositionRoot:
             pep_container.fetchers.pep_fetcher, PortalTransparenciaPEPFetcher
         )
 
-        use_case = pep_container.use_cases.expand_by_pep(cpf=CPF, username="admin")
+        use_case = pep_container.use_cases.expand_by_pep(cpf=CPF, username="alice")
 
         assert isinstance(use_case, ExpandByPEP)

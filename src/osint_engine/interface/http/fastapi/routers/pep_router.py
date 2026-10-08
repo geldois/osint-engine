@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 def build_pep_router(*, container: Container) -> APIRouter:
     jwt_guard = build_jwt_guard(container=container)
-    rate_limit = build_expansion_rate_limit(scope="pep")
+    rate_limit = build_expansion_rate_limit(container=container, scope="pep")
 
     router = APIRouter(
         prefix="/peps", dependencies=[Depends(jwt_guard), Depends(rate_limit)]

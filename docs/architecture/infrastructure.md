@@ -15,18 +15,20 @@ single endpoint today: the base itself carries no per-endpoint knowledge, so the
 endpoint to justify, and every provider looking the same way keeps the pattern predictable instead of conditional on how
 many endpoints a given provider happens to have right now.
 
-Persistence today is split two ways depending on what's being stored. Every entity, relationship, and user account lives
-in a plain in-memory snapshot with no framework and no external dependency — appropriate for a demo-scale deployment
-where nothing needs to survive a process restart and nothing needs to coordinate concurrent writers. Beyond looking an
-entity up by its own identity, the in-memory store can also list every currently-known entity of a given kind at once —
-the one lookup shape the possible-match workflow needs and the identity-keyed storage didn't offer before, added
-narrowly for that purpose rather than as a general query capability. One kind of sensitive data — the external
-credentials callers save for each paid provider — is durable and encrypted at rest in a real relational database
-instead, reached through hand-written, inspectable queries rather than any query-building abstraction, because staying
-close to the raw query was itself a deliberate goal, not an accident of the smallest-effort path. A single transactional
-boundary bridges the two storage kinds transparently to anything above it, at the cost that a failure partway through a
-write touching both kinds can leave one side applied and the other rolled back — accepted today because nothing yet
-writes to both kinds in the same transaction.
+Persistence today is split two ways depending on what's being stored. Every entity and relationship lives in a plain
+in-memory snapshot with no framework and no external dependency — appropriate for a demo-scale deployment where nothing
+needs to survive a process restart and nothing needs to coordinate concurrent writers. Beyond looking an entity up by
+its own identity, the in-memory store can also list every currently-known entity of a given kind at once — the one
+lookup shape the possible-match workflow needs and the identity-keyed storage didn't offer before, added narrowly for
+that purpose rather than as a general query capability. Two kinds of data that must outlive a restart — the user
+accounts callers create (a username and its password hash) and the external credentials they save for each paid
+provider, encrypted at rest — live in a real relational database instead; keeping accounts there is what stops a restart
+from leaving a stored provider key behind with no owner for a later signup to inherit. Both are reached through
+hand-written, inspectable queries rather than any query-building abstraction, because staying close to the raw query was
+itself a deliberate goal, not an accident of the smallest-effort path. A single transactional boundary bridges the two
+storage kinds transparently to anything above it, at the cost that a failure partway through a write touching both kinds
+can leave one side applied and the other rolled back — accepted today because nothing yet writes to both kinds in the
+same transaction.
 
 Password hashing uses the current OWASP-recommended, memory-hard algorithm, deliberately slow so that guessing many
 candidate passwords stays expensive for an attacker; verification always runs the same check whether or not the account

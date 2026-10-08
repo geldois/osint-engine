@@ -6,14 +6,14 @@ same commit; a gap closed comes out in the same commit.
 
 ## feat(persistence)
 
-- **All graph, user and consumption-log data lives in a plain in-memory snapshot** (`MemStorage` behind `HybridUoW`).
-  Every restart loses it, there is no coordination between concurrent writers, and the `fastapi-throttle` limiter and
-  the KipFlow pacing queue are in memory too, so the service is a single process by construction and a restart resets
-  every rate bucket. Only external credentials survive, because they sit in PostgreSQL. The replacement is a real graph
-  or relational adapter behind the existing repository contracts (a Neo4j migration is the stated direction); the layers
-  above never see which store answers. When it lands, `GraphRepository.list_all_revisions()` (a full scan today, with
-  `ListGraphCatalog` as its only caller) is the one method to replace with an aggregated projection. Do it before any
-  real second user or any data that must outlive a deploy
+- **All graph and consumption-log data lives in a plain in-memory snapshot** (`MemStorage` behind `HybridUoW`). Every
+  restart loses it, there is no coordination between concurrent writers, and the `fastapi-throttle` limiter and the
+  KipFlow pacing queue are in memory too, so the service is a single process by construction and a restart resets every
+  rate bucket. Only accounts and external credentials survive, because they sit in PostgreSQL. The replacement is a real
+  graph or relational adapter behind the existing repository contracts (a Neo4j migration is the stated direction); the
+  layers above never see which store answers. When it lands, `GraphRepository.list_all_revisions()` (a full scan today,
+  with `ListGraphCatalog` as its only caller) is the one method to replace with an aggregated projection. Do it before
+  any data that must outlive a deploy
 - **`Graph.nodes` and `Graph.edges` hold full `Node`/`Edge` content, not references.** Every stored `GraphRevision`
   re-embeds the complete content of every node and edge it holds, even ones unchanged since the previous revision. The
   node and edge repositories already dedupe by `content_id`; the graph repository does not reuse that. A reference-based
@@ -68,24 +68,35 @@ same commit; a gap closed comes out in the same commit.
 
 ## fix(api)
 
-- **`GET /graphs` returns every graph the process holds, with no owner and no pagination.** `MemStorage` never records
-  which user originated a revision, and no expansion route writes one. Invisible with a single demo operator; with a
-  second real user the catalog becomes a cross-account leak and the route needs owner scoping, and past a few hundred
-  entries it needs `limit` and `cursor` too, with the studio client handling a partial response
-- **`GET /credentials/{provider}/reveal` returns a stored API key decrypted over HTTP** to its ADMIN owner. The
-  trade-off (the studio can show a key back, at the price of exposing it in a response body and any log in front of it)
-  is not recorded in `docs/architecture/`; decide whether to keep it, mask it, or write the decision down
+- **Every authenticated account reads every stored graph.** `GET /graphs`, `/graphs/{root_id}/history`,
+  `/nodes/{node_id}/history` and `/edges/{edge_id}/history` return whatever any account ever expanded, with no owner and
+  no pagination, because `MemStorage` never records which user originated a revision. Signup is now open, so a second
+  account sees the CPF data a first account paid KipFlow for, and ids are deterministic from the CPF, so they can be
+  guessed. Fix before opening signup to anyone untrusted: record the owner on each revision (or on a per-user index of
+  root ids), filter every history route by it, and add `limit` and `cursor` once the catalog passes a few hundred
+  entries, with the studio client handling a partial response
+- **`GET /credentials/{provider}/reveal` returns a stored API key decrypted over HTTP** to its owner. The trade-off (the
+  studio can show a key back, at the price of exposing it in a response body and any log in front of it) is not recorded
+  in `docs/architecture/`; decide whether to keep it, mask it, or write the decision down
 - **`/health` and `/health/ready` do not report which commit is running.** After a deploy the pipeline proves the
   process answers, not that it is the verified commit. Exposing the build SHA would let the pipeline compare it to
   `${{ github.sha }}`
 
+## feat(auth)
+
+- **Accounts have no password reset, no deletion and no email or other proof of ownership**
+  (`application/use_cases/authentication/register_user.py`). A forgotten password locks the account and its saved keys
+  for good, and open signup is bounded only by the 10-per-15-minutes IP limit and argon2's cost. Add an invite code (an
+  environment value checked at registration) first if signup abuse shows up; a reset flow needs an email channel the
+  project does not have
+
 ## fix(rate-limit)
 
-- **Expansion buckets are a flat 100/min per route (`_EXPANSION_REQUESTS_PER_MINUTE`)**, but Portal da Transparência's
-  token ceiling is 90/min from 06:00 to 23:59 (higher overnight). With five Portal-backed routes (`/cnep`, `/ceis`,
-  `/cepim`, `/ceaf`, `/peps`) the aggregate can exceed it, so the limiter protects this server but not the shared
-  upstream token, and Portal may `429` first under load. Deliberate for the visitor-only demo; replace with a combined
-  cross-route Portal bucket under 90/min if real traffic trips it
+- **Expansion buckets are a flat 100/min per route and per user (`_EXPANSION_REQUESTS_PER_MINUTE`)**, but Portal da
+  Transparência's token ceiling is 90/min from 06:00 to 23:59 (higher overnight). With five Portal-backed routes
+  (`/cnep`, `/ceis`, `/cepim`, `/ceaf`, `/peps`) the aggregate can exceed it, so the limiter protects this server but
+  not the user's upstream key, and Portal may `429` first under load. Each account now spends its own bucket against its
+  own Portal key; replace with a combined per-user cross-route Portal bucket under 90/min if real traffic trips it
 
 ## test(providers)
 

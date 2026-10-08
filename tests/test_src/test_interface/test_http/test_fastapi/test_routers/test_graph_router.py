@@ -24,13 +24,8 @@ CPF = "10000000000"
 
 
 @pytest.fixture
-def viewer_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="viewer", role="VIEWER")
-
-
-@pytest.fixture
-def admin_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role="ADMIN")
+def user_token(pyjwt_service: PyJWTService) -> str:
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestGetGraphHistoryAuthentication:
@@ -55,11 +50,11 @@ class TestGetGraphCatalogAuthentication:
 
 class TestGetGraphCatalogReadAccess:
     @pytest.mark.asyncio
-    async def test_viewer_token_returns_200_with_no_entries_when_nothing_was_fetched(
-        self, fastapi_app_client: AsyncClient, viewer_token: str
+    async def test_authenticated_user_gets_200_with_no_entries_when_nothing_was_fetched(
+        self, fastapi_app_client: AsyncClient, user_token: str
     ) -> None:
         response = await fastapi_app_client.get(
-            "/graphs", headers={"Authorization": f"Bearer {viewer_token}"}
+            "/graphs", headers={"Authorization": f"Bearer {user_token}"}
         )
 
         assert response.status_code == 200
@@ -68,12 +63,12 @@ class TestGetGraphCatalogReadAccess:
 
 class TestGetGraphHistoryReadAccess:
     @pytest.mark.asyncio
-    async def test_viewer_token_returns_200_for_an_unseen_root_id(
-        self, fastapi_app_client: AsyncClient, viewer_token: str
+    async def test_authenticated_user_gets_200_for_an_unseen_root_id(
+        self, fastapi_app_client: AsyncClient, user_token: str
     ) -> None:
         response = await fastapi_app_client.get(
             f"/graphs/{uuid4()}/history",
-            headers={"Authorization": f"Bearer {viewer_token}"},
+            headers={"Authorization": f"Bearer {user_token}"},
         )
 
         assert response.status_code == 200
@@ -86,7 +81,7 @@ class TestGetGraphHistorySmoke:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        admin_token: str,
+        user_token: str,
     ) -> None:
         payloads: list[dict[str, object]] = [
             {"success": True, "data": {"cpf": CPF, "nome": "FULANO DE TAL"}},
@@ -102,14 +97,14 @@ class TestGetGraphHistorySmoke:
                 http_client=kipflow_http_client, mem_storage=make_mem_storage()
             )
             credential = ExternalCredential(
-                api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
+                api_key="test-api-key", provider=Provider.KIPFLOW, username="alice"
             )
 
             async with container.uow_factory() as uow:
                 await uow.external_credentials.save(credential=credential)
 
             app = build_fastapi_app(container=container)
-            headers = {"Authorization": f"Bearer {admin_token}"}
+            headers = {"Authorization": f"Bearer {user_token}"}
 
             async with AsyncClient(
                 transport=ASGITransport(app=app), base_url="http://test"
@@ -140,7 +135,7 @@ class TestGetGraphCatalogSmoke:
         self,
         make_container: MakeContainer,
         make_mem_storage: MakeMemStorage,
-        admin_token: str,
+        user_token: str,
     ) -> None:
         payloads: list[dict[str, object]] = [
             {"success": True, "data": {"cpf": CPF, "nome": "FULANO DE TAL"}},
@@ -156,14 +151,14 @@ class TestGetGraphCatalogSmoke:
                 http_client=kipflow_http_client, mem_storage=make_mem_storage()
             )
             credential = ExternalCredential(
-                api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
+                api_key="test-api-key", provider=Provider.KIPFLOW, username="alice"
             )
 
             async with container.uow_factory() as uow:
                 await uow.external_credentials.save(credential=credential)
 
             app = build_fastapi_app(container=container)
-            headers = {"Authorization": f"Bearer {admin_token}"}
+            headers = {"Authorization": f"Bearer {user_token}"}
 
             async with AsyncClient(
                 transport=ASGITransport(app=app), base_url="http://test"

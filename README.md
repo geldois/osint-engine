@@ -26,7 +26,7 @@ structure idempotent by construction, not by convention.
 
 ```mermaid
 flowchart LR
-    Client("Client") --> Interface("HTTP interface · JWT roles · rate limits")
+    Client("Client") --> Interface("HTTP interface · JWT accounts · rate limits")
     Interface --> Expansion("Expansion by identifier")
     Interface --> Ingestion("Text and spreadsheet ingestion")
     Interface --> History("Graph history and catalog")
@@ -36,37 +36,45 @@ flowchart LR
     Ingestion --> Graph
     Graph --> Snapshot("In-memory snapshot: graphs, users, consumption")
     History --> Snapshot
-    Providers -. "API keys" .-> Postgres("PostgreSQL: encrypted credentials")
+    Providers -. "API keys" .-> Postgres("PostgreSQL: accounts, encrypted credentials")
     Credentials --> Postgres
 ```
 
 ## API
 
-Every endpoint except `/auth/token`, `/auth/viewer-token` and the two health endpoints requires a Bearer token. Obtain
-one first, then use it on every subsequent request.
+Every endpoint except `/auth/register`, `/auth/token` and the two health endpoints requires a Bearer token. There is no
+seeded account and no anonymous access: create your own account first, then use its token on every subsequent request.
 
 ### Authentication
+
+```http
+POST /auth/register
+Content-Type: application/json
+
+{ "username": "alice", "password": "<at least 8 characters>" }
+```
+
+Creates the account and answers `201` with a token, same response shape as below. `username` is 3 to 32 characters of
+lowercase letters, digits, `_` or `-`; `password` is 8 to 128 characters; anything else is `422`. A username already in
+use is `409`. Signup is open and limited to 10 per 15 min per client IP. Accounts and their password hashes are stored
+in PostgreSQL, so they survive a restart.
 
 ```http
 POST /auth/token
 Content-Type: application/x-www-form-urlencoded
 
-username=admin&password=<ADMIN_PASSWORD>
+username=alice&password=<your password>
 ```
 
-Returns an `ADMIN`-role token, 60-minute TTL (`ACCESS_TOKEN_EXPIRE_MINUTES`):
+Returns a token with a 60-minute TTL (`ACCESS_TOKEN_EXPIRE_MINUTES`):
 
 ```json
 { "access_token": "<token>", "token_type": "bearer" }
 ```
 
-```http
-POST /auth/viewer-token
-```
-
-Issues a `VIEWER`-role token with no credential — 20-minute TTL by default (`VIEWER_TOKEN_EXPIRE_MINUTES`), same
-response shape as above. Intended for public demo access: it can read `/cnpj/{cnpj}` but is rejected with `403` on
-`/credentials`. See `docs/architecture/interface.md`.
+Every account is equal: what a caller can use depends on which provider keys they saved with `POST /credentials`, never
+on a privilege level. `/cnpj/{cnpj}` and the history routes need no key; the CPF, legal-process and Portal da
+Transparência routes answer `404` until the caller has saved the matching provider key.
 
 ### Provenance on every graph response
 
@@ -91,9 +99,8 @@ GET /cnpj/{cnpj}?force=false
 Authorization: Bearer <token>
 ```
 
-Returns a `GraphSchema` containing the root company, all connected entities, and all typed relationships. Available to
-both `ADMIN` and `VIEWER` tokens. The current provider is [BrasilAPI](https://brasilapi.com.br) (see
-`docs/architecture/infrastructure.md`).
+Returns a `GraphSchema` containing the root company, all connected entities, and all typed relationships. Needs no
+provider key. The current provider is [BrasilAPI](https://brasilapi.com.br) (see `docs/architecture/infrastructure.md`).
 
 ```http
 GET /cpf/{cpf}?force=false
@@ -102,7 +109,7 @@ Authorization: Bearer <token>
 
 Returns a `GraphSchema` rooted at the `Person` the CPF resolves to, including `registration_status`/`registration_date`
 when the provider has them. The current provider is [KipFlow](https://kipflow.io), a paid API. Requires the caller's own
-saved `KIPFLOW` credential, via `POST /credentials`. Available to `ADMIN` tokens only.
+saved `KIPFLOW` credential, via `POST /credentials`.
 
 ```http
 GET /legal-process/{cpf_or_cnpj}?force=false
@@ -111,14 +118,14 @@ Authorization: Bearer <token>
 
 Returns a `GraphSchema` rooted at the `LegalProcess` nodes tied to that identifier. Same paid-provider shape as
 `/cpf/{cpf}`: the current provider is [KipFlow](https://kipflow.io), requires the caller's own saved `KIPFLOW`
-credential, `ADMIN` tokens only. `/peps/{cpf}` returns political-exposure `GraphSchema`s the same way as every other
-Portal da Transparência-backed route below — free, both `ADMIN` and `VIEWER` tokens.
+credential. `/peps/{cpf}` returns political-exposure `GraphSchema`s the same way as every other Portal da
+Transparência-backed route below — free, but it needs the caller's own saved `PORTAL_TRANSPARENCIA` credential.
 
 Every graph-expansion route above, and every one of `/cnep`, `/ceis`, `/ceaf`, `/cepim`, `/peps`, `/legal-process`,
-carries the same `?force=false` reuse lock: a repeated expansion of the same identifier on the same route returns `409`
-instead of calling the provider again, unless `force=true` is passed — including a repeat after a `204`, since an empty
-result is still a definitive answer from the provider. Returns `204` (empty body) when the provider has no record for
-the identifier.
+carries the same `?force=false` reuse lock, tracked per user: a repeated expansion of the same identifier on the same
+route by the same user returns `409` instead of calling the provider again, unless `force=true` is passed — including a
+repeat after a `204`, since an empty result is still a definitive answer from the provider. Returns `204` (empty body)
+when the provider has no record for the identifier.
 
 ```http
 POST /cpf/batch
@@ -132,7 +139,7 @@ Expands up to 50 CPFs in one request, every expansion in its own transaction —
 another's paid fetch. The response carries a single `GraphSchema` union of everything that expanded (`null` when nothing
 did) plus one `outcome` per deduplicated input CPF (`expanded`, `already_fetched`, `failed`, `empty` or `invalid`), in
 input order, each echoing the input string verbatim. Always `200` when the batch was processed, even when every item
-failed — the per-item result lives in `outcomes`, never in the HTTP status. `ADMIN` only.
+failed — the per-item result lives in `outcomes`, never in the HTTP status.
 
 ```http
 POST /cpf/batch/estimate
@@ -146,7 +153,7 @@ The read-only pre-flight for a batch: sorts the deduplicated CPFs into `already_
 returns `wait_seconds` — the forecast, rounded up, for the caller's own KipFlow quota to release the billable calls,
 counting anything already queued ahead. `0` when nothing is billable or the caller has no `KIPFLOW` credential saved.
 `force` mirrors the batch's: with `force: true`, already-fetched CPFs count as billable, since the batch would spend
-calls on them. `ADMIN` only.
+calls on them.
 
 ```http
 GET /graphs
@@ -155,7 +162,7 @@ Authorization: Bearer <token>
 
 Returns a `GraphCatalogSchema` — one entry per distinct root `root_id` ever fetched, each carrying
 `first_fetched_at`/`last_fetched_at`, every `provider` and `fetched_routes` involved, a `revision_count`, and the root
-`Node` itself. Available to both `ADMIN` and `VIEWER` tokens.
+`Node` itself. Any authenticated caller.
 
 ```http
 GET /graphs/{root_id}/history
@@ -163,8 +170,8 @@ Authorization: Bearer <token>
 ```
 
 Returns every `Graph` revision ever stored for that `root_id`, as a `GraphSchema` array ordered by `fetched_at`
-ascending (oldest first). Available to both `ADMIN` and `VIEWER` tokens. `200 []` for a `root_id` never seen — an empty
-history is a valid state, not an error.
+ascending (oldest first). Any authenticated caller. `200 []` for a `root_id` never seen — an empty history is a valid
+state, not an error.
 
 ```http
 GET /nodes/{node_id}/history
@@ -172,15 +179,14 @@ Authorization: Bearer <token>
 ```
 
 Returns every stored revision of that node, oldest first, as a plain array of the node's own schema — not wrapped in a
-`GraphSchema`, since one node's history has no edges or root of its own. Available to both `ADMIN` and `VIEWER` tokens.
+`GraphSchema`, since one node's history has no edges or root of its own. Any authenticated caller.
 
 ```http
 GET /edges/{edge_id}/history
 Authorization: Bearer <token>
 ```
 
-Same shape as `/nodes/{node_id}/history`, for one edge's own history instead. Available to both `ADMIN` and `VIEWER`
-tokens.
+Same shape as `/nodes/{node_id}/history`, for one edge's own history instead. Any authenticated caller.
 
 ```http
 GET /consumption
@@ -189,7 +195,7 @@ Authorization: Bearer <token>
 
 Every CPF-expansion attempt ever recorded, regardless of outcome (`already_fetched`, `empty`, `expanded`, `failed`) —
 including one the reuse lock blocked before it ever reached the paid provider. Ordered by `requested_at` descending
-(newest first). `ADMIN` only, since an entry names which CPF a specific caller looked up and when.
+(newest first). Only the caller's own entries are returned, since an entry names which CPF a caller looked up and when.
 
 ```http
 GET /consumption/{cpf}
@@ -198,11 +204,11 @@ Authorization: Bearer <token>
 
 Same shape, scoped to one CPF, ordered by `requested_at` ascending. Each entry carries `entity_id` (always present),
 `entity_ref` (`id`/`content_id`, present only for `already_fetched`/`expanded`), `outcome`, `provider`, `requested_at`
-and `username`. `200 []` for a CPF never attempted. `ADMIN` only.
+and `username`. `200 []` for a CPF never attempted.
 
 ### Text ingestion
 
-All three routes are `ADMIN`-only.
+All three routes are available to any authenticated caller.
 
 ```http
 GET /text-ingestion/patterns
@@ -248,7 +254,7 @@ or `.csv`, a CSV field past the parser's own size limit, and any file whose cont
 
 ### Credentials
 
-All three routes are `ADMIN`-only and scoped to the caller's own username, so a `VIEWER` token gets `403`.
+All three routes are scoped to the caller's own username: one account never sees another's keys.
 
 ```http
 POST /credentials
@@ -290,47 +296,47 @@ Readiness — `200 {"status": "ready"}` when Postgres answers a `SELECT 1`, `503
 
 ### Rate limiting
 
-| Endpoint                           | Limit      | Keyed by                |
-| ---------------------------------- | ---------- | ----------------------- |
-| `POST /auth/token`                 | 5 / 15 min | Client IP               |
-| `POST /auth/viewer-token`          | 20 / min   | Client IP               |
-| `GET /cnpj/{cnpj}`                 | 100 / min  | Shared per-route bucket |
-| `GET /cpf/{cpf}`                   | 100 / min  | Shared per-route bucket |
-| `POST /cpf/batch`                  | 10 / min   | Shared per-route bucket |
-| `POST /cpf/batch/estimate`         | 10 / min   | Shared per-route bucket |
-| `GET /graphs`                      | 100 / min  | Shared per-route bucket |
-| `GET /graphs/{root_id}/history`    | 100 / min  | Shared per-route bucket |
-| `GET /nodes/{node_id}/history`     | 100 / min  | Shared per-route bucket |
-| `GET /edges/{edge_id}/history`     | 100 / min  | Shared per-route bucket |
-| `GET /consumption`                 | 100 / min  | Shared per-route bucket |
-| `GET /consumption/{cpf}`           | 100 / min  | Shared per-route bucket |
-| `GET /cnep/{cpf_or_cnpj}`          | 100 / min  | Shared per-route bucket |
-| `GET /ceis/{cpf_or_cnpj}`          | 100 / min  | Shared per-route bucket |
-| `GET /cepim/{cnpj}`                | 100 / min  | Shared per-route bucket |
-| `GET /ceaf/{cpf}`                  | 100 / min  | Shared per-route bucket |
-| `GET /peps/{cpf}`                  | 100 / min  | Shared per-route bucket |
-| `GET /legal-process/{cpf_or_cnpj}` | 100 / min  | Shared per-route bucket |
-| `GET /text-ingestion/patterns`     | 100 / min  | Shared per-route bucket |
-| `POST /text-ingestion`             | 100 / min  | Shared per-route bucket |
-| `POST /text-ingestion/file`        | 100 / min  | Shared per-route bucket |
+| Endpoint                           | Limit       | Keyed by                   |
+| ---------------------------------- | ----------- | -------------------------- |
+| `POST /auth/token`                 | 5 / 15 min  | Client IP                  |
+| `POST /auth/register`              | 10 / 15 min | Client IP                  |
+| `GET /cnpj/{cnpj}`                 | 100 / min   | Per-user, per-route bucket |
+| `GET /cpf/{cpf}`                   | 100 / min   | Per-user, per-route bucket |
+| `POST /cpf/batch`                  | 10 / min    | Per-user, per-route bucket |
+| `POST /cpf/batch/estimate`         | 10 / min    | Per-user, per-route bucket |
+| `GET /graphs`                      | 100 / min   | Per-user, per-route bucket |
+| `GET /graphs/{root_id}/history`    | 100 / min   | Per-user, per-route bucket |
+| `GET /nodes/{node_id}/history`     | 100 / min   | Per-user, per-route bucket |
+| `GET /edges/{edge_id}/history`     | 100 / min   | Per-user, per-route bucket |
+| `GET /consumption`                 | 100 / min   | Per-user, per-route bucket |
+| `GET /consumption/{cpf}`           | 100 / min   | Per-user, per-route bucket |
+| `GET /cnep/{cpf_or_cnpj}`          | 100 / min   | Per-user, per-route bucket |
+| `GET /ceis/{cpf_or_cnpj}`          | 100 / min   | Per-user, per-route bucket |
+| `GET /cepim/{cnpj}`                | 100 / min   | Per-user, per-route bucket |
+| `GET /ceaf/{cpf}`                  | 100 / min   | Per-user, per-route bucket |
+| `GET /peps/{cpf}`                  | 100 / min   | Per-user, per-route bucket |
+| `GET /legal-process/{cpf_or_cnpj}` | 100 / min   | Per-user, per-route bucket |
+| `GET /text-ingestion/patterns`     | 100 / min   | Per-user, per-route bucket |
+| `POST /text-ingestion`             | 100 / min   | Per-user, per-route bucket |
+| `POST /text-ingestion/file`        | 100 / min   | Per-user, per-route bucket |
 
 A `429` response includes a `Retry-After` header (seconds) and is exposed cross-origin via
-`Access-Control-Expose-Headers`. See `docs/architecture/interface.md`. Each expansion route has one global bucket shared
-across all callers — a fixed key, not per-IP or per-role — so the combined outbound traffic every visitor generates
-together is capped against the upstream API's per-minute quota, since every request proxies through this deployment's
-own IP/token. The two batch routes share their own `cpf_batch` bucket instead of the single-CPF one: one batch request
-drives up to 50 paid provider calls, so the HTTP quota and the outbound quota must not share a counter. Outbound KipFlow
-traffic is additionally paced client-side against KipFlow's own documented per-API-key limits — a 5/s burst, a 100/min
-average and a 1000/hour volume — by an in-memory queue keyed per credential: a fetch that would cross any window waits
-its turn in FIFO order instead of dropping or overrunning, and `POST /cpf/batch/estimate` surfaces how long that wait
-would be before the caller pays for anything. The health endpoints are unthrottled.
+`Access-Control-Expose-Headers`. See `docs/architecture/interface.md`. Every limited route has one bucket per
+authenticated user — keyed by the token's username, not by IP — so one account exhausting its allowance never throttles
+another, which fits each account spending its own provider keys against that provider's own per-key quota. The two batch
+routes share their own `cpf_batch` bucket instead of the single-CPF one: one batch request drives up to 50 paid provider
+calls, so the HTTP quota and the outbound quota must not share a counter. Outbound KipFlow traffic is additionally paced
+client-side against KipFlow's own documented per-API-key limits — a 5/s burst, a 100/min average and a 1000/hour volume
+— by an in-memory queue keyed per credential: a fetch that would cross any window waits its turn in FIFO order instead
+of dropping or overrunning, and `POST /cpf/batch/estimate` surfaces how long that wait would be before the caller pays
+for anything. The health endpoints are unthrottled.
 
 ### Errors
 
 Every response includes an `X-Correlation-ID` header for end-to-end request tracing. Error responses carry the same
 correlation ID in the body alongside a machine-readable `type` field derived from the domain error hierarchy. A `401`
-response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `403` means a valid token lacks the required role; a
-`409` means the request conflicts with something already done (e.g. `GET /cpf/{cpf}` repeated without `force=true`); a
+response always includes `WWW-Authenticate: Bearer` per RFC 6750; a `409` means the request conflicts with something
+already done (e.g. `GET /cpf/{cpf}` repeated by the same user without `force=true`, or a username already taken); a
 `429` means a rate limit was exceeded.
 
 ## Stack
@@ -415,7 +421,7 @@ cd osint-engine
 ```bash
 uv sync
 git config --local include.path ../.gitconfig
-cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
+cp .env.example .env  # then set SECRET_KEY, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
 ```
 
 ### Windows
@@ -429,7 +435,7 @@ cp .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EX
 ```powershell
 uv sync
 git config --local include.path ../.gitconfig
-copy .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
+copy .env.example .env  # then set SECRET_KEY, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
 ```
 
 > `.gitconfig` points `core.hooksPath` at the versioned `.githooks/` and forbids merge commits (`merge.ff = only`), so
@@ -441,17 +447,15 @@ copy .env.example .env  # then set SECRET_KEY, ADMIN_PASSWORD, DATABASE_URL and 
 
 ### Configuration
 
-Read from the environment, or from `.env` in the working directory. The first four have no default and the process
+Read from the environment, or from `.env` in the working directory. The first three have no default and the process
 refuses to start without them.
 
 | Variable                              | Default                 | Meaning                                                              |
 | ------------------------------------- | ----------------------- | -------------------------------------------------------------------- |
 | `SECRET_KEY`                          | required                | HS256 signing key for access tokens                                  |
-| `ADMIN_PASSWORD`                      | required                | Password of the `admin` user                                         |
 | `DATABASE_URL`                        | required                | PostgreSQL connection string (credentials and migrations)            |
 | `EXTERNAL_CREDENTIAL_ENCRYPTION_KEY`  | required                | Fernet key that encrypts stored provider API keys                    |
-| `ACCESS_TOKEN_EXPIRE_MINUTES`         | `60`                    | `ADMIN` token lifetime                                               |
-| `VIEWER_TOKEN_EXPIRE_MINUTES`         | `20`                    | `VIEWER` token lifetime                                              |
+| `ACCESS_TOKEN_EXPIRE_MINUTES`         | `60`                    | Access token lifetime                                                |
 | `CORS_ORIGINS`                        | `http://localhost:3000` | Comma-separated allowed origins                                      |
 | `DEBUG`                               | `false`                 | Console logging instead of JSON                                      |
 | `LOG_LEVEL`                           | `info`                  | Log level                                                            |

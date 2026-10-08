@@ -19,14 +19,19 @@ _logger = get_logger()
 class ListEntityRecordsByCPF(Query[tuple[EntityRecord, ...]]):
     uow_factory: Callable[[], UoW]
     cpf: str
+    username: str
 
     @override
-    def __init__(self, *, uow_factory: Callable[[], UoW], cpf: str) -> None:
-        super().__init__(uow_factory=uow_factory, cpf=cpf)
+    def __init__(
+        self, *, uow_factory: Callable[[], UoW], cpf: str, username: str
+    ) -> None:
+        super().__init__(uow_factory=uow_factory, cpf=cpf, username=username)
 
     @override
     async def execute(self) -> tuple[EntityRecord, ...]:
-        _logger.info("entity_records.list_by_cpf.start", cpf=self.cpf)
+        _logger.info(
+            "entity_records.list_by_cpf.start", cpf=self.cpf, username=self.username
+        )
 
         stub = Person(
             age_range=None,
@@ -40,11 +45,13 @@ class ListEntityRecordsByCPF(Query[tuple[EntityRecord, ...]]):
         async with self.uow_factory() as uow:
             records = await uow.entity_records.list_by_entity_id(entity_id=stub.id)
 
-        ordered = tuple(sorted(records, key=lambda record: record.requested_at))
+        own_records = (record for record in records if record.username == self.username)
+        ordered = tuple(sorted(own_records, key=lambda record: record.requested_at))
 
         _logger.info(
             "entity_records.list_by_cpf.success",
             cpf=self.cpf,
+            username=self.username,
             record_count=len(ordered),
         )
 

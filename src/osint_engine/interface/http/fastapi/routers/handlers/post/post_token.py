@@ -25,9 +25,7 @@ def build_post_token_handler(
         )
 
         user = await use_case.execute()
-        access_token = jwt_service.create_access_token(
-            username=user.username, role=user.role
-        )
+        access_token = jwt_service.create_access_token(username=user.username)
 
         return TokenSchema(access_token=access_token)
 

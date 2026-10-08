@@ -206,7 +206,10 @@ class EstimateCPFBatch(
                     )
 
                     fetched = await is_already_fetched(
-                        uow=uow, entity_id=stub.id, use_case=ExpandByCPF
+                        uow=uow,
+                        entity_id=stub.id,
+                        use_case=ExpandByCPF,
+                        username=self.username,
                     )
 
                     bucket = already_fetched if fetched else billable

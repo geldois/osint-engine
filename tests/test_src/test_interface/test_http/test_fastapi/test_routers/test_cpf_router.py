@@ -10,7 +10,6 @@ from osint_engine.application.auth.external_credential import (
     ExternalCredential,
     Provider,
 )
-from osint_engine.application.auth.user import Role
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.infrastructure.providers.kipflow.endpoints.cpf_fetcher import (
@@ -75,7 +74,7 @@ def cpf_container(
 @pytest_asyncio.fixture
 async def client(cpf_container: Container) -> AsyncGenerator[AsyncClient, None]:
     credential = ExternalCredential(
-        api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
+        api_key="test-api-key", provider=Provider.KIPFLOW, username="alice"
     )
 
     async with cpf_container.uow_factory() as uow:
@@ -91,7 +90,7 @@ async def client(cpf_container: Container) -> AsyncGenerator[AsyncClient, None]:
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role=Role.ADMIN)
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestGetCPFAuthentication:
@@ -160,7 +159,7 @@ class TestGetCPFExpansion:
             mem_storage=make_mem_storage(),
         )
         credential = ExternalCredential(
-            api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
+            api_key="test-api-key", provider=Provider.KIPFLOW, username="alice"
         )
 
         async with container.uow_factory() as uow:
@@ -229,7 +228,7 @@ class TestGetCPFPossiblyMatches:
             mem_storage=make_mem_storage(nodes=[make_entity_revision(entity=stored)]),
         )
         credential = ExternalCredential(
-            api_key="test-api-key", provider=Provider.KIPFLOW, username="admin"
+            api_key="test-api-key", provider=Provider.KIPFLOW, username="alice"
         )
 
         async with container.uow_factory() as uow:
@@ -257,6 +256,6 @@ class TestCPFCompositionRoot:
     ) -> None:
         assert isinstance(cpf_container.fetchers.cpf_fetcher, KipFlowCPFFetcher)
 
-        use_case = cpf_container.use_cases.expand_by_cpf(cpf=CPF, username="admin")
+        use_case = cpf_container.use_cases.expand_by_cpf(cpf=CPF, username="alice")
 
         assert isinstance(use_case, ExpandByCPF)

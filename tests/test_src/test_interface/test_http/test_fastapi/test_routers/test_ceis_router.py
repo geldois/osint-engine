@@ -100,7 +100,7 @@ async def client(ceis_container: Container) -> AsyncGenerator[AsyncClient, None]
     credential = ExternalCredential(
         api_key="test-api-key",
         provider=Provider.PORTAL_TRANSPARENCIA,
-        username="admin",
+        username="alice",
     )
 
     async with ceis_container.uow_factory() as uow:
@@ -116,7 +116,7 @@ async def client(ceis_container: Container) -> AsyncGenerator[AsyncClient, None]
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role="admin")
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestGetCEISAuthentication:
@@ -156,7 +156,7 @@ class TestGetCEISExpansion:
             credential = ExternalCredential(
                 api_key="test-api-key",
                 provider=Provider.PORTAL_TRANSPARENCIA,
-                username="admin",
+                username="alice",
             )
 
             async with container.uow_factory() as uow:
@@ -222,7 +222,7 @@ class TestGetCeisPossiblyMatches:
             credential = ExternalCredential(
                 api_key="test-api-key",
                 provider=Provider.PORTAL_TRANSPARENCIA,
-                username="admin",
+                username="alice",
             )
 
             async with container.uow_factory() as uow:
@@ -256,7 +256,7 @@ class TestCEISCompositionRoot:
         use_case = ceis_container.use_cases.expand_by_ceis(
             cpf_or_cnpj=CPF_OR_CNPJ,
             ceis_id=None,
-            username="admin",
+            username="alice",
         )
 
         assert isinstance(use_case, ExpandByCEIS)

@@ -5,15 +5,22 @@ from typing import TYPE_CHECKING
 from fastapi import HTTPException, Request, Response
 from fastapi_throttle import RateLimiter
 
+from osint_engine.domain.errors.osint_error import OsintError
 from osint_engine.interface.errors.rate_limit_error import RateLimitExceededError
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
+    from osint_engine.config.container import Container
+
 _DEFAULT_RETRY_AFTER_SECONDS = 60
 _TEN_MINUTES_IN_SECONDS = 10 * 60
+_FIFTEEN_MINUTES_IN_SECONDS = 15 * 60
 _EXPANSION_REQUESTS_PER_MINUTE = 100
 _BATCH_REQUESTS_PER_MINUTE = 10
+_REGISTRATIONS_PER_WINDOW = 10
+_ANONYMOUS_USERNAME = "anonymous"
+_BEARER_SCHEME = "bearer"
 
 
 def _translate_rate_limit_error(
@@ -34,34 +41,65 @@ def _translate_rate_limit_error(
     return guarded
 
 
+def build_user_bucket_key(
+    *, container: Container, scope: str
+) -> Callable[[Request], str]:
+
+    def key(request: Request) -> str:
+        scheme, _, token = request.headers.get("Authorization", "").partition(" ")
+        username = _ANONYMOUS_USERNAME
+
+        if scheme.lower() == _BEARER_SCHEME and token:
+            try:
+                claims = container.services.jwt_service.decode_access_token(token=token)
+            except OsintError:
+                return f"{scope}:{username}"
+
+            username = str(claims.get("sub", _ANONYMOUS_USERNAME))
+
+        return f"{scope}:{username}"
+
+    return key
+
+
 def build_auth_token_rate_limit() -> Callable[[Request, Response], Awaitable[None]]:
     return _translate_rate_limit_error(
         RateLimiter(times=5, seconds=_TEN_MINUTES_IN_SECONDS)
     )
 
 
-def build_viewer_token_rate_limit() -> Callable[[Request, Response], Awaitable[None]]:
-    return _translate_rate_limit_error(RateLimiter(times=20, seconds=60))
+def build_register_rate_limit() -> Callable[[Request, Response], Awaitable[None]]:
+    return _translate_rate_limit_error(
+        RateLimiter(
+            times=_REGISTRATIONS_PER_WINDOW, seconds=_FIFTEEN_MINUTES_IN_SECONDS
+        )
+    )
 
 
 def build_expansion_rate_limit(
-    *, scope: str
+    *, container: Container, scope: str
 ) -> Callable[[Request, Response], Awaitable[None]]:
 
     return _translate_rate_limit_error(
         RateLimiter(
             times=_EXPANSION_REQUESTS_PER_MINUTE,
             seconds=60,
-            key_func=lambda _request: f"expansion:{scope}",
+            key_func=build_user_bucket_key(
+                container=container, scope=f"expansion:{scope}"
+            ),
         )
     )
 
 
-def build_cpf_batch_rate_limit() -> Callable[[Request, Response], Awaitable[None]]:
+def build_cpf_batch_rate_limit(
+    *, container: Container
+) -> Callable[[Request, Response], Awaitable[None]]:
     return _translate_rate_limit_error(
         RateLimiter(
             times=_BATCH_REQUESTS_PER_MINUTE,
             seconds=60,
-            key_func=lambda _request: "expansion:cpf_batch",
+            key_func=build_user_bucket_key(
+                container=container, scope="expansion:cpf_batch"
+            ),
         )
     )

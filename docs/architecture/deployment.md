@@ -26,8 +26,8 @@ configured at all; leaving the default in place fails every migration on first b
 
 The published container image's tag is left unset by provisioning on purpose: cloud-init stops once the host has Docker,
 the cloned repository and a generated environment file. The first pipeline run supplies the tag inline and brings the
-stack up; the review of the generated admin password and the one-time repository secrets and variable the pipeline needs
-are the manual part, done in the same session, not something a provisioning script should do unattended.
+stack up; the one-time repository secrets and variable the pipeline needs are the manual part, done in the same session,
+not something a provisioning script should do unattended.
 
 The application is never exposed directly: a reverse proxy container owns ports 80 and 443, obtains and renews the
 certificate for the configured domain by itself, and forwards to the application on the compose-internal network only.
@@ -59,9 +59,8 @@ compose-internal, never exposed beyond this host's own private network — exten
 from outside this host needs TLS revisited first, not inherited from this configuration as-is.
 
 The manual steps this script deliberately leaves — setting the pipeline's repository secrets and variable for the new
-host, triggering the first run, and reviewing the generated admin password — are a standing prerequisite for every
-future provisioning of a new host from this same script, not a one-time bootstrapping quirk: whoever runs it again still
-has to complete them themselves.
+host, and triggering the first run — are a standing prerequisite for every future provisioning of a new host from this
+same script, not a one-time bootstrapping quirk: whoever runs it again still has to complete them themselves.
 
 The schema-migration command resolves its migrations directory relative to the working directory, which only works
 because the image sets that directory and copies the migrations into it; an installation from a built wheel run outside

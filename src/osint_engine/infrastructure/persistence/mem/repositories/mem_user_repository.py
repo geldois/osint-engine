@@ -21,6 +21,10 @@ class MemUserRepository(UserRepository):
         return self.users.get(username)
 
     @override
-    async def save(self, *, user: User) -> None:
-        if user.username not in self.users:
-            self.users[user.username] = user
+    async def save(self, *, user: User) -> bool:
+        if user.username in self.users:
+            return False
+
+        self.users[user.username] = user
+
+        return True

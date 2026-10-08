@@ -85,13 +85,12 @@ class TestHybridUoWContextLifecycle:
 
 class TestHybridUoWMemoryRepositories:
     @pytest.mark.asyncio
-    async def test_commits_edges_graphs_nodes_and_users_to_memory(
+    async def test_commits_edges_graphs_and_nodes_to_memory(
         self,
         make_entity_revision: MakeEntityRevision,
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
-        make_user: MakeUser,
         make_mem_storage: MakeMemStorage,
         fake_pg_pool: FakePgPool,
         settings: Settings,
@@ -101,7 +100,6 @@ class TestHybridUoWMemoryRepositories:
         node_b = make_fake_node()
         edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
         graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
-        user = make_user()
         mem_storage = make_mem_storage()
         uow = _make_hybrid_uow(
             mem_storage=mem_storage,
@@ -115,13 +113,11 @@ class TestHybridUoWMemoryRepositories:
             await uow.graphs.merge(revision=make_entity_revision(entity=graph))
             await uow.nodes.merge(revision=make_entity_revision(entity=node_a))
             await uow.nodes.merge(revision=make_entity_revision(entity=node_b))
-            await uow.users.save(user=user)
 
         assert edge.id in mem_storage.edges
         assert graph.id in mem_storage.graphs
         assert node_a.id in mem_storage.nodes
         assert node_b.id in mem_storage.nodes
-        assert user.username in mem_storage.users
 
     @pytest.mark.asyncio
     async def test_rolls_back_all_memory_repositories_on_error(
@@ -130,7 +126,6 @@ class TestHybridUoWMemoryRepositories:
         make_fake_edge: MakeFakeEdge,
         make_graph: MakeGraph,
         make_fake_node: MakeFakeNode,
-        make_user: MakeUser,
         make_mem_storage: MakeMemStorage,
         fake_pg_pool: FakePgPool,
         settings: Settings,
@@ -140,7 +135,6 @@ class TestHybridUoWMemoryRepositories:
         node_b = make_fake_node()
         edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
         graph = make_graph(edges=[edge], nodes=[node_a, node_b], root_id=node_a.id)
-        user = make_user()
         mem_storage = make_mem_storage()
         uow = _make_hybrid_uow(
             mem_storage=mem_storage,
@@ -155,7 +149,6 @@ class TestHybridUoWMemoryRepositories:
                 await uow.graphs.merge(revision=make_entity_revision(entity=graph))
                 await uow.nodes.merge(revision=make_entity_revision(entity=node_a))
                 await uow.nodes.merge(revision=make_entity_revision(entity=node_b))
-                await uow.users.save(user=user)
 
                 raise RuntimeError
 
@@ -166,7 +159,6 @@ class TestHybridUoWMemoryRepositories:
         assert graph.id not in mem_storage.graphs
         assert node_a.id not in mem_storage.nodes
         assert node_b.id not in mem_storage.nodes
-        assert user.username not in mem_storage.users
 
 
 class TestHybridUoWPostgresRepository:
@@ -226,3 +218,84 @@ class TestHybridUoWValidation:
         with pytest.raises(UoWNotPreparedError):
             async with uow:
                 await uow._finish()  # pyright: ignore[reportPrivateUsage]
+
+
+class TestHybridUoWUsersRepository:
+    @pytest.mark.asyncio
+    async def test_users_are_stored_in_postgres_not_in_the_memory_snapshot(
+        self,
+        make_user: MakeUser,
+        make_mem_storage: MakeMemStorage,
+        fake_pg_pool: FakePgPool,
+        settings: Settings,
+        policies: Policies,
+    ) -> None:
+        user = make_user()
+        mem_storage = make_mem_storage()
+        uow = _make_hybrid_uow(
+            mem_storage=mem_storage,
+            fake_pg_pool=fake_pg_pool,
+            settings=settings,
+            policies=policies,
+        )
+
+        async with uow:
+            inserted = await uow.users.save(user=user)
+
+        assert inserted is True
+        assert fake_pg_pool.users == {user.username: user.hashed_password}
+        assert user.username not in mem_storage.users
+
+    @pytest.mark.asyncio
+    async def test_a_user_saved_by_one_uow_is_found_by_the_next(
+        self,
+        make_user: MakeUser,
+        make_mem_storage: MakeMemStorage,
+        fake_pg_pool: FakePgPool,
+        settings: Settings,
+        policies: Policies,
+    ) -> None:
+        user = make_user()
+        mem_storage = make_mem_storage()
+
+        async with _make_hybrid_uow(
+            mem_storage=mem_storage,
+            fake_pg_pool=fake_pg_pool,
+            settings=settings,
+            policies=policies,
+        ) as first:
+            await first.users.save(user=user)
+
+        async with _make_hybrid_uow(
+            mem_storage=make_mem_storage(),
+            fake_pg_pool=fake_pg_pool,
+            settings=settings,
+            policies=policies,
+        ) as second:
+            found = await second.users.find(username=user.username)
+
+        assert found == user
+
+    @pytest.mark.asyncio
+    async def test_saving_an_existing_username_returns_false_and_keeps_the_first_hash(
+        self,
+        make_user: MakeUser,
+        make_mem_storage: MakeMemStorage,
+        fake_pg_pool: FakePgPool,
+        settings: Settings,
+        policies: Policies,
+    ) -> None:
+        first = make_user(username="alice", hashed_password="first-hash")
+        second = make_user(username="alice", hashed_password="second-hash")
+
+        async with _make_hybrid_uow(
+            mem_storage=make_mem_storage(),
+            fake_pg_pool=fake_pg_pool,
+            settings=settings,
+            policies=policies,
+        ) as uow:
+            await uow.users.save(user=first)
+            inserted = await uow.users.save(user=second)
+
+        assert inserted is False
+        assert fake_pg_pool.users == {"alice": "first-hash"}

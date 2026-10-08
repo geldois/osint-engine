@@ -8,7 +8,6 @@ import pytest_asyncio
 from httpx2 import ASGITransport, AsyncClient
 from openpyxl import Workbook
 
-from osint_engine.application.auth.user import Role
 from osint_engine.domain.entities.nodes.person import Person
 from osint_engine.infrastructure.text_ingestion import spreadsheet_reader
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
@@ -51,12 +50,7 @@ async def client(make_container: MakeContainer) -> AsyncGenerator[AsyncClient, N
 
 @pytest.fixture
 def valid_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="admin", role=Role.ADMIN)
-
-
-@pytest.fixture
-def viewer_token(pyjwt_service: PyJWTService) -> str:
-    return pyjwt_service.create_access_token(username="visitor", role=Role.VIEWER)
+    return pyjwt_service.create_access_token(username="alice")
 
 
 class TestPostTextIngestionFileAuthentication:
@@ -69,21 +63,6 @@ class TestPostTextIngestionFileAuthentication:
         )
 
         assert response.status_code == 401
-
-
-class TestPostTextIngestionFileAuthorization:
-    @pytest.mark.asyncio
-    async def test_viewer_token_returns_403(
-        self, client: AsyncClient, viewer_token: str
-    ) -> None:
-        response = await client.post(
-            "/text-ingestion/file",
-            files={"file": ("data.xlsx", _xlsx_bytes(cell_value=_VALID_CPF_DIGITS))},
-            data={"patterns": ["CPF_LOOSE"]},
-            headers={"Authorization": f"Bearer {viewer_token}"},
-        )
-
-        assert response.status_code == 403
 
 
 class TestPostTextIngestionFile:

@@ -34,6 +34,9 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.authentication.authenticate_user import (
         AuthenticateUser,
     )
+    from osint_engine.application.use_cases.authentication.register_user import (
+        RegisterUser,
+    )
     from osint_engine.application.use_cases.consumption.list_entity_record_catalog import (  # noqa: E501
         ListEntityRecordCatalog,
     )
@@ -151,5 +154,6 @@ class UseCases:
     list_node_history: partial[ListNodeHistory]
     list_text_patterns: partial[ListTextPatterns]
     record_invalid_attempt: partial[RecordInvalidAttempt]
+    register_user: partial[RegisterUser]
     reveal_external_credential: partial[RevealExternalCredential]
     save_external_credential: partial[SaveExternalCredential]

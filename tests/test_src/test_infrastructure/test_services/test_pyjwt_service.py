@@ -32,7 +32,7 @@ class TestPyJWTServiceCreateAccessToken:
     def test_create_access_token_returns_string(
         self, pyjwt_service: PyJWTService
     ) -> None:
-        token = pyjwt_service.create_access_token(username="alice", role="admin")
+        token = pyjwt_service.create_access_token(username="alice")
 
         assert isinstance(token, str)
 
@@ -42,9 +42,7 @@ class TestPyJWTServiceCreateAccessToken:
         self, pyjwt_service: PyJWTService
     ) -> None:
         username = "alice"
-        role = "admin"
-
-        token = pyjwt_service.create_access_token(username=username, role=role)
+        token = pyjwt_service.create_access_token(username=username)
 
         decoded = decode(
             jwt=token,
@@ -54,12 +52,10 @@ class TestPyJWTServiceCreateAccessToken:
 
         assert decoded["sub"] == username
 
-        assert decoded["role"] == role
-
     def test_create_access_token_includes_expiration_time(
         self, pyjwt_service: PyJWTService
     ) -> None:
-        token = pyjwt_service.create_access_token(username="bob", role="viewer")
+        token = pyjwt_service.create_access_token(username="bob")
 
         decoded = decode(
             jwt=token,
@@ -86,7 +82,7 @@ class TestPyJWTServiceCreateAccessToken:
     ) -> None:
         username = "charlie"
 
-        token = pyjwt_service.create_access_token(username=username, role="admin")
+        token = pyjwt_service.create_access_token(username=username)
 
         decoded = decode(
             jwt=token,
@@ -96,27 +92,12 @@ class TestPyJWTServiceCreateAccessToken:
 
         assert decoded["sub"] == username
 
-    def test_create_access_token_includes_role_claim(
-        self, pyjwt_service: PyJWTService
-    ) -> None:
-        role = "editor"
-
-        token = pyjwt_service.create_access_token(username="diana", role=role)
-
-        decoded = decode(
-            jwt=token,
-            key=pyjwt_service.secret_key,
-            algorithms=[pyjwt_service.algorithm],
-        )
-
-        assert decoded["role"] == role
-
 
 class TestPyJWTServiceDecodeAccessToken:
     def test_decode_access_token_with_valid_token_returns_dict(
         self, pyjwt_service: PyJWTService
     ) -> None:
-        token = pyjwt_service.create_access_token(username="eve", role="admin")
+        token = pyjwt_service.create_access_token(username="eve")
 
         decoded = pyjwt_service.decode_access_token(token=token)
 
@@ -127,7 +108,7 @@ class TestPyJWTServiceDecodeAccessToken:
     ) -> None:
         username = "frank"
 
-        token = pyjwt_service.create_access_token(username=username, role="viewer")
+        token = pyjwt_service.create_access_token(username=username)
 
         decoded = pyjwt_service.decode_access_token(token=token)
 
@@ -135,23 +116,10 @@ class TestPyJWTServiceDecodeAccessToken:
 
         assert decoded["sub"] == username
 
-    def test_decode_access_token_returns_role_field(
-        self, pyjwt_service: PyJWTService
-    ) -> None:
-        role = "admin"
-
-        token = pyjwt_service.create_access_token(username="grace", role=role)
-
-        decoded = pyjwt_service.decode_access_token(token=token)
-
-        assert "role" in decoded
-
-        assert decoded["role"] == role
-
     def test_decode_access_token_returns_exp_field(
         self, pyjwt_service: PyJWTService
     ) -> None:
-        token = pyjwt_service.create_access_token(username="henry", role="admin")
+        token = pyjwt_service.create_access_token(username="henry")
 
         decoded = pyjwt_service.decode_access_token(token=token)
 
@@ -163,23 +131,16 @@ class TestPyJWTServiceDecodeAccessToken:
         self, pyjwt_service: PyJWTService
     ) -> None:
         username = "iris"
-        role = "editor"
 
-        token = pyjwt_service.create_access_token(username=username, role=role)
+        token = pyjwt_service.create_access_token(username=username)
 
         decoded = pyjwt_service.decode_access_token(token=token)
 
         assert isinstance(decoded, dict)
 
-        assert "sub" in decoded
-
-        assert "role" in decoded
-
-        assert "exp" in decoded
+        assert set(decoded) == {"sub", "exp"}
 
         assert decoded["sub"] == username
-
-        assert decoded["role"] == role
 
         assert isinstance(decoded["exp"], int)
 
@@ -194,7 +155,7 @@ class TestPyJWTServiceDecodeAccessToken:
     def test_decode_access_token_with_corrupted_token_raises_invalid_token_error(
         self, pyjwt_service: PyJWTService
     ) -> None:
-        valid_token = pyjwt_service.create_access_token(username="jack", role="admin")
+        valid_token = pyjwt_service.create_access_token(username="jack")
 
         corrupted_token = valid_token[:-5] + "xxxxx"
 
@@ -210,7 +171,7 @@ class TestPyJWTServiceDecodeAccessToken:
     def test_decode_access_token_with_token_signed_with_different_key_raises_error(
         self, pyjwt_service: PyJWTService
     ) -> None:
-        token = pyjwt_service.create_access_token(username="kate", role="admin")
+        token = pyjwt_service.create_access_token(username="kate")
 
         modified_token = token[:-5] + "xxxxx"
 

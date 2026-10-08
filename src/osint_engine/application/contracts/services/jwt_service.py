@@ -5,9 +5,7 @@ from abc import ABC, abstractmethod
 
 class JWTService(ABC):
     @abstractmethod
-    def create_access_token(
-        self, *, username: str, role: str, expire_minutes: int | None = None
-    ) -> str:
+    def create_access_token(self, *, username: str) -> str:
         raise NotImplementedError
 
     @abstractmethod

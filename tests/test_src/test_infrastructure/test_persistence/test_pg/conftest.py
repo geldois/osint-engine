@@ -59,23 +59,18 @@ async def postgres_pool(postgres_url: str) -> AsyncIterator[asyncpg.Pool]:
     async with asyncpg.create_pool(  # pyright: ignore[reportUnknownMemberType]
         dsn=postgres_url
     ) as pool:
-        migration_path = (
-            _project_root() / "migrations" / "000001_create_external_credentials.up.sql"
-        )
-
-        await pool.execute(  # pyright: ignore[reportUnknownMemberType]
-            migration_path.read_text(encoding="utf-8")
-        )
+        for migration_path in sorted((_project_root() / "migrations").glob("*.up.sql")):
+            await pool.execute(  # pyright: ignore[reportUnknownMemberType]
+                migration_path.read_text(encoding="utf-8")
+            )
 
         yield pool
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def clean_external_credentials(
-    postgres_pool: asyncpg.Pool,
-) -> AsyncIterator[None]:
+async def clean_tables(postgres_pool: asyncpg.Pool) -> AsyncIterator[None]:
     await postgres_pool.execute(  # pyright: ignore[reportUnknownMemberType]
-        "TRUNCATE TABLE external_credentials"
+        "TRUNCATE TABLE external_credentials, users"
     )
 
     yield

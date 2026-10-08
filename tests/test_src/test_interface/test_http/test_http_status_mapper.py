@@ -7,7 +7,10 @@ from uuid import uuid4
 import pytest
 
 from osint_engine.application.auth.external_credential import Provider
-from osint_engine.application.errors.auth_error import InvalidCredentialsError
+from osint_engine.application.errors.auth_error import (
+    InvalidCredentialsError,
+    UsernameTakenError,
+)
 from osint_engine.application.errors.entity_fetch_error import AlreadyFetchedError
 from osint_engine.application.errors.external_credential_error import (
     ExternalCredentialNotFoundError,
@@ -93,6 +96,11 @@ class TestStatusMapping:
                 InvalidCredentialsError(username="user"),
                 401,
                 id="InvalidCredentialsError→401",
+            ),
+            pytest.param(
+                UsernameTakenError(username="user"),
+                409,
+                id="UsernameTakenError→409",
             ),
             pytest.param(
                 ExternalCredentialNotFoundError(
