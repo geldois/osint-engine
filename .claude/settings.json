@@ -33,7 +33,12 @@
       "Bash(uv run --no-sync python -m scripts check *)",
       "Bash(uv run --no-sync python -m scripts comments *)",
       "Bash(python -m pytest *)",
-      "Bash(python3 -m pytest *)"
+      "Bash(python3 -m pytest *)",
+      "Bash(git commit *--no-verify*)",
+      "Bash(git commit * -n *)",
+      "Bash(git commit -n *)",
+      "Bash(git merge *--no-verify*)",
+      "Bash(git push *--no-verify*)"
     ]
   },
   "hooks": {
@@ -44,7 +49,9 @@
           {
             "type": "command",
             "command": "bash",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/mark_docs_review.sh"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/mark_docs_review.sh"
+            ],
             "timeout": 10
           }
         ]
@@ -56,7 +63,9 @@
           {
             "type": "command",
             "command": "bash",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/require_docs_review.sh"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/require_docs_review.sh"
+            ],
             "timeout": 10
           }
         ]

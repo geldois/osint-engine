@@ -11,10 +11,10 @@ No linter, formatter, type-checker or test is ever run by the agent. The git hoo
 repo for every commit, so a direct run is pure duplication of a guarantee already given. This used to be a hook that
 nudged after the fact; it is now a list of denied commands in the project's settings, which blocks the call before it
 runs and needs no code. Denied are the tools themselves, the project's check command and its comment-ban command,
-directly and through the package runner with or without its sync step, including the test runner invoked as a module;
-the fix command is not denied, because the project's instructions require the agent to run it before every commit. A
-deny rule matches the command as written, so a wrapper shell or an absolute path to a tool can still get past it — a
-guard against the usual form, not a security boundary.
+directly and through the package runner with or without its sync step, including the test runner invoked as a module,
+and every commit, merge or push that skips the git hook; the fix command is not denied, because the project's
+instructions require the agent to run it before every commit. A deny rule matches the command as written, so a wrapper
+shell or an absolute path to a tool can still get past it — a guard against the usual form, not a security boundary.
 
 The comment ban lives in the gate, not here. It used to be a per-edit hook that nudged on a comment as it was written or
 read, which could only ever suggest; the gate now fails the commit, which is the only enforcement that cannot be
@@ -40,7 +40,8 @@ writes no mark, a deliberate gap.
 Both scripts are `bash`, like the git hook, rather than a second language: the repository already requires a POSIX shell
 for the git hook, which on Windows comes with Git for Windows, so the agent hooks add no new prerequisite. They locate
 the marker through the project directory the editor exports, never the shell's current directory, which any earlier
-change of directory can leave pointing at another repository.
+change of directory can leave pointing at another repository, and compare resolved paths so a symlinked spelling of the
+project directory still counts; with no project directory exported they do nothing.
 
 ## Consequences
 
