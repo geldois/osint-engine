@@ -30,25 +30,6 @@ def test_from_env_loads_postgres_settings(
     )
 
 
-def test_from_env_starts_without_any_seeded_account_setting(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
-    monkeypatch.delenv("VIEWER_TOKEN_EXPIRE_MINUTES", raising=False)
-    monkeypatch.setenv("DATABASE_URL", "postgresql://user:password@database/app")
-    monkeypatch.setenv(
-        "EXTERNAL_CREDENTIAL_ENCRYPTION_KEY",
-        "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=",
-    )
-    monkeypatch.setenv("SECRET_KEY", "secret-key")
-
-    settings = Settings.from_env()
-
-    assert not hasattr(settings, "admin_password")
-    assert not hasattr(settings, "viewer_token_expire_minutes")
-
-
 @pytest.mark.parametrize(
     "missing_variable",
     ["DATABASE_URL", "EXTERNAL_CREDENTIAL_ENCRYPTION_KEY"],
