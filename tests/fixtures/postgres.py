@@ -67,10 +67,14 @@ async def postgres_pool(postgres_url: str) -> AsyncIterator[asyncpg.Pool]:
         yield pool
 
 
-@pytest_asyncio.fixture(autouse=True)
+@pytest_asyncio.fixture
 async def clean_tables(postgres_pool: asyncpg.Pool) -> AsyncIterator[None]:
     await postgres_pool.execute(  # pyright: ignore[reportUnknownMemberType]
         "TRUNCATE TABLE external_credentials, users"
     )
 
     yield
+
+    await postgres_pool.execute(  # pyright: ignore[reportUnknownMemberType]
+        "TRUNCATE TABLE external_credentials, users"
+    )

@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
     from tests.conftest import MakeExternalCredential
 
+pytestmark = pytest.mark.usefixtures("clean_tables")
+
 
 @pytest.fixture
 def repository(postgres_pool: asyncpg.Pool) -> PgExternalCredentialRepository:

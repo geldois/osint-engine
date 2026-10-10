@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
     from tests.conftest import MakeUser
 
+pytestmark = pytest.mark.usefixtures("clean_tables")
+
 
 @pytest.fixture
 def repository(postgres_pool: asyncpg.Pool) -> PgUserRepository:

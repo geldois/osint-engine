@@ -522,10 +522,10 @@ uv run python -m scripts fixtures verify
 Requires a real, working `PORTAL_TRANSPARENCIA_API_KEY` in `.env` — request one at
 <https://api.portaldatransparencia.gov.br/>.
 
-`tests/test_src/test_infrastructure/test_persistence/test_pg/` spins up a real Postgres via `testcontainers`, pulling
-the `postgres:18` and `testcontainers/ryuk:0.8.1` images from Docker Hub on first run (cached locally afterward). If
-pulls hang or time out, your DNS resolver may not be resolving Docker Hub reliably — point the Docker daemon at a
-known-good resolver in `/etc/docker/daemon.json`:
+The tests under `tests/test_src/test_infrastructure/test_persistence/test_pg/`, and the registration test in the auth
+router tests, spin up a real Postgres via `testcontainers`, pulling the `postgres:18` and `testcontainers/ryuk:0.8.1`
+images from Docker Hub on first run (cached locally afterward). If pulls hang or time out, your DNS resolver may not be
+resolving Docker Hub reliably — point the Docker daemon at a known-good resolver in `/etc/docker/daemon.json`:
 
 ```json
 { "dns": ["1.1.1.1", "8.8.8.8"] }

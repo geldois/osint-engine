@@ -3,12 +3,18 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from httpx2 import ASGITransport, AsyncClient
 from jwt import decode as jwt_decode  # pyright: ignore[reportUnknownVariableType]
 
-if TYPE_CHECKING:
-    from httpx2 import AsyncClient
+from osint_engine.config.croot import build_container
+from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 
+if TYPE_CHECKING:
+    import asyncpg
+
+    from osint_engine.config.container import Policies
     from osint_engine.config.settings import Settings
+    from tests.conftest import MakeMemStorage
     from tests.fakes.persistence import FakePgPool
 
 _USER = {"username": "alice", "password": "correct horse"}
@@ -352,3 +358,43 @@ class TestEveryProtectedRouteRequiresAToken:
         response = await getattr(fastapi_app_client, method)(path)
 
         assert response.status_code == 401
+
+
+@pytest.mark.usefixtures("clean_tables")
+class TestRegisterAgainstPostgres:
+    @pytest.mark.asyncio(loop_scope="session")
+    async def test_registering_persists_the_account_and_allows_login(
+        self,
+        settings: Settings,
+        policies: Policies,
+        make_mem_storage: MakeMemStorage,
+        postgres_pool: asyncpg.Pool,
+    ) -> None:
+        async with AsyncClient() as http_client:
+            container = build_container(
+                settings=settings,
+                http_client=http_client,
+                pg_pool=postgres_pool,
+                external_credential_encryption_key=(
+                    settings.external_credential_encryption_key
+                ),
+                mem_storage=make_mem_storage(),
+                policies=policies,
+            )
+
+            async with AsyncClient(
+                transport=ASGITransport(app=build_fastapi_app(container=container)),
+                base_url="http://test",
+            ) as client:
+                registered = await client.post("/auth/register", json=_USER)
+                logged_in = await client.post("/auth/token", data=_USER)
+
+        stored_hash = await postgres_pool.fetchval(  # pyright: ignore[reportUnknownMemberType]
+            "SELECT hashed_password FROM users WHERE username = $1",
+            _USER["username"],
+        )
+
+        assert registered.status_code == 201
+        assert logged_in.status_code == 200
+        assert stored_hash is not None
+        assert stored_hash != _USER["password"]
