@@ -4,15 +4,11 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.edges.company_is_party_in_legal_process import (
+from osint_engine.domain.entities.edges import (
     CompanyIsPartyInLegalProcess,
-)
-from osint_engine.domain.entities.edges.person_is_party_in_legal_process import (
     PersonIsPartyInLegalProcess,
 )
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.legal_process import LegalProcess
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Company, LegalProcess, Person
 
 if TYPE_CHECKING:
     from uuid import UUID

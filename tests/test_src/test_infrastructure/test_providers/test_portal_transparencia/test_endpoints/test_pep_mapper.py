@@ -4,11 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from osint_engine.domain.entities.edges.person_has_political_exposure import (
-    PersonHasPoliticalExposure,
-)
-from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.domain.entities.nodes.political_exposure import PoliticalExposure
+from osint_engine.domain.entities.edges import PersonHasPoliticalExposure
+from osint_engine.domain.entities.nodes import Person, PoliticalExposure
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.pep_mapper import (  # noqa: E501
     _map_person_stub,  # pyright: ignore[reportPrivateUsage]
     _map_political_exposure,  # pyright: ignore[reportPrivateUsage]

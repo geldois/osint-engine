@@ -11,7 +11,7 @@ from osint_engine.application.auth.external_credential import (
     Provider,
 )
 from osint_engine.application.use_cases.expansion.expand_by_ceaf import ExpandByCEAF
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceaf_fetcher import (  # noqa: E501
     PortalTransparenciaCEAFFetcher,
 )

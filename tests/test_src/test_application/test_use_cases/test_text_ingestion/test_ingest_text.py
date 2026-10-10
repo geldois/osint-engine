@@ -9,19 +9,12 @@ from osint_engine.application.errors.text_ingestion_error import (
     UnknownPatternNameError,
 )
 from osint_engine.application.use_cases.text_ingestion.ingest_text import IngestText
-from osint_engine.domain.entities.edges.address_mentioned_in_text import (
+from osint_engine.domain.entities.edges import (
     AddressMentionedInText,
-)
-from osint_engine.domain.entities.edges.company_mentioned_in_text import (
     CompanyMentionedInText,
-)
-from osint_engine.domain.entities.edges.person_mentioned_in_text import (
     PersonMentionedInText,
 )
-from osint_engine.domain.entities.nodes.address import Address
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.domain.entities.nodes.text_source import TextSource
+from osint_engine.domain.entities.nodes import Address, Company, Person, TextSource
 from osint_engine.domain.value_objects.text_pattern import TextPatternName
 from osint_engine.infrastructure.persistence.mem.default_pattern_sets import (
     BRAZILIAN_DOCUMENTS_V1,

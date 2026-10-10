@@ -18,7 +18,7 @@ from osint_engine.infrastructure.providers.brasilapi.endpoints.cep_v2_mapper imp
 from osint_engine.infrastructure.providers.payload import Payload
 
 if TYPE_CHECKING:
-    from osint_engine.domain.entities.nodes.address import Address
+    from osint_engine.domain.entities.nodes import Address
 
 
 class BrasilAPICEPv2Fetcher(BrasilAPIFetcher, CEPFetcher, url_suffix="cep/v2/"):

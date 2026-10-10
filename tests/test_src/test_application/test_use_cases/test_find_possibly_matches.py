@@ -9,9 +9,8 @@ from osint_engine.application.use_cases.matching.find_possibly_matches import (
     FindPossiblyMatches,
 )
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.edges import PossiblyMatches
+from osint_engine.domain.entities.nodes import Company, Person
 
 if TYPE_CHECKING:
     from tests.conftest import (

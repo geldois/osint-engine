@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from osint_engine.domain.entities.nodes.company import Company
+from osint_engine.domain.entities.nodes import Company
 
 
 def _make_company(*, cnpj: str, trade_name: str = "DIRECAO GERAL") -> Company:

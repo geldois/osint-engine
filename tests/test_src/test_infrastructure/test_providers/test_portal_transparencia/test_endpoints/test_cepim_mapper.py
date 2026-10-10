@@ -4,11 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from osint_engine.domain.entities.edges.company_received_sanction import (
-    CompanyReceivedSanction,
-)
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.sanction import Sanction
+from osint_engine.domain.entities.edges import CompanyReceivedSanction
+from osint_engine.domain.entities.nodes import Company, Sanction
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cepim_mapper import (  # noqa: E501
     _map_company_stub,  # pyright: ignore[reportPrivateUsage]
     _map_sanction,  # pyright: ignore[reportPrivateUsage]

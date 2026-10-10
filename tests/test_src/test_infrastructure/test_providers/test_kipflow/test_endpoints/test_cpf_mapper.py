@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 from osint_engine.infrastructure.providers.kipflow.endpoints.cpf_mapper import (
     _map_person,  # pyright: ignore[reportPrivateUsage]
     map_graph,

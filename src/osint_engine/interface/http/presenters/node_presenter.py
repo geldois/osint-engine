@@ -2,16 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.nodes.address import Address
-from osint_engine.domain.entities.nodes.cnae import Cnae
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.email import Email
-from osint_engine.domain.entities.nodes.legal_process import LegalProcess
-from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.domain.entities.nodes.phone import Phone
-from osint_engine.domain.entities.nodes.political_exposure import PoliticalExposure
-from osint_engine.domain.entities.nodes.sanction import Sanction
-from osint_engine.domain.entities.nodes.text_source import TextSource
+from osint_engine.domain.entities.nodes import (
+    Address,
+    Cnae,
+    Company,
+    Email,
+    LegalProcess,
+    Person,
+    Phone,
+    PoliticalExposure,
+    Sanction,
+    TextSource,
+)
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
 from osint_engine.interface.http.presenters.revision_presenter import (
     revision_to_schema,

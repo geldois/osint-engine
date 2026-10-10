@@ -9,7 +9,7 @@ from osint_engine.application.errors.external_credential_error import (
     ExternalCredentialNotFoundError,
 )
 from osint_engine.application.use_cases.expansion.expand_by_ceaf import ExpandByCEAF
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 from tests.fakes.fetchers import FakeCEAFFetcher
 
 if TYPE_CHECKING:

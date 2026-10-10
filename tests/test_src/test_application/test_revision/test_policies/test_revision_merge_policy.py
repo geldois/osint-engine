@@ -11,7 +11,7 @@ from osint_engine.application.revision.policies.revision_merge_policy import (
     keep_incoming_policy,
     merge_by_filled_fields_policy,
 )
-from osint_engine.domain.entities.nodes.company import Company
+from osint_engine.domain.entities.nodes import Company
 
 if TYPE_CHECKING:
     from tests.conftest import (

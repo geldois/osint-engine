@@ -10,7 +10,7 @@ from osint_engine.application.auth.external_credential import (
     ExternalCredential,
     Provider,
 )
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 from osint_engine.interface.http.schemas.graph_schema import GraphSchema
 from tests.test_src.test_interface.test_http.test_fastapi.conftest import (

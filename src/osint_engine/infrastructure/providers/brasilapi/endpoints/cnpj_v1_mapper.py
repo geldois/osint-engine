@@ -4,19 +4,24 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
-from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
-from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
-from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
-from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
-from osint_engine.domain.entities.edges.company_owns_company import CompanyOwnsCompany
-from osint_engine.domain.entities.edges.person_owns_company import PersonOwnsCompany
-from osint_engine.domain.entities.nodes.address import Address
-from osint_engine.domain.entities.nodes.cnae import Cnae
-from osint_engine.domain.entities.nodes.company import Company, CompanyID
-from osint_engine.domain.entities.nodes.email import Email
-from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.domain.entities.nodes.phone import Phone
+from osint_engine.domain.entities.edges import (
+    CompanyHasCnae,
+    CompanyHasEmail,
+    CompanyHasMember,
+    CompanyHasPhone,
+    CompanyLocatedAt,
+    CompanyOwnsCompany,
+    PersonOwnsCompany,
+)
+from osint_engine.domain.entities.nodes import (
+    Address,
+    Cnae,
+    Company,
+    CompanyID,
+    Email,
+    Person,
+    Phone,
+)
 
 if TYPE_CHECKING:
     from osint_engine.infrastructure.providers.payload import Payload

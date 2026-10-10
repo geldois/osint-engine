@@ -10,7 +10,7 @@ import pytest
 from osint_engine.application.use_cases.history.list_edge_history import (
     ListEdgeHistory,
 )
-from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
+from osint_engine.domain.entities.edges import PossiblyMatches
 
 if TYPE_CHECKING:
     from tests.conftest import (

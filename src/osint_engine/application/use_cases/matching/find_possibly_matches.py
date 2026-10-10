@@ -9,8 +9,8 @@ from structlog.stdlib import get_logger
 from osint_engine.application.contracts.use_case import Query
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.edges import PossiblyMatches
+from osint_engine.domain.entities.nodes import Person
 from osint_engine.domain.errors.document_error import InvalidMaskedDocumentError
 from osint_engine.domain.services.masked_document_matching import (
     masked_document_overlap,

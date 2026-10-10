@@ -13,19 +13,12 @@ from osint_engine.application.errors.text_ingestion_error import (
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.application.text_ingestion.extraction import extract_matches
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.edges.address_mentioned_in_text import (
+from osint_engine.domain.entities.edges import (
     AddressMentionedInText,
-)
-from osint_engine.domain.entities.edges.company_mentioned_in_text import (
     CompanyMentionedInText,
-)
-from osint_engine.domain.entities.edges.person_mentioned_in_text import (
     PersonMentionedInText,
 )
-from osint_engine.domain.entities.nodes.address import Address
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.domain.entities.nodes.text_source import TextSource
+from osint_engine.domain.entities.nodes import Address, Company, Person, TextSource
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -35,7 +28,7 @@ if TYPE_CHECKING:
     from osint_engine.application.text_ingestion.extraction import ExtractedMatch
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.node import Node
-    from osint_engine.domain.entities.nodes.text_source import TextSourceID
+    from osint_engine.domain.entities.nodes import TextSourceID
     from osint_engine.domain.value_objects.text_pattern import TextPatternName
 
 _logger = get_logger()

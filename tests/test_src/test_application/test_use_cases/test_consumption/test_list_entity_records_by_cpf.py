@@ -8,7 +8,7 @@ import pytest
 from osint_engine.application.use_cases.consumption.list_entity_records_by_cpf import (
     ListEntityRecordsByCPF,
 )
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 
 if TYPE_CHECKING:
     from uuid import UUID

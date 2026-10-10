@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from osint_engine.application.text_ingestion.extraction import extract_matches
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Company, Person
 from osint_engine.domain.value_objects.text_pattern import TextPatternName
 
 _VALID_CPF = "11144477735"

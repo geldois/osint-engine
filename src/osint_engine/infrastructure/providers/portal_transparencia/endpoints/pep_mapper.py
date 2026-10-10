@@ -3,11 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.edges.person_has_political_exposure import (
-    PersonHasPoliticalExposure,
-)
-from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.domain.entities.nodes.political_exposure import PoliticalExposure
+from osint_engine.domain.entities.edges import PersonHasPoliticalExposure
+from osint_engine.domain.entities.nodes import Person, PoliticalExposure
 
 if TYPE_CHECKING:
     from osint_engine.infrastructure.providers.payload import Payload

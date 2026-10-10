@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 from osint_engine.domain.errors.entity_error import EntityInvalidIdentifierError
 
 

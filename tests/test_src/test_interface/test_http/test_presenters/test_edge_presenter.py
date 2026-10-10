@@ -6,39 +6,33 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from osint_engine.domain.entities.edges.address_mentioned_in_text import (
+from osint_engine.domain.entities.edges import (
     AddressMentionedInText,
-)
-from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
-from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
-from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
-from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
-from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
-from osint_engine.domain.entities.edges.company_mentioned_in_text import (
+    CompanyHasCnae,
+    CompanyHasEmail,
+    CompanyHasMember,
+    CompanyHasPhone,
+    CompanyLocatedAt,
     CompanyMentionedInText,
-)
-from osint_engine.domain.entities.edges.company_received_sanction import (
     CompanyReceivedSanction,
-)
-from osint_engine.domain.entities.edges.person_has_email import PersonHasEmail
-from osint_engine.domain.entities.edges.person_has_phone import PersonHasPhone
-from osint_engine.domain.entities.edges.person_mentioned_in_text import (
+    PersonHasEmail,
+    PersonHasPhone,
     PersonMentionedInText,
-)
-from osint_engine.domain.entities.edges.person_owns_company import PersonOwnsCompany
-from osint_engine.domain.entities.edges.person_received_sanction import (
+    PersonOwnsCompany,
     PersonReceivedSanction,
+    PersonResideAt,
+    PossiblyMatches,
 )
-from osint_engine.domain.entities.edges.person_reside_at import PersonResideAt
-from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
-from osint_engine.domain.entities.nodes.address import AddressID
-from osint_engine.domain.entities.nodes.cnae import CnaeID
-from osint_engine.domain.entities.nodes.company import CompanyID
-from osint_engine.domain.entities.nodes.email import EmailID
-from osint_engine.domain.entities.nodes.person import PersonID
-from osint_engine.domain.entities.nodes.phone import PhoneID
-from osint_engine.domain.entities.nodes.sanction import SanctionID
-from osint_engine.domain.entities.nodes.text_source import TextSourceID
+from osint_engine.domain.entities.nodes import (
+    AddressID,
+    CnaeID,
+    CompanyID,
+    EmailID,
+    PersonID,
+    PhoneID,
+    SanctionID,
+    TextSourceID,
+)
 from osint_engine.domain.value_objects.text_pattern import TextPatternName
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
 from osint_engine.interface.http.presenters.edge_presenter import (

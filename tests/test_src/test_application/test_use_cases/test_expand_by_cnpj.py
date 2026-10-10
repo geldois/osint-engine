@@ -10,7 +10,7 @@ from osint_engine.application.revision.policies.revision_selection_policy import
     select_current_by_newest_fetched,
 )
 from osint_engine.application.use_cases.expansion.expand_by_cnpj import ExpandByCNPJ
-from osint_engine.domain.entities.nodes.company import Company
+from osint_engine.domain.entities.nodes import Company
 from tests.fakes.fetchers import FakeCNPJFetcher
 
 if TYPE_CHECKING:

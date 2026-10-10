@@ -12,7 +12,7 @@ from osint_engine.application.errors.external_credential_error import (
 from osint_engine.application.use_cases.expansion.expand_by_legal_process import (
     ExpandByLegalProcess,
 )
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 from tests.fakes.fetchers import FakeLegalProcessFetcher
 
 if TYPE_CHECKING:

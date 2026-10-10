@@ -3,7 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 from uuid import uuid4
 
-from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
+from osint_engine.domain.entities.edges import PossiblyMatches
 
 
 class TestPossiblyMatchesCanonicalOrdering:

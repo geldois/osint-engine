@@ -8,9 +8,8 @@ from osint_engine.application.use_cases.history.list_graph_catalog import (
     GraphCatalogEntry,
 )
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
-from osint_engine.domain.entities.nodes.cnae import Cnae
-from osint_engine.domain.entities.nodes.company import Company
+from osint_engine.domain.entities.edges import CompanyHasCnae
+from osint_engine.domain.entities.nodes import Cnae, Company
 from osint_engine.interface.http.presenters.graph_presenter import (
     graph_catalog_to_schema,
     graph_to_schema,

@@ -4,9 +4,7 @@ import re
 
 import pytest
 
-from osint_engine.domain.entities.nodes.address import Address
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Address, Company, Person
 from osint_engine.domain.errors.text_pattern_error import FieldPatternGroupMismatchError
 from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
 from osint_engine.domain.value_objects.text_pattern import (

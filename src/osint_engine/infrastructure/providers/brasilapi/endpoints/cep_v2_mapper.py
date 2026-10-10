@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.nodes.address import Address
+from osint_engine.domain.entities.nodes import Address
 
 if TYPE_CHECKING:
     from osint_engine.infrastructure.providers.payload import Payload

@@ -4,11 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from osint_engine.domain.entities.edges.person_received_sanction import (
-    PersonReceivedSanction,
-)
-from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.domain.entities.nodes.sanction import Sanction
+from osint_engine.domain.entities.edges import PersonReceivedSanction
+from osint_engine.domain.entities.nodes import Person, Sanction
 from osint_engine.infrastructure.providers.portal_transparencia.endpoints.ceaf_mapper import (  # noqa: E501
     _map_person_stub,  # pyright: ignore[reportPrivateUsage]
     _map_sanction,  # pyright: ignore[reportPrivateUsage]

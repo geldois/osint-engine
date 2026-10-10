@@ -16,7 +16,7 @@ from osint_engine.application.errors.external_credential_error import (
     ExternalCredentialNotFoundError,
 )
 from osint_engine.application.errors.revision_error import EmptyRevisionSelectionError
-from osint_engine.domain.entities.nodes.company import Company
+from osint_engine.domain.entities.nodes import Company
 from osint_engine.domain.errors.domain_error import MissingErrorIdentityContractError
 from osint_engine.domain.errors.edge_error import EdgeSelfLoopError
 from osint_engine.domain.errors.entity_error import (

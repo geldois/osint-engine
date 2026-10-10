@@ -3,15 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.edges.company_received_sanction import (
+from osint_engine.domain.entities.edges import (
     CompanyReceivedSanction,
-)
-from osint_engine.domain.entities.edges.person_received_sanction import (
     PersonReceivedSanction,
 )
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.person import Person
-from osint_engine.domain.entities.nodes.sanction import Sanction
+from osint_engine.domain.entities.nodes import Company, Person, Sanction
 
 if TYPE_CHECKING:
     from uuid import UUID

@@ -13,7 +13,7 @@ from osint_engine.application.errors.entity_fetch_error import AlreadyFetchedErr
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 from osint_engine.domain.errors.osint_error import OsintError
 from osint_engine.domain.errors.sanitization_error import InvalidCPFError
 from osint_engine.domain.services.sanitization import sanitize_cpf

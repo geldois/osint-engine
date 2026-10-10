@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from osint_engine.domain.entities.nodes.text_source import TextSource
+from osint_engine.domain.entities.nodes import TextSource
 from osint_engine.domain.errors.text_source_error import TextSourceEmptyError
 
 

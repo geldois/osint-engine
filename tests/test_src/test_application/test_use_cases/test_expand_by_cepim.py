@@ -9,7 +9,7 @@ from osint_engine.application.errors.external_credential_error import (
     ExternalCredentialNotFoundError,
 )
 from osint_engine.application.use_cases.expansion.expand_by_cepim import ExpandByCEPIM
-from osint_engine.domain.entities.nodes.company import Company
+from osint_engine.domain.entities.nodes import Company
 from tests.fakes.fetchers import FakeCEPIMFetcher
 
 if TYPE_CHECKING:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from osint_engine.domain.entities.nodes.sanction import Sanction
+from osint_engine.domain.entities.nodes import Sanction
 
 
 def _make_sanction(

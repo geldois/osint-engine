@@ -3,15 +3,11 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.edges.company_is_party_in_legal_process import (
+from osint_engine.domain.entities.edges import (
     CompanyIsPartyInLegalProcess,
-)
-from osint_engine.domain.entities.edges.person_is_party_in_legal_process import (
     PersonIsPartyInLegalProcess,
 )
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.legal_process import LegalProcess
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Company, LegalProcess, Person
 from osint_engine.infrastructure.providers.kipflow.endpoints.legal_process_mapper import (  # noqa: E501
     _map_company_stub,  # pyright: ignore[reportPrivateUsage]
     _map_legal_process,  # pyright: ignore[reportPrivateUsage]

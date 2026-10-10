@@ -2,41 +2,27 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.edges.address_mentioned_in_text import (
+from osint_engine.domain.entities.edges import (
     AddressMentionedInText,
-)
-from osint_engine.domain.entities.edges.company_has_cnae import CompanyHasCnae
-from osint_engine.domain.entities.edges.company_has_email import CompanyHasEmail
-from osint_engine.domain.entities.edges.company_has_member import CompanyHasMember
-from osint_engine.domain.entities.edges.company_has_phone import CompanyHasPhone
-from osint_engine.domain.entities.edges.company_is_party_in_legal_process import (
+    CompanyHasCnae,
+    CompanyHasEmail,
+    CompanyHasMember,
+    CompanyHasPhone,
     CompanyIsPartyInLegalProcess,
-)
-from osint_engine.domain.entities.edges.company_located_at import CompanyLocatedAt
-from osint_engine.domain.entities.edges.company_mentioned_in_text import (
+    CompanyLocatedAt,
     CompanyMentionedInText,
-)
-from osint_engine.domain.entities.edges.company_owns_company import CompanyOwnsCompany
-from osint_engine.domain.entities.edges.company_received_sanction import (
+    CompanyOwnsCompany,
     CompanyReceivedSanction,
-)
-from osint_engine.domain.entities.edges.person_has_email import PersonHasEmail
-from osint_engine.domain.entities.edges.person_has_phone import PersonHasPhone
-from osint_engine.domain.entities.edges.person_has_political_exposure import (
+    PersonHasEmail,
+    PersonHasPhone,
     PersonHasPoliticalExposure,
-)
-from osint_engine.domain.entities.edges.person_is_party_in_legal_process import (
     PersonIsPartyInLegalProcess,
-)
-from osint_engine.domain.entities.edges.person_mentioned_in_text import (
     PersonMentionedInText,
-)
-from osint_engine.domain.entities.edges.person_owns_company import PersonOwnsCompany
-from osint_engine.domain.entities.edges.person_received_sanction import (
+    PersonOwnsCompany,
     PersonReceivedSanction,
+    PersonResideAt,
+    PossiblyMatches,
 )
-from osint_engine.domain.entities.edges.person_reside_at import PersonResideAt
-from osint_engine.domain.entities.edges.possibly_matches import PossiblyMatches
 from osint_engine.interface.http.errors.schema_error import UnmappedTypeSchemaError
 from osint_engine.interface.http.presenters.revision_presenter import (
     revision_to_schema,

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 from httpx2 import Request, RequestError, Response
 
-from osint_engine.domain.entities.nodes.address import Address
+from osint_engine.domain.entities.nodes import Address
 from osint_engine.infrastructure.errors.provider_error import ProviderRequestError
 from tests.data.brasilapi import CEP, CEP_DATA, NUMBER
 

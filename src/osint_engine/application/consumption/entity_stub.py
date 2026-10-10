@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Company, Person
 
 if TYPE_CHECKING:
     from uuid import UUID

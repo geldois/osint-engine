@@ -13,7 +13,7 @@ from osint_engine.application.contracts.use_case import Query, UseCaseRegistry
 from osint_engine.application.errors.use_case_registry_error import (
     UnregisteredUseCaseError,
 )
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 
 if TYPE_CHECKING:
     from tests.conftest import (

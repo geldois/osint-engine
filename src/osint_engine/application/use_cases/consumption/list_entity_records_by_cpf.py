@@ -6,7 +6,7 @@ from structlog.stdlib import get_logger
 
 from osint_engine.application.consumption.entity_record import EntityRecord
 from osint_engine.application.contracts.use_case import Query
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 
 if TYPE_CHECKING:
     from collections.abc import Callable

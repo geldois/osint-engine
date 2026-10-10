@@ -6,9 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.nodes.address import Address
-from osint_engine.domain.entities.nodes.company import Company
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Address, Company, Person
 from osint_engine.domain.errors.text_pattern_error import FieldPatternGroupMismatchError
 from osint_engine.domain.services.document_checksum import (
     is_valid_cnpj_checksum,

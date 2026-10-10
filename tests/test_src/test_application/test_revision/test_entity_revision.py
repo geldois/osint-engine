@@ -11,7 +11,7 @@ from osint_engine.application.errors.revision_error import (
     NonUTCAttributeError,
 )
 from osint_engine.application.revision.entity_revision import EntityRevision
-from osint_engine.domain.entities.nodes.person import Person
+from osint_engine.domain.entities.nodes import Person
 from osint_engine.domain.value_objects.entity_ref import EntityRef
 from tests.fakes.domain import FakeNode
 
