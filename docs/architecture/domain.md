@@ -1,10 +1,11 @@
 # Domain — what it does
 
 The domain layer defines what a real-world entity is (a company, a person, an address, a phone, an email, a CNAE
-classification, a sanction, a piece of ingested text) and how two entities relate to each other. Every entity's identity
-is derived deterministically from its own content — the same real-world thing, described the same way, always produces
-the same identifier, regardless of when or where it was constructed. Deduplication and idempotent re-processing follow
-automatically: fetching the same subject twice never creates two competing records for the same real thing.
+classification, a sanction, a legal process, a political-exposure record, a piece of ingested text) and how two entities
+relate to each other. Every entity's identity is derived deterministically from its own content — the same real-world
+thing, described the same way, always produces the same identifier, regardless of when or where it was constructed.
+Deduplication and idempotent re-processing follow automatically: fetching the same subject twice never creates two
+competing records for the same real thing.
 
 An entity refuses to exist in an invalid state. If a concrete type is missing something the base abstraction requires —
 a namespace, a properly typed identifier — the mistake is caught the moment the class itself is defined, not the first

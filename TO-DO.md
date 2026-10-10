@@ -117,9 +117,9 @@ same commit; a gap closed comes out in the same commit.
 ## test(gates)
 
 - **The mutation gate has never run.** `scripts mutation --max-survival` defaults to `100.0`, so it can never fail, no
-  workflow runs it, and `cosmic-ray.toml` was only just pointed at the real test directories, so expect a first run to
-  need adjustments. Run it once, set the ceiling to the measured baseline, then add a scheduled weekly and manual CI
-  job; until the ceiling is real, a scheduled job would be a false green
+  workflow runs it, and `cosmic-ray.toml` has never been exercised against the current test layout, so expect a first
+  run to need adjustments. Run it once, set the ceiling to the measured baseline, then add a scheduled weekly and manual
+  CI job; until the ceiling is real, a scheduled job would be a false green
 
 ## chore(gates)
 
@@ -134,6 +134,16 @@ same commit; a gap closed comes out in the same commit.
   "Require status checks to pass" and add the check `test` (it must have run once on a pushed branch to appear), keep
   "Require linear history", "Block force pushes" and "Restrict deletions", and leave bypass empty so admins are bound
   too
+
+## fix(deploy)
+
+- **`FORWARDED_ALLOW_IPS: "*"` in `compose.prod.yml` is safe only because `app` uses `expose` and not `ports`.** The
+  wildcard makes uvicorn trust the `X-Forwarded-For` of any peer and overwrite `request.client` with it, and the per-IP
+  limits (login, registration) key on `request.client.host`. If the `expose` ever became a published port, a direct
+  caller could forge the header and walk past every per-IP bucket. The compose network has no fixed subnet, so the Caddy
+  address is not stable and the wildcard is the pragmatic value today. Declare a network with a fixed subnet and trust
+  only that CIDR when a service other than Caddy that can reach `app` joins the network or the `expose` line is touched
+  (`docs/architecture/deployment.md` records the accepted trust, this is its hardening)
 
 ## chore(harness)
 
