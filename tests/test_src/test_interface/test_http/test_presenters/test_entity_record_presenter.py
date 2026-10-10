@@ -12,7 +12,7 @@ from osint_engine.interface.http.schemas.entity_record_schema import (
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEntityRecord
+    from tests.fixtures.application import MakeEntityRecord
 
 
 class TestEntityRecordPresenterFieldMapping:

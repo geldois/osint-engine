@@ -10,7 +10,9 @@ from osint_engine.domain.errors.entity_error import EntityNotFoundError
 from tests.fakes.domain import FakeDefaultEdge
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEntityRevision, MakeFakeEdge, MakeMemStorage
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeEdge
+    from tests.fixtures.persistence import MakeMemStorage
     from tests.test_src.test_infrastructure.test_persistence.test_mem.test_mem_repositories.conftest import (  # noqa: E501
         MakeMemEdgeRepository,
     )

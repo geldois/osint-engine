@@ -67,7 +67,8 @@ from osint_engine.interface.http.schemas.edge_schema import (
 if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
-    from tests.conftest import MakeEntityRevision, MakeFakeEdge
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeEdge
 
 _address_id = AddressID(uuid4())
 

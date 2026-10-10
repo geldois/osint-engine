@@ -25,7 +25,8 @@ if TYPE_CHECKING:
 
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.config.settings import Settings
-    from tests.conftest import MakeEntityRecord, MakeMemStorage, MakeUser
+    from tests.fixtures.application import MakeEntityRecord, MakeUser
+    from tests.fixtures.persistence import MakeMemStorage
 
 _NOOP_MERGE_POLICY_CALLED_MESSAGE = "_noop_merge_policy should not be called"
 _NOOP_SELECTION_POLICY_CALLED_MESSAGE = "_noop_selection_policy should not be called"

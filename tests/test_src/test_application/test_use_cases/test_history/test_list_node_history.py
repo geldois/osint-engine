@@ -11,13 +11,9 @@ from osint_engine.application.use_cases.history.list_node_history import (
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import (
-        MakeEntityRevision,
-        MakeFakeMergeableNode,
-        MakeFakeNode,
-        MakeMemStorage,
-        MakeMemUoW,
-    )
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeMergeableNode, MakeFakeNode
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import MakeMemUoWFactory
 
 

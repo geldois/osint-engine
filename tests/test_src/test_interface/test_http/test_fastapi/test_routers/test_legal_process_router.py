@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from osint_engine.config.container import Container
-    from tests.conftest import MakeMemStorage
+    from tests.fixtures.persistence import MakeMemStorage
     from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
         MakeContainer,
     )

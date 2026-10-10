@@ -14,11 +14,8 @@ from osint_engine.application.revision.policies.revision_merge_policy import (
 from osint_engine.domain.entities.nodes import Company
 
 if TYPE_CHECKING:
-    from tests.conftest import (
-        MakeEntityRevision,
-        MakeFakeMergeableNode,
-        MakeFakeNode,
-    )
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeMergeableNode, MakeFakeNode
 
 
 _EARLY = datetime(2026, 1, 1, tzinfo=UTC)

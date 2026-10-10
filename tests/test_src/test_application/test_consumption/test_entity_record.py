@@ -10,7 +10,7 @@ from osint_engine.application.consumption.entity_record import EntityRecord
 from osint_engine.domain.value_objects.entity_ref import EntityRef
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEntityRecord
+    from tests.fixtures.application import MakeEntityRecord
 
 
 class TestEntityRecordConstruction:

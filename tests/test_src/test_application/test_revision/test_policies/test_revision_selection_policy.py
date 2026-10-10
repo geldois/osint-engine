@@ -11,7 +11,8 @@ from osint_engine.application.revision.policies.revision_selection_policy import
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEntityRevision, MakeFakeNode
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeNode
 
 
 _EARLY = datetime(2026, 1, 1, tzinfo=UTC)

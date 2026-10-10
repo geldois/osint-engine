@@ -8,14 +8,9 @@ from osint_engine.infrastructure.persistence.mem.mem_storage import (
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import (
-        MakeEntityRecord,
-        MakeEntityRevision,
-        MakeFakeEdge,
-        MakeFakeNode,
-        MakeGraph,
-        MakeMemStorage,
-    )
+    from tests.fixtures.application import MakeEntityRecord, MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeEdge, MakeFakeNode, MakeGraph
+    from tests.fixtures.persistence import MakeMemStorage
 
 
 def _seeded_storage(

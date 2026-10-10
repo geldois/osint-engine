@@ -16,11 +16,8 @@ from osint_engine.application.errors.use_case_registry_error import (
 from osint_engine.domain.entities.nodes import Person
 
 if TYPE_CHECKING:
-    from tests.conftest import (
-        MakeEntityRecord,
-        MakeMemStorage,
-        MakeMemUoW,
-    )
+    from tests.fixtures.application import MakeEntityRecord
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
 
 _REQUESTED_AT = datetime(2026, 1, 1, tzinfo=UTC)
 _USERNAME = "alice"

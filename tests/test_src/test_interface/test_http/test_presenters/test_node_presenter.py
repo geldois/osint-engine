@@ -37,7 +37,8 @@ if TYPE_CHECKING:
 
     from osint_engine.domain.entities.bases.node import Node
     from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
-    from tests.conftest import MakeEntityRevision, MakeFakeNode
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeNode
 
 
 _ADDRESS = Address(

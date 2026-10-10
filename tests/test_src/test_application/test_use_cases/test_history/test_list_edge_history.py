@@ -13,12 +13,9 @@ from osint_engine.application.use_cases.history.list_edge_history import (
 from osint_engine.domain.entities.edges import PossiblyMatches
 
 if TYPE_CHECKING:
-    from tests.conftest import (
-        MakeEntityRevision,
-        MakeFakeEdge,
-        MakeMemStorage,
-        MakeMemUoW,
-    )
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeEdge
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import MakeMemUoWFactory
 
 

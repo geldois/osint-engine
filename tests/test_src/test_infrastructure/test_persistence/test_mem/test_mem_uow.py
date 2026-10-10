@@ -10,14 +10,9 @@ from osint_engine.infrastructure.errors.uow_error import (
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import (
-        MakeEntityRevision,
-        MakeFakeEdge,
-        MakeFakeNode,
-        MakeGraph,
-        MakeMemStorage,
-        MakeMemUoW,
-    )
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeEdge, MakeFakeNode, MakeGraph
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
 
 _LIFECYCLE_ATTRIBUTES = (
     "_snapshot",

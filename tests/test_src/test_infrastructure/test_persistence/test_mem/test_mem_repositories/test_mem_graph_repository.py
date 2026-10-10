@@ -9,12 +9,9 @@ import pytest
 from osint_engine.domain.errors.entity_error import EntityNotFoundError
 
 if TYPE_CHECKING:
-    from tests.conftest import (
-        MakeEntityRevision,
-        MakeFakeNode,
-        MakeGraph,
-        MakeMemStorage,
-    )
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeNode, MakeGraph
+    from tests.fixtures.persistence import MakeMemStorage
     from tests.test_src.test_infrastructure.test_persistence.test_mem.test_mem_repositories.conftest import (  # noqa: E501
         MakeMemGraphRepository,
     )

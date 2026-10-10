@@ -16,13 +16,9 @@ from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.nodes import Person
 
 if TYPE_CHECKING:
-    from tests.conftest import (
-        MakeEntityRevision,
-        MakeExternalCredential,
-        MakeGraph,
-        MakeMemStorage,
-        MakeMemUoW,
-    )
+    from tests.fixtures.application import MakeEntityRevision, MakeExternalCredential
+    from tests.fixtures.domain import MakeGraph
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import (
         MakeFakeCEAFFetcher,
         MakeFakeCPFFetcher,

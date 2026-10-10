@@ -11,7 +11,8 @@ from osint_engine.application.use_cases.consumption.list_entity_record_catalog i
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEntityRecord, MakeMemStorage, MakeMemUoW
+    from tests.fixtures.application import MakeEntityRecord
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import MakeMemUoWFactory
 
 _EARLY = datetime(2026, 1, 1, tzinfo=UTC)

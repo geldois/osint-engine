@@ -22,7 +22,7 @@ from osint_engine.interface.http.schemas.edge_schema import (
 from osint_engine.interface.http.schemas.node_schema import CnaeSchema, CompanySchema
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEntityRevision
+    from tests.fixtures.application import MakeEntityRevision
 
 _COMPANY = Company(
     activity_start_date="2020-01-01",

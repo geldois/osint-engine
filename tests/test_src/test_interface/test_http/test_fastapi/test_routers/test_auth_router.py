@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 
     from osint_engine.config.container import Policies
     from osint_engine.config.settings import Settings
-    from tests.conftest import MakeMemStorage
     from tests.fakes.persistence import FakePgPool
+    from tests.fixtures.persistence import MakeMemStorage
 
 _USER = {"username": "alice", "password": "correct horse"}
 

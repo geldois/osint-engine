@@ -26,13 +26,12 @@ if TYPE_CHECKING:
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.config.container import Policies
     from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
-    from tests.conftest import (
+    from tests.fixtures.application import (
         MakeEntityRecord,
         MakeEntityRevision,
         MakeExternalCredential,
-        MakeMemStorage,
-        MakeMemUoW,
     )
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import MakeMemUoWFactory
 
 _CPF_1 = "10000000000"

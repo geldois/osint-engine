@@ -17,7 +17,7 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_pattern_set_re
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeMemStorage
+    from tests.fixtures.persistence import MakeMemStorage
 
 _BUNDLE = TextPatternSet(
     id=PatternSetID("test_bundle"),

@@ -25,13 +25,10 @@ if TYPE_CHECKING:
     from osint_engine.config.settings import Settings
     from osint_engine.domain.entities.bases.graph import Graph
     from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
-    from tests.conftest import (
-        MakeEntityRevision,
-        MakeGraph,
-        MakeMemStorage,
-        MakeMemUoW,
-    )
     from tests.fakes.persistence import FakePgPool
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.domain import MakeGraph
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
 
 type MakeFakeCEAFFetcher = Callable[..., FakeCEAFFetcher]
 type MakeFakeCEISFetcher = Callable[..., FakeCEISFetcher]

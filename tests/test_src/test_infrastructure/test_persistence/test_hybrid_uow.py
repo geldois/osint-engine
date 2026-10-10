@@ -19,16 +19,14 @@ if TYPE_CHECKING:
     from osint_engine.config.container import Policies
     from osint_engine.config.settings import Settings
     from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
-    from tests.conftest import (
+    from tests.fakes.persistence import FakePgPool
+    from tests.fixtures.application import (
         MakeEntityRevision,
         MakeExternalCredential,
-        MakeFakeEdge,
-        MakeFakeNode,
-        MakeGraph,
-        MakeMemStorage,
         MakeUser,
     )
-    from tests.fakes.persistence import FakePgPool
+    from tests.fixtures.domain import MakeFakeEdge, MakeFakeNode, MakeGraph
+    from tests.fixtures.persistence import MakeMemStorage
 
 _LIFECYCLE_ATTRIBUTES = (
     "edges",

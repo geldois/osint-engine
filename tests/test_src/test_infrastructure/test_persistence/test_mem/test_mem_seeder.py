@@ -8,7 +8,7 @@ from osint_engine.infrastructure.persistence.mem.default_pattern_sets import (
 from osint_engine.infrastructure.persistence.mem.mem_seeder import seed_mem_storage
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeMemStorage
+    from tests.fixtures.persistence import MakeMemStorage
 
 
 class TestMemSeederSeedingBehavior:

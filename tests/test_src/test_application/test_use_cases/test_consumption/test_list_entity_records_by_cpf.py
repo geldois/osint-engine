@@ -13,7 +13,8 @@ from osint_engine.domain.entities.nodes import Person
 if TYPE_CHECKING:
     from uuid import UUID
 
-    from tests.conftest import MakeEntityRecord, MakeMemStorage, MakeMemUoW
+    from tests.fixtures.application import MakeEntityRecord
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import MakeMemUoWFactory
 
 _CPF = "10000000000"

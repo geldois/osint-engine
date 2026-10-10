@@ -6,7 +6,8 @@ from uuid import uuid4
 import pytest
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEntityRecord, MakeMemStorage
+    from tests.fixtures.application import MakeEntityRecord
+    from tests.fixtures.persistence import MakeMemStorage
     from tests.test_src.test_infrastructure.test_persistence.test_mem.test_mem_repositories.conftest import (  # noqa: E501
         MakeMemEntityRecordRepository,
     )

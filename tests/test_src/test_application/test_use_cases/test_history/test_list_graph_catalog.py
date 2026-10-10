@@ -11,14 +11,9 @@ from osint_engine.application.use_cases.history.list_graph_catalog import (
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import (
-        MakeEntityRecord,
-        MakeEntityRevision,
-        MakeFakeNode,
-        MakeGraph,
-        MakeMemStorage,
-        MakeMemUoW,
-    )
+    from tests.fixtures.application import MakeEntityRecord, MakeEntityRevision
+    from tests.fixtures.domain import MakeFakeNode, MakeGraph
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import MakeMemUoWFactory
 
 

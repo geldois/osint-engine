@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from osint_engine.config.container import Container, Policies
     from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
     from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
-    from tests.conftest import MakeMemStorage
+    from tests.fixtures.persistence import MakeMemStorage
 
 type MakeContainer = Callable[..., Container]
 type MakeSettings = Callable[..., Settings]

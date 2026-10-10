@@ -13,7 +13,7 @@ from osint_engine.infrastructure.persistence.pg.repositories.pg_external_credent
 if TYPE_CHECKING:
     import asyncpg
 
-    from tests.conftest import MakeExternalCredential
+    from tests.fixtures.application import MakeExternalCredential
 
 pytestmark = pytest.mark.usefixtures("clean_tables")
 

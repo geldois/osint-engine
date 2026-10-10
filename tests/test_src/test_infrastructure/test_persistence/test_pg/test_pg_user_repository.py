@@ -12,7 +12,7 @@ from osint_engine.infrastructure.persistence.pg.repositories.pg_user_repository 
 if TYPE_CHECKING:
     import asyncpg
 
-    from tests.conftest import MakeUser
+    from tests.fixtures.application import MakeUser
 
 pytestmark = pytest.mark.usefixtures("clean_tables")
 

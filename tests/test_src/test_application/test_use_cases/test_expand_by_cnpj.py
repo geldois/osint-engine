@@ -17,14 +17,13 @@ if TYPE_CHECKING:
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.entity import Entity
     from osint_engine.domain.entities.bases.graph import Graph
-    from tests.conftest import (
+    from tests.fixtures.application import (
         MakeEntityRecord,
         MakeEntityRevision,
-        MakeGraph,
-        MakeMemStorage,
-        MakeMemUoW,
         MakePolicies,
     )
+    from tests.fixtures.domain import MakeGraph
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import (
         MakeFakeCNPJFetcher,
         MakeMemUoWFactory,

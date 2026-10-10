@@ -21,7 +21,8 @@ from osint_engine.infrastructure.persistence.mem.default_pattern_sets import (
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeEntityRevision, MakeMemStorage, MakeMemUoW
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import MakeMemUoWFactory
 
 _VALID_CPF_LABELED_TEXT = "Contato: CPF 11144477735"

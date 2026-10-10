@@ -13,7 +13,7 @@ from osint_engine.infrastructure.persistence.mem.default_pattern_sets import (
 )
 
 if TYPE_CHECKING:
-    from tests.conftest import MakeMemStorage, MakeMemUoW
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import MakeMemUoWFactory
 
 

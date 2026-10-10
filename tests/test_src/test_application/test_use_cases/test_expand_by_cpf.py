@@ -20,13 +20,12 @@ if TYPE_CHECKING:
 
     from osint_engine.application.auth.external_credential import ExternalCredential
     from osint_engine.application.revision.entity_revision import EntityRevision
-    from tests.conftest import (
+    from tests.fixtures.application import (
         MakeEntityRecord,
         MakeEntityRevision,
         MakeExternalCredential,
-        MakeMemStorage,
-        MakeMemUoW,
     )
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import (
         MakeFakeCPFFetcher,
         MakeMemUoWFactory,

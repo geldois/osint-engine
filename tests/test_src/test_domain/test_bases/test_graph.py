@@ -21,7 +21,7 @@ from tests.fakes.domain import TEST_NODE, FakeDefaultEdge, FakeNodeID, FakeOneWa
 if TYPE_CHECKING:
     from hypothesis.strategies import DataObject
 
-    from tests.conftest import MakeFakeEdge, MakeFakeNode
+    from tests.fixtures.domain import MakeFakeEdge, MakeFakeNode
 
 
 class FakeNodeWithContentIdentity(

@@ -13,11 +13,8 @@ from osint_engine.domain.entities.edges import PossiblyMatches
 from osint_engine.domain.entities.nodes import Company, Person
 
 if TYPE_CHECKING:
-    from tests.conftest import (
-        MakeEntityRevision,
-        MakeMemStorage,
-        MakeMemUoW,
-    )
+    from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
     from tests.test_src.test_application.conftest import MakeMemUoWFactory
 
 
