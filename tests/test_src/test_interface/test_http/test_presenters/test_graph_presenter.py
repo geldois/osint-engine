@@ -8,14 +8,17 @@ from osint_engine.application.use_cases.history.list_graph_catalog import (
     GraphCatalogEntry,
 )
 from osint_engine.domain.entities.bases.graph import Graph
-from osint_engine.domain.entities.edges import CompanyHasCnae
+from osint_engine.domain.entities.edges import CnaeClassifiesCompany, CompanyHasCnae
 from osint_engine.domain.entities.nodes import Cnae, Company
 from osint_engine.interface.http.presenters.graph_presenter import (
     graph_catalog_to_schema,
     graph_to_schema,
     revision_to_schema,
 )
-from osint_engine.interface.http.schemas.edge_schema import CompanyHasCnaeSchema
+from osint_engine.interface.http.schemas.edge_schema import (
+    CnaeClassifiesCompanySchema,
+    CompanyHasCnaeSchema,
+)
 from osint_engine.interface.http.schemas.node_schema import CnaeSchema, CompanySchema
 
 if TYPE_CHECKING:
@@ -36,6 +39,7 @@ _COMPANY = Company(
 )
 _CNAE = Cnae(code="0101-3/01", description="Cultivo de arroz")
 _EDGE = CompanyHasCnae(source_id=_COMPANY.id, target_id=_CNAE.id)
+_INVERSE_EDGE = CnaeClassifiesCompany(source_id=_CNAE.id, target_id=_COMPANY.id)
 _GRAPH = Graph(
     nodes=frozenset({_COMPANY, _CNAE}),
     edges=frozenset({_EDGE}),
@@ -51,10 +55,11 @@ class TestGraphPresenterMapping:
 
         assert schema.root_id == _COMPANY.id
         assert len(schema.nodes) == 2
-        assert len(schema.edges) == 1
+        assert len(schema.edges) == 2
         assert any(isinstance(n, CompanySchema) for n in schema.nodes)
         assert any(isinstance(n, CnaeSchema) for n in schema.nodes)
-        assert isinstance(schema.edges[0], CompanyHasCnaeSchema)
+        assert any(isinstance(e, CompanyHasCnaeSchema) for e in schema.edges)
+        assert any(isinstance(e, CnaeClassifiesCompanySchema) for e in schema.edges)
 
 
 class TestGraphPresenterIdentity:
@@ -74,7 +79,10 @@ class TestGraphPresenterIdentity:
             _COMPANY.content_id,
             _CNAE.content_id,
         }
-        assert schema.edges[0].content_id == _EDGE.content_id
+        assert {edge.content_id for edge in schema.edges} == {
+            _EDGE.content_id,
+            _INVERSE_EDGE.content_id,
+        }
 
     def test_content_id_differs_from_id_for_an_entity_carrying_descriptive_fields(
         self, make_entity_revision: MakeEntityRevision

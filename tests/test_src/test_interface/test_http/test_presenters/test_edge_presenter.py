@@ -12,11 +12,15 @@ from osint_engine.domain.entities.edges import (
     CompanyHasEmail,
     CompanyHasMember,
     CompanyHasPhone,
+    CompanyIsPartyInLegalProcess,
     CompanyLocatedAt,
     CompanyMentionedInText,
+    CompanyOwnsCompany,
     CompanyReceivedSanction,
     PersonHasEmail,
     PersonHasPhone,
+    PersonHasPoliticalExposure,
+    PersonIsPartyInLegalProcess,
     PersonMentionedInText,
     PersonOwnsCompany,
     PersonReceivedSanction,
@@ -28,8 +32,10 @@ from osint_engine.domain.entities.nodes import (
     CnaeID,
     CompanyID,
     EmailID,
+    LegalProcessID,
     PersonID,
     PhoneID,
+    PoliticalExposureID,
     SanctionID,
     TextSourceID,
 )
@@ -267,6 +273,75 @@ class TestEdgePresenterFieldMapping:
         assert result.target_id == _POSSIBLY_MATCHES.target_id
 
         assert result.confidence == _POSSIBLY_MATCHES.confidence
+
+
+_other_company_id = CompanyID(uuid4())
+_legal_process_id = LegalProcessID(uuid4())
+_political_exposure_id = PoliticalExposureID(uuid4())
+
+_INVERTIBLE_EDGES: list[tuple[Edge[UUID, UUID, UUID], str]] = [
+    (_COMPANY_LOCATED_AT, "address_hosts_company"),
+    (_PERSON_RESIDE_AT, "address_hosts_person"),
+    (_COMPANY_HAS_CNAE, "cnae_classifies_company"),
+    (_COMPANY_HAS_EMAIL, "email_belongs_to_company"),
+    (_PERSON_HAS_EMAIL, "email_belongs_to_person"),
+    (_COMPANY_HAS_PHONE, "phone_belongs_to_company"),
+    (_PERSON_HAS_PHONE, "phone_belongs_to_person"),
+    (
+        CompanyIsPartyInLegalProcess(
+            source_id=_company_id, target_id=_legal_process_id
+        ),
+        "legal_process_has_company",
+    ),
+    (
+        PersonIsPartyInLegalProcess(source_id=_person_id, target_id=_legal_process_id),
+        "legal_process_has_person",
+    ),
+    (_COMPANY_RECEIVED_SANCTION, "sanction_applied_to_company"),
+    (_PERSON_RECEIVED_SANCTION, "sanction_applied_to_person"),
+    (
+        PersonHasPoliticalExposure(
+            source_id=_person_id, target_id=_political_exposure_id
+        ),
+        "political_exposure_of_person",
+    ),
+    (_COMPANY_MENTIONED_IN_TEXT, "text_source_mentions_company"),
+    (_PERSON_MENTIONED_IN_TEXT, "text_source_mentions_person"),
+    (_ADDRESS_MENTIONED_IN_TEXT, "text_source_mentions_address"),
+    (
+        CompanyOwnsCompany(
+            source_id=_company_id,
+            target_id=_other_company_id,
+            entry_date="2021-03-15",
+            role="SÓCIO",
+        ),
+        "company_owned_by_company",
+    ),
+]
+
+
+class TestInvertedEdgePresenter:
+    @pytest.mark.parametrize(
+        ("forward", "expected_type"),
+        _INVERTIBLE_EDGES,
+        ids=[expected_type for _, expected_type in _INVERTIBLE_EDGES],
+    )
+    def test_inverse_edge_is_presented_with_its_own_type_and_endpoints(
+        self,
+        forward: Edge[UUID, UUID, UUID],
+        expected_type: str,
+        revision_schema: RevisionSchema,
+    ) -> None:
+        inverse = forward.inverted()
+
+        assert inverse is not None
+
+        result = edge_to_schema(inverse, revision=revision_schema)
+
+        assert result.type == expected_type
+        assert result.id == inverse.id
+        assert result.source_id == forward.target_id
+        assert result.target_id == forward.source_id
 
 
 class TestEdgePresenterErrors:

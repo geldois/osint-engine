@@ -43,6 +43,21 @@ class GraphRootNotInNodesError(
         )
 
 
+class GraphBrokenInversionError(GraphError, error_code="GRAPH_BROKEN_INVERSION"):
+    edge_id: UUID
+
+    @override
+    def __init__(self, *, edge_id: UUID) -> None:
+        super().__init__(edge_id=edge_id)
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"The inverse of edge '{self.edge_id}' does not invert back to it. "
+            f"An edge and its inverse must be each other's inverse."
+        )
+
+
 class GraphInconsistentError(GraphError, error_code="GRAPH_INCONSISTENT"):
     @override
     def __init__(self) -> None:

@@ -46,3 +46,7 @@ class Edge(
             raise EdgeSelfLoopError(node_id=source_id)
 
         super().__init__(source_id=source_id, target_id=target_id, **kwargs)
+
+    @abstractmethod
+    def inverted(self) -> Edge[UUID, UUID, UUID] | None:
+        raise NotImplementedError

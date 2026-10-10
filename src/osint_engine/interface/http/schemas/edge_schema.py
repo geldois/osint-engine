@@ -10,7 +10,10 @@ from pydantic import BaseModel, Field
 
 from osint_engine.domain.entities.bases.edge import Edge
 from osint_engine.domain.entities.edges import (
+    AddressHostsCompany,
+    AddressHostsPerson,
     AddressMentionedInText,
+    CnaeClassifiesCompany,
     CompanyHasCnae,
     CompanyHasEmail,
     CompanyHasMember,
@@ -18,8 +21,13 @@ from osint_engine.domain.entities.edges import (
     CompanyIsPartyInLegalProcess,
     CompanyLocatedAt,
     CompanyMentionedInText,
+    CompanyOwnedByCompany,
     CompanyOwnsCompany,
     CompanyReceivedSanction,
+    EmailBelongsToCompany,
+    EmailBelongsToPerson,
+    LegalProcessHasCompany,
+    LegalProcessHasPerson,
     PersonHasEmail,
     PersonHasPhone,
     PersonHasPoliticalExposure,
@@ -28,7 +36,15 @@ from osint_engine.domain.entities.edges import (
     PersonOwnsCompany,
     PersonReceivedSanction,
     PersonResideAt,
+    PhoneBelongsToCompany,
+    PhoneBelongsToPerson,
+    PoliticalExposureOfPerson,
     PossiblyMatches,
+    SanctionAppliedToCompany,
+    SanctionAppliedToPerson,
+    TextSourceMentionsAddress,
+    TextSourceMentionsCompany,
+    TextSourceMentionsPerson,
 )
 from osint_engine.interface.http.errors.schema_error import (
     DuplicateSchemaRegistrationError,
@@ -246,6 +262,162 @@ class PersonResideAtSchema(EdgeSchema[PersonResideAt]):
         return PersonResideAt
 
 
+class AddressHostsCompanySchema(EdgeSchema[AddressHostsCompany]):
+    type: Literal["address_hosts_company"] = "address_hosts_company"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[AddressHostsCompany]:
+        return AddressHostsCompany
+
+
+class AddressHostsPersonSchema(EdgeSchema[AddressHostsPerson]):
+    type: Literal["address_hosts_person"] = "address_hosts_person"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[AddressHostsPerson]:
+        return AddressHostsPerson
+
+
+class CnaeClassifiesCompanySchema(EdgeSchema[CnaeClassifiesCompany]):
+    type: Literal["cnae_classifies_company"] = "cnae_classifies_company"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[CnaeClassifiesCompany]:
+        return CnaeClassifiesCompany
+
+
+class CompanyOwnedByCompanySchema(EdgeSchema[CompanyOwnedByCompany]):
+    type: Literal["company_owned_by_company"] = "company_owned_by_company"
+
+    entry_date: str
+    role: str
+
+    @classmethod
+    @override
+    def domain(cls) -> type[CompanyOwnedByCompany]:
+        return CompanyOwnedByCompany
+
+
+class EmailBelongsToCompanySchema(EdgeSchema[EmailBelongsToCompany]):
+    type: Literal["email_belongs_to_company"] = "email_belongs_to_company"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[EmailBelongsToCompany]:
+        return EmailBelongsToCompany
+
+
+class EmailBelongsToPersonSchema(EdgeSchema[EmailBelongsToPerson]):
+    type: Literal["email_belongs_to_person"] = "email_belongs_to_person"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[EmailBelongsToPerson]:
+        return EmailBelongsToPerson
+
+
+class LegalProcessHasCompanySchema(EdgeSchema[LegalProcessHasCompany]):
+    type: Literal["legal_process_has_company"] = "legal_process_has_company"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[LegalProcessHasCompany]:
+        return LegalProcessHasCompany
+
+
+class LegalProcessHasPersonSchema(EdgeSchema[LegalProcessHasPerson]):
+    type: Literal["legal_process_has_person"] = "legal_process_has_person"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[LegalProcessHasPerson]:
+        return LegalProcessHasPerson
+
+
+class PhoneBelongsToCompanySchema(EdgeSchema[PhoneBelongsToCompany]):
+    type: Literal["phone_belongs_to_company"] = "phone_belongs_to_company"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[PhoneBelongsToCompany]:
+        return PhoneBelongsToCompany
+
+
+class PhoneBelongsToPersonSchema(EdgeSchema[PhoneBelongsToPerson]):
+    type: Literal["phone_belongs_to_person"] = "phone_belongs_to_person"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[PhoneBelongsToPerson]:
+        return PhoneBelongsToPerson
+
+
+class PoliticalExposureOfPersonSchema(EdgeSchema[PoliticalExposureOfPerson]):
+    type: Literal["political_exposure_of_person"] = "political_exposure_of_person"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[PoliticalExposureOfPerson]:
+        return PoliticalExposureOfPerson
+
+
+class SanctionAppliedToCompanySchema(EdgeSchema[SanctionAppliedToCompany]):
+    type: Literal["sanction_applied_to_company"] = "sanction_applied_to_company"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[SanctionAppliedToCompany]:
+        return SanctionAppliedToCompany
+
+
+class SanctionAppliedToPersonSchema(EdgeSchema[SanctionAppliedToPerson]):
+    type: Literal["sanction_applied_to_person"] = "sanction_applied_to_person"
+
+    @classmethod
+    @override
+    def domain(cls) -> type[SanctionAppliedToPerson]:
+        return SanctionAppliedToPerson
+
+
+class TextSourceMentionsAddressSchema(EdgeSchema[TextSourceMentionsAddress]):
+    type: Literal["text_source_mentions_address"] = "text_source_mentions_address"
+
+    matched_field: str
+    pattern_name: str
+
+    @classmethod
+    @override
+    def domain(cls) -> type[TextSourceMentionsAddress]:
+        return TextSourceMentionsAddress
+
+
+class TextSourceMentionsCompanySchema(EdgeSchema[TextSourceMentionsCompany]):
+    type: Literal["text_source_mentions_company"] = "text_source_mentions_company"
+
+    matched_field: str
+    pattern_name: str
+
+    @classmethod
+    @override
+    def domain(cls) -> type[TextSourceMentionsCompany]:
+        return TextSourceMentionsCompany
+
+
+class TextSourceMentionsPersonSchema(EdgeSchema[TextSourceMentionsPerson]):
+    type: Literal["text_source_mentions_person"] = "text_source_mentions_person"
+
+    matched_field: str
+    pattern_name: str
+
+    @classmethod
+    @override
+    def domain(cls) -> type[TextSourceMentionsPerson]:
+        return TextSourceMentionsPerson
+
+
 class PossiblyMatchesSchema(EdgeSchema[PossiblyMatches[UUID]]):
     type: Literal["possibly_matches"] = "possibly_matches"
 
@@ -276,6 +448,22 @@ EdgeSchemaUnion = (
     | PersonOwnsCompanySchema
     | PersonReceivedSanctionSchema
     | PersonResideAtSchema
+    | AddressHostsCompanySchema
+    | AddressHostsPersonSchema
+    | CnaeClassifiesCompanySchema
+    | CompanyOwnedByCompanySchema
+    | EmailBelongsToCompanySchema
+    | EmailBelongsToPersonSchema
+    | LegalProcessHasCompanySchema
+    | LegalProcessHasPersonSchema
+    | PhoneBelongsToCompanySchema
+    | PhoneBelongsToPersonSchema
+    | PoliticalExposureOfPersonSchema
+    | SanctionAppliedToCompanySchema
+    | SanctionAppliedToPersonSchema
+    | TextSourceMentionsAddressSchema
+    | TextSourceMentionsCompanySchema
+    | TextSourceMentionsPersonSchema
     | PossiblyMatchesSchema
 )
 
@@ -326,4 +514,20 @@ EdgeSchemaRegistry.register(PersonMentionedInTextSchema)
 EdgeSchemaRegistry.register(PersonOwnsCompanySchema)
 EdgeSchemaRegistry.register(PersonReceivedSanctionSchema)
 EdgeSchemaRegistry.register(PersonResideAtSchema)
+EdgeSchemaRegistry.register(AddressHostsCompanySchema)
+EdgeSchemaRegistry.register(AddressHostsPersonSchema)
+EdgeSchemaRegistry.register(CnaeClassifiesCompanySchema)
+EdgeSchemaRegistry.register(CompanyOwnedByCompanySchema)
+EdgeSchemaRegistry.register(EmailBelongsToCompanySchema)
+EdgeSchemaRegistry.register(EmailBelongsToPersonSchema)
+EdgeSchemaRegistry.register(LegalProcessHasCompanySchema)
+EdgeSchemaRegistry.register(LegalProcessHasPersonSchema)
+EdgeSchemaRegistry.register(PhoneBelongsToCompanySchema)
+EdgeSchemaRegistry.register(PhoneBelongsToPersonSchema)
+EdgeSchemaRegistry.register(PoliticalExposureOfPersonSchema)
+EdgeSchemaRegistry.register(SanctionAppliedToCompanySchema)
+EdgeSchemaRegistry.register(SanctionAppliedToPersonSchema)
+EdgeSchemaRegistry.register(TextSourceMentionsAddressSchema)
+EdgeSchemaRegistry.register(TextSourceMentionsCompanySchema)
+EdgeSchemaRegistry.register(TextSourceMentionsPersonSchema)
 EdgeSchemaRegistry.register(PossiblyMatchesSchema)

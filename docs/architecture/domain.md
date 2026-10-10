@@ -10,8 +10,8 @@ An entity refuses to exist in an invalid state. If a concrete type is missing so
 a namespace, a properly typed identifier — the mistake is caught the moment the class itself is defined, not the first
 time someone tries to use it. The same fail-fast posture extends to relationships between entities: a relationship
 connecting an entity to itself is rejected outright, and a graph containing a relationship that points at an entity the
-graph doesn't actually hold is rejected too, both at the moment of construction, not later when something happens to
-touch the bad data.
+graph doesn't actually hold is rejected too, as is a graph holding a relationship whose declared opposite does not point
+back at it, all at the moment of construction, not later when something happens to touch the bad data.
 
 Identity is computed from only the fields that make an entity the entity it is, not from every attribute it happens to
 carry. That separation matters because entities grow richer over time — new descriptive fields get added — without ever
@@ -40,6 +40,18 @@ Making one relationship generic across two entity kinds that happen to need the 
 versus ownership by another entity) was considered and rejected: every other relationship in this layer already exists
 as its own dedicated type, and a generic exception here would break that consistency rather than simplify it — the
 accepted cost is a bit of repeated shape between the two, not a shared abstraction.
+
+A relationship that reads naturally from both ends is stored in both directions, each direction its own dedicated type
+with its own identity: a company located at an address, and that address hosting the company. Every kind of relationship
+is required to say whether it has an opposite, so leaving the question unanswered is as impossible as leaving out a
+namespace, and the graph itself completes any set of relationships with their opposites the moment it is built, so no
+provider mapping and no use case has to remember to produce both. Completing is idempotent: a graph already holding both
+directions, or merged from graphs that each hold one, never ends up with a duplicate. Deriving the opposite direction
+only when a graph is read was considered and rejected: the opposite would then have no identity or history of its own,
+and everything that stores or lists relationships individually would have to know it was synthetic. The accepted cost is
+that every graph carries roughly twice as many relationships. Membership and ownership between a company and a person
+were already both directions, each with its own details, so they stay as they are, and a possible match between two
+entities is symmetric by construction and has no opposite.
 
 Normalizing an identifying field is decided individually, case by case, right where identity for that kind of entity is
 computed, deliberately not centralized into one universal rule — at least one identifying-looking field genuinely cannot
@@ -80,6 +92,9 @@ entity kinds grows, since the check lives in the one shared base every concrete 
 Keeping every relationship its own dedicated type means a future kind of relationship is one more type to add, never a
 case folded into an existing one just because the shape happens to match — the repeated shape between similar
 relationships stays an ongoing, accepted cost of this choice, not a one-time one.
+
+A new kind of relationship that has an opposite reading has to declare it, and the opposite has to declare the way back;
+a pair declared on only one side would leave graphs that complete into a relationship nothing can complete back from.
 
 Because normalization is decided per entity kind rather than by one universal rule, a future identifying field with its
 own quirks needs its own case written where that entity's identity is computed — there is no shared normalization step

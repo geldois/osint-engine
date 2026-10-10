@@ -11,11 +11,12 @@ from osint_engine.domain.entities.bases.entity import Entity
 from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.bases.node import Node
 from osint_engine.domain.errors.graph_error import (
+    GraphBrokenInversionError,
     GraphHasNoNodesError,
     GraphInconsistentError,
     GraphRootNotInNodesError,
 )
-from tests.fakes.domain import TEST_NODE, FakeDefaultEdge, FakeNodeID
+from tests.fakes.domain import TEST_NODE, FakeDefaultEdge, FakeNodeID, FakeOneWayEdge
 
 if TYPE_CHECKING:
     from hypothesis.strategies import DataObject
@@ -244,3 +245,19 @@ class TestGraphValidation:
 
         with pytest.raises(GraphInconsistentError):
             Graph(edges=frozenset({edge}), nodes=frozenset({node}), root_id=node.id)
+
+    def test_raises_when_an_edge_inverse_does_not_invert_back(
+        self, make_fake_node: MakeFakeNode
+    ) -> None:
+        source = make_fake_node()
+        target = make_fake_node()
+        edge = FakeOneWayEdge(source_id=source.id, target_id=target.id, content="x")
+
+        with pytest.raises(GraphBrokenInversionError) as exception:
+            Graph(
+                edges=frozenset({edge}),
+                nodes=frozenset({source, target}),
+                root_id=source.id,
+            )
+
+        assert str(edge.id) in str(exception.value)

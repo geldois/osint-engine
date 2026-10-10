@@ -5,6 +5,7 @@ from uuid import UUID
 
 from osint_engine.domain.entities.bases.entity import Entity
 from osint_engine.domain.errors.graph_error import (
+    GraphBrokenInversionError,
     GraphHasNoNodesError,
     GraphInconsistentError,
     GraphRootNotInNodesError,
@@ -56,6 +57,8 @@ class Graph(
         if not any(node.id == root_id for node in nodes):
             raise GraphRootNotInNodesError(root_id=root_id)
 
+        edges |= self._inverses_of(edges)
+
         node_ids = frozenset({node.id for node in nodes})
 
         if not all(
@@ -64,6 +67,25 @@ class Graph(
             raise GraphInconsistentError
 
         super().__init__(edges=edges, nodes=nodes, root_id=root_id)
+
+    @staticmethod
+    def _inverses_of(
+        edges: frozenset[Edge[UUID, UUID, UUID]], /
+    ) -> frozenset[Edge[UUID, UUID, UUID]]:
+        inverses: set[Edge[UUID, UUID, UUID]] = set()
+
+        for edge in edges:
+            inverse = edge.inverted()
+
+            if inverse is None:
+                continue
+
+            if inverse.inverted() != edge:
+                raise GraphBrokenInversionError(edge_id=edge.id)
+
+            inverses.add(inverse)
+
+        return frozenset(inverses)
 
     @classmethod
     @override

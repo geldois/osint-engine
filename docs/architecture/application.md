@@ -19,12 +19,12 @@ newest fetch), and the **merge policy** decides how two revisions reconcile into
 Ingestion is a hard boundary by design: only a match the system can deterministically resolve — never a fuzzy or
 probabilistic guess — is allowed to link into existing data. A recognized identifier that isn't already known creates a
 **stub**, enriched later through expansion; a match against a node that already exists only ever adds a "mentioned in"
-edge, and the existing node is never touched. Which criteria apply isn't fixed at startup — a caller composes the exact
-list per request, naming individual **pattern names** and reusable **pattern sets** together, because providers format
-the same identifier differently in free text and locking one fixed combination in globally would mean a redeploy every
-time a new provider needs recognizing. Each mention edge records the one specific pattern name that actually produced
-it, not just which combination was requested, so provenance stays precise even when two different criteria both match
-the same text.
+edge, plus its opposite "mentions" edge from the text, and the existing node is never touched. Which criteria apply
+isn't fixed at startup — a caller composes the exact list per request, naming individual **pattern names** and reusable
+**pattern sets** together, because providers format the same identifier differently in free text and locking one fixed
+combination in globally would mean a redeploy every time a new provider needs recognizing. Each mention edge records the
+one specific pattern name that actually produced it, not just which combination was requested, so provenance stays
+precise even when two different criteria both match the same text.
 
 A separate, best-effort workflow runs after any expansion or ingestion produces a fresh batch of people: it compares
 each newly seen person's CPF against every person already known, overlapping the visible digits of a masked value

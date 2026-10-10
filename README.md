@@ -16,7 +16,8 @@ A **CNPJ** enters the engine as a root identifier. The engine queries official p
 immutable graph, and returns it — ready to traverse. Each **Node** represents a real-world entity: a company, a person,
 an address, a CNAE classification, a phone, an email, a sanction record, an ingested text source, a legal process, or a
 political-exposure record. Each **Edge** names the relationship between two nodes: `company_has_member`,
-`person_owns_company`, `company_located_at`, and so on.
+`person_owns_company`, `company_located_at`, and so on. Relationships that read naturally from both ends exist in both
+directions — `company_located_at` and `address_hosts_company` — and every graph already carries both.
 
 Every node and edge carries a stable, deterministic identity derived exclusively from its content. The same CNPJ
 expanded on different machines at different times always produces the same graph with the same IDs — making the

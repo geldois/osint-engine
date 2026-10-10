@@ -54,6 +54,10 @@ class FakeEdge(
             source_id=source_id, target_id=target_id, content=content, **kwargs
         )
 
+    @override
+    def inverted(self) -> None:
+        return None
+
 
 class FakeDefaultEdge(
     Edge[FakeEdgeID, UUID, UUID], id_fields=None, namespace=TEST_EDGE
@@ -66,6 +70,30 @@ class FakeDefaultEdge(
     ) -> None:
         super().__init__(
             source_id=source_id, target_id=target_id, content=content, **kwargs
+        )
+
+    @override
+    def inverted(self) -> None:
+        return None
+
+
+class FakeOneWayEdge(
+    Edge[FakeEdgeID, UUID, UUID], id_fields=frozenset({"content"}), namespace=TEST_EDGE
+):
+    content: str
+
+    @override
+    def __init__(
+        self, *, source_id: UUID, target_id: UUID, content: str, **kwargs: object
+    ) -> None:
+        super().__init__(
+            source_id=source_id, target_id=target_id, content=content, **kwargs
+        )
+
+    @override
+    def inverted(self) -> FakeEdge:
+        return FakeEdge(
+            source_id=self.target_id, target_id=self.source_id, content=self.content
         )
 
 
