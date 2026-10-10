@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import pytest
 
-from osint_engine.infrastructure.persistence.hybrid_uow import HybridUoW
 from tests.fakes.fetchers import (
     FakeCEAFFetcher,
     FakeCEISFetcher,
@@ -18,17 +17,10 @@ from tests.fakes.fetchers import (
 )
 
 if TYPE_CHECKING:
-    from asyncpg import Pool
-
     from osint_engine.application.revision.entity_revision import EntityRevision
-    from osint_engine.config.container import Policies
-    from osint_engine.config.settings import Settings
     from osint_engine.domain.entities.bases.graph import Graph
-    from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
-    from tests.fakes.persistence import FakePgPool
     from tests.fixtures.application import MakeEntityRevision
     from tests.fixtures.domain import MakeGraph
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
 
 type MakeFakeCEAFFetcher = Callable[..., FakeCEAFFetcher]
 type MakeFakeCEISFetcher = Callable[..., FakeCEISFetcher]
@@ -38,41 +30,6 @@ type MakeFakeCNPJFetcher = Callable[..., FakeCNPJFetcher]
 type MakeFakeCPFFetcher = Callable[..., FakeCPFFetcher]
 type MakeFakeLegalProcessFetcher = Callable[..., FakeLegalProcessFetcher]
 type MakeFakePEPFetcher = Callable[..., FakePEPFetcher]
-type MakeMemUoWFactory = Callable[..., MakeMemUoW]
-type MakeHybridUoWFactory = Callable[[], Callable[[], HybridUoW]]
-
-
-@pytest.fixture
-def make_hybrid_uow_factory(
-    fake_pg_pool: FakePgPool,
-    make_mem_storage: MakeMemStorage,
-    policies: Policies,
-    settings: Settings,
-) -> MakeHybridUoWFactory:
-
-    def hybrid_uow_factory() -> Callable[[], HybridUoW]:
-        mem_storage = make_mem_storage()
-
-        return lambda: HybridUoW(
-            mem_storage=mem_storage,
-            pg_pool=cast("Pool", fake_pg_pool),
-            encryption_key=settings.external_credential_encryption_key,
-            revision_merge_policy=policies.revision_merge_policy,
-            revision_selection_policy=policies.revision_selection_policy,
-        )
-
-    return hybrid_uow_factory
-
-
-@pytest.fixture
-def make_mem_uow_factory(make_mem_uow: MakeMemUoW) -> MakeMemUoWFactory:
-
-    def mem_uow_factory(mem_uow: MemUoW | None = None) -> MakeMemUoW:
-        mem_uow = mem_uow if mem_uow is not None else make_mem_uow()
-
-        return lambda: mem_uow
-
-    return mem_uow_factory
 
 
 @pytest.fixture

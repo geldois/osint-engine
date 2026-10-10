@@ -23,7 +23,7 @@ from osint_engine.infrastructure.providers.portal_transparencia.endpoints.cnep_m
 
 if TYPE_CHECKING:
     from osint_engine.infrastructure.providers.payload import Payload
-    from tests.test_src.test_infrastructure.test_providers.conftest import MakePayload
+    from tests.fixtures.providers import MakePayload
 
 
 _SANCTION_DATA: dict[str, object] = {

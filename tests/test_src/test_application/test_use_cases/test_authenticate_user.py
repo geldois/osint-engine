@@ -15,7 +15,7 @@ if TYPE_CHECKING:
         Argon2PasswordHasher,
     )
     from tests.fakes.persistence import FakePgPool
-    from tests.test_src.test_application.conftest import MakeHybridUoWFactory
+    from tests.fixtures.persistence import MakeHybridUoWFactory
 
 
 class TestAuthenticateUserExecution:

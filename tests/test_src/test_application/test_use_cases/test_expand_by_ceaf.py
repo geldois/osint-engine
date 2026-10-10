@@ -22,11 +22,8 @@ if TYPE_CHECKING:
         MakeExternalCredential,
     )
     from tests.fixtures.domain import MakeGraph
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
-    from tests.test_src.test_application.conftest import (
-        MakeFakeCEAFFetcher,
-        MakeMemUoWFactory,
-    )
+    from tests.fixtures.fetchers import MakeFakeCEAFFetcher
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
 
 _CPF = "10000000000"
 

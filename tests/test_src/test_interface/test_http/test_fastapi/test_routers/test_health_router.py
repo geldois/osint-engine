@@ -10,9 +10,7 @@ from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 if TYPE_CHECKING:
     from asyncpg import Pool
 
-    from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
-        MakeContainer,
-    )
+    from tests.fixtures.interface import MakeContainer
 
 
 class _UnavailablePgPool:

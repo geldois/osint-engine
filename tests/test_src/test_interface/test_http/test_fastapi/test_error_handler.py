@@ -22,10 +22,7 @@ from osint_engine.interface.http.fastapi.error_handler import build_error_handle
 from osint_engine.observability.context import correlation_id
 
 if TYPE_CHECKING:
-    from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
-        MakeContainer,
-        MakeSettings,
-    )
+    from tests.fixtures.interface import MakeContainer, MakeSettings
 
 
 class _FakeDomainError(DomainError, error_code="TEST_DOMAIN_ERROR"):

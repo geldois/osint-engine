@@ -18,14 +18,13 @@ from osint_engine.domain.entities.nodes import Person
 if TYPE_CHECKING:
     from tests.fixtures.application import MakeEntityRevision, MakeExternalCredential
     from tests.fixtures.domain import MakeGraph
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
-    from tests.test_src.test_application.conftest import (
+    from tests.fixtures.fetchers import (
         MakeFakeCEAFFetcher,
         MakeFakeCPFFetcher,
         MakeFakeLegalProcessFetcher,
         MakeFakePEPFetcher,
-        MakeMemUoWFactory,
     )
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
 
 _CPF = "10000000000"
 

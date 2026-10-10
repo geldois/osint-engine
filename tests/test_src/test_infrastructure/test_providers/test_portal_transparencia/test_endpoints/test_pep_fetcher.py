@@ -14,9 +14,7 @@ from osint_engine.infrastructure.errors.provider_error import ProviderRequestErr
 
 if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import ExternalCredential
-    from tests.test_src.test_infrastructure.test_providers.test_portal_transparencia.test_endpoints.conftest import (  # noqa: E501
-        MakePortalTransparenciaPEPFetcher,
-    )
+    from tests.fixtures.providers import MakePortalTransparenciaPEPFetcher
 
 _PEP_RECORD_DATA = {
     "cpf": "100.000.000-00",

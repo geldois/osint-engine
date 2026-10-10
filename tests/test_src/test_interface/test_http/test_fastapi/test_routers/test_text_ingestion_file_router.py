@@ -12,18 +12,14 @@ from osint_engine.domain.entities.nodes import Person
 from osint_engine.infrastructure.text_ingestion import spreadsheet_reader
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
 from osint_engine.interface.http.schemas.graph_schema import GraphSchema
-from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
-    masked_overlapping_cpf,
-)
+from tests.helpers import masked_overlapping_cpf
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from tests.fixtures.application import MakeEntityRevision
+    from tests.fixtures.interface import MakeContainer
     from tests.fixtures.persistence import MakeMemStorage
-    from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
-        MakeContainer,
-    )
 
 _VALID_CPF_DIGITS = "11144477735"
 

@@ -18,9 +18,7 @@ from osint_engine.infrastructure.errors.provider_error import (
 
 if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import ExternalCredential
-    from tests.test_src.test_infrastructure.test_providers.test_kipflow.test_endpoints.conftest import (  # noqa: E501
-        MakeKipFlowLegalProcessFetcher,
-    )
+    from tests.fixtures.providers import MakeKipFlowLegalProcessFetcher
 
 _TEST_CPF = "52998224563"
 _TEST_CNPJ = "35965725000107"

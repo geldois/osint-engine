@@ -8,8 +8,21 @@ from uuid import UUID
 import pytest
 
 from osint_engine.domain.entities.bases.entity import Entity
+from osint_engine.infrastructure.persistence.hybrid_uow import HybridUoW
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
+from osint_engine.infrastructure.persistence.mem.repositories.mem_edge_repository import (  # noqa: E501
+    MemEdgeRepository,
+)
+from osint_engine.infrastructure.persistence.mem.repositories.mem_entity_record_repository import (  # noqa: E501
+    MemEntityRecordRepository,
+)
+from osint_engine.infrastructure.persistence.mem.repositories.mem_graph_repository import (  # noqa: E501
+    MemGraphRepository,
+)
+from osint_engine.infrastructure.persistence.mem.repositories.mem_node_repository import (  # noqa: E501
+    MemNodeRepository,
+)
 from tests.fakes.persistence import FakePgPool
 
 if TYPE_CHECKING:
@@ -19,13 +32,20 @@ if TYPE_CHECKING:
     from osint_engine.application.consumption.entity_record import EntityRecord
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.config.container import Policies
+    from osint_engine.config.settings import Settings
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.graph import Graph
     from osint_engine.domain.entities.bases.node import Node
     from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
+type MakeHybridUoWFactory = Callable[[], Callable[[], HybridUoW]]
+type MakeMemEdgeRepository = Callable[..., MemEdgeRepository]
+type MakeMemEntityRecordRepository = Callable[..., MemEntityRecordRepository]
+type MakeMemGraphRepository = Callable[..., MemGraphRepository]
+type MakeMemNodeRepository = Callable[..., MemNodeRepository]
 type MakeMemStorage = Callable[..., MemStorage]
 type MakeMemUoW = Callable[..., MemUoW]
+type MakeMemUoWFactory = Callable[..., MakeMemUoW]
 
 
 def _entity_store[Entity_: Entity[UUID]](
@@ -101,3 +121,108 @@ def make_mem_uow(make_mem_storage: MakeMemStorage, policies: Policies) -> MakeMe
         )
 
     return mem_uow
+
+
+@pytest.fixture
+def make_hybrid_uow_factory(
+    fake_pg_pool: FakePgPool,
+    make_mem_storage: MakeMemStorage,
+    policies: Policies,
+    settings: Settings,
+) -> MakeHybridUoWFactory:
+
+    def hybrid_uow_factory() -> Callable[[], HybridUoW]:
+        mem_storage = make_mem_storage()
+
+        return lambda: HybridUoW(
+            mem_storage=mem_storage,
+            pg_pool=cast("Pool", fake_pg_pool),
+            encryption_key=settings.external_credential_encryption_key,
+            revision_merge_policy=policies.revision_merge_policy,
+            revision_selection_policy=policies.revision_selection_policy,
+        )
+
+    return hybrid_uow_factory
+
+
+@pytest.fixture
+def make_mem_uow_factory(make_mem_uow: MakeMemUoW) -> MakeMemUoWFactory:
+
+    def mem_uow_factory(mem_uow: MemUoW | None = None) -> MakeMemUoW:
+        mem_uow = mem_uow if mem_uow is not None else make_mem_uow()
+
+        return lambda: mem_uow
+
+    return mem_uow_factory
+
+
+@pytest.fixture
+def make_mem_node_repository(policies: Policies) -> MakeMemNodeRepository:
+
+    def mem_node_repository(
+        *, mem_storage: MemStorage, policies_override: Policies | None = None
+    ) -> MemNodeRepository:
+        resolved = policies_override if policies_override is not None else policies
+
+        return MemNodeRepository(
+            mem_storage=mem_storage,
+            revision_merge_policy=resolved.revision_merge_policy,
+            revision_selection_policy=resolved.revision_selection_policy,
+        )
+
+    return mem_node_repository
+
+
+@pytest.fixture
+def make_mem_edge_repository(policies: Policies) -> MakeMemEdgeRepository:
+
+    def mem_edge_repository(
+        *, mem_storage: MemStorage, policies_override: Policies | None = None
+    ) -> MemEdgeRepository:
+        resolved = policies_override if policies_override is not None else policies
+
+        return MemEdgeRepository(
+            mem_storage=mem_storage,
+            revision_merge_policy=resolved.revision_merge_policy,
+            revision_selection_policy=resolved.revision_selection_policy,
+        )
+
+    return mem_edge_repository
+
+
+@pytest.fixture
+def make_mem_entity_record_repository() -> MakeMemEntityRecordRepository:
+
+    def mem_entity_record_repository(
+        *, mem_storage: MemStorage
+    ) -> MemEntityRecordRepository:
+        return MemEntityRecordRepository(mem_storage=mem_storage)
+
+    return mem_entity_record_repository
+
+
+@pytest.fixture
+def make_mem_graph_repository(policies: Policies) -> MakeMemGraphRepository:
+
+    def mem_graph_repository(
+        *, mem_storage: MemStorage, policies_override: Policies | None = None
+    ) -> MemGraphRepository:
+        resolved = policies_override if policies_override is not None else policies
+
+        return MemGraphRepository(
+            mem_storage=mem_storage,
+            revision_merge_policy=resolved.revision_merge_policy,
+            revision_selection_policy=resolved.revision_selection_policy,
+            node_repository=MemNodeRepository(
+                mem_storage=mem_storage,
+                revision_merge_policy=resolved.revision_merge_policy,
+                revision_selection_policy=resolved.revision_selection_policy,
+            ),
+            edge_repository=MemEdgeRepository(
+                mem_storage=mem_storage,
+                revision_merge_policy=resolved.revision_merge_policy,
+                revision_selection_policy=resolved.revision_selection_policy,
+            ),
+        )
+
+    return mem_graph_repository

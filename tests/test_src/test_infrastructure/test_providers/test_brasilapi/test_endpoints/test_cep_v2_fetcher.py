@@ -11,9 +11,7 @@ from osint_engine.infrastructure.errors.provider_error import ProviderRequestErr
 from tests.data.brasilapi import CEP, CEP_DATA, NUMBER
 
 if TYPE_CHECKING:
-    from tests.test_src.test_infrastructure.test_providers.test_brasilapi.test_endpoints.conftest import (  # noqa: E501
-        MakeBrasilAPICEPv2Fetcher,
-    )
+    from tests.fixtures.providers import MakeBrasilAPICEPv2Fetcher
 
 
 class TestBrasilAPICEPv2FetcherOnHTTPStatusError:

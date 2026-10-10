@@ -21,10 +21,8 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from osint_engine.config.container import Container
+    from tests.fixtures.interface import MakeContainer
     from tests.fixtures.persistence import MakeMemStorage
-    from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
-        MakeContainer,
-    )
 
 _PEP_RECORD_DATA = {
     "cpf": "100.000.000-00",

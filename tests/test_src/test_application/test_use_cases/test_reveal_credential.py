@@ -14,8 +14,7 @@ from osint_engine.application.use_cases.credentials.reveal_credential import (
 
 if TYPE_CHECKING:
     from tests.fixtures.application import MakeExternalCredential
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
-    from tests.test_src.test_application.conftest import MakeMemUoWFactory
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
 
 
 class TestRevealExternalCredentialExecution:

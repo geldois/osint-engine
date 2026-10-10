@@ -20,10 +20,8 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
+    from tests.fixtures.interface import MakeContainer
     from tests.fixtures.persistence import MakeMemStorage
-    from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
-        MakeContainer,
-    )
 
 CPF_1 = "10000000000"
 CPF_2 = "10000000001"

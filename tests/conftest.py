@@ -13,9 +13,12 @@ if TYPE_CHECKING:
 pytest_plugins = [
     "tests.fixtures.application",
     "tests.fixtures.domain",
+    "tests.fixtures.fetchers",
     "tests.fixtures.git",
+    "tests.fixtures.interface",
     "tests.fixtures.persistence",
     "tests.fixtures.postgres",
+    "tests.fixtures.providers",
     "tests.fixtures.settings",
 ]
 

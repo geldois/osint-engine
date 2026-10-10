@@ -11,9 +11,7 @@ from osint_engine.infrastructure.errors.provider_error import ProviderRequestErr
 from tests.data.brasilapi import CNPJ, COMPLETE_PAYLOAD_DATA
 
 if TYPE_CHECKING:
-    from tests.test_src.test_infrastructure.test_providers.test_brasilapi.test_endpoints.conftest import (  # noqa: E501
-        MakeBrasilAPICNPJv1Fetcher,
-    )
+    from tests.fixtures.providers import MakeBrasilAPICNPJv1Fetcher
 
 
 class TestBrasilAPICNPJv1FetcherOnHTTPStatusError:

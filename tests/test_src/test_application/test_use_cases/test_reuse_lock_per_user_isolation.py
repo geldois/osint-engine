@@ -34,8 +34,7 @@ if TYPE_CHECKING:
     from osint_engine.application.revision.entity_revision import EntityRevision
     from tests.fixtures.application import MakeEntityRevision, MakeExternalCredential
     from tests.fixtures.domain import MakeGraph
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
-    from tests.test_src.test_application.conftest import MakeMemUoWFactory
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
 
 _CPF = "10000000000"
 _CNPJ = "10000000000000"

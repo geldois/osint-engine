@@ -14,8 +14,7 @@ from osint_engine.domain.entities.nodes import Company, Person
 
 if TYPE_CHECKING:
     from tests.fixtures.application import MakeEntityRevision
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
-    from tests.test_src.test_application.conftest import MakeMemUoWFactory
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
 
 
 def _make_person(*, cpf: str, name: str = "FULANO DE TAL") -> Person:

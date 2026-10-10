@@ -14,8 +14,7 @@ if TYPE_CHECKING:
     from uuid import UUID
 
     from tests.fixtures.application import MakeEntityRecord
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
-    from tests.test_src.test_application.conftest import MakeMemUoWFactory
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
 
 _CPF = "10000000000"
 _OTHER_CPF = "20000000000"

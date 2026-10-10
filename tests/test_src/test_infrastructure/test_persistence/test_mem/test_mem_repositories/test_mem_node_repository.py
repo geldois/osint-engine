@@ -18,10 +18,7 @@ from tests.fakes.domain import FakeMergeableNode
 if TYPE_CHECKING:
     from tests.fixtures.application import MakeEntityRevision, MakePolicies
     from tests.fixtures.domain import MakeFakeMergeableNode, MakeFakeNode
-    from tests.fixtures.persistence import MakeMemStorage
-    from tests.test_src.test_infrastructure.test_persistence.test_mem.test_mem_repositories.conftest import (  # noqa: E501
-        MakeMemNodeRepository,
-    )
+    from tests.fixtures.persistence import MakeMemNodeRepository, MakeMemStorage
 
 
 _EARLY = datetime(2026, 1, 1, tzinfo=UTC)

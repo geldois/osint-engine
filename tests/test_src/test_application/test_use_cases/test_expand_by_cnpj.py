@@ -23,11 +23,8 @@ if TYPE_CHECKING:
         MakePolicies,
     )
     from tests.fixtures.domain import MakeGraph
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
-    from tests.test_src.test_application.conftest import (
-        MakeFakeCNPJFetcher,
-        MakeMemUoWFactory,
-    )
+    from tests.fixtures.fetchers import MakeFakeCNPJFetcher
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
 
 _CNPJ = "10000000000000"
 

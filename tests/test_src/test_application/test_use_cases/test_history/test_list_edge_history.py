@@ -15,8 +15,7 @@ from osint_engine.domain.entities.edges import PossiblyMatches
 if TYPE_CHECKING:
     from tests.fixtures.application import MakeEntityRevision
     from tests.fixtures.domain import MakeFakeEdge
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
-    from tests.test_src.test_application.conftest import MakeMemUoWFactory
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
 
 
 _EARLY = datetime(2026, 1, 1, tzinfo=UTC)

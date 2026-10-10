@@ -25,11 +25,8 @@ if TYPE_CHECKING:
         MakeEntityRevision,
         MakeExternalCredential,
     )
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW
-    from tests.test_src.test_application.conftest import (
-        MakeFakeCPFFetcher,
-        MakeMemUoWFactory,
-    )
+    from tests.fixtures.fetchers import MakeFakeCPFFetcher
+    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
 
 _CPF = "10000000000"
 

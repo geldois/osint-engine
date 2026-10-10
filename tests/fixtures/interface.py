@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 import pytest
@@ -9,8 +10,8 @@ from httpx2 import ASGITransport, AsyncClient, Timeout
 
 from osint_engine.config.croot import build_container
 from osint_engine.config.settings import Settings
-from osint_engine.domain.services.normalization import normalize_masked_document
 from osint_engine.interface.http.fastapi.fastapi_app import build_fastapi_app
+from osint_engine.interface.http.schemas.revision_schema import RevisionSchema
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -30,21 +31,6 @@ type MakeContainer = Callable[..., Container]
 type MakeSettings = Callable[..., Settings]
 
 
-def masked_overlapping_cpf(*, real_cpf: str) -> str:
-    normalized = normalize_masked_document(value=real_cpf)
-    kept = 0
-    masked: list[str] = []
-
-    for char in normalized:
-        if char != "*" and kept < 4:
-            masked.append(char)
-            kept += 1
-        else:
-            masked.append("*")
-
-    return "".join(masked)
-
-
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def http_client(settings: Settings) -> AsyncGenerator[AsyncClient, None]:
 
@@ -56,6 +42,15 @@ async def http_client(settings: Settings) -> AsyncGenerator[AsyncClient, None]:
 
     async with AsyncClient(timeout=timeout) as http_client:
         yield http_client
+
+
+@pytest.fixture
+def revision_schema() -> RevisionSchema:
+    return RevisionSchema(
+        fetched_at=datetime(year=2026, month=1, day=1, tzinfo=UTC),
+        merged_at=None,
+        provider="test_provider",
+    )
 
 
 @pytest.fixture

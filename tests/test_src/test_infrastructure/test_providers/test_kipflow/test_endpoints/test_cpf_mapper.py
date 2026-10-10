@@ -9,7 +9,7 @@ from osint_engine.infrastructure.providers.kipflow.endpoints.cpf_mapper import (
 )
 
 if TYPE_CHECKING:
-    from tests.test_src.test_infrastructure.test_providers.conftest import MakePayload
+    from tests.fixtures.providers import MakePayload
 
 _TEST_CPF = "52998224563"
 

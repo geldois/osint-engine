@@ -15,10 +15,8 @@ from osint_engine.interface.http.schemas.graph_schema import GraphSchema
 
 if TYPE_CHECKING:
     from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
+    from tests.fixtures.interface import MakeContainer
     from tests.fixtures.persistence import MakeMemStorage
-    from tests.test_src.test_interface.test_http.test_fastapi.conftest import (
-        MakeContainer,
-    )
 
 CPF = "10000000000"
 
