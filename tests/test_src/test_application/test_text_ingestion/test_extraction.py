@@ -12,7 +12,7 @@ class TestExtractMatchesDeterministicIdentifiers:
     def test_finds_a_valid_cpf(self) -> None:
         matches = extract_matches(
             text=f"CPF: {_VALID_CPF}",
-            pattern_names=frozenset({TextPatternName.CPF_LABELED}),
+            pattern_names=frozenset({TextPatternName.CPF_LOOSE}),
         )
 
         assert len(matches) == 1
@@ -22,12 +22,12 @@ class TestExtractMatchesDeterministicIdentifiers:
         assert match.node_type is Person
         assert dict(match.field_values) == {"cpf": _VALID_CPF}
         assert match.matched_field == "cpf"
-        assert match.pattern_name is TextPatternName.CPF_LABELED
+        assert match.pattern_name is TextPatternName.CPF_LOOSE
 
     def test_discards_a_cpf_that_fails_checksum(self) -> None:
         matches = extract_matches(
             text="CPF: 00000000000",
-            pattern_names=frozenset({TextPatternName.CPF_LABELED}),
+            pattern_names=frozenset({TextPatternName.CPF_LOOSE}),
         )
 
         assert matches == frozenset()
@@ -36,7 +36,7 @@ class TestExtractMatchesDeterministicIdentifiers:
         matches = extract_matches(
             text=f"CNPJ: {_VALID_CNPJ}",
             pattern_names=frozenset(
-                {TextPatternName.CPF_LABELED, TextPatternName.CNPJ_LABELED}
+                {TextPatternName.CPF_LOOSE, TextPatternName.CNPJ_LOOSE}
             ),
         )
 
@@ -64,7 +64,7 @@ class TestExtractMatchesDeterministicIdentifiers:
         matches = extract_matches(
             text=f"CPF: {_VALID_CPF}",
             pattern_names=frozenset(
-                {TextPatternName.CPF_LABELED, TextPatternName.CNPJ_LABELED}
+                {TextPatternName.CPF_LOOSE, TextPatternName.CEP_AND_NUMBER}
             ),
         )
 
@@ -74,7 +74,7 @@ class TestExtractMatchesDeterministicIdentifiers:
         matches = extract_matches(
             text="nothing relevant here",
             pattern_names=frozenset(
-                {TextPatternName.CPF_LABELED, TextPatternName.CNPJ_LABELED}
+                {TextPatternName.CPF_LOOSE, TextPatternName.CNPJ_LOOSE}
             ),
         )
 
@@ -88,18 +88,16 @@ class TestExtractMatchesDeterministicIdentifiers:
     def test_deduplicates_the_same_match_found_twice(self) -> None:
         matches = extract_matches(
             text=f"CPF: {_VALID_CPF} ... again CPF: {_VALID_CPF}",
-            pattern_names=frozenset({TextPatternName.CPF_LABELED}),
+            pattern_names=frozenset({TextPatternName.CPF_LOOSE}),
         )
 
         assert len(matches) == 1
 
-    def test_two_patterns_matching_the_same_text_produce_two_distinct_matches(
-        self,
-    ) -> None:
+    def test_two_patterns_in_the_same_text_produce_two_distinct_matches(self) -> None:
         matches = extract_matches(
-            text=f"CPF: {_VALID_CPF}",
+            text=f"CPF {_VALID_CPF}, CNPJ {_VALID_CNPJ}",
             pattern_names=frozenset(
-                {TextPatternName.CPF_LOOSE, TextPatternName.CPF_LABELED}
+                {TextPatternName.CPF_LOOSE, TextPatternName.CNPJ_LOOSE}
             ),
         )
 
@@ -109,5 +107,5 @@ class TestExtractMatchesDeterministicIdentifiers:
 
         assert found_pattern_names == {
             TextPatternName.CPF_LOOSE,
-            TextPatternName.CPF_LABELED,
+            TextPatternName.CNPJ_LOOSE,
         }

@@ -126,9 +126,7 @@ class TestGetTextPatternsSuccess:
 
         assert {p["name"] for p in body["patterns"]} == {
             "CPF_LOOSE",
-            "CPF_LABELED",
             "CNPJ_LOOSE",
-            "CNPJ_LABELED",
             "CEP_AND_NUMBER",
         }
         assert any(bundle["id"] == _BUNDLE_ID for bundle in body["bundles"])

@@ -128,9 +128,13 @@ exactly what a spreadsheet cell looks like — matched none of the fixed combina
 reformat the text before recognizing it, since ingested text feeds an immutable snapshot that must honestly reflect what
 the source actually contained. Splitting recognition into individually addressable pieces, composable per request, let a
 new loose-matching piece cover that gap without touching or redefining what any existing named combination means to
-whoever already depends on it. The one accepted cost is the same one a loose, label-free match always carries: it will
-occasionally match something that merely happens to satisfy the checksum by chance, so it stays opt-in per request
-rather than folded into any existing default combination.
+whoever already depends on it. The pieces that required a "CPF" or "CNPJ" label before the digits were later removed.
+Every document they found, the loose pieces found as well, so asking for both only produced a second mention of the same
+entity from the same text. The one case only a label-based piece caught is a label glued to the digits with no separator
+at all, such as "CPF11144477735", and it was judged too rare to keep a second piece for. The remaining pieces are a
+loose CPF, a loose CNPJ and a CEP followed by a street number, and the default shortcut holds the loose CPF. The
+accepted cost of a loose, label-free match is that it will occasionally match something that merely happens to satisfy
+the checksum by chance.
 
 Recording a blocked attempt's log entry required moving where the reuse lock's error is actually raised. The
 transactional boundary only persists what a workflow wrote once the boundary closes without an exception escaping it;

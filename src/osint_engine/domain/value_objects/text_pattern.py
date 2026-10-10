@@ -55,19 +55,9 @@ class TextPatternName(Enum):
         regex=re.compile(r"\b(?P<cpf>\d{3}\.\d{3}\.\d{3}-\d{2}|\d{11})\b"),
         checksum_validators={"cpf": _checks_cpf},
     )
-    CPF_LABELED = FieldPattern(
-        node_type=Person,
-        regex=re.compile(r"CPF\s*[:\-]?\s*(?P<cpf>\d{11})\b", re.IGNORECASE),
-        checksum_validators={"cpf": _checks_cpf},
-    )
     CNPJ_LOOSE = FieldPattern(
         node_type=Company,
         regex=re.compile(r"\b(?P<cnpj>\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}|\d{14})\b"),
-        checksum_validators={"cnpj": _checks_cnpj},
-    )
-    CNPJ_LABELED = FieldPattern(
-        node_type=Company,
-        regex=re.compile(r"CNPJ\s*[:\-]?\s*(?P<cnpj>\d{14})\b", re.IGNORECASE),
         checksum_validators={"cnpj": _checks_cnpj},
     )
     CEP_AND_NUMBER = FieldPattern(

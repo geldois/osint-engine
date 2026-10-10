@@ -79,7 +79,7 @@ _person_id = PersonID(uuid4())
 _phone_id = PhoneID(uuid4())
 _sanction_id = SanctionID(uuid4())
 _text_source_id = TextSourceID(uuid4())
-_pattern_name = TextPatternName.CPF_LABELED
+_pattern_name = TextPatternName.CPF_LOOSE
 
 _COMPANY_HAS_CNAE = CompanyHasCnae(source_id=_company_id, target_id=_cnae_id)
 

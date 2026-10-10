@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from tests.fixtures.application import MakeEntityRevision
     from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
 
-_VALID_CPF_LABELED_TEXT = "Contato: CPF 11144477735"
+_VALID_CPF_TEXT = "Contato: CPF 11144477735"
 _VALID_CPF_DIGITS = "11144477735"
 _VALID_CNPJ_TEXT = "Empresa CNPJ 11.222.333/0001-81 registrada"
 _VALID_CEP_AND_NUMBER_TEXT = "Endereco: CEP 01310-100, numero 500"
@@ -88,8 +88,8 @@ class TestIngestTextNewStub:
     ) -> None:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
-            patterns=frozenset({"CPF_LABELED"}),
-            text=_VALID_CPF_LABELED_TEXT,
+            patterns=frozenset({"CPF_LOOSE"}),
+            text=_VALID_CPF_TEXT,
         )
 
         graph = (await use_case.execute()).entity
@@ -110,7 +110,7 @@ class TestIngestTextNewStub:
         assert mention_edges[0].source_id == persons[0].id
         assert mention_edges[0].target_id == text_sources[0].id
         assert mention_edges[0].matched_field == "cpf"
-        assert mention_edges[0].pattern_name is TextPatternName.CPF_LABELED
+        assert mention_edges[0].pattern_name is TextPatternName.CPF_LOOSE
 
     @pytest.mark.asyncio
     async def test_persists_the_stub_and_text_provider_individually(
@@ -124,8 +124,8 @@ class TestIngestTextNewStub:
 
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
-            patterns=frozenset({"CPF_LABELED"}),
-            text=_VALID_CPF_LABELED_TEXT,
+            patterns=frozenset({"CPF_LOOSE"}),
+            text=_VALID_CPF_TEXT,
         )
 
         graph = (await use_case.execute()).entity
@@ -162,8 +162,8 @@ class TestIngestTextExistingEntity:
 
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(mem_uow=mem_uow),
-            patterns=frozenset({"CPF_LABELED"}),
-            text=_VALID_CPF_LABELED_TEXT,
+            patterns=frozenset({"CPF_LOOSE"}),
+            text=_VALID_CPF_TEXT,
         )
 
         graph = (await use_case.execute()).entity
@@ -225,22 +225,22 @@ class TestIngestTextUnknownPatternName:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
             patterns=frozenset({"does_not_exist"}),
-            text=_VALID_CPF_LABELED_TEXT,
+            text=_VALID_CPF_TEXT,
         )
 
         with pytest.raises(UnknownPatternNameError):
             await use_case.execute()
 
 
-class TestIngestTextOverlappingAtomicPatterns:
+class TestIngestTextSeveralAtomicPatterns:
     @pytest.mark.asyncio
-    async def test_two_patterns_matching_the_same_person_produce_two_mention_edges(
+    async def test_each_pattern_links_its_own_entity_to_the_same_text(
         self, make_mem_uow_factory: MakeMemUoWFactory
     ) -> None:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
-            patterns=frozenset({"CPF_LOOSE", "CPF_LABELED"}),
-            text=_VALID_CPF_LABELED_TEXT,
+            patterns=frozenset({"CPF_LOOSE", "CNPJ_LOOSE"}),
+            text=f"{_VALID_CPF_TEXT}. {_VALID_CNPJ_TEXT}",
         )
 
         graph = (await use_case.execute()).entity
@@ -248,16 +248,16 @@ class TestIngestTextOverlappingAtomicPatterns:
         mention_edges = [
             edge for edge in graph.edges if isinstance(edge, PersonMentionedInText)
         ]
-        assert len(mention_edges) == 2
-
-        found_pattern_names = {edge.pattern_name for edge in mention_edges}
-        assert found_pattern_names == {
-            TextPatternName.CPF_LOOSE,
-            TextPatternName.CPF_LABELED,
-        }
+        assert len(mention_edges) == 1
+        assert mention_edges[0].pattern_name is TextPatternName.CPF_LOOSE
 
         persons = [node for node in graph.nodes if isinstance(node, Person)]
         assert len(persons) == 1
+        company_edges = [
+            edge for edge in graph.edges if isinstance(edge, CompanyMentionedInText)
+        ]
+        assert len(company_edges) == 1
+        assert company_edges[0].pattern_name is TextPatternName.CNPJ_LOOSE
 
 
 class TestIngestTextLoosePatternIsOptIn:
@@ -277,12 +277,12 @@ class TestIngestTextLoosePatternIsOptIn:
         assert len(persons) == 1
 
     @pytest.mark.asyncio
-    async def test_bare_unlabeled_cpf_is_not_captured_by_cpf_labeled_alone(
+    async def test_bare_cpf_is_not_captured_by_a_pattern_for_another_entity(
         self, make_mem_uow_factory: MakeMemUoWFactory
     ) -> None:
         use_case = IngestText(
             uow_factory=make_mem_uow_factory(),
-            patterns=frozenset({"CPF_LABELED"}),
+            patterns=frozenset({"CNPJ_LOOSE"}),
             text=_VALID_CPF_DIGITS,
         )
 

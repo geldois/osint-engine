@@ -116,35 +116,6 @@ class TestCPFLoosePattern:
         assert self._REGEX.search(_VALID_CNPJ_BARE) is None
 
 
-class TestCPFLabeledPattern:
-    _REGEX = TextPatternName.CPF_LABELED.value.regex
-    _CHECKS_CPF = staticmethod(
-        TextPatternName.CPF_LABELED.value.checksum_validators["cpf"]
-    )
-
-    def test_matches_bare_digits_with_the_cpf_keyword(self) -> None:
-        match = self._REGEX.search(f"CPF: {_VALID_CPF_BARE}")
-
-        assert match is not None
-        assert match.group("cpf") == _VALID_CPF_BARE
-        assert self._CHECKS_CPF(match.group("cpf"))
-
-    def test_does_not_match_bare_digits_without_the_cpf_keyword(self) -> None:
-        assert self._REGEX.search(_VALID_CPF_BARE) is None
-
-    def test_checksum_rejects_invalid_cpf(self) -> None:
-        match = self._REGEX.search(f"CPF: {_INVALID_CPF_BARE}")
-
-        assert match is not None
-        assert not self._CHECKS_CPF(match.group("cpf"))
-
-    def test_does_not_match_empty_string(self) -> None:
-        assert self._REGEX.search("") is None
-
-    def test_does_not_match_string_without_digits(self) -> None:
-        assert self._REGEX.search("CPF: nada aqui") is None
-
-
 class TestCNPJLoosePattern:
     _REGEX = TextPatternName.CNPJ_LOOSE.value.regex
     _CHECKS_CNPJ = staticmethod(
@@ -180,35 +151,6 @@ class TestCNPJLoosePattern:
 
     def test_does_not_match_string_without_digits(self) -> None:
         assert self._REGEX.search("nada aqui") is None
-
-
-class TestCNPJLabeledPattern:
-    _REGEX = TextPatternName.CNPJ_LABELED.value.regex
-    _CHECKS_CNPJ = staticmethod(
-        TextPatternName.CNPJ_LABELED.value.checksum_validators["cnpj"]
-    )
-
-    def test_matches_bare_digits_with_the_cnpj_keyword(self) -> None:
-        match = self._REGEX.search(f"CNPJ: {_VALID_CNPJ_BARE}")
-
-        assert match is not None
-        assert match.group("cnpj") == _VALID_CNPJ_BARE
-        assert self._CHECKS_CNPJ(match.group("cnpj"))
-
-    def test_does_not_match_bare_digits_without_the_cnpj_keyword(self) -> None:
-        assert self._REGEX.search(_VALID_CNPJ_BARE) is None
-
-    def test_checksum_rejects_invalid_cnpj(self) -> None:
-        match = self._REGEX.search(f"CNPJ: {_INVALID_CNPJ_BARE}")
-
-        assert match is not None
-        assert not self._CHECKS_CNPJ(match.group("cnpj"))
-
-    def test_does_not_match_empty_string(self) -> None:
-        assert self._REGEX.search("") is None
-
-    def test_does_not_match_string_without_digits(self) -> None:
-        assert self._REGEX.search("CNPJ: nada aqui") is None
 
 
 class TestCEPAndNumberPattern:

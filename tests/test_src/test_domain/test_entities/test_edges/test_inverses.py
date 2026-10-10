@@ -123,7 +123,7 @@ _FORWARD_AND_INVERSE: list[_Pair] = [
             source_id=_company_id,
             target_id=_text_source_id,
             matched_field="cnpj",
-            pattern_name=TextPatternName.CPF_LABELED,
+            pattern_name=TextPatternName.CPF_LOOSE,
         ),
         TextSourceMentionsCompany,
     ),
@@ -132,7 +132,7 @@ _FORWARD_AND_INVERSE: list[_Pair] = [
             source_id=_person_id,
             target_id=_text_source_id,
             matched_field="cpf",
-            pattern_name=TextPatternName.CPF_LABELED,
+            pattern_name=TextPatternName.CPF_LOOSE,
         ),
         TextSourceMentionsPerson,
     ),
@@ -141,7 +141,7 @@ _FORWARD_AND_INVERSE: list[_Pair] = [
             source_id=_address_id,
             target_id=_text_source_id,
             matched_field="cep,number",
-            pattern_name=TextPatternName.CPF_LABELED,
+            pattern_name=TextPatternName.CPF_LOOSE,
         ),
         TextSourceMentionsAddress,
     ),
@@ -224,13 +224,13 @@ class TestInvertedEdges:
             source_id=_person_id,
             target_id=_text_source_id,
             matched_field="cpf",
-            pattern_name=TextPatternName.CPF_LABELED,
+            pattern_name=TextPatternName.CPF_LOOSE,
         )
 
         inverse = forward.inverted()
 
         assert inverse.matched_field == "cpf"
-        assert inverse.pattern_name is TextPatternName.CPF_LABELED
+        assert inverse.pattern_name is TextPatternName.CPF_LOOSE
 
     def test_edges_that_already_have_a_counterpart_or_are_symmetric_have_no_inverse(
         self,
