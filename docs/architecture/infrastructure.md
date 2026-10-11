@@ -97,7 +97,7 @@ undercount the true wait afterward.
 
 Queries stay hand-written next to plain migration files, and a code generator turns them into the committed record
 models, validating each query against the migrations while it does — but only when someone runs it by hand, because it
-is not part of the gate. The accepted cost is regenerating by hand after any change to a query or a migration.
+is not part of the gate.
 
 The closed list of named spreadsheet-corruption failures is exactly what has actually been reproduced and confirmed so
 far, not a claim of completeness — a new corruption shape a future file exhibits falls through to the broad catch
@@ -106,13 +106,10 @@ underneath rather than a specific, documented one, until someone reproduces it a
 ## Open problems
 
 - **All graph and consumption-log data lives in a plain in-memory snapshot** (`MemStorage` behind `HybridUoW`). Every
-  restart loses it, there is no coordination between concurrent writers, and the `fastapi-throttle` limiter and the
-  KipFlow pacing queue are in memory too, so the service is a single process by construction and a restart resets every
-  rate bucket. Only accounts and external credentials survive, because they sit in PostgreSQL. The replacement is a real
-  graph or relational adapter behind the existing repository contracts (a Neo4j migration is the stated direction); the
-  layers above never see which store answers. When it lands, `GraphRepository.list_all_revisions()` (a full scan today,
-  with `ListGraphCatalog` as its only caller) is the one method to replace with an aggregated projection. Do it before
-  any data that must outlive a deploy
+  restart loses it, and the `fastapi-throttle` limiter and the KipFlow pacing queue are in memory too, so the service is
+  a single process by construction. Only accounts and external credentials survive, because they sit in PostgreSQL. When
+  the real adapter lands, `GraphRepository.list_all_revisions()` (a full scan today, with `ListGraphCatalog` as its only
+  caller) is the one method to replace with an aggregated projection. Do it before any data that must outlive a deploy
 - **The committed `generated/` sqlc models can drift from `migrations/` and
   `infrastructure/persistence/pg/queries/*.sql`.** `scripts sqlc-generate` is manual and not part of `check`, so nothing
   fails if someone changes a query or a migration and forgets to regenerate. A gate that regenerates and compares would

@@ -106,8 +106,8 @@ describe something other than what the caller actually received.
 - **`/health` and `/health/ready` do not report which commit is running.** After a deploy the pipeline proves the
   process answers, not that it is the verified commit. Exposing the build SHA would let the pipeline compare it to
   `${{ github.sha }}`
-- **Expansion buckets are a flat 100/min per route and per user (`_EXPANSION_REQUESTS_PER_MINUTE`)**, but Portal da
-  Transparência's token ceiling is 90/min from 06:00 to 23:59 (higher overnight). With five Portal-backed routes
-  (`/cnep`, `/ceis`, `/cepim`, `/ceaf`, `/peps`) the aggregate can exceed it, so the limiter protects this server but
-  not the user's upstream key, and Portal may `429` first under load. Each account now spends its own bucket against its
-  own Portal key; replace with a combined per-user cross-route Portal bucket under 90/min if real traffic trips it
+- **Authenticated expansion buckets are a flat 100/min per route and per user (`_EXPANSION_REQUESTS_PER_MINUTE`)**, but
+  Portal da Transparência's token ceiling is 90/min from 06:00 to 23:59 (higher overnight). With five Portal-backed
+  routes (`/cnep`, `/ceis`, `/cepim`, `/ceaf`, `/peps`) the aggregate can exceed it, so the limiter protects this server
+  but not the user's upstream key, and Portal may `429` first under load. Each account now spends its own bucket against
+  its own Portal key; replace with a combined per-user cross-route Portal bucket under 90/min if real traffic trips it

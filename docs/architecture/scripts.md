@@ -97,6 +97,7 @@ that same root, never a new dot-directory at the repository's own top level to r
 
 ## Open problems
 
-- **The uv version lives in three places**, all exactly `0.11.21`: `required-version` in `[tool.uv]` (the one the
-  workflows read and that uv enforces everywhere it runs), the `build` extra that lets semantic-release install uv, and
-  the `Dockerfile`'s uv image tag and digest. A drifted copy fails loudly, but the three still move together
+- **The uv version lives in five places**, all exactly `0.11.21`: `required-version` in `[tool.uv]` (the one the
+  workflows read and that uv enforces everywhere it runs), the `build` extra that lets semantic-release install uv, the
+  `Dockerfile`'s uv image tag and digest, and the two README setup steps that state it. A drifted copy in the first
+  three fails loudly, but all five still move together

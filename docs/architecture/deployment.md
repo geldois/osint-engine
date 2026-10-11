@@ -85,10 +85,8 @@ that is only ever the container, and needs revisiting the day another install pa
   (`MemStorage`) would make a second replica diverge from the first anyway. Move to Kubernetes (services, probes,
   network policies, a stable address for the ingress) when the persistence problem in the infrastructure document is
   closed and a second replica or a second host is wanted; until then compose is the proportionate choice
-- **`FORWARDED_ALLOW_IPS: "*"` in `compose.prod.yml` is safe only because `app` uses `expose` and not `ports`.** The
-  wildcard makes uvicorn trust the `X-Forwarded-For` of any peer and overwrite `request.client` with it, and the per-IP
-  limits (login, registration) key on `request.client.host`. If the `expose` ever became a published port, a direct
-  caller could forge the header and walk past every per-IP bucket. The compose network has no fixed subnet, so the Caddy
-  address is not stable and the wildcard is the pragmatic value today. Declare a network with a fixed subnet and trust
-  only that CIDR when a service other than Caddy that can reach `app` joins the network or the `expose` line is touched
-  (the accepted trust is recorded in the Decisions above, this is its hardening)
+- **`FORWARDED_ALLOW_IPS: "*"` in `compose.prod.yml` trusts every peer, because the compose network has no fixed subnet
+  and the Caddy address is not stable.** The per-IP limits (login, registration) key on `request.client.host`, so a
+  published port in place of `expose` would let a direct caller forge the header past every bucket. Declare a network
+  with a fixed subnet and trust only that CIDR when a service other than Caddy that can reach `app` joins the network or
+  the `expose` line is touched
