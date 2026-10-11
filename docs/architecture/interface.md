@@ -89,3 +89,25 @@ caller merges several responses into one accumulated view and needs to tell whic
 A future read-time step that adds its own cross-entity links has to follow the same rule the existing one does — rebuild
 the provenance wrapper around whatever it actually returns — or the content-derived identifier in that response would
 describe something other than what the caller actually received.
+
+## Open problems
+
+- **Every authenticated account reads every stored graph.** `GET /graphs`, `/graphs/{root_id}/history`,
+  `/nodes/{node_id}/history` and `/edges/{edge_id}/history` return whatever any account ever expanded, with no owner and
+  no pagination, because `MemStorage` never records which user originated a revision. Signup is open, so a second
+  account sees the CPF data a first account paid KipFlow for, and ids are deterministic from the CPF, so they can be
+  guessed. Fix before opening signup to anyone untrusted: record the owner on each revision (or on a per-user index of
+  root ids), filter every history route by it, and add `limit` and `cursor` once the catalog passes a few hundred
+  entries, with the studio client handling a partial response
+- **`GET /credentials/{provider}/reveal` returns a stored API key decrypted over HTTP** to its owner. The trade-off (the
+  studio can show a key back, at the price of exposing it in a response body and any log in front of it) is not written
+  down as a decision; the route is throttled per account, but decide whether to keep it, mask it, or record the decision
+  in this document
+- **`/health` and `/health/ready` do not report which commit is running.** After a deploy the pipeline proves the
+  process answers, not that it is the verified commit. Exposing the build SHA would let the pipeline compare it to
+  `${{ github.sha }}`
+- **Expansion buckets are a flat 100/min per route and per user (`_EXPANSION_REQUESTS_PER_MINUTE`)**, but Portal da
+  Transparência's token ceiling is 90/min from 06:00 to 23:59 (higher overnight). With five Portal-backed routes
+  (`/cnep`, `/ceis`, `/cepim`, `/ceaf`, `/peps`) the aggregate can exceed it, so the limiter protects this server but
+  not the user's upstream key, and Portal may `429` first under load. Each account now spends its own bucket against its
+  own Portal key; replace with a combined per-user cross-route Portal bucket under 90/min if real traffic trips it

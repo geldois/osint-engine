@@ -167,9 +167,7 @@ declares its own `(provider, billable)` pair in `UseCaseRegistry` before its fir
 generalize to a source nobody named yet, by design, since a shared guard function still needs to know which stored
 revisions belong to which route. What does now generalize is the failure mode for skipping that step: a workflow that
 never registers raises `UnregisteredUseCaseError` the moment it reaches the guard, rather than quietly shipping with no
-reuse protection until someone notices the gap by hand. The atomicity gap across the two kinds of storage stays a
-standing obligation rather than a closed question: the moment any future workflow writes to both in one unit of work,
-that workflow inherits the gap and has to close it, not merely notice it.
+reuse protection until someone notices the gap by hand.
 
 Because the merge policy's default now keeps every incoming revision exactly as it arrived, any future workflow that
 genuinely wants a single synthesized view has to explicitly reach for the older reconciling policy — it stays available,
@@ -184,3 +182,28 @@ Grouping the catalog by the root identifier rather than the graph's own content-
 cannot be answered by the same identity-keyed lookup every other stored entity supports; a future storage backend has to
 support walking and bucketing by root the same way, or the catalog's own grouping logic has to be re-derived for it
 specifically.
+
+## Open problems
+
+- **Commits are not atomic across PostgreSQL credentials and the in-memory snapshot.** `HybridUoW` persists credentials
+  during repository `save()` and only coordinates the snapshot during `commit()`. The reuse lock and the consumption log
+  inherit the same gap, and so does any future workflow that writes to both: it inherits the gap and has to close it,
+  not merely notice it
+- **A text-ingested `Person` stub stores its `cpf` exactly as the regex matched it**, whatever punctuation the source
+  used. `Person.id` comes from normalized digits, so a later ingestion of the same CPF in another format resolves to the
+  same entity and is only linked, never merged, which makes the first-seen format permanent. Cosmetic: identity
+  resolution is unaffected. Fixing it means giving `_resolve_node` a path to update an existing entity's field from a
+  new deterministic match, which the design deliberately does not do for anything
+- **Password verification at login runs on the event loop**
+  (`application/use_cases/authentication/authenticate_user.py`). Registration already hashes in a worker thread, but
+  `AuthenticateUser` still calls the memory-hard verify inline, so a burst of logins stalls every concurrent request
+  until the 5-per-10-minutes limit bites. Move it to the same worker thread when login traffic is more than a demo's
+- **Per-user consumption filtering reads every record first** (`list_entity_record_catalog.py`,
+  `list_entity_records_by_cpf.py`, `guard_reuse_lock.py`). Each call loads every account's records from the in-memory
+  log and keeps the caller's, so cost grows with total users, not the caller's own history. Replace with a repository
+  query by username when the log leaves memory
+- **Accounts have no password reset, no deletion and no email or other proof of ownership**
+  (`application/use_cases/authentication/register_user.py`). A forgotten password locks the account and its saved keys
+  for good, and open signup is bounded only by the 10-per-15-minutes IP limit and argon2's cost. Add an invite code (an
+  environment value checked at registration) first if signup abuse shows up; a reset flow needs an email channel the
+  project does not have

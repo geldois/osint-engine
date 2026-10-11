@@ -54,3 +54,14 @@ The strict runtime-detection rule means a future environment running some other 
 other socket location this check doesn't yet know about, fails loudly with a raised error rather than quietly skipping
 every test that needs a real database — closing that gap for a new environment means teaching this one check about it,
 not adding another skip somewhere else.
+
+## Open problems
+
+- **KipFlow's fetchers and mappers have no live-snapshot contract test.** The `real_api_snapshot` tests cover BrasilAPI
+  and Portal da Transparência only, and `tests/test_scripts/test_fixtures_coverage.py` excludes the paid provider on
+  purpose, so CPF and legal-process mapping against the real paid response is never verified. Record a snapshot by hand
+  once with a real key, or accept it explicitly
+- **The mutation gate has never run.** `scripts mutation --max-survival` defaults to `100.0`, so it can never fail, no
+  workflow runs it, and `cosmic-ray.toml` has never been exercised against the current test layout, so expect a first
+  run to need adjustments. Run it once, set the ceiling to the measured baseline, then add a scheduled weekly and manual
+  CI job; until the ceiling is real, a scheduled job would be a false green

@@ -164,7 +164,7 @@ Authorization: Bearer <token>
 Returns a `GraphCatalogSchema` — one entry per distinct root `root_id` ever fetched, each carrying
 `first_fetched_at`/`last_fetched_at`, every `provider` and `fetched_routes` involved, a `revision_count`, and the root
 `Node` itself. Any authenticated caller. The catalog and every history route below are shared across accounts today: a
-caller sees whatever any account expanded, a known gap recorded in `TO-DO.md`.
+caller sees whatever any account expanded, a known gap recorded among the interface document's open problems.
 
 ```http
 GET /graphs/{root_id}/history

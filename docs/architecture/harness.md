@@ -55,3 +55,8 @@ commit that follows carries code and documents together.
 
 The marker is shared by every session in the same checkout, so two agents working at once can consume each other's mark;
 the review then still happens, just in the other session.
+
+## Open problems
+
+- **The shared contract with `osint-studio` is written down nowhere.** The review prompt asks to check that repo's docs
+  when the contract moves, but no document says what the contract is or where its source of truth lives

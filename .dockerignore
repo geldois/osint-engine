@@ -13,7 +13,6 @@ docs/
 .claude/
 build/
 CHANGELOG.md
-TO-DO.md
 .editorconfig
 .gitignore
 .dockerignore

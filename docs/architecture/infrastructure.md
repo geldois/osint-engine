@@ -97,9 +97,35 @@ undercount the true wait afterward.
 
 Queries stay hand-written next to plain migration files, and a code generator turns them into the committed record
 models, validating each query against the migrations while it does — but only when someone runs it by hand, because it
-is not part of the gate. The tradeoff is that the committed generated models can silently fall behind a changed query or
-migration until the next manual regeneration; no mechanical check enforces their freshness.
+is not part of the gate. The accepted cost is regenerating by hand after any change to a query or a migration.
 
 The closed list of named spreadsheet-corruption failures is exactly what has actually been reproduced and confirmed so
 far, not a claim of completeness — a new corruption shape a future file exhibits falls through to the broad catch
 underneath rather than a specific, documented one, until someone reproduces it and gives it its own name.
+
+## Open problems
+
+- **All graph and consumption-log data lives in a plain in-memory snapshot** (`MemStorage` behind `HybridUoW`). Every
+  restart loses it, there is no coordination between concurrent writers, and the `fastapi-throttle` limiter and the
+  KipFlow pacing queue are in memory too, so the service is a single process by construction and a restart resets every
+  rate bucket. Only accounts and external credentials survive, because they sit in PostgreSQL. The replacement is a real
+  graph or relational adapter behind the existing repository contracts (a Neo4j migration is the stated direction); the
+  layers above never see which store answers. When it lands, `GraphRepository.list_all_revisions()` (a full scan today,
+  with `ListGraphCatalog` as its only caller) is the one method to replace with an aggregated projection. Do it before
+  any data that must outlive a deploy
+- **The committed `generated/` sqlc models can drift from `migrations/` and
+  `infrastructure/persistence/pg/queries/*.sql`.** `scripts sqlc-generate` is manual and not part of `check`, so nothing
+  fails if someone changes a query or a migration and forgets to regenerate. A gate that regenerates and compares would
+  close it, but sqlc's own comparison also reports the unused querier file this repo discards, so it needs a wrapper
+- **`BrasilAPICEPv2Fetcher` and `cep_v2_mapper` are built and fully tested but unwired.** No use case calls
+  `CEPFetcher.fetch(cep, number)`. Text ingestion deliberately does not consume it (it never calls external APIs, only
+  stubs and links by deterministic id; see `docs/architecture/application.md`). The likely consumer is a manual "enrich
+  this Address stub" endpoint, not automatic chaining from `cnpj_v1`, whose `_map_address` already returns a complete
+  `Address`. Decide the consumer or delete the fetcher
+- **CEPIM's `convenio` and CEAF's `cargoEfetivo`, `codigoCargoComissao`, `cargoComissao`, `punicao.portaria`,
+  `punicao.paginaDOU` and `punicao.secaoDOU` are real upstream fields with no counterpart on the `Sanction` node.**
+  `cepim_mapper.py` and `ceaf_mapper.py` drop them silently, because mapping them would extend the entity for something
+  specific to two of the four sanction sources. Revisit if a consumer needs those details
+- **`_read_csv` splits on a fixed `,`.** A `;`-delimited export (common from PT-BR Excel) degrades cell-level
+  granularity to line-level; CPF and CNPJ extraction is unaffected because neither pattern depends on cell boundaries.
+  Add delimiter sniffing only if a real file makes it a problem

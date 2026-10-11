@@ -108,3 +108,14 @@ ever converges them on its own, by design.
 The separation now enforced between a composite entity's own stable identity and its content-derived identity is the
 same shape every other entity already had; any future composite entity has to preserve that same separation
 deliberately, since collapsing the two again would silently reintroduce the same lost-revision failure this fix closed.
+
+## Open problems
+
+- **`Graph.nodes` and `Graph.edges` hold full `Node`/`Edge` content, not references.** Every stored `GraphRevision`
+  re-embeds the complete content of every node and edge it holds, even ones unchanged since the previous revision. The
+  node and edge repositories already dedupe by `content_id`; the graph repository does not reuse that. A reference-based
+  redesign (`Graph` holding an `EntityRef` per node and edge, resolved against those repositories at read time, behind a
+  new application-layer value object so no interface code touches a repository) was fully specified and deferred: it
+  touches every expansion, estimate, ingestion and matching use case under `application/use_cases/` (twelve today across
+  `expansion/`, `text_ingestion/` and `matching/`), every fetcher, every graph-shaped presenter, the mem seeder and the
+  whole domain test suite for `Graph`. Not a narrow change

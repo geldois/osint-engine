@@ -94,3 +94,9 @@ per mutant rather than an in-process reimport.
 
 Redirecting every tool's cache under one root means a future tool added to this toolchain is one more subdirectory of
 that same root, never a new dot-directory at the repository's own top level to remember to gitignore separately.
+
+## Open problems
+
+- **The uv version lives in three places**, all exactly `0.11.21`: `required-version` in `[tool.uv]` (the one the
+  workflows read and that uv enforces everywhere it runs), the `build` extra that lets semantic-release install uv, and
+  the `Dockerfile`'s uv image tag and digest. A drifted copy fails loudly, but the three still move together
