@@ -135,6 +135,14 @@ same commit; a gap closed comes out in the same commit.
   "Require linear history", "Block force pushes" and "Restrict deletions", and leave bypass empty so admins are bound
   too
 
+## feat(deploy)
+
+- **The deploy is one VM running `compose.prod.yml`, with no orchestrator.** A crashed container only comes back through
+  `restart`, there is no rolling update, no second replica and no fixed network addressing, and the in-memory snapshot
+  (`MemStorage`) would make a second replica diverge from the first anyway. Move to Kubernetes (services, probes,
+  network policies, a stable address for the ingress) when the persistence bullet above is closed and a second replica
+  or a second host is wanted; until then compose is the proportionate choice
+
 ## fix(deploy)
 
 - **`FORWARDED_ALLOW_IPS: "*"` in `compose.prod.yml` is safe only because `app` uses `expose` and not `ports`.** The
