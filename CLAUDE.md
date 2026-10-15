@@ -22,6 +22,12 @@ investigation of every doc after any turn that edited a file here, and the commi
 is left to fix lives only in the `## Open problems` section of the owning `docs/architecture/*.md`; that section alone
 may name files and symbols, the rest of the docs never does.
 
+Anything that needs fixing is tracked, always, and never left to be rediscovered: any bug, accidental behaviour (what
+nobody chose), missing test coverage or lost intent found anywhere in the code, off the main flow or not, at any moment
+and whatever its size, is written into the owning document's `## Open problems` the same turn it is seen, without being
+asked. Finding it again later always costs more than recording it now. Only drift in the docs themselves outranks that:
+it is never postponed, it is fixed in the same change.
+
 The README's mermaid diagram stays brutally summarized, semantic and lean: roughly a dozen nodes naming the main flows
 and stores, never one node per route, use case, class or repository. If a change needs more than a node or an edge to
 appear there, it belongs in prose, not in the graph.

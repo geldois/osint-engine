@@ -119,3 +119,14 @@ deliberately, since collapsing the two again would silently reintroduce the same
   touches every expansion, estimate, ingestion and matching use case under `application/use_cases/` (twelve today across
   `expansion/`, `text_ingestion/` and `matching/`), every fetcher, every graph-shaped presenter, the mem seeder and the
   whole domain test suite for `Graph`. Not a narrow change
+- **`Graph.merge` silently picks one version when both graphs hold different versions of the same node or edge.**
+  Entities are equal by `id` alone, so the union of the two `frozenset`s keeps the receiver's element and drops the
+  other's, and nothing in the code or the docs says that was meant: which version survives is an accident of operand
+  order. The graph's `id` is unaffected, its `content_id` is not. Decide whether the receiver wins, the newer
+  `fetched_at` wins, or divergent versions raise, and say it in the merge, not in the equality
+- **Entity identity travels through untyped seams.** `for_content` rides inside `**kwargs` to `_calculate_id`, popped by
+  the base and read with `kwargs.get` by `Graph`, so a field of that name would collide; `Graph._calculate_id` then
+  `cast`s `kwargs["edges"]` and `kwargs["nodes"]`, erasing the types exactly where identity is computed. A constructor
+  parameter, its entry in `id_fields` and the attribute `reconstruct_kwargs` reads back must share one name by
+  convention; only the first two are checked, at class definition, so renaming a parameter without renaming the
+  attribute would break `evolve` and `reconstruct_kwargs` at runtime (read, not exercised)

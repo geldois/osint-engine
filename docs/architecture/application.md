@@ -202,6 +202,11 @@ specifically.
   `list_entity_records_by_cpf.py`, `guard_reuse_lock.py`). Each call loads every account's records from the in-memory
   log and keeps the caller's, so cost grows with total users, not the caller's own history. Replace with a repository
   query by username when the log leaves memory
+- **`FindPossiblyMatches` can compute two different confidences for one pair and keeps an arbitrary one.** The score is
+  the overlap divided by the length of the document of the node being iterated, and the pair's edge `id` is the same
+  whichever side starts. When the graph holds both people, each side scores the pair against its own length, the edge
+  set keeps the first one added, and which is first follows the iteration order of a `frozenset`. Whether real graphs
+  hold both sides is unconfirmed; make the score symmetric, or keep the higher one on purpose
 - **Accounts have no password reset, no deletion and no email or other proof of ownership**
   (`application/use_cases/authentication/register_user.py`). A forgotten password locks the account and its saved keys
   for good, and open signup is bounded only by the 10-per-15-minutes IP limit and argon2's cost. Add an invite code (an

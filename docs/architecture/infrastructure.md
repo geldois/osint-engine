@@ -110,6 +110,10 @@ underneath rather than a specific, documented one, until someone reproduces it a
   a single process by construction. Only accounts and external credentials survive, because they sit in PostgreSQL. When
   the real adapter lands, `GraphRepository.list_all_revisions()` (a full scan today, with `ListGraphCatalog` as its only
   caller) is the one method to replace with an aggregated projection. Do it before any data that must outlive a deploy
+- **`MemGraphRepository.merge` stores a graph's nodes and edges one lookup at a time, in two near-identical blocks.**
+  Every node and every edge costs a sequential `find` before the batch write, so cost grows with graph size, and the
+  node and edge paths must be kept in step by hand. Harmless in memory; the Postgres adapter should resolve both with
+  one batched query each
 - **The committed `generated/` sqlc models can drift from `migrations/` and
   `infrastructure/persistence/pg/queries/*.sql`.** `scripts sqlc-generate` is manual and not part of `check`, so nothing
   fails if someone changes a query or a migration and forgets to regenerate. A gate that regenerates and compares would
