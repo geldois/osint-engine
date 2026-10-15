@@ -217,6 +217,109 @@ class TestGraphMerge:
         assert merged.nodes == frozenset({root, node})
         assert merged.edges == frozenset({edge})
 
+    def test_holds_one_version_of_a_node_present_in_both_graphs(self) -> None:
+        version_a = FakeNodeWithContentIdentity(content="root", extra_field="value_a")
+        version_b = FakeNodeWithContentIdentity(content="root", extra_field="value_b")
+
+        assert version_a.id == version_b.id
+
+        assert version_a.content_id != version_b.content_id
+
+        graph_a = Graph(
+            edges=frozenset(), nodes=frozenset({version_a}), root_id=version_a.id
+        )
+        graph_b = Graph(
+            edges=frozenset(), nodes=frozenset({version_b}), root_id=version_a.id
+        )
+
+        merged = graph_a.merge(other=graph_b)
+
+        assert len(merged.nodes) == 1
+
+        assert next(iter(merged.nodes)) in {version_a, version_b}
+
+    def test_keeps_the_graph_id_when_the_other_graph_holds_a_newer_node_version(
+        self,
+    ) -> None:
+        version_a = FakeNodeWithContentIdentity(content="root", extra_field="value_a")
+        version_b = FakeNodeWithContentIdentity(content="root", extra_field="value_b")
+        graph_a = Graph(
+            edges=frozenset(), nodes=frozenset({version_a}), root_id=version_a.id
+        )
+        graph_b = Graph(
+            edges=frozenset(), nodes=frozenset({version_b}), root_id=version_a.id
+        )
+
+        merged = graph_a.merge(other=graph_b)
+
+        assert merged.id == graph_a.id
+
+        assert merged.id == graph_b.id
+
+    def test_graph_id_is_the_same_whichever_graph_merge_is_called_on(
+        self, make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode
+    ) -> None:
+        root = make_fake_node()
+        node_a = make_fake_node()
+        node_b = make_fake_node()
+        edge_a = make_fake_edge(source_id=root.id, target_id=node_a.id)
+        edge_b = make_fake_edge(source_id=root.id, target_id=node_b.id)
+        graph_a = Graph(
+            edges=frozenset({edge_a}),
+            nodes=frozenset({root, node_a}),
+            root_id=root.id,
+        )
+        graph_b = Graph(
+            edges=frozenset({edge_b}),
+            nodes=frozenset({root, node_b}),
+            root_id=root.id,
+        )
+
+        assert graph_a.merge(other=graph_b).id == graph_b.merge(other=graph_a).id
+
+    def test_merging_the_same_graph_again_changes_nothing(
+        self, make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode
+    ) -> None:
+        root = make_fake_node()
+        node = make_fake_node()
+        edge = make_fake_edge(source_id=root.id, target_id=node.id)
+        graph_a = Graph(
+            edges=frozenset({edge}), nodes=frozenset({root, node}), root_id=root.id
+        )
+        graph_b = Graph(edges=frozenset(), nodes=frozenset({root}), root_id=root.id)
+
+        merged = graph_a.merge(other=graph_b)
+        merged_again = merged.merge(other=graph_b)
+
+        assert merged_again.id == merged.id
+
+        assert merged_again.content_id == merged.content_id
+
+        assert merged_again.nodes == merged.nodes
+
+        assert merged_again.edges == merged.edges
+
+    def test_does_not_mutate_either_input_graph(
+        self, make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode
+    ) -> None:
+        root = make_fake_node()
+        node = make_fake_node()
+        edge = make_fake_edge(source_id=root.id, target_id=node.id)
+        graph_a = Graph(edges=frozenset(), nodes=frozenset({root}), root_id=root.id)
+        graph_b = Graph(
+            edges=frozenset({edge}), nodes=frozenset({root, node}), root_id=root.id
+        )
+
+        graph_a.merge(other=graph_b)
+
+        assert graph_a.nodes == frozenset({root})
+
+        assert graph_a.edges == frozenset()
+
+        assert graph_b.nodes == frozenset({root, node})
+
+        assert graph_b.edges == frozenset({edge})
+
 
 class TestGraphValidation:
     def test_raises_with_empty_node_set(self, make_fake_node: MakeFakeNode) -> None:

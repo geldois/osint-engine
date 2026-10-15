@@ -146,6 +146,95 @@ class TestEntityIdentity:
 
         assert len({entity_a, entity_b}) == 1
 
+    def test_versions_sharing_an_id_are_equal_despite_different_content_id(
+        self,
+    ) -> None:
+        entity_a = FakeEntityWithContentIdentity(content="Alice", extra_field="value_a")
+        entity_b = FakeEntityWithContentIdentity(content="Alice", extra_field="value_b")
+
+        assert entity_a.content_id != entity_b.content_id
+
+        assert entity_a == entity_b
+
+        assert entity_b == entity_a
+
+    def test_equality_is_transitive_across_versions_of_one_id(self) -> None:
+        entity_a = FakeEntityWithContentIdentity(content="Alice", extra_field="value_a")
+        entity_b = FakeEntityWithContentIdentity(content="Alice", extra_field="value_b")
+        entity_c = FakeEntityWithContentIdentity(content="Alice", extra_field="value_c")
+
+        assert entity_a == entity_b
+
+        assert entity_b == entity_c
+
+        assert entity_a == entity_c
+
+        assert len({entity_a, entity_b, entity_c}) == 1
+
+    def test_entities_with_different_ids_are_never_equal(self) -> None:
+        entity_a = FakeEntityWithContentIdentity(content="Alice", extra_field="value")
+        entity_b = FakeEntityWithContentIdentity(content="Bob", extra_field="value")
+
+        assert entity_a.id != entity_b.id
+
+        assert entity_a != entity_b
+
+        assert len({entity_a, entity_b}) == 2
+
+    def test_dict_lookup_finds_any_version_of_the_same_id(self) -> None:
+        entity_a = FakeEntityWithContentIdentity(content="Alice", extra_field="value_a")
+        entity_b = FakeEntityWithContentIdentity(content="Alice", extra_field="value_b")
+        by_entity = {entity_a: "stored"}
+
+        assert by_entity[entity_b] == "stored"
+
+    def test_set_union_keeps_one_version_per_id(self) -> None:
+        entity_a = FakeEntityWithContentIdentity(content="Alice", extra_field="value_a")
+        entity_b = FakeEntityWithContentIdentity(content="Alice", extra_field="value_b")
+
+        merged = frozenset({entity_a}) | frozenset({entity_b})
+
+        assert len(merged) == 1
+
+        assert next(iter(merged)) in {entity_a, entity_b}
+
+    def test_evolving_a_non_identity_field_keeps_equality(self) -> None:
+        entity = FakeEntityWithContentIdentity(content="Alice", extra_field="value_a")
+
+        evolved = entity.evolve(extra_field="value_b")
+
+        assert evolved.content_id != entity.content_id
+
+        assert evolved == entity
+
+    def test_evolving_an_identity_field_breaks_equality(self) -> None:
+        entity = FakeEntityWithContentIdentity(content="Alice", extra_field="value_a")
+
+        evolved = entity.evolve(content="Bob")
+
+        assert evolved.id != entity.id
+
+        assert evolved != entity
+
+    def test_hash_is_derived_from_the_integer_of_the_id(self) -> None:
+        entity = FakeEntityWithContentIdentity(content="Alice", extra_field="value_a")
+
+        assert hash(entity) == hash(entity.id.int)
+
+    def test_hash_ignores_content_id(self) -> None:
+        entity_a = FakeEntityWithContentIdentity(content="Alice", extra_field="value_a")
+        entity_b = FakeEntityWithContentIdentity(content="Alice", extra_field="value_b")
+
+        assert hash(entity_a) == hash(entity_b)
+
+    def test_equal_entities_always_hash_alike(self) -> None:
+        entity_a = FakeEntityWithContentIdentity(content="Alice", extra_field="value_a")
+        entity_b = FakeEntityWithContentIdentity(content="Alice", extra_field="value_b")
+
+        assert entity_a == entity_b
+
+        assert hash(entity_a) == hash(entity_b)
+
 
 class TestEntitySubclassContract:
     def test_id_type_is_bound_to_subclass(self) -> None:
