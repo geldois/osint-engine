@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, NamedTuple, cast
 from uuid import UUID
 
 import pytest
 
+from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.domain.entities.bases.entity import Entity
 from osint_engine.infrastructure.persistence.hybrid_uow import HybridUoW
 from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
@@ -30,12 +31,11 @@ if TYPE_CHECKING:
 
     from osint_engine.application.auth.external_credential import ExternalCredential
     from osint_engine.application.consumption.entity_record import EntityRecord
-    from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.config.container import Policies
     from osint_engine.config.settings import Settings
     from osint_engine.domain.entities.bases.edge import Edge
-    from osint_engine.domain.entities.bases.graph import Graph
     from osint_engine.domain.entities.bases.node import Node
+    from osint_engine.domain.entities.graphs import CompositeGraph
     from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
 type MakeHybridUoWFactory = Callable[[], Callable[[], HybridUoW]]
@@ -62,6 +62,39 @@ def _entity_store[Entity_: Entity[UUID]](
     return store
 
 
+class _GraphMembers(NamedTuple):
+    edges: list[EntityRevision[Edge[UUID, UUID, UUID]]]
+    nodes: list[EntityRevision[Node[UUID]]]
+
+
+def _graph_members(
+    graph_revisions: Iterable[EntityRevision[CompositeGraph]] | None,
+) -> _GraphMembers:
+    members = _GraphMembers(edges=[], nodes=[])
+
+    for revision in graph_revisions or ():
+        members.edges.extend(
+            EntityRevision(
+                entity=edge,
+                fetched_at=revision.fetched_at,
+                merged_at=revision.merged_at,
+                provider=revision.provider,
+            )
+            for edge in revision.entity.edges
+        )
+        members.nodes.extend(
+            EntityRevision(
+                entity=node,
+                fetched_at=revision.fetched_at,
+                merged_at=revision.merged_at,
+                provider=revision.provider,
+            )
+            for node in revision.entity.nodes
+        )
+
+    return members
+
+
 @pytest.fixture
 def fake_pg_pool() -> FakePgPool:
     return FakePgPool()
@@ -80,12 +113,19 @@ def make_mem_storage() -> MakeMemStorage:
         edges: Iterable[EntityRevision[Edge[UUID, UUID, UUID]]] | None = None,
         entity_records: Iterable[EntityRecord] | None = None,
         external_credentials: Iterable[ExternalCredential] | None = None,
-        graphs: Iterable[EntityRevision[Graph]] | None = None,
+        graphs: Iterable[EntityRevision[CompositeGraph]] | None = None,
         nodes: Iterable[EntityRevision[Node[UUID]]] | None = None,
         pattern_sets: Iterable[TextPatternSet] | None = None,
     ) -> MemStorage:
+        graph_revisions = tuple(graphs) if graphs is not None else None
+        members = _graph_members(graph_revisions)
+
         return MemStorage(
-            edges=_entity_store(edges),
+            edges=_entity_store(
+                [*(edges or ()), *members.edges]
+                if edges is not None or graph_revisions is not None
+                else None
+            ),
             entity_records=list(entity_records) if entity_records is not None else None,
             external_credentials={
                 (credential.username, credential.provider): credential
@@ -93,8 +133,24 @@ def make_mem_storage() -> MakeMemStorage:
             }
             if external_credentials is not None
             else None,
-            graphs=_entity_store(graphs),
-            nodes=_entity_store(nodes),
+            graphs=_entity_store(
+                [
+                    EntityRevision(
+                        entity=revision.entity.flatten(),
+                        fetched_at=revision.fetched_at,
+                        merged_at=revision.merged_at,
+                        provider=revision.provider,
+                    )
+                    for revision in graph_revisions
+                ]
+                if graph_revisions is not None
+                else None
+            ),
+            nodes=_entity_store(
+                [*(nodes or ()), *members.nodes]
+                if nodes is not None or graph_revisions is not None
+                else None
+            ),
             pattern_sets={pattern_set.id: pattern_set for pattern_set in pattern_sets}
             if pattern_sets is not None
             else None,

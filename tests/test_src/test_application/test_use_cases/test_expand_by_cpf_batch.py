@@ -14,7 +14,7 @@ from osint_engine.application.use_cases.expansion.expand_by_cpf_batch import (
     EstimateCPFBatch,
     ExpandByCPFBatch,
 )
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Person
 from osint_engine.infrastructure.errors.provider_error import InsufficientCreditsError
 from osint_engine.infrastructure.persistence.mem.mem_uow import MemUoW
@@ -50,10 +50,12 @@ def _make_person(*, cpf: str) -> Person:
     )
 
 
-def _make_graph(*, cpf: str) -> Graph:
+def _make_graph(*, cpf: str) -> CompositeGraph:
     person = _make_person(cpf=cpf)
 
-    return Graph(edges=frozenset(), nodes=frozenset({person}), root_id=person.id)
+    return CompositeGraph(
+        edges=frozenset(), nodes=frozenset({person}), root_id=person.id
+    )
 
 
 def _formatted_cpf(cpf: str, /) -> str:
@@ -75,7 +77,9 @@ def _make_uow_factory(
 
 class _ProgrammedCPFFetcher(CPFFetcher):
     def __init__(
-        self, *, results: dict[str, EntityRevision[Graph] | None | BaseException]
+        self,
+        *,
+        results: dict[str, EntityRevision[CompositeGraph] | None | BaseException],
     ) -> None:
         self.results = results
         self.calls: list[str] = []
@@ -83,7 +87,7 @@ class _ProgrammedCPFFetcher(CPFFetcher):
     @override
     async def fetch(
         self, *, cpf: str, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         self.calls.append(cpf)
         result = self.results[cpf]
 
@@ -428,7 +432,7 @@ class TestExpandByCPFBatch:
         failing_index: int,
         expected_statuses: list[str],
     ) -> None:
-        results: dict[str, EntityRevision[Graph] | None | BaseException] = {
+        results: dict[str, EntityRevision[CompositeGraph] | None | BaseException] = {
             cpf: make_entity_revision(entity=_make_graph(cpf=cpf)) for cpf in _CPFS
         }
         results[_CPFS[failing_index]] = InsufficientCreditsError(provider="kipflow")
@@ -695,10 +699,10 @@ class TestExpandByCPFBatch:
         person_a = _make_person(cpf=_CPF_1)
         person_b = _make_person(cpf=_CPF_2)
         shared = _make_person(cpf="10000000009")
-        graph_a = Graph(
+        graph_a = CompositeGraph(
             edges=frozenset(), nodes=frozenset({person_a, shared}), root_id=person_a.id
         )
-        graph_b = Graph(
+        graph_b = CompositeGraph(
             edges=frozenset(), nodes=frozenset({person_b, shared}), root_id=person_b.id
         )
         credential = make_external_credential(
@@ -814,7 +818,7 @@ class _InFlightFetcher(CPFFetcher):
     @override
     async def fetch(
         self, *, cpf: str, credential: ExternalCredential
-    ) -> EntityRevision[Graph]:
+    ) -> EntityRevision[CompositeGraph]:
         self.in_flight += 1
         self.max_in_flight = max(self.max_in_flight, self.in_flight)
 

@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from osint_engine.application.contracts.services.kipflow_rate_limiter import (
         KipFlowRateLimiter,
     )
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 _CPF_LENGTH = 11
 _INSUFFICIENT_CREDITS_STATUS = 402
@@ -48,7 +48,7 @@ class KipFlowLegalProcessFetcher(
     @override
     async def fetch(
         self, *, cpf_or_cnpj: str, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         self._logger.info("legal_process.fetch.start", cpf_or_cnpj=cpf_or_cnpj)
 
         await self._rate_limiter.acquire(credential=credential)

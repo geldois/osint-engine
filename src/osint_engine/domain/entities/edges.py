@@ -78,7 +78,7 @@ class AddressHostsCompany(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> CompanyLocatedAt:
+    def invert(self) -> CompanyLocatedAt:
         return CompanyLocatedAt(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -92,7 +92,7 @@ class AddressHostsPerson(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> PersonResideAt:
+    def invert(self) -> PersonResideAt:
         return PersonResideAt(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -126,7 +126,7 @@ class AddressMentionedInText(
         return super()._calculate_id(**_pattern_name_as_text(kwargs))
 
     @override
-    def inverted(self) -> TextSourceMentionsAddress:
+    def invert(self) -> TextSourceMentionsAddress:
         return TextSourceMentionsAddress(
             source_id=self.target_id,
             target_id=self.source_id,
@@ -145,7 +145,7 @@ class CnaeClassifiesCompany(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> CompanyHasCnae:
+    def invert(self) -> CompanyHasCnae:
         return CompanyHasCnae(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -159,7 +159,7 @@ class CompanyHasCnae(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> CnaeClassifiesCompany:
+    def invert(self) -> CnaeClassifiesCompany:
         return CnaeClassifiesCompany(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -173,7 +173,7 @@ class CompanyHasEmail(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> EmailBelongsToCompany:
+    def invert(self) -> EmailBelongsToCompany:
         return EmailBelongsToCompany(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -187,7 +187,7 @@ class CompanyHasMember(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> None:
+    def invert(self) -> None:
         return None
 
 
@@ -201,7 +201,7 @@ class CompanyHasPhone(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> PhoneBelongsToCompany:
+    def invert(self) -> PhoneBelongsToCompany:
         return PhoneBelongsToCompany(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -215,7 +215,7 @@ class CompanyIsPartyInLegalProcess(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> LegalProcessHasCompany:
+    def invert(self) -> LegalProcessHasCompany:
         return LegalProcessHasCompany(
             source_id=self.target_id, target_id=self.source_id
         )
@@ -231,7 +231,7 @@ class CompanyLocatedAt(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> AddressHostsCompany:
+    def invert(self) -> AddressHostsCompany:
         return AddressHostsCompany(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -265,7 +265,7 @@ class CompanyMentionedInText(
         return super()._calculate_id(**_pattern_name_as_text(kwargs))
 
     @override
-    def inverted(self) -> TextSourceMentionsCompany:
+    def invert(self) -> TextSourceMentionsCompany:
         return TextSourceMentionsCompany(
             source_id=self.target_id,
             target_id=self.source_id,
@@ -291,7 +291,7 @@ class CompanyOwnedByCompany(
         )
 
     @override
-    def inverted(self) -> CompanyOwnsCompany:
+    def invert(self) -> CompanyOwnsCompany:
         return CompanyOwnsCompany(
             source_id=self.target_id,
             target_id=self.source_id,
@@ -317,7 +317,7 @@ class CompanyOwnsCompany(
         )
 
     @override
-    def inverted(self) -> CompanyOwnedByCompany:
+    def invert(self) -> CompanyOwnedByCompany:
         return CompanyOwnedByCompany(
             source_id=self.target_id,
             target_id=self.source_id,
@@ -336,7 +336,7 @@ class CompanyReceivedSanction(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> SanctionAppliedToCompany:
+    def invert(self) -> SanctionAppliedToCompany:
         return SanctionAppliedToCompany(
             source_id=self.target_id, target_id=self.source_id
         )
@@ -352,7 +352,7 @@ class EmailBelongsToCompany(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> CompanyHasEmail:
+    def invert(self) -> CompanyHasEmail:
         return CompanyHasEmail(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -366,7 +366,7 @@ class EmailBelongsToPerson(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> PersonHasEmail:
+    def invert(self) -> PersonHasEmail:
         return PersonHasEmail(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -380,7 +380,7 @@ class LegalProcessHasCompany(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> CompanyIsPartyInLegalProcess:
+    def invert(self) -> CompanyIsPartyInLegalProcess:
         return CompanyIsPartyInLegalProcess(
             source_id=self.target_id, target_id=self.source_id
         )
@@ -396,7 +396,7 @@ class LegalProcessHasPerson(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> PersonIsPartyInLegalProcess:
+    def invert(self) -> PersonIsPartyInLegalProcess:
         return PersonIsPartyInLegalProcess(
             source_id=self.target_id, target_id=self.source_id
         )
@@ -412,7 +412,7 @@ class PersonHasEmail(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> EmailBelongsToPerson:
+    def invert(self) -> EmailBelongsToPerson:
         return EmailBelongsToPerson(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -426,7 +426,7 @@ class PersonHasPhone(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> PhoneBelongsToPerson:
+    def invert(self) -> PhoneBelongsToPerson:
         return PhoneBelongsToPerson(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -440,7 +440,7 @@ class PersonHasPoliticalExposure(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> PoliticalExposureOfPerson:
+    def invert(self) -> PoliticalExposureOfPerson:
         return PoliticalExposureOfPerson(
             source_id=self.target_id, target_id=self.source_id
         )
@@ -456,7 +456,7 @@ class PersonIsPartyInLegalProcess(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> LegalProcessHasPerson:
+    def invert(self) -> LegalProcessHasPerson:
         return LegalProcessHasPerson(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -490,7 +490,7 @@ class PersonMentionedInText(
         return super()._calculate_id(**_pattern_name_as_text(kwargs))
 
     @override
-    def inverted(self) -> TextSourceMentionsPerson:
+    def invert(self) -> TextSourceMentionsPerson:
         return TextSourceMentionsPerson(
             source_id=self.target_id,
             target_id=self.source_id,
@@ -516,7 +516,7 @@ class PersonOwnsCompany(
         )
 
     @override
-    def inverted(self) -> None:
+    def invert(self) -> None:
         return None
 
 
@@ -530,7 +530,7 @@ class PersonReceivedSanction(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> SanctionAppliedToPerson:
+    def invert(self) -> SanctionAppliedToPerson:
         return SanctionAppliedToPerson(
             source_id=self.target_id, target_id=self.source_id
         )
@@ -546,7 +546,7 @@ class PersonResideAt(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> AddressHostsPerson:
+    def invert(self) -> AddressHostsPerson:
         return AddressHostsPerson(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -560,7 +560,7 @@ class PhoneBelongsToCompany(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> CompanyHasPhone:
+    def invert(self) -> CompanyHasPhone:
         return CompanyHasPhone(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -574,7 +574,7 @@ class PhoneBelongsToPerson(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> PersonHasPhone:
+    def invert(self) -> PersonHasPhone:
         return PersonHasPhone(source_id=self.target_id, target_id=self.source_id)
 
 
@@ -588,7 +588,7 @@ class PoliticalExposureOfPerson(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> PersonHasPoliticalExposure:
+    def invert(self) -> PersonHasPoliticalExposure:
         return PersonHasPoliticalExposure(
             source_id=self.target_id, target_id=self.source_id
         )
@@ -613,7 +613,7 @@ class PossiblyMatches[NodeID: UUID](
         )
 
     @override
-    def inverted(self) -> None:
+    def invert(self) -> None:
         return None
 
 
@@ -627,7 +627,7 @@ class SanctionAppliedToCompany(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> CompanyReceivedSanction:
+    def invert(self) -> CompanyReceivedSanction:
         return CompanyReceivedSanction(
             source_id=self.target_id, target_id=self.source_id
         )
@@ -643,7 +643,7 @@ class SanctionAppliedToPerson(
         super().__init__(source_id=source_id, target_id=target_id)
 
     @override
-    def inverted(self) -> PersonReceivedSanction:
+    def invert(self) -> PersonReceivedSanction:
         return PersonReceivedSanction(
             source_id=self.target_id, target_id=self.source_id
         )
@@ -679,7 +679,7 @@ class TextSourceMentionsAddress(
         return super()._calculate_id(**_pattern_name_as_text(kwargs))
 
     @override
-    def inverted(self) -> AddressMentionedInText:
+    def invert(self) -> AddressMentionedInText:
         return AddressMentionedInText(
             source_id=self.target_id,
             target_id=self.source_id,
@@ -718,7 +718,7 @@ class TextSourceMentionsCompany(
         return super()._calculate_id(**_pattern_name_as_text(kwargs))
 
     @override
-    def inverted(self) -> CompanyMentionedInText:
+    def invert(self) -> CompanyMentionedInText:
         return CompanyMentionedInText(
             source_id=self.target_id,
             target_id=self.source_id,
@@ -757,7 +757,7 @@ class TextSourceMentionsPerson(
         return super()._calculate_id(**_pattern_name_as_text(kwargs))
 
     @override
-    def inverted(self) -> PersonMentionedInText:
+    def invert(self) -> PersonMentionedInText:
         return PersonMentionedInText(
             source_id=self.target_id,
             target_id=self.source_id,

@@ -58,6 +58,21 @@ class GraphBrokenInversionError(GraphError, error_code="GRAPH_BROKEN_INVERSION")
         )
 
 
+class GraphDuplicateEntityError(GraphError, error_code="GRAPH_DUPLICATE_ENTITY"):
+    entity_id: UUID
+
+    @override
+    def __init__(self, *, entity_id: UUID) -> None:
+        super().__init__(entity_id=entity_id)
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"'{self.entity_id}' appears in the graph with more than one version. "
+            f"A graph holds exactly one version of each node and edge."
+        )
+
+
 class GraphInconsistentError(GraphError, error_code="GRAPH_INCONSISTENT"):
     @override
     def __init__(self) -> None:

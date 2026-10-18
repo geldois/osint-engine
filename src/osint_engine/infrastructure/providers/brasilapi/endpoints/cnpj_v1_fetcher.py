@@ -18,7 +18,7 @@ from osint_engine.infrastructure.providers.brasilapi.endpoints.cnpj_v1_mapper im
 from osint_engine.infrastructure.providers.payload import Payload
 
 if TYPE_CHECKING:
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 
 class BrasilAPICNPJv1Fetcher(BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/"):
@@ -27,7 +27,7 @@ class BrasilAPICNPJv1Fetcher(BrasilAPIFetcher, CNPJFetcher, url_suffix="cnpj/v1/
         super().__init__(http_client=http_client)
 
     @override
-    async def fetch(self, *, cnpj: str) -> EntityRevision[Graph]:
+    async def fetch(self, *, cnpj: str) -> EntityRevision[CompositeGraph]:
         self._logger.info("cnpj.fetch.start", cnpj=cnpj)
 
         try:

@@ -12,12 +12,12 @@ from osint_engine.application.errors.text_ingestion_error import (
 )
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.application.text_ingestion.extraction import extract_matches
-from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.edges import (
     AddressMentionedInText,
     CompanyMentionedInText,
     PersonMentionedInText,
 )
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Address, Company, Person, TextSource
 
 if TYPE_CHECKING:
@@ -132,7 +132,7 @@ async def _resolve_node(*, uow: UoW, match: ExtractedMatch) -> Node[UUID]:
     return existing.entity if existing is not None else stub
 
 
-class IngestText(Query[EntityRevision[Graph]]):
+class IngestText(Query[EntityRevision[CompositeGraph]]):
     uow_factory: Callable[[], UoW]
     patterns: frozenset[str]
     text: str
@@ -148,7 +148,7 @@ class IngestText(Query[EntityRevision[Graph]]):
         super().__init__(uow_factory=uow_factory, patterns=patterns, text=text)
 
     @override
-    async def execute(self) -> EntityRevision[Graph]:
+    async def execute(self) -> EntityRevision[CompositeGraph]:
         _logger.info("text_ingestion.start", patterns=self.patterns)
 
         fetched_at = datetime.now(tz=UTC)
@@ -176,7 +176,7 @@ class IngestText(Query[EntityRevision[Graph]]):
                 nodes.add(node)
                 edges.add(edge)
 
-            graph = Graph(
+            graph = CompositeGraph(
                 edges=frozenset(edges), nodes=frozenset(nodes), root_id=text_source.id
             )
 

@@ -8,6 +8,7 @@ import pytest
 
 from osint_engine.application.consumption.entity_record import EntityRecord
 from osint_engine.domain.value_objects.entity_ref import EntityRef
+from tests.fakes.domain import FakeNode
 
 if TYPE_CHECKING:
     from tests.fixtures.application import MakeEntityRecord
@@ -32,7 +33,8 @@ class TestEntityRecordConstruction:
         self, make_entity_record: MakeEntityRecord
     ) -> None:
         expanded = make_entity_record(
-            outcome="expanded", entity_ref=EntityRef(id=uuid4(), content_id=uuid4())
+            outcome="expanded",
+            entity_ref=EntityRef(entity_type=FakeNode, id=uuid4(), content_id=uuid4()),
         )
         empty = make_entity_record(outcome="empty", entity_ref=None)
 

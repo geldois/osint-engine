@@ -20,8 +20,9 @@ in-memory snapshot with no framework and no external dependency — appropriate 
 needs to survive a process restart and nothing needs to coordinate concurrent writers. Beyond looking an entity up by
 its own identity, the in-memory store can also list every currently-known entity of a given kind at once — the one
 lookup shape the possible-match workflow needs and the identity-keyed storage didn't offer before, added narrowly for
-that purpose rather than as a general query capability. Two kinds of data that must outlive a restart — the user
-accounts callers create (a username and its password hash) and the external credentials they save for each paid
+that purpose rather than as a general query capability. A stored graph keeps only a reference to each of its entities
+and relationships, and is rebuilt from the entity stores on every read. Two kinds of data that must outlive a restart —
+the user accounts callers create (a username and its password hash) and the external credentials they save for each paid
 provider, encrypted at rest — live in a real relational database instead; keeping accounts there is what stops a restart
 from leaving a stored provider key behind with no owner for a later signup to inherit. Accounts have no in-memory
 implementation at all: the in-memory copy that once existed was deleted rather than kept as a second source of truth.
@@ -110,6 +111,11 @@ underneath rather than a specific, documented one, until someone reproduces it a
   a single process by construction. Only accounts and external credentials survive, because they sit in PostgreSQL. When
   the real adapter lands, `GraphRepository.list_all_revisions()` (a full scan today, with `ListGraphCatalog` as its only
   caller) is the one method to replace with an aggregated projection. Do it before any data that must outlive a deploy
+- **Every `MemGraphRepository` read rebuilds each graph one entity lookup at a time.** A stored graph holds only a
+  reference per node and edge, so `find`, `get` and every `list_*` rehydrate through the node and edge repositories'
+  batch reads, which in memory are a sequential `find` per reference; `list_all_revisions` therefore rebuilds every
+  stored graph for `ListGraphCatalog`, which needs only the metadata. Harmless in memory; the Postgres adapter needs a
+  real batched read and a lightweight read of the flattened form for the catalog and the history
 - **`MemGraphRepository.merge` stores a graph's nodes and edges one lookup at a time, in two near-identical blocks.**
   Every node and every edge costs a sequential `find` before the batch write, so cost grows with graph size, and the
   node and edge paths must be kept in step by hand. Harmless in memory; the Postgres adapter should resolve both with

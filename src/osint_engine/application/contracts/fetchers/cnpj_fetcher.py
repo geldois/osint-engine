@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from osint_engine.application.revision.entity_revision import EntityRevision
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 
 class CNPJFetcher(ABC):
     @abstractmethod
-    async def fetch(self, *, cnpj: str) -> EntityRevision[Graph]:
+    async def fetch(self, *, cnpj: str) -> EntityRevision[CompositeGraph]:
         raise NotImplementedError

@@ -18,10 +18,10 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.history.list_graph_catalog import (
         GraphCatalogEntry,
     )
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 
-def graph_to_schema(revision: EntityRevision[Graph], /) -> GraphSchema:
+def graph_to_schema(revision: EntityRevision[CompositeGraph], /) -> GraphSchema:
     graph = revision.entity
     revision_schema = revision_to_schema(revision)
 

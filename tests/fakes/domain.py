@@ -55,7 +55,7 @@ class FakeEdge(
         )
 
     @override
-    def inverted(self) -> None:
+    def invert(self) -> None:
         return None
 
 
@@ -73,7 +73,7 @@ class FakeDefaultEdge(
         )
 
     @override
-    def inverted(self) -> None:
+    def invert(self) -> None:
         return None
 
 
@@ -91,7 +91,7 @@ class FakeOneWayEdge(
         )
 
     @override
-    def inverted(self) -> FakeEdge:
+    def invert(self) -> FakeEdge:
         return FakeEdge(
             source_id=self.target_id, target_id=self.source_id, content=self.content
         )

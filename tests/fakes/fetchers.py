@@ -16,90 +16,90 @@ from osint_engine.application.contracts.fetchers.pep_fetcher import PEPFetcher
 if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import ExternalCredential
     from osint_engine.application.revision.entity_revision import EntityRevision
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 
 class FakeCNPJFetcher(CNPJFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph]) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph]) -> None:
         self.revision = revision
 
     @override
-    async def fetch(self, *, cnpj: str) -> EntityRevision[Graph]:
+    async def fetch(self, *, cnpj: str) -> EntityRevision[CompositeGraph]:
         return self.revision
 
 
 class FakeCPFFetcher(CPFFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph] | None) -> None:
         self.revision = revision
 
     @override
     async def fetch(
         self, *, cpf: str, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         return self.revision
 
 
 class FakeCEISFetcher(CEISFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph] | None) -> None:
         self.revision = revision
 
     @override
     async def fetch(
         self, *, cpf_or_cnpj: str, ceis_id: int | None, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         return self.revision
 
 
 class FakeCNEPFetcher(CNEPFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph] | None) -> None:
         self.revision = revision
 
     @override
     async def fetch(
         self, *, cpf_or_cnpj: str, cnep_id: int | None, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         return self.revision
 
 
 class FakeCEPIMFetcher(CEPIMFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph] | None) -> None:
         self.revision = revision
 
     @override
     async def fetch(
         self, *, cnpj: str, cepim_id: int | None, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         return self.revision
 
 
 class FakeCEAFFetcher(CEAFFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph] | None) -> None:
         self.revision = revision
 
     @override
     async def fetch(
         self, *, cpf: str, ceaf_id: int | None, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         return self.revision
 
 
 class FakePEPFetcher(PEPFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph] | None) -> None:
         self.revision = revision
 
     @override
     async def fetch(
         self, *, cpf: str, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         return self.revision
 
 
 class FakeLegalProcessFetcher(LegalProcessFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph] | None) -> None:
         self.revision = revision
 
     @override
     async def fetch(
         self, *, cpf_or_cnpj: str, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         return self.revision

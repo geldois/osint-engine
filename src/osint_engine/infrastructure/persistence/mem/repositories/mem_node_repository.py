@@ -81,11 +81,6 @@ class MemNodeRepository(NodeRepository):
         return await self._save(revision=merged)
 
     @override
-    async def merge_many(self, *, revisions: frozenset[NodeRevision]) -> None:
-        for revision in revisions:
-            await self.merge(revision=revision)
-
-    @override
     async def list_revisions(self, *, id_: UUID) -> tuple[NodeRevision, ...]:
         return tuple(self.nodes.get(id_, {}).values())
 

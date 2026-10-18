@@ -10,6 +10,7 @@ from osint_engine.interface.http.presenters.entity_record_presenter import (
 from osint_engine.interface.http.schemas.entity_record_schema import (
     EntityRecordSchema,
 )
+from tests.fakes.domain import FakeNode
 
 if TYPE_CHECKING:
     from tests.fixtures.application import MakeEntityRecord
@@ -34,7 +35,7 @@ class TestEntityRecordPresenterFieldMapping:
     def test_maps_a_present_entity_ref(
         self, make_entity_record: MakeEntityRecord
     ) -> None:
-        ref = EntityRef(id=uuid4(), content_id=uuid4())
+        ref = EntityRef(entity_type=FakeNode, id=uuid4(), content_id=uuid4())
         record = make_entity_record(outcome="expanded", entity_ref=ref)
 
         result = entity_record_to_schema(record)

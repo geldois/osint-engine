@@ -15,7 +15,7 @@ from osint_engine.application.use_cases.expansion.expand_by_legal_process import
     ExpandByLegalProcess,
 )
 from osint_engine.application.use_cases.expansion.expand_by_pep import ExpandByPEP
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Person
 from tests.fakes.fetchers import (
     FakeCEAFFetcher,
@@ -40,7 +40,7 @@ _CPF = "10000000000"
 _CNPJ = "10000000000000"
 
 
-def _person_graph() -> Graph:
+def _person_graph() -> CompositeGraph:
     person = Person(
         age_range=None,
         birthdate=None,
@@ -50,7 +50,9 @@ def _person_graph() -> Graph:
         registration_status=None,
     )
 
-    return Graph(edges=frozenset(), nodes=frozenset({person}), root_id=person.id)
+    return CompositeGraph(
+        edges=frozenset(), nodes=frozenset({person}), root_id=person.id
+    )
 
 
 class _Executable(Protocol):
@@ -58,7 +60,7 @@ class _Executable(Protocol):
 
 
 type _UoWFactory = Callable[[], UoW]
-type _Revision = EntityRevision[Graph]
+type _Revision = EntityRevision[CompositeGraph]
 
 
 def _ceaf(uow: _UoWFactory, revision: _Revision, username: str) -> _Executable:

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from osint_engine.application.contracts.uow import UoW
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 
 async def ensure_person_logged(  # noqa: PLR0913
@@ -21,7 +21,7 @@ async def ensure_person_logged(  # noqa: PLR0913
     provider: str,
     username: str,
     requested_at: datetime,
-    revision: EntityRevision[Graph] | None,
+    revision: EntityRevision[CompositeGraph] | None,
 ) -> None:
     stub = person_stub(cpf)
     stub_revision = EntityRevision(
@@ -33,7 +33,7 @@ async def ensure_person_logged(  # noqa: PLR0913
         record=EntityRecord(
             id=uuid4(),
             entity_id=stub.id,
-            entity_ref=stub_revision.ref,
+            entity_ref=stub_revision.entity.ref,
             outcome="empty" if revision is None else "expanded",
             provider=provider,
             requested_at=requested_at,
@@ -49,7 +49,7 @@ async def ensure_company_logged(  # noqa: PLR0913
     provider: str,
     username: str,
     requested_at: datetime,
-    revision: EntityRevision[Graph] | None,
+    revision: EntityRevision[CompositeGraph] | None,
 ) -> None:
     stub = company_stub(cnpj)
     stub_revision = EntityRevision(
@@ -61,7 +61,7 @@ async def ensure_company_logged(  # noqa: PLR0913
         record=EntityRecord(
             id=uuid4(),
             entity_id=stub.id,
-            entity_ref=stub_revision.ref,
+            entity_ref=stub_revision.entity.ref,
             outcome="empty" if revision is None else "expanded",
             provider=provider,
             requested_at=requested_at,

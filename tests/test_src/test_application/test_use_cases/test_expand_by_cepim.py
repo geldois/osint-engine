@@ -15,7 +15,7 @@ from tests.fakes.fetchers import FakeCEPIMFetcher
 if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import ExternalCredential
     from osint_engine.application.revision.entity_revision import EntityRevision
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
     from tests.fixtures.application import (
         MakeEntityRecord,
         MakeEntityRevision,
@@ -23,7 +23,12 @@ if TYPE_CHECKING:
     )
     from tests.fixtures.domain import MakeGraph
     from tests.fixtures.fetchers import MakeFakeCEPIMFetcher
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
+    from tests.fixtures.persistence import (
+        MakeMemGraphRepository,
+        MakeMemStorage,
+        MakeMemUoW,
+        MakeMemUoWFactory,
+    )
 
 _CNPJ = "10000000000000"
 
@@ -78,6 +83,7 @@ class TestExpandByCEPIMOrchestration:
     @pytest.mark.asyncio
     async def test_persists_the_fetched_revision_to_storage(
         self,
+        make_mem_graph_repository: MakeMemGraphRepository,
         make_entity_revision: MakeEntityRevision,
         make_external_credential: MakeExternalCredential,
         make_fake_cepim_fetcher: MakeFakeCEPIMFetcher,
@@ -104,7 +110,11 @@ class TestExpandByCEPIMOrchestration:
 
         graph = revision.entity
 
-        assert mem_storage.graphs[graph.id][graph.content_id] is revision
+        stored = await make_mem_graph_repository(mem_storage=mem_storage).get(
+            id_=graph.id, content_id=graph.content_id
+        )
+
+        assert stored == revision
 
     @pytest.mark.asyncio
     async def test_raises_when_credential_is_missing(
@@ -155,14 +165,14 @@ class TestExpandByCEPIMOrchestration:
 
 
 class _CountingCEPIMFetcher(FakeCEPIMFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph] | None) -> None:
         super().__init__(revision=revision)
         self.call_count = 0
 
     @override
     async def fetch(
         self, *, cnpj: str, cepim_id: int | None, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         self.call_count += 1
 
         return await super().fetch(cnpj=cnpj, cepim_id=cepim_id, credential=credential)

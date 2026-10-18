@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 from httpx2 import Request, RequestError, Response
 
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.infrastructure.errors.provider_error import ProviderRequestError
 from tests.data.brasilapi import CNPJ, COMPLETE_PAYLOAD_DATA
 
@@ -83,7 +83,7 @@ class TestBrasilAPICNPJv1FetcherOnSuccess:
 
         result = await fetcher.fetch(cnpj=CNPJ)
 
-        assert isinstance(result.entity, Graph)
+        assert isinstance(result.entity, CompositeGraph)
 
         assert result.fetched_at.tzinfo is UTC
 

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
     from osint_engine.application.contracts.uow import UoW
     from osint_engine.application.revision.entity_revision import EntityRevision
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 _logger = get_logger()
 
@@ -24,7 +24,7 @@ _logger = get_logger()
 @dataclass(eq=True, frozen=True, kw_only=True)
 class GraphCatalogEntry:
     fetched_routes: frozenset[str]
-    revisions: tuple[EntityRevision[Graph], ...]
+    revisions: tuple[EntityRevision[CompositeGraph], ...]
 
 
 class ListGraphCatalog(Query[tuple[GraphCatalogEntry, ...]]):
@@ -43,7 +43,7 @@ class ListGraphCatalog(Query[tuple[GraphCatalogEntry, ...]]):
         async with self.uow_factory() as uow:
             revisions = await uow.graphs.list_all_revisions()
 
-            by_root: dict[UUID, list[EntityRevision[Graph]]] = {}
+            by_root: dict[UUID, list[EntityRevision[CompositeGraph]]] = {}
 
             for revision in revisions:
                 by_root.setdefault(revision.entity.root_id, []).append(revision)

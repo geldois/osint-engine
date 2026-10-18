@@ -181,6 +181,40 @@ class EntityInvalidIdentifierError(
         )
 
 
+class EntityRefMismatchError(EntityError, error_code="ENTITY_REF_MISMATCH"):
+    subject: type[Entity[UUID]]
+    ref_id: UUID
+    ref_content_id: UUID
+    entity_id: UUID
+    entity_content_id: UUID
+
+    @override
+    def __init__(
+        self,
+        *,
+        subject: type[Entity[UUID]],
+        ref_id: UUID,
+        ref_content_id: UUID,
+        entity_id: UUID,
+        entity_content_id: UUID,
+    ) -> None:
+        super().__init__(
+            subject=subject,
+            ref_id=ref_id,
+            ref_content_id=ref_content_id,
+            entity_id=entity_id,
+            entity_content_id=entity_content_id,
+        )
+
+    @override
+    def _build_message(self) -> str:
+        return (
+            f"'{self.subject.__name__}' does not match its reference: "
+            f"expected id '{self.ref_id}' and content id '{self.ref_content_id}', "
+            f"got id '{self.entity_id}' and content id '{self.entity_content_id}'."
+        )
+
+
 class EntityNotFoundError(
     EntityError, error_code="ENTITY_NOT_FOUND", category=ErrorCategory.NOT_FOUND
 ):

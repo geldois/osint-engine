@@ -20,7 +20,7 @@ from osint_engine.infrastructure.providers.portal_transparencia.portal_transpare
 
 if TYPE_CHECKING:
     from osint_engine.application.auth.external_credential import ExternalCredential
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 
 class PortalTransparenciaCNEPFetcher(
@@ -33,7 +33,7 @@ class PortalTransparenciaCNEPFetcher(
     @override
     async def fetch(
         self, *, cpf_or_cnpj: str, cnep_id: int | None, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         self._logger.info("cnep.fetch.start", cpf_or_cnpj=cpf_or_cnpj, cnep_id=cnep_id)
 
         try:

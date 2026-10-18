@@ -43,7 +43,7 @@ class TestMemGraphRepositoryFind:
             mem_storage=make_mem_storage(graphs=[revision])
         )
 
-        assert await repo.find(id_=revision.entity.id) is revision
+        assert await repo.find(id_=revision.entity.id) == revision
 
     @pytest.mark.asyncio
     async def test_returns_the_exact_revision_by_content_id(
@@ -62,7 +62,7 @@ class TestMemGraphRepositoryFind:
             id_=revision.entity.id, content_id=revision.entity.content_id
         )
 
-        assert found is revision
+        assert found == revision
 
     @pytest.mark.asyncio
     async def test_returns_none_for_unknown_content_id(
@@ -94,7 +94,7 @@ class TestMemGraphRepositoryGet:
             mem_storage=make_mem_storage(graphs=[revision])
         )
 
-        assert await repo.get(id_=revision.entity.id) is revision
+        assert await repo.get(id_=revision.entity.id) == revision
 
     @pytest.mark.asyncio
     async def test_raises_with_id_and_subject_when_absent(
@@ -258,10 +258,11 @@ class TestMemGraphRepositoryMerge:
 
         assert returned is revision
 
-        assert (
-            mem_storage.graphs[revision.entity.id][revision.entity.content_id]
-            is revision
-        )
+        stored = mem_storage.graphs[revision.entity.id][revision.entity.content_id]
+
+        assert stored.entity.nodes == revision.entity.flatten().nodes
+
+        assert stored.entity.edges == revision.entity.flatten().edges
 
     @pytest.mark.asyncio
     async def test_with_an_existing_identical_graph_stores_the_newest_revision(

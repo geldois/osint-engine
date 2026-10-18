@@ -3,7 +3,6 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.edges import (
     CompanyHasCnae,
     CompanyHasEmail,
@@ -13,6 +12,7 @@ from osint_engine.domain.entities.edges import (
     CompanyOwnsCompany,
     PersonOwnsCompany,
 )
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import (
     Address,
     Cnae,
@@ -219,7 +219,7 @@ def _map_company_partners_and_ownerships(
     return companies, ownerships
 
 
-def map_graph(*, payload: Payload) -> Graph:
+def map_graph(*, payload: Payload) -> CompositeGraph:
     address = _map_address(payload=payload)
     cnaes = _map_cnaes(payload=payload)
     company = _map_company(payload=payload)
@@ -260,4 +260,6 @@ def map_graph(*, payload: Payload) -> Graph:
     if email is not None:
         edges |= {CompanyHasEmail(source_id=company.id, target_id=email.id)}
 
-    return Graph(edges=frozenset(edges), nodes=frozenset(nodes), root_id=company.id)
+    return CompositeGraph(
+        edges=frozenset(edges), nodes=frozenset(nodes), root_id=company.id
+    )

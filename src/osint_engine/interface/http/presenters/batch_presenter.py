@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from osint_engine.application.use_cases.expansion.expand_by_cpf_batch import (
         BatchOutcome,
     )
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 
 def batch_estimate_to_schema(
@@ -33,7 +33,9 @@ def batch_estimate_to_schema(
 
 
 def batch_result_to_schema(
-    revision: EntityRevision[Graph] | None, outcomes: tuple[BatchOutcome, ...], /
+    revision: EntityRevision[CompositeGraph] | None,
+    outcomes: tuple[BatchOutcome, ...],
+    /,
 ) -> BatchCPFResultSchema:
     graph = graph_to_schema(revision) if revision is not None else None
 

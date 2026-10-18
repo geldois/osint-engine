@@ -79,7 +79,7 @@ def make_entity_record() -> MakeEntityRecord:
     def entity_record(
         *,
         entity_id: UUID | None = None,
-        entity_ref: EntityRef | None = None,
+        entity_ref: EntityRef[Entity[UUID], UUID] | None = None,
         outcome: ConsumptionOutcome = "expanded",
         provider: str = "test_provider",
         requested_at: datetime | None = None,

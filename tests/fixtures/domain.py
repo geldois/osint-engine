@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 from tests.fakes.domain import FakeEdge, FakeMergeableNode, FakeNode
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 type MakeFakeEdge = Callable[..., FakeEdge]
 type MakeFakeNode = Callable[..., FakeNode]
 type MakeFakeMergeableNode = Callable[..., FakeMergeableNode]
-type MakeGraph = Callable[..., Graph]
+type MakeGraph = Callable[..., CompositeGraph]
 
 
 @pytest.fixture
@@ -67,12 +67,12 @@ def make_graph(make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode) -> Ma
         edges: Iterable[Edge[UUID, UUID, UUID]] | None = None,
         nodes: Iterable[Node[UUID]] | None = None,
         root_id: UUID | None = None,
-    ) -> Graph:
+    ) -> CompositeGraph:
         node_a = make_fake_node()
         node_b = make_fake_node()
         edge = make_fake_edge(source_id=node_a.id, target_id=node_b.id)
 
-        return Graph(
+        return CompositeGraph(
             edges=frozenset(edges) if edges is not None else frozenset({edge}),
             nodes=frozenset(nodes)
             if nodes is not None

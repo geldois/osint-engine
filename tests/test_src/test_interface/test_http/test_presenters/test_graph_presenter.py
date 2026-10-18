@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 from osint_engine.application.use_cases.history.list_graph_catalog import (
     GraphCatalogEntry,
 )
-from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.edges import CnaeClassifiesCompany, CompanyHasCnae
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Cnae, Company
 from osint_engine.interface.http.presenters.graph_presenter import (
     graph_catalog_to_schema,
@@ -40,7 +40,7 @@ _COMPANY = Company(
 _CNAE = Cnae(code="0101-3/01", description="Cultivo de arroz")
 _EDGE = CompanyHasCnae(source_id=_COMPANY.id, target_id=_CNAE.id)
 _INVERSE_EDGE = CnaeClassifiesCompany(source_id=_CNAE.id, target_id=_COMPANY.id)
-_GRAPH = Graph(
+_GRAPH = CompositeGraph(
     nodes=frozenset({_COMPANY, _CNAE}),
     edges=frozenset({_EDGE}),
     root_id=_COMPANY.id,
@@ -229,7 +229,7 @@ class TestGraphCatalogPresenter:
     def test_root_is_the_only_node_when_the_graph_has_a_single_node(
         self, make_entity_revision: MakeEntityRevision
     ) -> None:
-        lone_graph = Graph(
+        lone_graph = CompositeGraph(
             nodes=frozenset({_CNAE}), edges=frozenset(), root_id=_CNAE.id
         )
         revision = make_entity_revision(entity=lone_graph)
@@ -243,7 +243,7 @@ class TestGraphCatalogPresenter:
     def test_multiple_entries_are_each_mapped_independently(
         self, make_entity_revision: MakeEntityRevision
     ) -> None:
-        other_graph = Graph(
+        other_graph = CompositeGraph(
             nodes=frozenset({_CNAE}), edges=frozenset(), root_id=_CNAE.id
         )
         entry_a = GraphCatalogEntry(

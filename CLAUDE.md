@@ -11,11 +11,12 @@ Only what no other source holds. Everything else is owned elsewhere — go there
 
 Every commit, by anyone, runs the full gate through `.githooks/pre-commit` and is refused if anything fails. So: edit,
 review the docs against the change and edit those too, run `uv run python -m scripts fix` (the only tool you run
-routinely), stage everything, commit — code and docs together. Never run a linter, formatter, type-checker or test
-yourself, not on one file and not on the whole repo; iterate from the hook's own failure output. The hook also refuses a
-dirty tree, so nothing may be left unstaged or untracked at commit time. See README.md's Quality gates section for what
-it runs. Needs Docker (the Postgres persistence tests use `testcontainers`) — no `.env` is required for `check`, only
-for the periodic `scripts fixtures` refresh.
+routinely), stage everything, commit — code and docs together. Any other linter, formatter, type-checker or test tool
+(ruff, basedpyright, pytest and the rest) runs only when the user explicitly asks for it or allows it in that message,
+never on your own initiative. `scripts check` and `scripts comments` are run only by the pre-commit hook and CI, never
+by you, even if asked. The hook also refuses a dirty tree, so nothing may be left unstaged or untracked at commit time.
+See README.md's Quality gates section for what it runs. Needs Docker (the Postgres persistence tests use
+`testcontainers`) — no `.env` is required for `check`, only for the periodic `scripts fixtures` refresh.
 
 Docs describe the repo exactly as it is and are the only place a decision lives. Mandatory before every commit: after
 the last edit of the turn, investigate every doc, not merely read it: `README.md` and each `docs/architecture/*.md`,
@@ -24,7 +25,10 @@ a doc makes (command, path, version, count, route, variable, behaviour, limit, r
 workflows to confirm it still holds, and correct or delete whatever is wrong, outdated or deprecated, including what
 this change made stale without adding anything: remove each open problem the change resolved, purge every mention of
 anything removed, recount counts and lists, delete diagram nodes for things that are gone. A doc left unchanged must be
-one you verified. The commit carries code and docs together. What is left to fix lives only in the `## Open problems`
+one you verified. The investigation happens at the moment of each doc write, in the same step as the edit: read the code
+the sentence describes right then, never from an earlier reading in the turn, because the tree changes under you. That
+holds for a new Open problems entry as much as for any other claim: confirm the problem still exists immediately before
+writing it down. The commit carries code and docs together. What is left to fix lives only in the `## Open problems`
 section of the owning `docs/architecture/*.md`; that section alone may name files and symbols, the rest of the docs
 never does, and a fact lives in one document only: a limit accepted by design is a Consequence, never also an open
 problem. Docs are written in natural language, never citing a function, class or type name.

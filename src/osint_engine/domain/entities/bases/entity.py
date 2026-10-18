@@ -28,6 +28,7 @@ from osint_engine.domain.errors.entity_error import (
     EntityMissingIDTypeError,
     EntityNonDeterministicValueError,
 )
+from osint_engine.domain.value_objects.entity_ref import EntityRef
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -210,6 +211,11 @@ class Entity(ABC, Generic[IDType_co]):  # noqa: UP046
     @final
     def init_parameters(cls) -> dict[str, object]:
         return dict(_constructor_parameters(subject=cls))
+
+    @property
+    @final
+    def ref(self) -> EntityRef[Self, IDType_co]:
+        return EntityRef(entity_type=type(self), id=self.id, content_id=self.content_id)
 
     @final
     def evolve(self, **changes: object) -> Self:

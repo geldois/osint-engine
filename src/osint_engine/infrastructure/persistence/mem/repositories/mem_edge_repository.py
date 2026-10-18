@@ -81,10 +81,5 @@ class MemEdgeRepository(EdgeRepository):
         return await self._save(revision=merged)
 
     @override
-    async def merge_many(self, *, revisions: frozenset[EdgeRevision]) -> None:
-        for revision in revisions:
-            await self.merge(revision=revision)
-
-    @override
     async def list_revisions(self, *, id_: UUID) -> tuple[EdgeRevision, ...]:
         return tuple(self.edges.get(id_, {}).values())

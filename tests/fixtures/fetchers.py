@@ -18,7 +18,7 @@ from tests.fakes.fetchers import (
 
 if TYPE_CHECKING:
     from osint_engine.application.revision.entity_revision import EntityRevision
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
     from tests.fixtures.application import MakeEntityRevision
     from tests.fixtures.domain import MakeGraph
 
@@ -38,7 +38,7 @@ def make_fake_cnpj_fetcher(
 ) -> MakeFakeCNPJFetcher:
 
     def fake_cnpj_fetcher(
-        *, revision: EntityRevision[Graph] | None = None
+        *, revision: EntityRevision[CompositeGraph] | None = None
     ) -> FakeCNPJFetcher:
         return FakeCNPJFetcher(
             revision=revision
@@ -55,7 +55,7 @@ def make_fake_cpf_fetcher(
 ) -> MakeFakeCPFFetcher:
 
     def fake_cpf_fetcher(
-        *, revision: EntityRevision[Graph] | None = None
+        *, revision: EntityRevision[CompositeGraph] | None = None
     ) -> FakeCPFFetcher:
         return FakeCPFFetcher(
             revision=revision
@@ -72,7 +72,7 @@ def make_fake_ceis_fetcher(
 ) -> MakeFakeCEISFetcher:
 
     def fake_ceis_fetcher(
-        *, revision: EntityRevision[Graph] | None = None
+        *, revision: EntityRevision[CompositeGraph] | None = None
     ) -> FakeCEISFetcher:
         return FakeCEISFetcher(
             revision=revision
@@ -89,7 +89,7 @@ def make_fake_cnep_fetcher(
 ) -> MakeFakeCNEPFetcher:
 
     def fake_cnep_fetcher(
-        *, revision: EntityRevision[Graph] | None = None
+        *, revision: EntityRevision[CompositeGraph] | None = None
     ) -> FakeCNEPFetcher:
         return FakeCNEPFetcher(
             revision=revision
@@ -106,7 +106,7 @@ def make_fake_cepim_fetcher(
 ) -> MakeFakeCEPIMFetcher:
 
     def fake_cepim_fetcher(
-        *, revision: EntityRevision[Graph] | None = None
+        *, revision: EntityRevision[CompositeGraph] | None = None
     ) -> FakeCEPIMFetcher:
         return FakeCEPIMFetcher(
             revision=revision
@@ -123,7 +123,7 @@ def make_fake_ceaf_fetcher(
 ) -> MakeFakeCEAFFetcher:
 
     def fake_ceaf_fetcher(
-        *, revision: EntityRevision[Graph] | None = None
+        *, revision: EntityRevision[CompositeGraph] | None = None
     ) -> FakeCEAFFetcher:
         return FakeCEAFFetcher(
             revision=revision
@@ -140,7 +140,7 @@ def make_fake_pep_fetcher(
 ) -> MakeFakePEPFetcher:
 
     def fake_pep_fetcher(
-        *, revision: EntityRevision[Graph] | None = None
+        *, revision: EntityRevision[CompositeGraph] | None = None
     ) -> FakePEPFetcher:
         return FakePEPFetcher(
             revision=revision
@@ -157,7 +157,7 @@ def make_fake_legal_process_fetcher(
 ) -> MakeFakeLegalProcessFetcher:
 
     def fake_legal_process_fetcher(
-        *, revision: EntityRevision[Graph] | None = None
+        *, revision: EntityRevision[CompositeGraph] | None = None
     ) -> FakeLegalProcessFetcher:
         return FakeLegalProcessFetcher(
             revision=revision

@@ -504,7 +504,7 @@ uv run python -m scripts sqlc-generate
 
 ### Test
 
-For a human contributor, outside the gate (the agent never runs it; `scripts check` is the gate):
+For a human contributor, outside the gate (`scripts check` is the gate):
 
 ```bash
 uv run pytest --cov --cov-branch
@@ -559,8 +559,10 @@ project owns.
   lint, import-linter, basedpyright (warnings fail), dprint, sqruff, shellcheck, shfmt, actionlint (via its pinned
   Docker image) and the full pytest suite with coverage (warnings fail). `.githooks/pre-commit` and CI both run exactly
   this, and the hook first refuses a commit when anything is unstaged or untracked, so what the gate tested is exactly
-  what is committed. A partial commit therefore needs the rest stashed, and the hook prints the exact commands. A
-  failure prints only the failed gates' output, trimmed to its last 60 lines.
+  what is committed. A partial commit therefore needs the rest stashed, and the hook prints the exact commands. Each
+  gate prints a header line and then its tool's own output, straight to the terminal as the tool runs and in the tool's
+  own formatting, so each result appears the moment its gate finishes; the run ends with a verdict line. Each tool runs
+  with its least verbose output flags.
 
 `scripts mutation`, `scripts sqlc-generate`, and `scripts fixtures` stay separate, periodic, manual commands — never
 part of `check`.

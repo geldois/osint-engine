@@ -48,5 +48,5 @@ class Edge(
         super().__init__(source_id=source_id, target_id=target_id, **kwargs)
 
     @abstractmethod
-    def inverted(self) -> Edge[UUID, UUID, UUID] | None:
+    def invert(self) -> Edge[UUID, UUID, UUID] | None:
         raise NotImplementedError

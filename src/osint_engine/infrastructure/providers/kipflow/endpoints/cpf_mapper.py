@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Person
 
 if TYPE_CHECKING:
@@ -22,7 +22,9 @@ def _map_person(*, payload: Payload) -> Person:
     )
 
 
-def map_graph(*, payload: Payload) -> Graph:
+def map_graph(*, payload: Payload) -> CompositeGraph:
     person = _map_person(payload=payload)
 
-    return Graph(edges=frozenset(), nodes=frozenset({person}), root_id=person.id)
+    return CompositeGraph(
+        edges=frozenset(), nodes=frozenset({person}), root_id=person.id
+    )

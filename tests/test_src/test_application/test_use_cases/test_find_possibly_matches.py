@@ -8,8 +8,8 @@ import pytest
 from osint_engine.application.use_cases.matching.find_possibly_matches import (
     FindPossiblyMatches,
 )
-from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.edges import PossiblyMatches
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Company, Person
 
 if TYPE_CHECKING:
@@ -44,13 +44,13 @@ def _make_company(*, cnpj: str = "33754482000124") -> Company:
     )
 
 
-def _make_graph(*, node: Person | Company) -> Graph:
-    return Graph(edges=frozenset(), nodes=frozenset({node}), root_id=node.id)
+def _make_graph(*, node: Person | Company) -> CompositeGraph:
+    return CompositeGraph(edges=frozenset(), nodes=frozenset({node}), root_id=node.id)
 
 
 def _find_possibly_matches(
     *,
-    graph: Graph,
+    graph: CompositeGraph,
     make_entity_revision: MakeEntityRevision,
     make_mem_storage: MakeMemStorage,
     make_mem_uow: MakeMemUoW,

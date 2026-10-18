@@ -6,7 +6,6 @@ from uuid import UUID, uuid4
 import pytest
 
 from osint_engine.domain.entities.bases.edge import Edge
-from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.edges import (
     AddressHostsCompany,
     AddressHostsPerson,
@@ -44,6 +43,7 @@ from osint_engine.domain.entities.edges import (
     TextSourceMentionsCompany,
     TextSourceMentionsPerson,
 )
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import (
     AddressID,
     Cnae,
@@ -168,7 +168,7 @@ class TestInvertedEdges:
         forward: Edge[UUID, UUID, UUID],
         inverse_type: type[Edge[UUID, UUID, UUID]],
     ) -> None:
-        inverse = forward.inverted()
+        inverse = forward.invert()
 
         assert isinstance(inverse, inverse_type)
         assert inverse.source_id == forward.target_id
@@ -182,12 +182,12 @@ class TestInvertedEdges:
         forward: Edge[UUID, UUID, UUID],
         inverse_type: type[Edge[UUID, UUID, UUID]],
     ) -> None:
-        inverse = forward.inverted()
+        inverse = forward.invert()
 
         assert inverse is not None
         assert isinstance(inverse, inverse_type)
 
-        back = inverse.inverted()
+        back = inverse.invert()
 
         assert back == forward
         assert back is not None
@@ -201,7 +201,7 @@ class TestInvertedEdges:
         forward: Edge[UUID, UUID, UUID],
         inverse_type: type[Edge[UUID, UUID, UUID]],
     ) -> None:
-        inverse = forward.inverted()
+        inverse = forward.invert()
 
         assert isinstance(inverse, inverse_type)
         assert inverse.id != forward.id
@@ -214,7 +214,7 @@ class TestInvertedEdges:
             role="SÓCIO",
         )
 
-        inverse = forward.inverted()
+        inverse = forward.invert()
 
         assert inverse.entry_date == "2021-03-15"
         assert inverse.role == "SÓCIO"
@@ -227,7 +227,7 @@ class TestInvertedEdges:
             pattern_name=TextPatternName.CPF_LOOSE,
         )
 
-        inverse = forward.inverted()
+        inverse = forward.invert()
 
         assert inverse.matched_field == "cpf"
         assert inverse.pattern_name is TextPatternName.CPF_LOOSE
@@ -246,9 +246,9 @@ class TestInvertedEdges:
             source_id=_person_id, target_id=_company_id, confidence=Decimal("0.5")
         )
 
-        assert member.inverted() is None
-        assert owner.inverted() is None
-        assert match.inverted() is None
+        assert member.invert() is None
+        assert owner.invert() is None
+        assert match.invert() is None
 
 
 class TestGraphInversionClosure:
@@ -267,8 +267,8 @@ class TestGraphInversionClosure:
     )
     _CNAE = Cnae(code="0101-3/01", description="Cultivo de arroz")
 
-    def _graph(self, *edges: Edge[UUID, UUID, UUID]) -> Graph:
-        return Graph(
+    def _graph(self, *edges: Edge[UUID, UUID, UUID]) -> CompositeGraph:
+        return CompositeGraph(
             nodes=frozenset({self._COMPANY, self._CNAE}),
             edges=frozenset(edges),
             root_id=self._COMPANY.id,
@@ -279,7 +279,7 @@ class TestGraphInversionClosure:
 
         graph = self._graph(forward)
 
-        assert graph.edges == frozenset({forward, forward.inverted()})
+        assert graph.edges == frozenset({forward, forward.invert()})
 
     def test_graph_given_only_the_inverse_gains_the_forward_edge(self) -> None:
         inverse = CnaeClassifiesCompany(
@@ -288,7 +288,7 @@ class TestGraphInversionClosure:
 
         graph = self._graph(inverse)
 
-        assert graph.edges == frozenset({inverse, inverse.inverted()})
+        assert graph.edges == frozenset({inverse, inverse.invert()})
 
     def test_graph_given_both_directions_does_not_duplicate_them(self) -> None:
         forward = CompanyHasCnae(source_id=self._COMPANY.id, target_id=self._CNAE.id)
@@ -316,4 +316,4 @@ class TestGraphInversionClosure:
 
         merged = self._graph(forward).merge(other=self._graph(forward))
 
-        assert merged.edges == frozenset({forward, forward.inverted()})
+        assert merged.edges == frozenset({forward, forward.invert()})

@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from datetime import datetime
     from uuid import UUID
 
+    from osint_engine.domain.entities.bases.entity import Entity
     from osint_engine.domain.value_objects.entity_ref import EntityRef
 
 type ConsumptionOutcome = Literal[
@@ -18,7 +19,7 @@ type ConsumptionOutcome = Literal[
 class EntityRecord:
     id: UUID
     entity_id: UUID | None
-    entity_ref: EntityRef | None
+    entity_ref: EntityRef[Entity[UUID], UUID] | None
     outcome: ConsumptionOutcome
     provider: str
     requested_at: datetime

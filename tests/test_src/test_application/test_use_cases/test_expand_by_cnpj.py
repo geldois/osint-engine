@@ -16,7 +16,7 @@ from tests.fakes.fetchers import FakeCNPJFetcher
 if TYPE_CHECKING:
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.entity import Entity
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
     from tests.fixtures.application import (
         MakeEntityRecord,
         MakeEntityRevision,
@@ -24,7 +24,12 @@ if TYPE_CHECKING:
     )
     from tests.fixtures.domain import MakeGraph
     from tests.fixtures.fetchers import MakeFakeCNPJFetcher
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
+    from tests.fixtures.persistence import (
+        MakeMemGraphRepository,
+        MakeMemStorage,
+        MakeMemUoW,
+        MakeMemUoWFactory,
+    )
 
 _CNPJ = "10000000000000"
 
@@ -80,6 +85,7 @@ class TestExpandByCNPJOrchestration:
     @pytest.mark.asyncio
     async def test_persists_the_fetched_revision_to_storage(
         self,
+        make_mem_graph_repository: MakeMemGraphRepository,
         make_entity_revision: MakeEntityRevision,
         make_fake_cnpj_fetcher: MakeFakeCNPJFetcher,
         make_graph: MakeGraph,
@@ -103,7 +109,11 @@ class TestExpandByCNPJOrchestration:
 
         graph = revision.entity
 
-        assert mem_storage.graphs[graph.id][graph.content_id] is revision
+        stored = await make_mem_graph_repository(mem_storage=mem_storage).get(
+            id_=graph.id, content_id=graph.content_id
+        )
+
+        assert stored == revision
 
     @pytest.mark.asyncio
     async def test_returns_what_the_merge_produced_not_what_the_fetcher_supplied(
@@ -120,8 +130,7 @@ class TestExpandByCNPJOrchestration:
         stored = make_entity_revision(entity=graph, provider="already_stored")
         incoming = make_entity_revision(entity=graph, provider="just_fetched")
 
-        mem_storage = make_mem_storage()
-        mem_storage.graphs[graph.id][graph.content_id] = stored
+        mem_storage = make_mem_storage(graphs=[stored])
 
         use_case = ExpandByCNPJ(
             uow_factory=make_mem_uow_factory(
@@ -145,12 +154,12 @@ class TestExpandByCNPJOrchestration:
 
 
 class _CountingCNPJFetcher(FakeCNPJFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph]) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph]) -> None:
         super().__init__(revision=revision)
         self.call_count = 0
 
     @override
-    async def fetch(self, *, cnpj: str) -> EntityRevision[Graph]:
+    async def fetch(self, *, cnpj: str) -> EntityRevision[CompositeGraph]:
         self.call_count += 1
 
         return await super().fetch(cnpj=cnpj)

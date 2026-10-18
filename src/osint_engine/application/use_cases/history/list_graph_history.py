@@ -6,7 +6,7 @@ from structlog.stdlib import get_logger
 
 from osint_engine.application.contracts.use_case import Query
 from osint_engine.application.revision.entity_revision import EntityRevision
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 _logger = get_logger()
 
 
-class ListGraphHistory(Query[tuple[EntityRevision[Graph], ...]]):
+class ListGraphHistory(Query[tuple[EntityRevision[CompositeGraph], ...]]):
     uow_factory: Callable[[], UoW]
     root_id: UUID
 
@@ -26,7 +26,7 @@ class ListGraphHistory(Query[tuple[EntityRevision[Graph], ...]]):
         super().__init__(uow_factory=uow_factory, root_id=root_id)
 
     @override
-    async def execute(self) -> tuple[EntityRevision[Graph], ...]:
+    async def execute(self) -> tuple[EntityRevision[CompositeGraph], ...]:
         _logger.info("graph_history.list.start", root_id=str(self.root_id))
 
         async with self.uow_factory() as uow:

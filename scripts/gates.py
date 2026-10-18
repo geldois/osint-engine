@@ -6,7 +6,7 @@ import sys
 import time
 from pathlib import Path
 
-from scripts._report import Gate, GateOutcome, print_verdict
+from scripts._report import Gate, GateOutcome, print_header, print_verdict
 
 _UV_RUN = ("uv", "run", "--no-sync")
 _ACTIONLINT_IMAGE = "rhysd/actionlint:1.7.12"
@@ -21,12 +21,15 @@ WORKFLOW_FILES = (
     ".github/workflows/release.yml",
     ".github/workflows/test.yml",
 )
-_LOCK_CHECK = Gate("lock-check", ("uv", "lock", "--check"))
+_LOCK_CHECK = Gate("lock-check", ("uv", "lock", "--check", "--quiet"))
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
 _GATES: tuple[Gate, ...] = (
     Gate("comments", (*_UV_RUN, "python", "-m", "scripts", "comments")),
-    Gate("ruff-format", (*_UV_RUN, "ruff", "format", "--check", ".")),
-    Gate("ruff-check", (*_UV_RUN, "ruff", "check", ".")),
+    Gate("ruff-format", (*_UV_RUN, "ruff", "format", "--check", "--quiet", ".")),
+    Gate(
+        "ruff-check",
+        (*_UV_RUN, "ruff", "check", "--output-format", "concise", "--quiet", "."),
+    ),
     Gate(
         "import-linter",
         (*_UV_RUN, "lint-imports", "--cache-dir", ".cache/import-linter"),
@@ -34,7 +37,7 @@ _GATES: tuple[Gate, ...] = (
     Gate("basedpyright", (*_UV_RUN, "basedpyright")),
     Gate("dprint", (*_UV_RUN, "dprint", "check")),
     Gate("sqruff", (*_UV_RUN, "sqruff", "lint", "migrations", "src")),
-    Gate("shellcheck", (*_UV_RUN, "shellcheck", *SHELL_FILES)),
+    Gate("shellcheck", (*_UV_RUN, "shellcheck", "--format=gcc", *SHELL_FILES)),
     Gate("shfmt", (*_UV_RUN, "shfmt", "-d", *SHELL_FILES)),
     Gate(
         "actionlint",
@@ -75,32 +78,23 @@ def run_check() -> int:
 
 
 def _run_gate(gate: Gate, cwd: Path, env: dict[str, str]) -> GateOutcome:
+    print_header(gate.name)
     start = time.monotonic()
     try:
-        result = subprocess.run(
-            gate.command,
-            cwd=cwd,
-            env=env,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        result = subprocess.run(gate.command, cwd=cwd, env=env, check=False)
     except FileNotFoundError:
+        sys.stderr.write(
+            f"{gate.command[0]} not found — required tool missing from the "
+            f"environment; install it so this gate can run\n"
+        )
         return GateOutcome(
-            name=gate.name,
-            passed=False,
-            duration_s=time.monotonic() - start,
-            output=(
-                f"{gate.command[0]} not found — required tool missing from the "
-                f"environment; install it so this gate can run"
-            ),
+            name=gate.name, passed=False, duration_s=time.monotonic() - start
         )
 
     return GateOutcome(
         name=gate.name,
         passed=result.returncode == 0,
         duration_s=time.monotonic() - start,
-        output=(result.stdout or "") + (result.stderr or ""),
     )
 
 

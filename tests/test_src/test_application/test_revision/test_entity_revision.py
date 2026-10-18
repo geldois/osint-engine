@@ -205,16 +205,18 @@ class TestEntityRevisionRef:
             entity=_PERSON, fetched_at=_UTC, merged_at=None, provider="test_provider"
         )
 
-        assert revision.ref == EntityRef(id=_PERSON.id, content_id=_PERSON.content_id)
+        assert revision.entity.ref == EntityRef(
+            entity_type=Person, id=_PERSON.id, content_id=_PERSON.content_id
+        )
 
     def test_ref_never_swaps_id_and_content_id(self) -> None:
         revision = EntityRevision(
             entity=_PERSON, fetched_at=_UTC, merged_at=None, provider="test_provider"
         )
 
-        assert revision.ref.id == _PERSON.id
-        assert revision.ref.content_id == _PERSON.content_id
-        assert revision.ref.id != revision.ref.content_id
+        assert revision.entity.ref.id == _PERSON.id
+        assert revision.entity.ref.content_id == _PERSON.content_id
+        assert revision.entity.ref.id != revision.entity.ref.content_id
 
     def test_ref_is_not_a_dataclass_field(self) -> None:
         assert "ref" not in {

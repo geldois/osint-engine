@@ -3,11 +3,11 @@ from __future__ import annotations
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.edges import (
     CompanyIsPartyInLegalProcess,
     PersonIsPartyInLegalProcess,
 )
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Company, LegalProcess, Person
 
 if TYPE_CHECKING:
@@ -108,7 +108,7 @@ def _map_company_stub(*, cnpj: str) -> Company:
     )
 
 
-def map_graph(*, cpf_or_cnpj: str, payload: Payload) -> Graph:
+def map_graph(*, cpf_or_cnpj: str, payload: Payload) -> CompositeGraph:
     legal_process = _map_legal_process(payload=payload)
 
     party: Company | Person
@@ -127,4 +127,4 @@ def map_graph(*, cpf_or_cnpj: str, payload: Payload) -> Graph:
 
     nodes = frozenset({legal_process, party})
 
-    return Graph(edges=frozenset({edge}), nodes=nodes, root_id=party.id)
+    return CompositeGraph(edges=frozenset({edge}), nodes=nodes, root_id=party.id)

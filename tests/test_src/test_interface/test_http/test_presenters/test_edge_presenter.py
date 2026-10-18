@@ -333,7 +333,7 @@ class TestInvertedEdgePresenter:
         expected_type: str,
         revision_schema: RevisionSchema,
     ) -> None:
-        inverse = forward.inverted()
+        inverse = forward.invert()
 
         assert inverse is not None
 

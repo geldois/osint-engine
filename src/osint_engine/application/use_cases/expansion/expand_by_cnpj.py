@@ -14,7 +14,7 @@ from osint_engine.application.consumption.guard_reuse_lock import (
 )
 from osint_engine.application.contracts.use_case import Query, UseCaseRegistry
 from osint_engine.application.revision.entity_revision import EntityRevision
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 _logger = get_logger()
 
 
-class ExpandByCNPJ(Query[EntityRevision[Graph]]):
+class ExpandByCNPJ(Query[EntityRevision[CompositeGraph]]):
     uow_factory: Callable[[], UoW]
     cnpj_fetcher: CNPJFetcher
     cnpj: str
@@ -51,7 +51,7 @@ class ExpandByCNPJ(Query[EntityRevision[Graph]]):
         )
 
     @override
-    async def execute(self) -> EntityRevision[Graph]:
+    async def execute(self) -> EntityRevision[CompositeGraph]:
         _logger.info("cnpj.expansion.start", cnpj=self.cnpj, force=self.force)
 
         requested_at = datetime.now(tz=UTC)

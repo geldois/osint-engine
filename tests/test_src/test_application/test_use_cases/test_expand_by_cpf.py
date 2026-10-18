@@ -11,7 +11,7 @@ from osint_engine.application.errors.external_credential_error import (
     ExternalCredentialNotFoundError,
 )
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Person
 from tests.fakes.fetchers import FakeCPFFetcher
 
@@ -26,20 +26,25 @@ if TYPE_CHECKING:
         MakeExternalCredential,
     )
     from tests.fixtures.fetchers import MakeFakeCPFFetcher
-    from tests.fixtures.persistence import MakeMemStorage, MakeMemUoW, MakeMemUoWFactory
+    from tests.fixtures.persistence import (
+        MakeMemGraphRepository,
+        MakeMemStorage,
+        MakeMemUoW,
+        MakeMemUoWFactory,
+    )
 
 _CPF = "10000000000"
 
 
 class _CountingCPFFetcher(FakeCPFFetcher):
-    def __init__(self, *, revision: EntityRevision[Graph] | None) -> None:
+    def __init__(self, *, revision: EntityRevision[CompositeGraph] | None) -> None:
         super().__init__(revision=revision)
         self.call_count = 0
 
     @override
     async def fetch(
         self, *, cpf: str, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         self.call_count += 1
 
         return await super().fetch(cpf=cpf, credential=credential)
@@ -60,10 +65,12 @@ def _stub_id() -> UUID:
     return _make_stub().id
 
 
-def _make_kipflow_graph() -> Graph:
+def _make_kipflow_graph() -> CompositeGraph:
     person = _make_stub()
 
-    return Graph(edges=frozenset(), nodes=frozenset({person}), root_id=person.id)
+    return CompositeGraph(
+        edges=frozenset(), nodes=frozenset({person}), root_id=person.id
+    )
 
 
 class TestExpandByCPFOrchestration:
@@ -100,6 +107,7 @@ class TestExpandByCPFOrchestration:
     @pytest.mark.asyncio
     async def test_persists_the_fetched_revision_to_storage(
         self,
+        make_mem_graph_repository: MakeMemGraphRepository,
         make_entity_revision: MakeEntityRevision,
         make_external_credential: MakeExternalCredential,
         make_fake_cpf_fetcher: MakeFakeCPFFetcher,
@@ -126,7 +134,11 @@ class TestExpandByCPFOrchestration:
 
         graph = revision.entity
 
-        assert mem_storage.graphs[graph.id][graph.content_id] is revision
+        stored = await make_mem_graph_repository(mem_storage=mem_storage).get(
+            id_=graph.id, content_id=graph.content_id
+        )
+
+        assert stored == revision
 
     @pytest.mark.asyncio
     async def test_raises_when_credential_is_missing(

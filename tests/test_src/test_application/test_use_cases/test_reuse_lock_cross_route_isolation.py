@@ -12,7 +12,7 @@ from osint_engine.application.use_cases.expansion.expand_by_legal_process import
     ExpandByLegalProcess,
 )
 from osint_engine.application.use_cases.expansion.expand_by_pep import ExpandByPEP
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Person
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 _CPF = "10000000000"
 
 
-def _make_kipflow_graph() -> Graph:
+def _make_kipflow_graph() -> CompositeGraph:
     person = Person(
         age_range=None,
         birthdate=None,
@@ -39,7 +39,9 @@ def _make_kipflow_graph() -> Graph:
         registration_status=None,
     )
 
-    return Graph(edges=frozenset(), nodes=frozenset({person}), root_id=person.id)
+    return CompositeGraph(
+        edges=frozenset(), nodes=frozenset({person}), root_id=person.id
+    )
 
 
 class TestPortalTransparenciaRoutesStayIsolated:

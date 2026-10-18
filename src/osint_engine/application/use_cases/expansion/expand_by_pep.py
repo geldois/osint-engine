@@ -18,7 +18,7 @@ from osint_engine.application.errors.external_credential_error import (
     ExternalCredentialNotFoundError,
 )
 from osint_engine.application.revision.entity_revision import EntityRevision
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 _logger = get_logger()
 
 
-class ExpandByPEP(Query[EntityRevision[Graph] | None]):
+class ExpandByPEP(Query[EntityRevision[CompositeGraph] | None]):
     uow_factory: Callable[[], UoW]
     pep_fetcher: PEPFetcher
     cpf: str
@@ -57,13 +57,13 @@ class ExpandByPEP(Query[EntityRevision[Graph] | None]):
         )
 
     @override
-    async def execute(self) -> EntityRevision[Graph] | None:
+    async def execute(self) -> EntityRevision[CompositeGraph] | None:
         _logger.info("pep.expansion.start", cpf=self.cpf, force=self.force)
 
         provider = UseCaseRegistry.billing_for(type(self)).provider
         requested_at = datetime.now(tz=UTC)
         to_raise: EntityFetchError | ExternalCredentialNotFoundError | None = None
-        stored: EntityRevision[Graph] | None = None
+        stored: EntityRevision[CompositeGraph] | None = None
 
         async with self.uow_factory() as uow:
             to_raise = await find_already_fetched_error(

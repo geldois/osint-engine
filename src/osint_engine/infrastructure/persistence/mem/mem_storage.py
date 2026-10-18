@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from osint_engine.application.consumption.entity_record import EntityRecord
     from osint_engine.application.revision.entity_revision import EntityRevision
     from osint_engine.domain.entities.bases.edge import Edge
-    from osint_engine.domain.entities.bases.graph import Graph
     from osint_engine.domain.entities.bases.node import Node
+    from osint_engine.domain.entities.graphs import FlattenedGraph
     from osint_engine.domain.value_objects.pattern_set_id import PatternSetID
     from osint_engine.domain.value_objects.text_pattern import TextPatternSet
 
@@ -26,7 +26,7 @@ class MemStorage:
     edges: defaultdict[UUID, dict[UUID, EntityRevision[Edge[UUID, UUID, UUID]]]]
     entity_records: list[EntityRecord]
     external_credentials: dict[tuple[str, Provider], ExternalCredential]
-    graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]]
+    graphs: defaultdict[UUID, dict[UUID, EntityRevision[FlattenedGraph]]]
     nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]]
     pattern_sets: dict[PatternSetID, TextPatternSet]
 
@@ -38,7 +38,8 @@ class MemStorage:
         entity_records: list[EntityRecord] | None = None,
         external_credentials: dict[tuple[str, Provider], ExternalCredential]
         | None = None,
-        graphs: defaultdict[UUID, dict[UUID, EntityRevision[Graph]]] | None = None,
+        graphs: defaultdict[UUID, dict[UUID, EntityRevision[FlattenedGraph]]]
+        | None = None,
         nodes: defaultdict[UUID, dict[UUID, EntityRevision[Node[UUID]]]] | None = None,
         pattern_sets: dict[PatternSetID, TextPatternSet] | None = None,
     ) -> None:

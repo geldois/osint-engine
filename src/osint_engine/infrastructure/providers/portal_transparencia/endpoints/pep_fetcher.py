@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from httpx2 import AsyncClient
 
     from osint_engine.application.auth.external_credential import ExternalCredential
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 
 class PortalTransparenciaPEPFetcher(
@@ -35,7 +35,7 @@ class PortalTransparenciaPEPFetcher(
     @override
     async def fetch(
         self, *, cpf: str, credential: ExternalCredential
-    ) -> EntityRevision[Graph] | None:
+    ) -> EntityRevision[CompositeGraph] | None:
         self._logger.info("pep.fetch.start", cpf=cpf)
 
         try:

@@ -19,7 +19,7 @@ from osint_engine.infrastructure.providers.kipflow.in_memory_rate_limiter import
 
 if TYPE_CHECKING:
     from osint_engine.application.revision.entity_revision import EntityRevision
-    from osint_engine.domain.entities.bases.graph import Graph
+    from osint_engine.domain.entities.graphs import CompositeGraph
 
 CPF = "10000000000"
 
@@ -66,7 +66,7 @@ class TestKipFlowCPFFetcherPacing:
         for _ in range(5):
             await limiter.acquire(credential=credential)
 
-        revision: EntityRevision[Graph] | None = await fetcher.fetch(
+        revision: EntityRevision[CompositeGraph] | None = await fetcher.fetch(
             cpf=CPF, credential=credential
         )
 

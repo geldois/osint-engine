@@ -76,13 +76,17 @@ history relies on. The fix makes the composite's content-id derive from its cons
 stable identity keeps deriving from their identities alone, restoring the same separation every other entity already
 has, one level removed.
 
-A value object carrying an entity's stable identity paired with its content-derived one is now a first-class domain
+A value object carrying an entity's kind, its stable identity and its content-derived one is now a first-class domain
 concept, not an ad hoc tuple assembled at each call site. It exists because a consuming layer sometimes needs to point
 at a specific entity revision — not the entity's current state, one exact version of it — without owning a copy of that
 version's full content. Two same-typed UUIDs sitting next to each other invites the one mistake that matters here:
 silent transposition, a caller passing the stable id where the content id belongs or the reverse, with nothing at the
 type level catching it because both are the same type. The fields are therefore keyword-only by construction, so a
-transposed pair can only ever be written by naming the wrong field explicitly, never by getting the position wrong.
+transposed pair can only ever be written by naming the wrong field explicitly, never by getting the position wrong. The
+reference can also check an entity against itself, and refuses with a dedicated error unless the entity's kind, stable
+identity and content-derived identity all match; that check is how a consuming layer proves that what it fetched is the
+exact version it pointed at. The identifier's own distinct type is only enforced statically, since it is erased at run
+time.
 
 ## Consequences
 
@@ -111,19 +115,18 @@ deliberately, since collapsing the two again would silently reintroduce the same
 
 ## Open problems
 
-- **`Graph.nodes` and `Graph.edges` hold full `Node`/`Edge` content, not references.** Every stored `GraphRevision`
-  re-embeds the complete content of every node and edge it holds, even ones unchanged since the previous revision. The
-  node and edge repositories already dedupe by `content_id`; the graph repository does not reuse that. A reference-based
-  redesign (`Graph` holding an `EntityRef` per node and edge, resolved against those repositories at read time, behind a
-  new application-layer value object so no interface code touches a repository) was fully specified and deferred: it
-  touches every expansion, estimate, ingestion and matching use case under `application/use_cases/` (twelve today across
-  `expansion/`, `text_ingestion/` and `matching/`), every fetcher, every graph-shaped presenter, the mem seeder and the
-  whole domain test suite for `Graph`. Not a narrow change
+- **`FlattenedGraph` trusts whoever builds it.** `Graph` is an abstract base with `CompositeGraph` (full entities) and
+  `FlattenedGraph` (one `EntityRef` per node and edge), and `GraphRepository` stores the flattened form and rehydrates
+  through `CompositeGraph`. A ref carries no `source_id`/`target_id`, so `FlattenedGraph` cannot check endpoints or
+  inversions and those invariants hold only because `CompositeGraph.flatten` builds it. Separately, the empty-nodes and
+  missing-root checks now run after the inverse and endpoint checks, which can change which error a malformed graph
+  raises, and no test pins that order
 - **`Graph.merge` silently picks one version when both graphs hold different versions of the same node or edge.**
   Entities are equal by `id` alone, so the union of the two `frozenset`s keeps the receiver's element and drops the
   other's, and nothing in the code or the docs says that was meant: which version survives is an accident of operand
-  order. The graph's `id` is unaffected, its `content_id` is not. Decide whether the receiver wins, the newer
-  `fetched_at` wins, or divergent versions raise, and say it in the merge, not in the equality
+  order, and the one test on it only asserts that the survivor is one of the two. The graph's `id` is unaffected, its
+  `content_id` is not. Decide whether the receiver wins, the newer `fetched_at` wins, or divergent versions raise, and
+  say it in the merge, not in the equality
 - **Entity identity travels through untyped seams.** `for_content` rides inside `**kwargs` to `_calculate_id`, popped by
   the base and read with `kwargs.get` by `Graph`, so a field of that name would collide; `Graph._calculate_id` then
   `cast`s `kwargs["edges"]` and `kwargs["nodes"]`, erasing the types exactly where identity is computed. A constructor

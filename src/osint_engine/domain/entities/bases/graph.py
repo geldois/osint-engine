@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from typing import TYPE_CHECKING, NewType, cast, override
 from uuid import UUID
 
 from osint_engine.domain.entities.bases.entity import Entity
 from osint_engine.domain.errors.graph_error import (
-    GraphBrokenInversionError,
     GraphHasNoNodesError,
-    GraphInconsistentError,
     GraphRootNotInNodesError,
 )
 from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
@@ -15,17 +14,24 @@ from osint_engine.domain.value_objects.entity_namespace import EntityNAMESPACE
 if TYPE_CHECKING:
     from osint_engine.domain.entities.bases.edge import Edge
     from osint_engine.domain.entities.bases.node import Node
+    from osint_engine.domain.value_objects.entity_ref import EntityRef
 
 GraphID = NewType("GraphID", UUID)
 
+type _EdgeLike = Edge[UUID, UUID, UUID] | EntityRef[Edge[UUID, UUID, UUID], UUID]
+type _NodeLike = Node[UUID] | EntityRef[Node[UUID], UUID]
 
-class Graph(
+
+class Graph[
+    EdgeType: Edge[UUID, UUID, UUID] | EntityRef[Edge[UUID, UUID, UUID], UUID],
+    NodeType: Node[UUID] | EntityRef[Node[UUID], UUID],
+](
     Entity[GraphID],
     id_fields=frozenset({"edges", "nodes", "root_id"}),
     namespace=EntityNAMESPACE.GRAPH,
 ):
-    edges: frozenset[Edge[UUID, UUID, UUID]]
-    nodes: frozenset[Node[UUID]]
+    edges: frozenset[EdgeType]
+    nodes: frozenset[NodeType]
     root_id: UUID
 
     @override
@@ -43,13 +49,10 @@ class Graph(
             id_fields=cls.id_fields, namespace=namespace, **kwargs
         )
 
+    @abstractmethod
     @override
     def __init__(
-        self,
-        *,
-        edges: frozenset[Edge[UUID, UUID, UUID]],
-        nodes: frozenset[Node[UUID]],
-        root_id: UUID,
+        self, *, edges: frozenset[EdgeType], nodes: frozenset[NodeType], root_id: UUID
     ) -> None:
         if not nodes:
             raise GraphHasNoNodesError
@@ -57,42 +60,14 @@ class Graph(
         if not any(node.id == root_id for node in nodes):
             raise GraphRootNotInNodesError(root_id=root_id)
 
-        edges |= self._inverses_of(edges)
-
-        node_ids = frozenset({node.id for node in nodes})
-
-        if not all(
-            edge.source_id in node_ids and edge.target_id in node_ids for edge in edges
-        ):
-            raise GraphInconsistentError
-
         super().__init__(edges=edges, nodes=nodes, root_id=root_id)
-
-    @staticmethod
-    def _inverses_of(
-        edges: frozenset[Edge[UUID, UUID, UUID]], /
-    ) -> frozenset[Edge[UUID, UUID, UUID]]:
-        inverses: set[Edge[UUID, UUID, UUID]] = set()
-
-        for edge in edges:
-            inverse = edge.inverted()
-
-            if inverse is None:
-                continue
-
-            if inverse.inverted() != edge:
-                raise GraphBrokenInversionError(edge_id=edge.id)
-
-            inverses.add(inverse)
-
-        return frozenset(inverses)
 
     @classmethod
     @override
     def _calculate_id(cls, **kwargs: object) -> GraphID:
         for_content = bool(kwargs.get("for_content"))
-        edges = cast("frozenset[Edge[UUID, UUID, UUID]]", kwargs["edges"])
-        nodes = cast("frozenset[Node[UUID]]", kwargs["nodes"])
+        edges = cast("frozenset[_EdgeLike]", kwargs["edges"])
+        nodes = cast("frozenset[_NodeLike]", kwargs["nodes"])
 
         if for_content:
             kwargs["edges"] = tuple(sorted(edge.content_id for edge in edges))
@@ -102,10 +77,3 @@ class Graph(
             kwargs["nodes"] = tuple(sorted(node.id for node in nodes))
 
         return super()._calculate_id(**kwargs)
-
-    def merge(self, *, other: Graph) -> Graph:
-        return Graph(
-            edges=self.edges | other.edges,
-            nodes=self.nodes | other.nodes,
-            root_id=self.root_id,
-        )

@@ -12,8 +12,10 @@ Every commit is validated in full, automatically, by the git hook, and continuou
 command. The release and image-publishing workflows call that same workflow first and do nothing unless it passes, so
 nothing is published or deployed without every check having passed on the exact commit being shipped. A warning from any
 tool counts as a failure, and so does a missing required tool, which fails its check outright rather than being silently
-skipped. When something fails, the output of exactly the gates that broke is shown directly, trimmed to its tail, and
-nothing else: no progress display, no separate report file to dig through, and a passing run is a single line.
+skipped. Each gate prints a header line and then its tool's own output, written straight to the terminal as the tool
+runs and never captured, so it keeps the tool's own formatting and appears the moment the gate finishes; a closing
+verdict line ends the run. There is no progress display and no separate report file to dig through. Each tool runs with
+its least verbose output flags.
 
 ## Decisions
 
@@ -101,3 +103,9 @@ that same root, never a new dot-directory at the repository's own top level to r
   workflows read and that uv enforces everywhere it runs), the `build` extra that lets semantic-release install uv, the
   `Dockerfile`'s uv image tag and digest, and the two README setup steps that state it. A drifted copy in the first
   three fails loudly, but all five still move together
+- **Six gates run without a reduced-output flag.** `dprint`, `sqruff`, `basedpyright`, `shfmt`, `actionlint` and
+  `lint-imports` print their full default output, because no flag cutting it was confirmed for the pinned versions
+  (`lint-imports` 2.13 lacks `--no-logo`, which later documentation lists). Check each tool's changelog on every bump
+- **No test covers the live, unmodified output of a gate.** The tests cover the header, the verdict line and the missing
+  tool, but nothing runs a real tool through the runner to prove that its output reaches the terminal as it is produced,
+  in its own formatting and in order with the header

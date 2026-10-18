@@ -2,50 +2,44 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from scripts._report import GateOutcome, print_verdict
+from scripts._report import GateOutcome, print_header, print_verdict
 
 if TYPE_CHECKING:
     import pytest
 
 
-def test_passing_run_prints_one_line(capsys: pytest.CaptureFixture[str]) -> None:
+def test_header_is_one_line_naming_the_gate(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    print_header("ruff-check")
+
+    assert capsys.readouterr().err == "\n── ruff-check ──\n"
+
+
+def test_passing_run_ends_with_the_passed_verdict(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     outcomes = [
-        GateOutcome("a", passed=True, duration_s=0.1, output="noise"),
-        GateOutcome("b", passed=True, duration_s=0.2, output="noise"),
+        GateOutcome("a", passed=True, duration_s=0.1),
+        GateOutcome("b", passed=True, duration_s=0.2),
     ]
 
     print_verdict(outcomes)
 
     err = capsys.readouterr().err
-    assert err.count("\n") == 1
-    assert "passed · 2 gates" in err
-    assert "noise" not in err
+    assert err.splitlines()[-1].startswith("quality gates passed · 2 gates")
 
 
-def test_failing_run_names_failed_gates_and_prints_only_their_output(
+def test_failing_run_ends_with_the_failed_gates_named(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     outcomes = [
-        GateOutcome("good", passed=True, duration_s=0.1, output="fine"),
-        GateOutcome("bad", passed=False, duration_s=0.2, output="boom"),
+        GateOutcome("good", passed=True, duration_s=0.1),
+        GateOutcome("bad", passed=False, duration_s=0.2),
     ]
 
     print_verdict(outcomes)
 
     err = capsys.readouterr().err
-    assert "FAILED — bad" in err
-    assert "── bad ──\nboom" in err
-    assert "fine" not in err
-
-
-def test_long_failure_output_keeps_only_the_tail(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    output = "\n".join(f"line {n}" for n in range(200))
-
-    print_verdict([GateOutcome("bad", passed=False, duration_s=0.1, output=output)])
-
-    err = capsys.readouterr().err
-    assert "line 199" in err
-    assert "line 0\n" not in err
-    assert "earlier lines omitted" in err
+    assert err.splitlines()[-1].startswith("quality gates FAILED — bad")
+    assert "good" not in err

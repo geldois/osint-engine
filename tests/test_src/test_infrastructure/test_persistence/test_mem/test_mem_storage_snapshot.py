@@ -161,7 +161,7 @@ class TestMemStorageSnapshotCommit:
 
         new_node = make_fake_node()
         new_graph = make_graph(edges=[], nodes=[new_node], root_id=new_node.id)
-        new_graph_revision = make_entity_revision(entity=new_graph)
+        new_graph_revision = make_entity_revision(entity=new_graph.flatten())
         early_snapshot.graphs[new_graph.id][new_graph.content_id] = new_graph_revision
         early_snapshot.commit_to_storage()
 

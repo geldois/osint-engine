@@ -12,7 +12,7 @@ from osint_engine.application.contracts.use_case import Query
 from osint_engine.application.errors.entity_fetch_error import AlreadyFetchedError
 from osint_engine.application.revision.entity_revision import EntityRevision
 from osint_engine.application.use_cases.expansion.expand_by_cpf import ExpandByCPF
-from osint_engine.domain.entities.bases.graph import Graph
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Person
 from osint_engine.domain.errors.osint_error import OsintError
 from osint_engine.domain.errors.sanitization_error import InvalidCPFError
@@ -38,7 +38,7 @@ type BatchOutcome = tuple[str, BatchOutcomeStatus, str | None]
 
 
 class ExpandByCPFBatch(
-    Query[tuple[EntityRevision[Graph] | None, tuple[BatchOutcome, ...]]]
+    Query[tuple[EntityRevision[CompositeGraph] | None, tuple[BatchOutcome, ...]]]
 ):
     uow_factory: Callable[[], UoW]
     cpf_fetcher: CPFFetcher
@@ -67,7 +67,7 @@ class ExpandByCPFBatch(
     @override
     async def execute(
         self,
-    ) -> tuple[EntityRevision[Graph] | None, tuple[BatchOutcome, ...]]:
+    ) -> tuple[EntityRevision[CompositeGraph] | None, tuple[BatchOutcome, ...]]:
         _logger.info(
             "cpf.batch.expansion.start", count=len(self.cpfs), force=self.force
         )
@@ -84,7 +84,7 @@ class ExpandByCPFBatch(
         )
 
         outcomes: list[BatchOutcome] = []
-        revisions: list[EntityRevision[Graph]] = []
+        revisions: list[EntityRevision[CompositeGraph]] = []
         result_index = 0
 
         for raw_cpf, sanitized in zip(raw_cpfs, sanitized_cpfs, strict=True):
@@ -120,7 +120,7 @@ class ExpandByCPFBatch(
 
     async def _expand_one(
         self, *, cpf: str, semaphore: asyncio.Semaphore
-    ) -> tuple[BatchOutcomeStatus, str | None, EntityRevision[Graph] | None]:
+    ) -> tuple[BatchOutcomeStatus, str | None, EntityRevision[CompositeGraph] | None]:
         async with semaphore:
             try:
                 revision = await ExpandByCPF(

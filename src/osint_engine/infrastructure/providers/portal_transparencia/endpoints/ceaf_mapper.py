@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.edges import PersonReceivedSanction
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Person, Sanction
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ def _map_person_stub(*, payload: Payload) -> Person:
     )
 
 
-def map_graph(*, payload: Payload) -> Graph:
+def map_graph(*, payload: Payload) -> CompositeGraph:
     sanction = _map_sanction(payload=payload)
     person = _map_person_stub(
         payload=payload.scope(
@@ -64,6 +64,6 @@ def map_graph(*, payload: Payload) -> Graph:
     )
     edge = PersonReceivedSanction(source_id=person.id, target_id=sanction.id)
 
-    return Graph(
+    return CompositeGraph(
         edges=frozenset({edge}), nodes=frozenset({sanction, person}), root_id=person.id
     )

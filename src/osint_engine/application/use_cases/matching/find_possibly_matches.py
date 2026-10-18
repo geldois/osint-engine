@@ -8,8 +8,8 @@ from structlog.stdlib import get_logger
 
 from osint_engine.application.contracts.use_case import Query
 from osint_engine.application.revision.entity_revision import EntityRevision
-from osint_engine.domain.entities.bases.graph import Graph
 from osint_engine.domain.entities.edges import PossiblyMatches
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.entities.nodes import Person
 from osint_engine.domain.errors.document_error import InvalidMaskedDocumentError
 from osint_engine.domain.services.masked_document_matching import (
@@ -50,16 +50,18 @@ def _extract_document(*, node: Node[UUID]) -> str | None:
         return None
 
 
-class FindPossiblyMatches(Query[Graph | None]):
+class FindPossiblyMatches(Query[CompositeGraph | None]):
     uow_factory: Callable[[], UoW]
-    graph: Graph
+    graph: CompositeGraph
 
     @override
-    def __init__(self, *, uow_factory: Callable[[], UoW], graph: Graph) -> None:
+    def __init__(
+        self, *, uow_factory: Callable[[], UoW], graph: CompositeGraph
+    ) -> None:
         super().__init__(uow_factory=uow_factory, graph=graph)
 
     @override
-    async def execute(self) -> Graph | None:
+    async def execute(self) -> CompositeGraph | None:
         matches: set[PossiblyMatches[UUID]] = set()
         matched_nodes: set[Node[UUID]] = set()
         candidates_by_type: dict[
@@ -129,6 +131,6 @@ class FindPossiblyMatches(Query[Graph | None]):
 
         anchor = min(matched_nodes, key=lambda node: node.id)
 
-        return Graph(
+        return CompositeGraph(
             edges=frozenset(matches), nodes=frozenset(matched_nodes), root_id=anchor.id
         )
