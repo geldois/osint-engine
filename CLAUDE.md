@@ -51,25 +51,16 @@ fetcher against a free provider needs a matching case in `scripts/fixtures.py` â
 
 Every behaviour of this codebase is pinned by a regression test, and a change is not done while one remains: each
 success path, each failure branch, the order of validations, the winner when two versions collide, the order of a paired
-argument, and what a call must not touch. The 97% coverage floor in `pyproject.toml` is a floor, never the goal. A bug
-fix lands with the test that fails without it. A missing or loose test found anywhere is written in the same change, and
-recorded in the owning `## Open problems` only when it cannot be written yet (a paid key, a design that is still
-undecided).
+argument, and what a call must not touch. The coverage floor is a floor, never the goal. Every bug, drift or unintended
+behaviour, once corrected, lands in the same change with a regression test that fails without the fix and is named for
+the invariant it protects; an unintended behaviour kept on purpose is pinned as the decision. A missing or loose test
+found anywhere is written in the same change, and recorded in the owning `## Open problems` only when it cannot be
+written yet (a paid key, a design that is still undecided).
 
-Where pinning pays most here, in order:
-
-- **Identity against content.** Every entity has a stable `id` and a `content_id` derived from everything it holds, and
-  `==` compares `id` alone. A test of persistence, rehydration or merge therefore asserts the `content_id` and the
-  fields, never only `==`. `FakeNode` and `FakeEdge` have an `id` equal to their `content_id`, so they can never catch a
-  swapped pair or a stale version; use `FakeMergeableNode` and `FakeVersionedEdge`, whose `id` differs from their
-  `content_id`.
-- **Paid routes.** Every path that could reach a paid provider has a test that it does not, when the reuse lock, a
-  missing credential or an invalid input stops it, counting the calls on the fake fetcher the way the CPF tests do.
-- **Provider mappers.** A field a mapper reads has a recorded fixture behind it; a new mapped field comes with the
-  fixture case that carries it.
-- **Use cases read back through a repository**, never through the shape of the in-memory store or the identity of an
-  object (`is`), which breaks when nothing a caller sees has changed.
-- **Error mapping.** Every error the API can raise has its status code and body pinned.
+Pinning pays most where a wrong result is silent or costly: identity against content, where a test asserts the value
+that measures what an entity holds and not only the one equality compares, with test entities whose two differ; whatever
+spends money or cannot be undone, where a test proves it does not happen when it must not; and every boundary the system
+crosses, read back through its public seam and never through an internal representation.
 
 ## Code
 
