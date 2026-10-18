@@ -17,10 +17,17 @@ dirty tree, so nothing may be left unstaged or untracked at commit time. See REA
 it runs. Needs Docker (the Postgres persistence tests use `testcontainers`) — no `.env` is required for `check`, only
 for the periodic `scripts fixtures` refresh.
 
-Docs describe the repo exactly as it is and are the only place a decision lives. A stop hook demands the full
-investigation of every doc after any turn that edited a file here, and the commit carries code and docs together. What
-is left to fix lives only in the `## Open problems` section of the owning `docs/architecture/*.md`; that section alone
-may name files and symbols, the rest of the docs never does.
+Docs describe the repo exactly as it is and are the only place a decision lives. Mandatory before every commit: after
+the last edit of the turn, investigate every doc, not merely read it: `README.md` and each `docs/architecture/*.md`,
+Open problems sections included, and the sibling osint-studio repo's docs if the shared contract moved. For every claim
+a doc makes (command, path, version, count, route, variable, behaviour, limit, rationale) search the code, config and
+workflows to confirm it still holds, and correct or delete whatever is wrong, outdated or deprecated, including what
+this change made stale without adding anything: remove each open problem the change resolved, purge every mention of
+anything removed, recount counts and lists, delete diagram nodes for things that are gone. A doc left unchanged must be
+one you verified. The commit carries code and docs together. What is left to fix lives only in the `## Open problems`
+section of the owning `docs/architecture/*.md`; that section alone may name files and symbols, the rest of the docs
+never does, and a fact lives in one document only: a limit accepted by design is a Consequence, never also an open
+problem. Docs are written in natural language, never citing a function, class or type name.
 
 Anything that needs fixing is tracked, always, and never left to be rediscovered: any bug, accidental behaviour (what
 nobody chose), missing test coverage or lost intent found anywhere in the code, off the main flow or not, at any moment

@@ -13,8 +13,6 @@ _ACTIONLINT_IMAGE = "rhysd/actionlint:1.7.12"
 
 SHELL_FILES = (
     ".githooks/pre-commit",
-    ".claude/hooks/mark_docs_review.sh",
-    ".claude/hooks/require_docs_review.sh",
     "cloud-init.sh",
     "docker-entrypoint.sh",
 )
