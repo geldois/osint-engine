@@ -19,7 +19,13 @@ from osint_engine.domain.errors.graph_error import (
     GraphRootNotInNodesError,
 )
 from osint_engine.domain.value_objects.entity_ref import EntityRef
-from tests.fakes.domain import TEST_NODE, FakeDefaultEdge, FakeNodeID, FakeOneWayEdge
+from tests.fakes.domain import (
+    TEST_NODE,
+    FakeDefaultEdge,
+    FakeNodeID,
+    FakeOneWayEdge,
+    FakeVersionedEdge,
+)
 
 if TYPE_CHECKING:
     from hypothesis.strategies import DataObject
@@ -251,6 +257,56 @@ class TestGraphMerge:
 
         assert next(iter(merged.nodes)) in {version_a, version_b}
 
+    def test_keeps_the_receivers_version_of_a_node_present_in_both_graphs(self) -> None:
+        version_a = FakeNodeWithContentIdentity(content="root", extra_field="value_a")
+        version_b = FakeNodeWithContentIdentity(content="root", extra_field="value_b")
+        graph_a = CompositeGraph(
+            edges=frozenset(), nodes=frozenset({version_a}), root_id=version_a.id
+        )
+        graph_b = CompositeGraph(
+            edges=frozenset(), nodes=frozenset({version_b}), root_id=version_a.id
+        )
+
+        assert next(iter(graph_a.merge(other=graph_b).nodes)).content_id == (
+            version_a.content_id
+        )
+
+        assert next(iter(graph_b.merge(other=graph_a).nodes)).content_id == (
+            version_b.content_id
+        )
+
+    def test_keeps_the_receivers_version_of_an_edge_present_in_both_graphs(
+        self, make_fake_node: MakeFakeNode
+    ) -> None:
+        source = make_fake_node()
+        target = make_fake_node()
+        version_a = FakeVersionedEdge(
+            source_id=source.id, target_id=target.id, content="link", label="a"
+        )
+        version_b = FakeVersionedEdge(
+            source_id=source.id, target_id=target.id, content="link", label="b"
+        )
+
+        assert version_a.id == version_b.id
+
+        assert version_a.content_id != version_b.content_id
+
+        nodes = frozenset({source, target})
+        graph_a = CompositeGraph(
+            edges=frozenset({version_a}), nodes=nodes, root_id=source.id
+        )
+        graph_b = CompositeGraph(
+            edges=frozenset({version_b}), nodes=nodes, root_id=source.id
+        )
+
+        assert next(iter(graph_a.merge(other=graph_b).edges)).content_id == (
+            version_a.content_id
+        )
+
+        assert next(iter(graph_b.merge(other=graph_a).edges)).content_id == (
+            version_b.content_id
+        )
+
     def test_keeps_the_graph_id_when_the_other_graph_holds_a_newer_node_version(
         self,
     ) -> None:
@@ -383,6 +439,42 @@ class TestGraphValidation:
             )
 
         assert str(edge.id) in str(exception.value)
+
+
+class TestGraphValidationOrder:
+    def test_reports_an_unknown_endpoint_before_the_empty_node_set(
+        self, make_fake_edge: MakeFakeEdge
+    ) -> None:
+        with pytest.raises(GraphInconsistentError):
+            CompositeGraph(
+                edges=frozenset({make_fake_edge()}),
+                nodes=frozenset(),
+                root_id=uuid4(),
+            )
+
+    def test_reports_an_unknown_endpoint_before_the_absent_root(
+        self, make_fake_edge: MakeFakeEdge, make_fake_node: MakeFakeNode
+    ) -> None:
+        node = make_fake_node()
+
+        with pytest.raises(GraphInconsistentError):
+            CompositeGraph(
+                edges=frozenset({make_fake_edge(source_id=uuid4(), target_id=node.id)}),
+                nodes=frozenset({node}),
+                root_id=uuid4(),
+            )
+
+    def test_reports_a_broken_inversion_before_an_unknown_endpoint(
+        self,
+    ) -> None:
+        edge = FakeOneWayEdge(source_id=uuid4(), target_id=uuid4(), content="x")
+
+        with pytest.raises(GraphBrokenInversionError):
+            CompositeGraph(edges=frozenset({edge}), nodes=frozenset(), root_id=uuid4())
+
+    def test_reports_the_empty_node_set_before_the_absent_root(self) -> None:
+        with pytest.raises(GraphHasNoNodesError):
+            CompositeGraph(edges=frozenset(), nodes=frozenset(), root_id=uuid4())
 
 
 class TestGraphFlatten:

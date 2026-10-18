@@ -61,10 +61,9 @@ not adding another skip somewhere else.
   and Portal da Transparência only, and `tests/test_scripts/test_fixtures_coverage.py` excludes the paid provider on
   purpose, so CPF and legal-process mapping against the real paid response is never verified. Record a snapshot by hand
   once with a real key, or accept it explicitly
-- **Several behaviours of the graph layer are not pinned by any test.** No fake edge carries a field outside its
-  identity, so two versions of the same edge in a graph cannot be built; no test asserts which version `Graph.merge`
-  keeps when two differ, only that one survives; and the `FindPossiblyMatches` tests always pass a graph with a single
-  node, so a pair seen from both sides is never exercised. Add the edge fake first, then the three cases
+- **`FindPossiblyMatches` is never tested with a pair seen from both sides.** Its tests always pass a graph with a
+  single node, so a graph holding both people of a pair, and the two scores it can compute for it, are never exercised.
+  Write the case once the symmetric score is decided
 - **The mutation gate has never run.** `scripts mutation --max-survival` defaults to `100.0`, so it can never fail, no
   workflow runs it, and `cosmic-ray.toml` has never been exercised against the current test layout, so expect a first
   run to need adjustments. Run it once, set the ceiling to the measured baseline, then add a scheduled weekly and manual

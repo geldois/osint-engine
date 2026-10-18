@@ -59,6 +59,35 @@ class FakeEdge(
         return None
 
 
+class FakeVersionedEdge(
+    Edge[FakeEdgeID, UUID, UUID], id_fields=frozenset({"content"}), namespace=TEST_EDGE
+):
+    content: str
+    label: str
+
+    @override
+    def __init__(
+        self,
+        *,
+        source_id: UUID,
+        target_id: UUID,
+        content: str,
+        label: str,
+        **kwargs: object,
+    ) -> None:
+        super().__init__(
+            source_id=source_id,
+            target_id=target_id,
+            content=content,
+            label=label,
+            **kwargs,
+        )
+
+    @override
+    def invert(self) -> None:
+        return None
+
+
 class FakeDefaultEdge(
     Edge[FakeEdgeID, UUID, UUID], id_fields=None, namespace=TEST_EDGE
 ):

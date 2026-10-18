@@ -61,15 +61,11 @@ class MemGraphRepository(GraphRepository):
             [(node_ref.id, node_ref.content_id) for node_ref in flattened_graph.nodes]
         )
 
-        edge_revisions = self._edge_repository.get_many(id_pairs=edge_id_pairs)
-        node_revisions = self._node_repository.get_many(id_pairs=node_id_pairs)
+        edge_revisions = await self._edge_repository.get_many(id_pairs=edge_id_pairs)
+        node_revisions = await self._node_repository.get_many(id_pairs=node_id_pairs)
 
-        edges = frozenset(
-            edge_revision.entity for edge_revision in await edge_revisions
-        )
-        nodes = frozenset(
-            node_revision.entity for node_revision in await node_revisions
-        )
+        edges = frozenset(edge_revision.entity for edge_revision in edge_revisions)
+        nodes = frozenset(node_revision.entity for node_revision in node_revisions)
 
         root_id = flattened_graph.root_id
 

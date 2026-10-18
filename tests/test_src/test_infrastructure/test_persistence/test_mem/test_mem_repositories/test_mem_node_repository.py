@@ -303,3 +303,193 @@ class TestMemNodeRepositoryMerge:
         assert first.entity.id in mem_storage.nodes
 
         assert second.entity.id in mem_storage.nodes
+
+
+class TestMemNodeRepositoryFindMany:
+    @pytest.mark.asyncio
+    async def test_returns_an_empty_tuple_for_no_pairs(
+        self,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        repo = make_mem_node_repository(mem_storage=make_mem_storage())
+
+        assert await repo.find_many(id_pairs=()) == ()
+
+    @pytest.mark.asyncio
+    async def test_returns_one_slot_per_pair_in_the_given_order(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_node: MakeFakeNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        first = make_entity_revision(entity=make_fake_node())
+        second = make_entity_revision(entity=make_fake_node())
+        repo = make_mem_node_repository(
+            mem_storage=make_mem_storage(nodes=[first, second])
+        )
+
+        found = await repo.find_many(
+            id_pairs=(
+                (second.entity.id, second.entity.content_id),
+                (first.entity.id, first.entity.content_id),
+            )
+        )
+
+        assert len(found) == 2
+
+        assert found[0] is second
+
+        assert found[1] is first
+
+    @pytest.mark.asyncio
+    async def test_leaves_none_in_the_slot_of_an_unknown_pair(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_node: MakeFakeNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        revision = make_entity_revision(entity=make_fake_node())
+        repo = make_mem_node_repository(mem_storage=make_mem_storage(nodes=[revision]))
+
+        found = await repo.find_many(
+            id_pairs=(
+                (revision.entity.id, revision.entity.content_id),
+                (uuid4(), None),
+            )
+        )
+
+        assert found[0] is revision
+
+        assert found[1] is None
+
+    @pytest.mark.asyncio
+    async def test_reads_every_pair_as_id_then_content_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_mergeable_node: MakeFakeMergeableNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        revision = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="a")
+        )
+        assert revision.entity.id != revision.entity.content_id
+        repo = make_mem_node_repository(mem_storage=make_mem_storage(nodes=[revision]))
+
+        found = await repo.find_many(
+            id_pairs=((revision.entity.content_id, revision.entity.id),)
+        )
+
+        assert found == (None,)
+
+    @pytest.mark.asyncio
+    async def test_a_pair_with_a_content_id_selects_exactly_that_version(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_mergeable_node: MakeFakeMergeableNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        older = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="a"), fetched_at=_EARLY
+        )
+        newer = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="b"), fetched_at=_LATE
+        )
+        repo = make_mem_node_repository(
+            mem_storage=make_mem_storage(nodes=[older, newer])
+        )
+
+        found = await repo.find_many(
+            id_pairs=(
+                (older.entity.id, older.entity.content_id),
+                (older.entity.id, None),
+            )
+        )
+
+        assert found[0] is older
+
+        assert found[1] is newer
+
+
+class TestMemNodeRepositoryGetMany:
+    @pytest.mark.asyncio
+    async def test_returns_an_empty_tuple_for_no_pairs(
+        self,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        repo = make_mem_node_repository(mem_storage=make_mem_storage())
+
+        assert await repo.get_many(id_pairs=()) == ()
+
+    @pytest.mark.asyncio
+    async def test_returns_one_revision_per_pair_in_the_given_order(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_node: MakeFakeNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        first = make_entity_revision(entity=make_fake_node())
+        second = make_entity_revision(entity=make_fake_node())
+        repo = make_mem_node_repository(
+            mem_storage=make_mem_storage(nodes=[first, second])
+        )
+
+        found = await repo.get_many(
+            id_pairs=(
+                (second.entity.id, second.entity.content_id),
+                (first.entity.id, first.entity.content_id),
+            )
+        )
+
+        assert len(found) == 2
+
+        assert found[0] is second
+
+        assert found[1] is first
+
+    @pytest.mark.asyncio
+    async def test_raises_with_the_id_of_the_first_missing_pair(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_node: MakeFakeNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        revision = make_entity_revision(entity=make_fake_node())
+        missing_id = uuid4()
+        repo = make_mem_node_repository(mem_storage=make_mem_storage(nodes=[revision]))
+
+        with pytest.raises(EntityNotFoundError) as exception:
+            await repo.get_many(
+                id_pairs=(
+                    (revision.entity.id, revision.entity.content_id),
+                    (missing_id, None),
+                )
+            )
+
+        assert str(missing_id) in str(exception.value)
+
+    @pytest.mark.asyncio
+    async def test_raises_when_a_pair_is_given_as_content_id_then_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_mergeable_node: MakeFakeMergeableNode,
+        make_mem_storage: MakeMemStorage,
+        make_mem_node_repository: MakeMemNodeRepository,
+    ) -> None:
+        revision = make_entity_revision(
+            entity=make_fake_mergeable_node(key="k", label="a")
+        )
+        assert revision.entity.id != revision.entity.content_id
+        repo = make_mem_node_repository(mem_storage=make_mem_storage(nodes=[revision]))
+
+        with pytest.raises(EntityNotFoundError):
+            await repo.get_many(
+                id_pairs=((revision.entity.content_id, revision.entity.id),)
+            )

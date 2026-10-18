@@ -120,13 +120,13 @@ deliberately, since collapsing the two again would silently reintroduce the same
   through `CompositeGraph`. A ref carries no `source_id`/`target_id`, so `FlattenedGraph` cannot check endpoints or
   inversions and those invariants hold only because `CompositeGraph.flatten` builds it. Separately, the empty-nodes and
   missing-root checks now run after the inverse and endpoint checks, which can change which error a malformed graph
-  raises, and no test pins that order
+  raises; tests pin that order
 - **`Graph.merge` silently picks one version when both graphs hold different versions of the same node or edge.**
   Entities are equal by `id` alone, so the union of the two `frozenset`s keeps the receiver's element and drops the
   other's, and nothing in the code or the docs says that was meant: which version survives is an accident of operand
-  order, and the one test on it only asserts that the survivor is one of the two. The graph's `id` is unaffected, its
-  `content_id` is not. Decide whether the receiver wins, the newer `fetched_at` wins, or divergent versions raise, and
-  say it in the merge, not in the equality
+  order; tests pin today's outcome, that the receiver's version survives, for nodes and edges, so changing it is
+  deliberate. The graph's `id` is unaffected, its `content_id` is not. Decide whether the receiver wins, the newer
+  `fetched_at` wins, or divergent versions raise, and say it in the merge, not in the equality
 - **Entity identity travels through untyped seams.** `for_content` rides inside `**kwargs` to `_calculate_id`, popped by
   the base and read with `kwargs.get` by `Graph`, so a field of that name would collide; `Graph._calculate_id` then
   `cast`s `kwargs["edges"]` and `kwargs["nodes"]`, erasing the types exactly where identity is computed. A constructor

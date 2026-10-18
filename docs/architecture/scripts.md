@@ -106,6 +106,6 @@ that same root, never a new dot-directory at the repository's own top level to r
 - **Six gates run without a reduced-output flag.** `dprint`, `sqruff`, `basedpyright`, `shfmt`, `actionlint` and
   `lint-imports` print their full default output, because no flag cutting it was confirmed for the pinned versions
   (`lint-imports` 2.13 lacks `--no-logo`, which later documentation lists). Check each tool's changelog on every bump
-- **No test covers the live, unmodified output of a gate.** The tests cover the header, the verdict line and the missing
-  tool, but nothing runs a real tool through the runner to prove that its output reaches the terminal as it is produced,
-  in its own formatting and in order with the header
+- **No test proves that a gate's tool still sees a terminal.** The tests run a real process through the runner and prove
+  that its output reaches the terminal untouched and under its header, but the capture they use is not a terminal, so
+  nothing proves the tool keeps the colors and layout it only emits to one

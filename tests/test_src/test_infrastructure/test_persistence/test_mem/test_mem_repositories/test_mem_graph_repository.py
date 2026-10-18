@@ -6,11 +6,12 @@ from uuid import uuid4
 
 import pytest
 
+from osint_engine.domain.entities.graphs import CompositeGraph
 from osint_engine.domain.errors.entity_error import EntityNotFoundError
 
 if TYPE_CHECKING:
     from tests.fixtures.application import MakeEntityRevision
-    from tests.fixtures.domain import MakeFakeNode, MakeGraph
+    from tests.fixtures.domain import MakeFakeMergeableNode, MakeFakeNode, MakeGraph
     from tests.fixtures.persistence import MakeMemGraphRepository, MakeMemStorage
 
 
@@ -389,3 +390,113 @@ class TestMemGraphRepositoryMergeCascade:
 
         assert cascaded.fetched_at == _EARLY
         assert cascaded.provider == "original_source"
+
+
+class TestMemGraphRepositoryRehydration:
+    @pytest.mark.asyncio
+    async def test_rebuilds_a_graph_with_the_same_id_and_content_id(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        graph = make_graph()
+        repo = make_mem_graph_repository(
+            mem_storage=make_mem_storage(graphs=[make_entity_revision(entity=graph)])
+        )
+
+        found = await repo.get(id_=graph.id, content_id=graph.content_id)
+
+        assert found.entity.id == graph.id
+
+        assert found.entity.content_id == graph.content_id
+
+        assert found.entity.root_id == graph.root_id
+
+        assert {node.content_id for node in found.entity.nodes} == {
+            node.content_id for node in graph.nodes
+        }
+
+        assert {edge.content_id for edge in found.entity.edges} == {
+            edge.content_id for edge in graph.edges
+        }
+
+    @pytest.mark.asyncio
+    async def test_rebuilds_the_exact_node_version_the_graph_was_stored_with(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_fake_mergeable_node: MakeFakeMergeableNode,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        stored_version = make_fake_mergeable_node(key="k", label="a")
+        newer_version = make_fake_mergeable_node(key="k", label="b")
+        assert stored_version.id == newer_version.id
+        assert stored_version.content_id != newer_version.content_id
+        graph = make_graph(edges=[], nodes=[stored_version], root_id=stored_version.id)
+        repo = make_mem_graph_repository(
+            mem_storage=make_mem_storage(
+                graphs=[make_entity_revision(entity=graph)],
+                nodes=[make_entity_revision(entity=newer_version, fetched_at=_LATE)],
+            )
+        )
+
+        found = await repo.get(id_=graph.id, content_id=graph.content_id)
+
+        rebuilt = next(iter(found.entity.nodes))
+
+        assert rebuilt.content_id == stored_version.content_id
+
+        assert rebuilt.content_id != newer_version.content_id
+
+        assert found.entity.content_id == graph.content_id
+
+    @pytest.mark.asyncio
+    async def test_raises_when_a_referenced_node_is_not_stored(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        graph = make_graph()
+        mem_storage = make_mem_storage()
+        mem_storage.graphs[graph.id][graph.content_id] = make_entity_revision(
+            entity=graph.flatten()
+        )
+        repo = make_mem_graph_repository(mem_storage=mem_storage)
+
+        with pytest.raises(EntityNotFoundError):
+            await repo.get(id_=graph.id)
+
+    @pytest.mark.asyncio
+    async def test_every_listing_returns_rebuilt_composite_graphs(
+        self,
+        make_entity_revision: MakeEntityRevision,
+        make_graph: MakeGraph,
+        make_mem_storage: MakeMemStorage,
+        make_mem_graph_repository: MakeMemGraphRepository,
+    ) -> None:
+        graph = make_graph()
+        repo = make_mem_graph_repository(
+            mem_storage=make_mem_storage(graphs=[make_entity_revision(entity=graph)])
+        )
+
+        listings = (
+            await repo.list_revisions(id_=graph.id),
+            await repo.list_revisions_by_root(root_id=graph.root_id),
+            await repo.list_all_revisions(),
+        )
+
+        for listing in listings:
+            assert len(listing) == 1
+
+            assert isinstance(listing[0].entity, CompositeGraph)
+
+            assert listing[0].entity.content_id == graph.content_id
+
+            assert {node.content_id for node in listing[0].entity.nodes} == {
+                node.content_id for node in graph.nodes
+            }
