@@ -136,3 +136,10 @@ underneath rather than a specific, documented one, until someone reproduces it a
 - **`_read_csv` splits on a fixed `,`.** A `;`-delimited export (common from PT-BR Excel) degrades cell-level
   granularity to line-level; CPF and CNPJ extraction is unaffected because neither pattern depends on cell boundaries.
   Add delimiter sniffing only if a real file makes it a problem
+- **Storing the same `content_id` twice behaves differently for a graph than for its nodes and edges**
+  (`mem_graph_repository.py`, `mem_node_repository.py`). `MemGraphRepository.merge` skips a node or edge whose
+  `(id, content_id)` is already stored, but always saves the graph's own revision, so a forced re-fetch of an unchanged
+  graph replaces its `fetched_at`, `merged_at` and `provider` and loses when it was first observed; a direct node merge
+  overwrites the same way. The history then shows the latest observation for the graph and the first for its parts. The
+  Postgres adapter has to pick one rule, first write kept or last write kept, for every table; decide it, and pin it
+  with a test, before writing that adapter

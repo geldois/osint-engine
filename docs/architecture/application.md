@@ -212,3 +212,9 @@ specifically.
   for good, and open signup is bounded only by the 10-per-15-minutes IP limit and argon2's cost. Add an invite code (an
   environment value checked at registration) first if signup abuse shows up; a reset flow needs an email channel the
   project does not have
+- **Every single-identifier expansion calls its external fetcher inside the unit-of-work boundary**
+  (`application/use_cases/expansion/`, for example `expand_by_cpf.py`). The call holds the HTTP round trip and, for
+  KipFlow routes, the wait on the credential's pacing window. Harmless while the boundary is an in-memory snapshot; once
+  graphs sit behind a PostgreSQL transaction, that transaction and its pooled connection stay open for the whole fetch
+  and the whole wait. Read the reuse lock in one boundary, fetch outside any, and open a second only to write, before
+  graph storage moves to PostgreSQL and together with the atomicity gap above
