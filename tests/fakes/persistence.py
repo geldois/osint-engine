@@ -1,6 +1,51 @@
 from __future__ import annotations
 
-from typing import Self
+from typing import TYPE_CHECKING, Self, override
+
+from osint_engine.infrastructure.persistence.hybrid_uow import HybridUoW
+
+if TYPE_CHECKING:
+    from asyncpg import Pool
+
+    from osint_engine.application.revision.policies.revision_merge_policy import (
+        RevisionMergePolicy,
+    )
+    from osint_engine.application.revision.policies.revision_selection_policy import (
+        RevisionSelectionPolicy,
+    )
+    from osint_engine.infrastructure.persistence.mem.mem_storage import MemStorage
+
+
+class RecordingHybridUoW(HybridUoW):
+    @override
+    def __init__(
+        self,
+        *,
+        events: list[str],
+        mem_storage: MemStorage,
+        pg_pool: Pool,
+        encryption_key: str,
+        revision_merge_policy: RevisionMergePolicy,
+        revision_selection_policy: RevisionSelectionPolicy,
+    ) -> None:
+        super().__init__(
+            mem_storage=mem_storage,
+            pg_pool=pg_pool,
+            encryption_key=encryption_key,
+            revision_merge_policy=revision_merge_policy,
+            revision_selection_policy=revision_selection_policy,
+        )
+        self._events = events
+
+    @override
+    async def _prepare(self) -> None:
+        self._events.append("uow:enter")
+        await super()._prepare()
+
+    @override
+    async def _finish(self) -> None:
+        await super()._finish()
+        self._events.append("uow:exit")
 
 
 class FakePgPool:

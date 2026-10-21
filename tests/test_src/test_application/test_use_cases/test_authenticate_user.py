@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
@@ -11,11 +12,14 @@ from osint_engine.application.use_cases.authentication.authenticate_user import 
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from osint_engine.infrastructure.hashers.argon2_password_hasher import (
         Argon2PasswordHasher,
     )
-    from tests.fakes.persistence import FakePgPool
+    from tests.fakes.persistence import FakePgPool, RecordingHybridUoW
     from tests.fixtures.persistence import MakeHybridUoWFactory
+    from tests.fixtures.settings import MakeRecordingPasswordHasher
 
 
 class TestAuthenticateUserExecution:
@@ -83,3 +87,59 @@ class TestAuthenticateUserExecution:
 
         assert error.username == "alice"
         assert "alice" in str(error)
+
+    @pytest.mark.asyncio
+    async def test_execute_keeps_the_event_loop_running_while_the_password_is_verified(
+        self,
+        fake_pg_pool: FakePgPool,
+        recording_uow_factory: Callable[[], RecordingHybridUoW],
+        make_recording_password_hasher: MakeRecordingPasswordHasher,
+        events: list[str],
+    ) -> None:
+        recording_password_hasher = make_recording_password_hasher(block_seconds=0.2)
+        fake_pg_pool.users["alice"] = recording_password_hasher.hash_(
+            password="password"
+        )
+        fake_pg_pool.users["bella"] = recording_password_hasher.hash_(
+            password="password"
+        )
+
+        use_case_a = AuthenticateUser(
+            uow_factory=recording_uow_factory,
+            password_hasher=recording_password_hasher,
+            username="alice",
+            password="password",
+        )
+        use_case_b = AuthenticateUser(
+            uow_factory=recording_uow_factory,
+            password_hasher=recording_password_hasher,
+            username="bella",
+            password="password",
+        )
+
+        await asyncio.gather(use_case_a.execute(), use_case_b.execute())
+
+        assert events[-2:] == ["verify:end", "verify:end"]
+
+    @pytest.mark.asyncio
+    async def test_execute_verifies_the_password_only_after_the_unit_of_work_closes(
+        self,
+        fake_pg_pool: FakePgPool,
+        recording_uow_factory: Callable[[], RecordingHybridUoW],
+        make_recording_password_hasher: MakeRecordingPasswordHasher,
+        events: list[str],
+    ) -> None:
+        recording_password_hasher = make_recording_password_hasher(block_seconds=0.2)
+        fake_pg_pool.users["alice"] = recording_password_hasher.hash_(
+            password="password"
+        )
+        use_case = AuthenticateUser(
+            uow_factory=recording_uow_factory,
+            password_hasher=recording_password_hasher,
+            username="alice",
+            password="password",
+        )
+
+        await use_case.execute()
+
+        assert events[-3:] == ["uow:exit", "verify:start", "verify:end"]

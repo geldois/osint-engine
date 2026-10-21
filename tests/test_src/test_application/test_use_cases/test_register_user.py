@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
@@ -13,11 +14,14 @@ from osint_engine.application.use_cases.authentication.register_user import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from osint_engine.infrastructure.hashers.argon2_password_hasher import (
         Argon2PasswordHasher,
     )
-    from tests.fakes.persistence import FakePgPool
+    from tests.fakes.persistence import FakePgPool, RecordingHybridUoW
     from tests.fixtures.persistence import MakeHybridUoWFactory
+    from tests.fixtures.settings import MakeRecordingPasswordHasher
 
 
 class TestRegisterUserExecution:
@@ -105,3 +109,47 @@ class TestRegisterUserExecution:
 
         assert exception.value.username == "alice"
         assert fake_pg_pool.users == {"alice": "original-hash"}
+
+    @pytest.mark.asyncio
+    async def test_keeps_the_event_loop_running_while_the_password_is_hashed(
+        self,
+        make_hybrid_uow_factory: MakeHybridUoWFactory,
+        make_recording_password_hasher: MakeRecordingPasswordHasher,
+        events: list[str],
+    ) -> None:
+        recording_password_hasher = make_recording_password_hasher(block_seconds=0.2)
+        use_case_a = RegisterUser(
+            uow_factory=make_hybrid_uow_factory(),
+            password_hasher=recording_password_hasher,
+            username="alice",
+            password="password",
+        )
+        use_case_b = RegisterUser(
+            uow_factory=make_hybrid_uow_factory(),
+            password_hasher=recording_password_hasher,
+            username="bella",
+            password="password",
+        )
+
+        await asyncio.gather(use_case_a.execute(), use_case_b.execute())
+
+        assert events[:2] == ["hash:start", "hash:start"]
+
+    @pytest.mark.asyncio
+    async def test_hashes_the_password_before_the_unit_of_work_opens(
+        self,
+        recording_uow_factory: Callable[[], RecordingHybridUoW],
+        make_recording_password_hasher: MakeRecordingPasswordHasher,
+        events: list[str],
+    ) -> None:
+        recording_password_hasher = make_recording_password_hasher(block_seconds=0.2)
+        use_case = RegisterUser(
+            uow_factory=recording_uow_factory,
+            password_hasher=recording_password_hasher,
+            username="alice",
+            password="password",
+        )
+
+        await use_case.execute()
+
+        assert events[:3] == ["hash:start", "hash:end", "uow:enter"]

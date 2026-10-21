@@ -160,6 +160,14 @@ the same fetcher (every Portal da Transparência route stamps `"portal_transpare
 attempt, stamped with the calling workflow's own registered provider string, which is the only place per-route
 granularity actually exists.
 
+Password hashing at registration and password verification at login both run in a worker thread, and both sit outside
+the transactional boundary: registration hashes before opening it, and login reads the account inside it, lets it close,
+and only then verifies. The memory-hard algorithm is deliberately slow, so run inline it would hold the event loop and
+stall every concurrent request for the length of each attempt; run inside the boundary it would keep that boundary open
+for the same time. Reading the account first and verifying after keeps the timing-equalizing check for an unknown
+username intact, since the verification still runs, against a stand-in, whether or not the account was found. A failed
+login therefore no longer leaves through the boundary as an error, which is harmless: login only reads.
+
 ## Consequences
 
 A provider guard scoped per provider rather than per identifier means a workflow reaching a new external source still
@@ -194,10 +202,6 @@ specifically.
   same entity and is only linked, never merged, which makes the first-seen format permanent. Cosmetic: identity
   resolution is unaffected. Fixing it means giving `_resolve_node` a path to update an existing entity's field from a
   new deterministic match, which the design deliberately does not do for anything
-- **Password verification at login runs on the event loop**
-  (`application/use_cases/authentication/authenticate_user.py`). Registration already hashes in a worker thread, but
-  `AuthenticateUser` still calls the memory-hard verify inline, so a burst of logins stalls every concurrent request
-  until the 5-per-10-minutes limit bites. Move it to the same worker thread when login traffic is more than a demo's
 - **Per-user consumption filtering reads every record first** (`list_entity_record_catalog.py`,
   `list_entity_records_by_cpf.py`, `guard_reuse_lock.py`). Each call loads every account's records from the in-memory
   log and keeps the caller's, so cost grows with total users, not the caller's own history. Replace with a repository

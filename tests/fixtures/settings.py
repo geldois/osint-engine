@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 import pytest
 
 from osint_engine.config.settings import Settings
@@ -7,12 +9,32 @@ from osint_engine.infrastructure.hashers.argon2_password_hasher import (
     Argon2PasswordHasher,
 )
 from osint_engine.infrastructure.services.pyjwt_service import PyJWTService
+from tests.fakes.hashers import RecordingPasswordHasher
+
+
+class MakeRecordingPasswordHasher(Protocol):
+    def __call__(self, *, block_seconds: float) -> RecordingPasswordHasher: ...
 
 
 @pytest.fixture(scope="session")
 def argon2_password_hasher() -> Argon2PasswordHasher:
 
     return Argon2PasswordHasher()
+
+
+@pytest.fixture
+def events() -> list[str]:
+
+    return []
+
+
+@pytest.fixture
+def make_recording_password_hasher(events: list[str]) -> MakeRecordingPasswordHasher:
+
+    def recording_password_hasher(*, block_seconds: float) -> RecordingPasswordHasher:
+        return RecordingPasswordHasher(events=events, block_seconds=block_seconds)
+
+    return recording_password_hasher
 
 
 @pytest.fixture(scope="session")

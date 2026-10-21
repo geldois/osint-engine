@@ -24,7 +24,7 @@ from osint_engine.infrastructure.persistence.mem.repositories.mem_graph_reposito
 from osint_engine.infrastructure.persistence.mem.repositories.mem_node_repository import (  # noqa: E501
     MemNodeRepository,
 )
-from tests.fakes.persistence import FakePgPool
+from tests.fakes.persistence import FakePgPool, RecordingHybridUoW
 
 if TYPE_CHECKING:
     from asyncpg import Pool
@@ -199,6 +199,27 @@ def make_hybrid_uow_factory(
         )
 
     return hybrid_uow_factory
+
+
+@pytest.fixture
+def recording_uow_factory(
+    events: list[str],
+    fake_pg_pool: FakePgPool,
+    make_mem_storage: MakeMemStorage,
+    policies: Policies,
+    settings: Settings,
+) -> Callable[[], RecordingHybridUoW]:
+
+    mem_storage = make_mem_storage()
+
+    return lambda: RecordingHybridUoW(
+        events=events,
+        mem_storage=mem_storage,
+        pg_pool=cast("Pool", fake_pg_pool),
+        encryption_key=settings.external_credential_encryption_key,
+        revision_merge_policy=policies.revision_merge_policy,
+        revision_selection_policy=policies.revision_selection_policy,
+    )
 
 
 @pytest.fixture

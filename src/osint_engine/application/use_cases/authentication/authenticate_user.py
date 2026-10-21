@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING, override
 
 from structlog.stdlib import get_logger
@@ -48,15 +49,16 @@ class AuthenticateUser(Query[User]):
         async with self.uow_factory() as uow:
             user = await uow.users.find(username=self.username)
 
-            result: bool = self.password_hasher.verify(
-                hash_=user.hashed_password if user is not None else None,
-                password=self.password,
-            )
+        result: bool = await asyncio.to_thread(
+            self.password_hasher.verify,
+            hash_=user.hashed_password if user is not None else None,
+            password=self.password,
+        )
 
-            if user is None or not result:
-                _logger.warning("authentication_failure", username=self.username)
+        if user is None or not result:
+            _logger.warning("authentication_failure", username=self.username)
 
-                raise InvalidCredentialsError(username=self.username)
+            raise InvalidCredentialsError(username=self.username)
 
         _logger.info("user.authentication.end", username=self.username)
 

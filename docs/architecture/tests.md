@@ -68,3 +68,9 @@ not adding another skip somewhere else.
   workflow runs it, and `cosmic-ray.toml` has never been exercised against the current test layout, so expect a first
   run to need adjustments. Run it once, set the ceiling to the measured baseline, then add a scheduled weekly and manual
   CI job; until the ceiling is real, a scheduled job would be a false green
+- **No test proves the unit of work holds no pooled PostgreSQL connection while a password is hashed or verified.** The
+  `AuthenticateUser` and `RegisterUser` tests run on the in-memory pool fake, whose acquire and release are trivial, and
+  today `HybridUoW` and the PostgreSQL repositories never hold a connection across the unit of work (each query takes
+  and returns one), so a real pool would pass such a check without proving anything. Once the persistence block makes
+  the unit of work hold a connection or a transaction, add a test on `postgres_pool` that reads `get_idle_size()` while
+  a blocking hasher runs, and fails if the verification moves back inside the unit of work
