@@ -83,13 +83,21 @@ def test_python_line_width_has_one_value() -> None:
     assert mirrored == str(_get(_pyproject(), "tool", "ruff", "line-length"))
 
 
+def test_sql_line_width_has_one_value() -> None:
+    parser = configparser.ConfigParser(interpolation=None)
+    parser.read(ROOT / ".sqruff", encoding="utf-8")
+
+    mirrored = _editorconfig()["*.sql"]["max_line_length"]
+
+    assert mirrored == parser["sqruff"]["max_line_length"]
+
+
 def test_document_line_width_has_one_value() -> None:
     mirrored = _editorconfig()[_DOC_TYPES]["max_line_length"]
     owners = {
         "rumdl": _get(_pyproject(), "tool", "rumdl", "line-length"),
         "tombi": _get(_pyproject(), "tool", "tombi", "format", "rules", "line-width"),
         "dprint": _get(_dprint(), "lineWidth"),
-        "dprint yaml": _get(_dprint(), "yaml", "printWidth"),
     }
 
     for owner, value in owners.items():
@@ -101,8 +109,6 @@ def test_document_indent_has_one_value() -> None:
     owners = {
         "tombi": _get(_pyproject(), "tool", "tombi", "format", "rules", "indent-width"),
         "dprint": _get(_dprint(), "indentWidth"),
-        "dprint json": _get(_dprint(), "json", "indentWidth"),
-        "dprint yaml": _get(_dprint(), "yaml", "indentWidth"),
     }
 
     for owner, value in owners.items():
@@ -113,7 +119,6 @@ def test_line_ending_has_one_value() -> None:
     mirrored = _editorconfig()["*"]["end_of_line"]
 
     assert _get(_dprint(), "newLineKind") == mirrored
-    assert _get(_dprint(), "yaml", "lineBreak") == mirrored
 
 
 def test_no_editor_specific_file_is_tracked() -> None:

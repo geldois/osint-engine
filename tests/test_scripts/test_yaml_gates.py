@@ -37,7 +37,7 @@ def _schema(builtin: str, target: Path) -> tuple[int, str]:
 def test_the_compose_files_the_gate_checks_are_every_compose_file() -> None:
     found = sorted(
         path.name
-        for pattern in ("compose*.yml", "docker-compose*.yml")
+        for pattern in ("compose*.y*ml", "docker-compose*.y*ml")
         for path in ROOT.glob(pattern)
     )
 
@@ -47,7 +47,7 @@ def test_the_compose_files_the_gate_checks_are_every_compose_file() -> None:
 def test_the_workflow_files_the_gate_checks_are_every_workflow() -> None:
     found = sorted(
         path.relative_to(ROOT).as_posix()
-        for path in (ROOT / ".github" / "workflows").glob("*.yml")
+        for path in (ROOT / ".github" / "workflows").glob("*.y*ml")
     )
 
     assert sorted(WORKFLOW_FILES) == found

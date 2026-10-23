@@ -155,6 +155,10 @@ def test_pragma_word_inside_ordinary_comment_is_still_flagged() -> None:
         ".githooks/pre-commit",
         "pyproject.toml",
         "Dockerfile",
+        ".env.example",
+        ".gitattributes",
+        ".sqruff",
+        ".yamllint",
     ],
 )
 def test_is_scanned_covers_code_and_config(rel: str) -> None:

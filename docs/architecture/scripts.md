@@ -15,7 +15,7 @@ tool counts as a failure, and so does a missing required tool, which fails its c
 skipped. Each gate prints a header line and then its tool's own output, written straight to the terminal as the tool
 runs and never captured, so it keeps the tool's own formatting and appears the moment the gate finishes; a closing
 verdict line ends the run. There is no progress display and no separate report file to dig through. Each tool runs with
-its least verbose output flags.
+the least verbose output flags confirmed for its pinned version.
 
 ## Decisions
 
@@ -41,22 +41,21 @@ rather than the runner because the runner strips git's own environment variables
 selected paths or of all tracked changes see the right index.
 
 The comment ban is a gate rather than a nudge. A comment or docstring is never auto-stripped, since an AST-level rewrite
-could silently corrupt a file, but a violation now fails the commit: every tracked, non-generated file is scanned, with
-a closed allowlist for linter-suppression pragmas, shell directives, shebangs, pinned-action version tags and the
-annotations the SQL query loader requires. A comment marker only counts when it starts a word, so shell argument-count
-and length expansions are never mistaken for one.
+could silently corrupt a file, but a violation now fails the commit: every tracked, non-generated source, shell, SQL,
+YAML and TOML file, the committed hooks and a closed set of named configuration files are scanned, while JSON and prose
+have no comment syntax or are the point of the file, with a closed allowlist for linter-suppression pragmas, shell
+directives, shebangs, pinned-action version tags and the annotations the SQL query loader requires. A comment marker
+only counts when it starts a word, so shell argument-count and length expansions are never mistaken for one.
 
 The uv version is pinned exactly in the project manifest, read by the workflows and enforced by uv itself wherever it
 runs, so a stale install fails loudly instead of drifting; the container image's tag and the release helper's pin are
 the two other copies and are edited together. The runner syncs the environment once and then runs every tool without
 re-syncing, so no gate can change the environment under another. Every linter, formatter and type-checker is a pinned
 development dependency installed with that environment, so the only prerequisites of the gate are the package manager
-and the container runtime the test suite already needs. The workflow linter is the one exception: its Python wrapper
-downloads a binary at install time, so it runs from its pinned container image instead.
-
-Within the fixer, whatever can rewrite logic or structure always runs before whatever only reformats: a fixer that
-introduces new code (an import rewrite, a lint autofix) can leave text that doesn't match the project's own formatting,
-and nothing further in the sequence would normalize it if the formatter had already had its turn.
+and the container runtime the test suite already needs. Within the fixer, whatever can rewrite logic or structure always
+runs before whatever only reformats: a fixer that introduces new code (an import rewrite, a lint autofix) can leave text
+that doesn't match the project's own formatting, and nothing further in the sequence would normalize it if the formatter
+had already had its turn.
 
 The mutation-testing tool was switched once already: the original choice achieves its speed by copying mutated code into
 place and re-importing it, which broke under this project's own combination of test-collection plugins and strict async
@@ -70,20 +69,21 @@ rather than the job failing on a secret it was never going to have.
 
 Every tool's own cache or working-data directory is redirected under one gitignored root, rather than left at each
 tool's own default location — the repository root otherwise accumulates one dot-directory per tool, none of them meant
-for a person to ever open. The one exception is the project's own environment and its own generated report output,
-neither of which is a third-party tool's cache in the same sense; the agent-hook marker lives in the same generated
-build directory.
+for a person to ever open. The exceptions are the project's own environment and the mutation run's session database,
+neither of which is a third-party tool's cache in the same sense.
 
 Every linter, formatter and fixer a gate calls is a pinned development dependency of the project, installed by the same
 environment sync as the code, never an image pulled or a binary expected on the host. A gate therefore behaves
 identically on a fresh clone, in the hook and in continuous integration, and a tool version moves only through the
 lockfile in a reviewable commit. A tool that could not be installed that way would need its alternatives weighed in the
 open and written down here, or the absence of any alternative stated, before it joined a gate; a test fails the build
-when a gate runs a tool the project does not declare. The one deliberate exception is a plugin that a declared tool
-loads from its own configuration: dprint formats JSON and YAML through plugins that it fetches from the npm registry,
-each pinned to an exact version in its own configuration file and cached after the first run. They are part of that
-tool, not a second tool, so they stay out of the manifest, and the cost is registry access on the first run of a fresh
-machine or runner.
+when a gate runs a tool the project does not declare. The workflow linter is declared too, but it is distributed as
+source whose build downloads the linter's binary and checks it against a digest carried inside the package, so a sync
+needs access to the code host and, on NixOS, the system certificate bundle exported to the environment. The one
+deliberate exception is a plugin that a declared tool loads from its own configuration: dprint formats JSON and YAML
+through plugins that it fetches from the npm registry, each pinned to an exact version in its own configuration file and
+cached after the first run. They are part of that tool, not a second tool, so they stay out of the manifest, and the
+cost is registry access on the first run of a fresh machine or runner.
 
 Each file type has exactly one owner that both lints and formats it, so lint and fix share one parser and one
 configuration: Markdown belongs to rumdl, TOML to tombi, and JSON and YAML to dprint, which stays only for the types no
@@ -126,7 +126,7 @@ in this repository's own history — but it also means a fresh clone that skips 
 silently runs no hook at all. Continuous integration running the same command is what closes that gap, along with the
 bypass flag, the rebase and the cherry-pick, none of which run the hook.
 
-The documentation formatter downloads its plugins on first use, so the very first gate on a fresh machine needs network
+The JSON and YAML formatter downloads its plugins on first use, so the very first gate on a fresh machine needs network
 access beyond the package index.
 
 Refusing a dirty tree makes every commit a whole-tree event: unrelated half-finished work has to be stashed before an
@@ -156,9 +156,10 @@ that same root, never a new dot-directory at the repository's own top level to r
   workflows read and that uv enforces everywhere it runs), the `build` extra that lets semantic-release install uv, the
   `Dockerfile`'s uv image tag and digest, and the two README setup steps that state it. A drifted copy in the first
   three fails loudly, but all five still move together
-- **Five gates run without a reduced-output flag.** `dprint`, `sqruff`, `basedpyright`, `shfmt` and `lint-imports` print
-  their full default output, because no flag cutting it was confirmed for the pinned versions (`lint-imports` 2.13 lacks
-  `--no-logo`, which later documentation lists). Check each tool's changelog on every bump
+- **Ten gates run without a reduced-output flag.** `dprint`, `sqruff`, `basedpyright`, `shfmt`, `lint-imports`,
+  `yamllint`, `check-jsonschema`, `validate-pyproject`, `actionlint` and `zizmor` (which only turns its progress off)
+  print their full default output, because no flag cutting it was confirmed for the pinned versions (`lint-imports` 2.13
+  lacks `--no-logo`, which later documentation lists). Check each tool's changelog on every bump
 - **No test proves that a gate's tool still sees a terminal.** The tests run a real process through the runner and prove
   that its output reaches the terminal untouched and under its header, but the capture they use is not a terminal, so
   nothing proves the tool keeps the colors and layout it only emits to one

@@ -27,10 +27,14 @@ _HASH_FILENAMES = frozenset(
     {
         "Dockerfile",
         "Caddyfile",
+        ".env.example",
+        ".gitattributes",
         ".gitconfig",
         ".gitignore",
         ".dockerignore",
         ".editorconfig",
+        ".sqruff",
+        ".yamllint",
         "pre-commit",
     }
 )

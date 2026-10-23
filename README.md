@@ -435,8 +435,7 @@ cp .env.example .env  # then set SECRET_KEY, DATABASE_URL and EXTERNAL_CREDENTIA
 ### Windows
 
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend enabled.
-2. Install [Git for Windows](https://gitforwindows.org) — the git hooks and the Claude Code hooks are `sh`/`bash`
-   scripts it provides.
+2. Install [Git for Windows](https://gitforwindows.org) — the git hook is an `sh` script it provides.
 3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (the project requires exactly `0.11.21`).
 4. Install the dependencies and activate the versioned git config:
 
@@ -538,14 +537,14 @@ then `sudo systemctl restart docker` and re-run the pulls.
 
 ## Deploy
 
-`.github/workflows/publish-image.yml` runs on every push to `main`. It first calls `test.yml`, the very same gate as the
-commit hook, on that exact commit; only if it passes does it build both architectures, merge them into one multi-arch
-manifest on ghcr.io tagged with the branch and with the commit SHA, then deploy over SSH to the host `cloud-init.sh`
-provisions, pulling the image by SHA so production runs exactly the commit that was verified. `release.yml`, run by
-hand, is the semantic-release job and likewise waits for the same gate. Its last step probes
-`https://${{ vars.API_DOMAIN }}/health` from the runner rather than from the host, so the check still reports a host
-that is itself the broken half — the probe therefore reaches Caddy by the name CI believes in, which Caddy only answers
-if the host serves that same name.
+`.github/workflows/publish-image.yml` runs on every push to `main` and on manual dispatch. It first calls `test.yml`,
+the very same gate as the commit hook, on that exact commit; only if it passes does it build both architectures, merge
+them into one multi-arch manifest on ghcr.io tagged with the branch and with the commit SHA, then deploy over SSH to the
+host `cloud-init.sh` provisions, pulling the image by SHA so production runs exactly the commit that was verified.
+`release.yml`, run by hand, is the semantic-release job and likewise waits for the same gate. The last step of the
+deploy job probes `https://${{ vars.API_DOMAIN }}/health` from the runner rather than from the host, so the check still
+reports a host that is itself the broken half — the probe therefore reaches Caddy by the name CI believes in, which
+Caddy only answers if the host serves that same name.
 
 The two commands the deploy job runs on the host live in `deploy/` as shell files, so they are checked like any other
 script, and every value reaches them through the environment of the job rather than by text substitution. Every workflow
@@ -574,7 +573,7 @@ project owns.
   exactly what is committed. A partial commit therefore needs the rest stashed, and the hook prints the exact commands.
   Each gate prints a header line and then its tool's own output, straight to the terminal as the tool runs and in the
   tool's own formatting, so each result appears the moment its gate finishes; the run ends with a verdict line. Each
-  tool runs with its least verbose output flags.
+  tool runs with the least verbose output flags confirmed for its pinned version.
 
 `scripts mutation`, `scripts sqlc-generate`, and `scripts fixtures` stay separate, periodic, manual commands — never
 part of `check`.

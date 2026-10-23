@@ -4,7 +4,10 @@ import subprocess
 from typing import TYPE_CHECKING
 
 from scripts import fix
-from scripts.check import _UV_RUN  # pyright: ignore[reportPrivateUsage]
+from scripts.check import (
+    _UV_RUN,  # pyright: ignore[reportPrivateUsage]
+    SHELL_FILES,
+)
 
 if TYPE_CHECKING:
     import pytest
@@ -37,16 +40,19 @@ def test_every_fixer_runs_through_the_project_environment(
     assert all(command[:_TOOL_INDEX] == list(_UV_RUN) for command in commands)
 
 
-def test_each_document_type_is_formatted_by_its_own_tool(
+def test_the_fixers_run_in_order_and_each_document_type_has_its_own(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     commands = _recorded_commands(monkeypatch)
 
     fix.run_fix()
 
-    formatters = {
-        command[_TOOL_INDEX]: command[_TOOL_INDEX + 1] for command in commands
-    }
-    assert formatters["rumdl"] == "fmt"
-    assert formatters["tombi"] == "format"
-    assert formatters["dprint"] == "fmt"
+    assert [command[_TOOL_INDEX:] for command in commands] == [
+        ["ruff", "check", "--fix", "."],
+        ["ruff", "format", "."],
+        ["rumdl", "fmt", "--quiet", "."],
+        ["tombi", "format", "--offline", "--quiet"],
+        ["dprint", "fmt"],
+        ["sqruff", "fix", "migrations", "src"],
+        ["shfmt", "-w", *SHELL_FILES],
+    ]

@@ -68,4 +68,5 @@ No comments and no docstrings anywhere in this repository, ever — not `src/`, 
 `.githooks/`, `.claude/`, `.github/`, nor any root-level config — the name says it, or the code is wrong, or the
 decision belongs in `README.md`/`docs/architecture/*.md`/this file. The only exceptions are linter pragmas, shell
 directives, shebangs, pinned-action version tags and the SQL loader's `-- name:` lines. The gate scans every tracked
-file and fails the commit on any other.
+source, shell, SQL, YAML and TOML file, the committed hooks and the named configuration files, and fails the commit on
+any other.

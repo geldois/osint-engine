@@ -1,8 +1,9 @@
 # Harness — what it does
 
 This is the editor/agent integration layer under `.claude/` — distinct from the developer-facing gate runner
-`scripts.md` documents. It is deliberately tiny: one settings file holding a list of denied commands, with no hook and
-no script. Nothing in it writes a file the agent might be holding in context.
+`scripts.md` documents. It is deliberately tiny: one settings file holding a list of denied commands and the denial of
+reading any environment file, with no hook and no script. Nothing in it writes a file the agent might be holding in
+context.
 
 ## Decisions
 
