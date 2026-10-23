@@ -15,6 +15,16 @@ SHELL_FILES = (
     "cloud-init.sh",
     "docker-entrypoint.sh",
 )
+COMPOSE_FILES = (
+    "compose.prod.yml",
+    "docker-compose.override.yml",
+    "docker-compose.yml",
+)
+WORKFLOW_FILES = (
+    ".github/workflows/publish-image.yml",
+    ".github/workflows/release.yml",
+    ".github/workflows/test.yml",
+)
 _LOCK_CHECK = Gate("lock-check", ("uv", "lock", "--check", "--quiet"))
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
 _GATES: tuple[Gate, ...] = (
@@ -38,6 +48,27 @@ _GATES: tuple[Gate, ...] = (
     Gate(
         "tombi-lint",
         (*_UV_RUN, "tombi", "lint", "--offline", "--error-on-warnings", "--quiet"),
+    ),
+    Gate("yamllint", (*_UV_RUN, "yamllint", "--strict", ".")),
+    Gate(
+        "schema-compose",
+        (
+            *_UV_RUN,
+            "check-jsonschema",
+            "--builtin-schema",
+            "vendor.compose-spec",
+            *COMPOSE_FILES,
+        ),
+    ),
+    Gate(
+        "schema-workflows",
+        (
+            *_UV_RUN,
+            "check-jsonschema",
+            "--builtin-schema",
+            "vendor.github-workflows",
+            *WORKFLOW_FILES,
+        ),
     ),
     Gate("sqruff", (*_UV_RUN, "sqruff", "lint", "migrations", "src")),
     Gate("shellcheck", (*_UV_RUN, "shellcheck", "--format=gcc", *SHELL_FILES)),

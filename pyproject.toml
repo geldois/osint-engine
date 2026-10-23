@@ -47,6 +47,7 @@ build = ["uv==0.11.21"]
 dev = [
   "asyncpg-stubs>=0.31.3",
   "basedpyright>=1.39",
+  "check-jsonschema==0.38.2",
   "cosmic-ray==8.4.6",
   "dprint-py==0.64.3.0",
   "hypothesis>=6.156.1",
@@ -64,6 +65,7 @@ dev = [
   "sqruff==0.39.0",
   "testcontainers[postgres]>=4.14.2",
   "tombi==1.9.1",
+  "yamllint==1.38.0",
 ]
 
 [build-system]

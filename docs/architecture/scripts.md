@@ -79,7 +79,11 @@ environment sync as the code, never an image pulled or a binary expected on the 
 identically on a fresh clone, in the hook and in continuous integration, and a tool version moves only through the
 lockfile in a reviewable commit. A tool that could not be installed that way would need its alternatives weighed in the
 open and written down here, or the absence of any alternative stated, before it joined a gate; a test fails the build
-when a gate runs a tool the project does not declare.
+when a gate runs a tool the project does not declare. The one deliberate exception is a plugin that a declared tool
+loads from its own configuration: dprint formats JSON and YAML through plugins that it fetches from the npm registry,
+each pinned to an exact version in its own configuration file and cached after the first run. They are part of that
+tool, not a second tool, so they stay out of the manifest, and the cost is registry access on the first run of a fresh
+machine or runner.
 
 Each file type has exactly one owner that both lints and formats it, so lint and fix share one parser and one
 configuration: Markdown belongs to rumdl, TOML to tombi, and JSON and YAML to dprint, which stays only for the types no
@@ -90,6 +94,11 @@ project still labelled beta, offset by pinning one exact version. tombi replaced
 and formatter agree on table order, which the plugin never checked, and its schema for the project manifest ships inside
 the tool, so linting needs no network. Generated files, the changelog and the lockfile, are left out of the tools that
 would rewrite them.
+
+YAML has two checks beyond its formatter. A linter keeps only the rules a formatter cannot see, such as duplicate keys
+and values a YAML 1.1 parser would read as booleans, with every layout rule switched off so that it never disagrees with
+dprint. Compose files and workflows are additionally validated against their published schemas, which ship inside the
+validator, so the check needs no network and catches a misspelt key or a missing required field.
 
 Every value a tool enforces, such as line width, indentation and line endings, is written once, in that tool's own
 configuration. The editor-neutral configuration file only mirrors them for editors that cannot read the tools, and a

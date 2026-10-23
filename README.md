@@ -359,8 +359,8 @@ already done (e.g. `GET /cpf/{cpf}` repeated by the same user without `force=tru
 - **File reading:** openpyxl (`.xlsx`), stdlib `csv` (`.csv`)
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
-- **Tooling:** uv, Ruff, basedpyright (strict), import-linter, dprint, rumdl, tombi, sqruff, shellcheck, shfmt, sqlc,
-  cosmic-ray, python-semantic-release; mise only for `migrate`
+- **Tooling:** uv, Ruff, basedpyright (strict), import-linter, dprint, rumdl, tombi, yamllint, check-jsonschema, sqruff,
+  shellcheck, shfmt, sqlc, cosmic-ray, python-semantic-release; mise only for `migrate`
 - **Testing:** pytest, pytest-asyncio, testcontainers, hypothesis (property-based tests, see
   `docs/architecture/tests.md`)
 
@@ -448,9 +448,11 @@ copy .env.example .env  # then set SECRET_KEY, DATABASE_URL and EXTERNAL_CREDENT
 > `.gitconfig` points `core.hooksPath` at the versioned `.githooks/` and forbids merge commits (`merge.ff = only`), so
 > the hooks are whatever is committed — nothing is generated into `.git/` — and every commit is born through the
 > `pre-commit` hook. The only prerequisites of the quality gates are `uv` and Docker: every linter, formatter and
-> type-checker is a pinned dev dependency installed by `uv sync`. If `uv` isn't found, the hook says so (or bypass once
-> with `git commit --no-verify`). No editor or Claude Code is required: the gates run from the git hook and CI,
-> identically for every contributor, and there is no `pre-push` — pushing is never blocked.
+> type-checker is a pinned dev dependency installed by `uv sync`. The one thing `uv sync` does not install is dprint's
+> own formatter plugins (JSON and YAML): `dprint.json` pins each to an exact version, and dprint fetches it from the npm
+> registry on the first run and caches it, so a fresh machine needs registry access once. If `uv` isn't found, the hook
+> says so (or bypass once with `git commit --no-verify`). No editor or Claude Code is required: the gates run from the
+> git hook and CI, identically for every contributor, and there is no `pre-push` — pushing is never blocked.
 
 ### Configuration
 
@@ -556,12 +558,13 @@ project owns.
 - `fix` runs every safe fixer (Ruff's linter fixes then its formatter, rumdl, tombi, dprint, sqruff, shfmt) on the whole
   repo. It is never part of the commit: run it before committing, and the commit finds nothing left to complain about.
 - `check` runs every gate on the working tree, after syncing the environment: lockfile, comment ban, Ruff format and
-  lint, import-linter, basedpyright (warnings fail), dprint, rumdl, tombi, sqruff, shellcheck, shfmt and the full pytest
-  suite with coverage (warnings fail). `.githooks/pre-commit` and CI both run exactly this, and the hook first refuses a
-  commit when anything is unstaged or untracked, so what the gate tested is exactly what is committed. A partial commit
-  therefore needs the rest stashed, and the hook prints the exact commands. Each gate prints a header line and then its
-  tool's own output, straight to the terminal as the tool runs and in the tool's own formatting, so each result appears
-  the moment its gate finishes; the run ends with a verdict line. Each tool runs with its least verbose output flags.
+  lint, import-linter, basedpyright (warnings fail), dprint, rumdl, tombi, yamllint, check-jsonschema (compose files and
+  workflows against their published schemas), sqruff, shellcheck, shfmt and the full pytest suite with coverage
+  (warnings fail). `.githooks/pre-commit` and CI both run exactly this, and the hook first refuses a commit when
+  anything is unstaged or untracked, so what the gate tested is exactly what is committed. A partial commit therefore
+  needs the rest stashed, and the hook prints the exact commands. Each gate prints a header line and then its tool's own
+  output, straight to the terminal as the tool runs and in the tool's own formatting, so each result appears the moment
+  its gate finishes; the run ends with a verdict line. Each tool runs with its least verbose output flags.
 
 `scripts mutation`, `scripts sqlc-generate`, and `scripts fixtures` stay separate, periodic, manual commands — never
 part of `check`.

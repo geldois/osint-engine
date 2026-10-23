@@ -9,7 +9,8 @@ import tomllib
 from pathlib import Path
 from typing import cast
 
-_ROOT = Path(__file__).resolve().parents[2]
+from test_scripts.tools import ROOT
+
 _BRACES = re.compile(r"\{([^{}]*)\}")
 _DOC_TYPES = "*.{json,md,toml,yaml,yml}"
 _EDITOR_DIRECTORIES = {".idea", ".vscode", ".zed"}
@@ -31,7 +32,7 @@ def _expand(pattern: str) -> list[str]:
 def _editorconfig() -> dict[str, dict[str, str]]:
     parser = configparser.ConfigParser(interpolation=None)
     parser.read_string(
-        "[__root__]\n" + (_ROOT / ".editorconfig").read_text(encoding="utf-8")
+        "[__root__]\n" + (ROOT / ".editorconfig").read_text(encoding="utf-8")
     )
 
     return {
@@ -42,7 +43,7 @@ def _editorconfig() -> dict[str, dict[str, str]]:
 def _tracked() -> list[str]:
     listed = subprocess.run(
         ["git", "ls-files"],
-        cwd=_ROOT,
+        cwd=ROOT,
         check=True,
         capture_output=True,
         text=True,
@@ -52,11 +53,11 @@ def _tracked() -> list[str]:
 
 
 def _pyproject() -> object:
-    return tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    return tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
 
 def _dprint() -> object:
-    return json.loads((_ROOT / "dprint.json").read_text(encoding="utf-8"))
+    return json.loads((ROOT / "dprint.json").read_text(encoding="utf-8"))
 
 
 def _get(data: object, *keys: str) -> object:
