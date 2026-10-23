@@ -3,9 +3,9 @@ from __future__ import annotations
 import typer
 
 from scripts import fixtures
+from scripts.check import run_check
 from scripts.comments import run_comments
 from scripts.fix import run_fix
-from scripts.gates import run_check
 from scripts.mutation import run_mutation
 from scripts.sqlc import run_sqlc_generate
 

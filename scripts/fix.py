@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from scripts.gates import SHELL_FILES
+from scripts.check import SHELL_FILES
 
 _UV_RUN = ("uv", "run", "--no-sync")
 

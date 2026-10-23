@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from scripts._report import Gate
-from scripts.gates import _run_gate  # pyright: ignore[reportPrivateUsage]
+from scripts.check import _run_gate  # pyright: ignore[reportPrivateUsage]
 
 if TYPE_CHECKING:
     import pytest
