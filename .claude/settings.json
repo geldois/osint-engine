@@ -1,6 +1,7 @@
 {
   "permissions": {
     "deny": [
+      "Read(./.env*)",
       "Bash(uv run python -m scripts check)",
       "Bash(uv run python -m scripts check *)",
       "Bash(uv run python -m scripts comments)",
