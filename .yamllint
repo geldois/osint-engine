@@ -1,9 +1,6 @@
 extends: default
 
-ignore: |
-  .venv/
-  .cache/
-  build/
+ignore-from-file: .gitignore
 
 rules:
   braces: disable

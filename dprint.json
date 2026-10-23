@@ -8,12 +8,7 @@
     "**/*.yml"
   ],
   "excludes": [
-    "build/",
-    "**/responses/",
-    ".cache/",
-    ".venv/",
-    ".git/",
-    "**/__pycache__/"
+    "**/responses/"
   ],
   "plugins": [
     "npm:@dprint/json@0.25.2",

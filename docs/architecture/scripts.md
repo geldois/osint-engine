@@ -41,11 +41,12 @@ rather than the runner because the runner strips git's own environment variables
 selected paths or of all tracked changes see the right index.
 
 The comment ban is a gate rather than a nudge. A comment or docstring is never auto-stripped, since an AST-level rewrite
-could silently corrupt a file, but a violation now fails the commit: every tracked, non-generated source, shell, SQL,
-YAML and TOML file, the committed hooks and a closed set of named configuration files are scanned, while JSON and prose
-have no comment syntax or are the point of the file, with a closed allowlist for linter-suppression pragmas, shell
-directives, shebangs, pinned-action version tags and the annotations the SQL query loader requires. A comment marker
-only counts when it starts a word, so shell argument-count and length expansions are never mistaken for one.
+could silently corrupt a file, but a violation now fails the commit: every tracked file is scanned, whatever its type,
+except generated code and the few kinds that have no comment syntax or are the point of the file (JSON, Markdown, the
+lockfile, the licence and the interpreter version file), so a new kind of file is covered the day it is added, with a
+closed allowlist for linter-suppression pragmas, shell directives, shebangs, pinned-action version tags and the
+annotations the SQL query loader requires. A comment marker only counts when it starts a word, so shell argument-count
+and length expansions are never mistaken for one.
 
 The uv version is pinned exactly in the project manifest, read by the workflows and enforced by uv itself wherever it
 runs, so a stale install fails loudly instead of drifting; the container image's tag and the release helper's pin are
@@ -112,6 +113,14 @@ file, and the one asking for the new in-repository call syntax, because the pinn
 Both settings live in the analyser's own configuration and are revisited when the linter learns the syntax. The
 host-side commands of the deploy job are committed shell files executed through the action's script path, which puts
 them under the shell linter and formatter and keeps every value out of text substitution.
+
+The set of files a gate or a tool touches is discovered, never listed by hand. The shell, compose and workflow files
+come from the version control's own list of tracked files, so a new file enters its gate the moment it is added, with no
+list to edit and no test needed to notice a forgotten entry; the comment ban inverts the default and scans every tracked
+file, excluding a short closed set. What is generated, cached or vendored is already declared once in the ignore file,
+and the formatters, the Markdown linter and the YAML linter read it instead of repeating it; the only exclusions left in
+a tool's own configuration are tracked files that tool must not rewrite, the recorded API responses and the lockfile.
+Which package installs each gate's executable is read from the environment's own metadata, not from a table.
 
 Every value a tool enforces, such as line width, indentation and line endings, is written once, in that tool's own
 configuration. The editor-neutral configuration file only mirrors them for editors that cannot read the tools, and a

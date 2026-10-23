@@ -17,6 +17,7 @@ _VALID_WORKFLOW = (
 
 
 def _yamllint(target: Path) -> tuple[int, str]:
+    write(target.parent, ".gitignore", "")
     result = run(
         [str(BIN / "yamllint"), "--strict", "-c", str(ROOT / ".yamllint"), str(target)],
         cwd=target.parent,

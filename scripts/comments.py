@@ -22,22 +22,8 @@ _SQL_PRAGMA = re.compile(r"^--\s*(?:noqa\b.*|name:\s*\S+\s+:\S+\s*)$")
 _HASH_PRAGMA = re.compile(
     r"^#\s*(?:shellcheck\s+(?:disable|enable|source)=\S+|v\d+(?:\.\d+){1,2})\s*$"
 )
-_HASH_EXTENSIONS = (".sh", ".yml", ".yaml", ".toml")
-_HASH_FILENAMES = frozenset(
-    {
-        "Dockerfile",
-        "Caddyfile",
-        ".env.example",
-        ".gitattributes",
-        ".gitconfig",
-        ".gitignore",
-        ".dockerignore",
-        ".editorconfig",
-        ".sqruff",
-        ".yamllint",
-        "pre-commit",
-    }
-)
+_UNSCANNED_SUFFIXES = (".json", ".lock", ".md")
+_UNSCANNED_NAMES = frozenset({".python-version", "LICENSE"})
 _EXCLUDED_PARTS = frozenset({"generated"})
 _MAX_REPORTED = 50
 
@@ -95,11 +81,7 @@ def is_scanned(rel: str) -> bool:
     path = Path(rel)
     if _EXCLUDED_PARTS & set(path.parts[:-1]):
         return False
-    return (
-        path.name in _HASH_FILENAMES
-        or rel.endswith((".py", ".sql", *_HASH_EXTENSIONS))
-        or path.parts[0] == ".githooks"
-    )
+    return path.name not in _UNSCANNED_NAMES and not rel.endswith(_UNSCANNED_SUFFIXES)
 
 
 def run_comments() -> int:
@@ -112,8 +94,11 @@ def run_comments() -> int:
         path = Path(rel)
         if not is_scanned(rel) or not path.is_file():
             continue
-        lines = comment_lines(rel, path.read_text(encoding="utf-8"))
-        hits.extend(f"{rel}:{line}" for line in lines)
+        try:
+            source = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        hits.extend(f"{rel}:{line}" for line in comment_lines(rel, source))
 
     if not hits:
         return 0

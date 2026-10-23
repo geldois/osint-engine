@@ -153,7 +153,6 @@ convention = "google"
 
 [tool.rumdl]
 line-length = 120
-exclude = [".venv", ".cache", "build"]
 cache-dir = ".cache/rumdl"
 
 [tool.rumdl.MD003]

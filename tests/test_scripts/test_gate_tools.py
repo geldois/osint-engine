@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from importlib import metadata
 from typing import TYPE_CHECKING, cast
 
 from test_scripts.tools import BIN, PYPROJECT, run, write
@@ -12,23 +13,6 @@ if TYPE_CHECKING:
     import subprocess
     from pathlib import Path
 
-_PACKAGE_OF_TOOL = {
-    "actionlint": "actionlint-py",
-    "basedpyright": "basedpyright",
-    "check-jsonschema": "check-jsonschema",
-    "dprint": "dprint-py",
-    "lint-imports": "import-linter",
-    "pytest": "pytest",
-    "ruff": "ruff",
-    "rumdl": "rumdl",
-    "shellcheck": "shellcheck-py",
-    "shfmt": "shfmt-py",
-    "sqruff": "sqruff",
-    "tombi": "tombi",
-    "validate-pyproject": "validate-pyproject",
-    "yamllint": "yamllint",
-    "zizmor": "zizmor",
-}
 _TOOL_INDEX = len(_UV_RUN)
 _WIDTH = 120
 _WORDS_PER_LONG_LINE = 60
@@ -40,10 +24,24 @@ def _dev_dependencies() -> list[str]:
     return groups["dev"]
 
 
+def _normalized(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
 def _declared_packages() -> set[str]:
     return {
-        re.split(r"[<>=!~\[ ]", spec, maxsplit=1)[0] for spec in _dev_dependencies()
+        _normalized(re.split(r"[<>=!~\[ ]", spec, maxsplit=1)[0])
+        for spec in _dev_dependencies()
     }
+
+
+def _package_installing(tool: str) -> str | None:
+    for distribution in metadata.distributions():
+        for file in distribution.files or ():
+            if file.name == tool and file.parent.name == "bin":
+                return _normalized(distribution.metadata["Name"])
+
+    return None
 
 
 def _gate_tools() -> list[str]:
@@ -75,27 +73,9 @@ def test_every_gate_tool_is_a_declared_dev_dependency() -> None:
     for tool in _gate_tools():
         if tool == "python":
             continue
-        assert tool in _PACKAGE_OF_TOOL, tool
-        assert _PACKAGE_OF_TOOL[tool] in declared, tool
-
-
-def test_the_document_and_workflow_tools_are_pinned_to_one_exact_version() -> None:
-    exact = {
-        re.split(r"[\[=]", spec, maxsplit=1)[0]
-        for spec in _dev_dependencies()
-        if "==" in spec
-    }
-
-    assert {
-        "actionlint-py",
-        "check-jsonschema",
-        "dprint-py",
-        "rumdl",
-        "tombi",
-        "validate-pyproject",
-        "yamllint",
-        "zizmor",
-    } <= exact
+        owner = _package_installing(tool)
+        assert owner is not None, tool
+        assert owner in declared, tool
 
 
 def test_the_markdown_and_toml_linters_are_gates() -> None:

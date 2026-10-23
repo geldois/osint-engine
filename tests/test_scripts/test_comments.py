@@ -159,9 +159,11 @@ def test_pragma_word_inside_ordinary_comment_is_still_flagged() -> None:
         ".gitattributes",
         ".sqruff",
         ".yamllint",
+        "a-file-type-nobody-listed.cfg",
+        "tools/Makefile",
     ],
 )
-def test_is_scanned_covers_code_and_config(rel: str) -> None:
+def test_is_scanned_covers_every_file_not_excluded(rel: str) -> None:
     assert is_scanned(rel)
 
 
@@ -171,9 +173,12 @@ def test_is_scanned_covers_code_and_config(rel: str) -> None:
         "src/osint_engine/infrastructure/persistence/pg/generated/models.py",
         "README.md",
         "dprint.json",
+        "uv.lock",
+        "LICENSE",
+        ".python-version",
     ],
 )
-def test_is_scanned_skips_generated_and_prose(rel: str) -> None:
+def test_is_scanned_skips_generated_data_and_prose(rel: str) -> None:
     assert not is_scanned(rel)
 
 

@@ -6,26 +6,14 @@ import sys
 import time
 from pathlib import Path
 
+from scripts._discovery import tracked
 from scripts._report import Gate, GateOutcome, print_header, print_verdict
 
 _UV_RUN = ("uv", "run", "--no-sync")
 
-SHELL_FILES = (
-    ".githooks/pre-commit",
-    "cloud-init.sh",
-    "deploy/roll-out.sh",
-    "deploy/verify-api-domain.sh",
-    "docker-entrypoint.sh",
-)
-COMPOSE_FILES = (
-    "compose.prod.yml",
-    "docker-compose.override.yml",
-    "docker-compose.yml",
-)
-WORKFLOW_FILES = (
-    ".github/workflows/publish-image.yml",
-    ".github/workflows/test.yml",
-)
+SHELL_FILES = tracked("*.sh", ".githooks/*")
+COMPOSE_FILES = tracked(":(glob)compose*.y*ml", ":(glob)docker-compose*.y*ml")
+WORKFLOW_FILES = tracked(":(glob).github/workflows/*.y*ml")
 _LOCK_CHECK = Gate("lock-check", ("uv", "lock", "--check", "--quiet"))
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
 _GATES: tuple[Gate, ...] = (
