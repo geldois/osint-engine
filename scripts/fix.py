@@ -10,6 +10,7 @@ _UV_RUN = ("uv", "run", "--no-sync")
 def run_fix() -> int:
     _run("ruff", "check", "--fix", ".")
     _run("ruff", "format", ".")
+    _run("rumdl", "check", "--fix", "--quiet", ".")
     _run("dprint", "fmt")
     _run("sqruff", "fix", "migrations", "src")
     _run("shfmt", "-w", *SHELL_FILES)

@@ -9,17 +9,11 @@ from pathlib import Path
 from scripts._report import Gate, GateOutcome, print_header, print_verdict
 
 _UV_RUN = ("uv", "run", "--no-sync")
-_ACTIONLINT_IMAGE = "rhysd/actionlint:1.7.12"
 
 SHELL_FILES = (
     ".githooks/pre-commit",
     "cloud-init.sh",
     "docker-entrypoint.sh",
-)
-WORKFLOW_FILES = (
-    ".github/workflows/publish-image.yml",
-    ".github/workflows/release.yml",
-    ".github/workflows/test.yml",
 )
 _LOCK_CHECK = Gate("lock-check", ("uv", "lock", "--check", "--quiet"))
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
@@ -36,23 +30,10 @@ _GATES: tuple[Gate, ...] = (
     ),
     Gate("basedpyright", (*_UV_RUN, "basedpyright")),
     Gate("dprint", (*_UV_RUN, "dprint", "check")),
+    Gate("rumdl", (*_UV_RUN, "rumdl", "check", "--quiet", ".")),
     Gate("sqruff", (*_UV_RUN, "sqruff", "lint", "migrations", "src")),
     Gate("shellcheck", (*_UV_RUN, "shellcheck", "--format=gcc", *SHELL_FILES)),
     Gate("shfmt", (*_UV_RUN, "shfmt", "-d", *SHELL_FILES)),
-    Gate(
-        "actionlint",
-        (
-            "docker",
-            "run",
-            "--rm",
-            "--volume",
-            f"{Path.cwd()}:/repo:ro",
-            "--workdir",
-            "/repo",
-            _ACTIONLINT_IMAGE,
-            *WORKFLOW_FILES,
-        ),
-    ),
     Gate(
         "pytest",
         (

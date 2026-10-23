@@ -2,7 +2,7 @@
 
 This is the project's own developer-facing tooling — the quality gate runner and one-off maintenance commands — kept
 entirely separate from the product itself so none of it ships in the deployed application. One command runs every check
-the project owns: the ban on comments, formatting, linting, import direction, static typing, shell and workflow linting,
+the project owns: the ban on comments, formatting, linting, import direction, static typing, shell and Markdown linting,
 and the full automated test suite with coverage. A second command applies every safe automatic fixer to the whole repo.
 A completely separate, periodic command deliberately introduces small mutations into the codebase and confirms the test
 suite actually catches them, as a check on the tests' own effectiveness rather than just their pass/fail status — this
@@ -74,6 +74,22 @@ for a person to ever open. The one exception is the project's own environment an
 neither of which is a third-party tool's cache in the same sense; the agent-hook marker lives in the same generated
 build directory.
 
+Every linter, formatter and fixer a gate calls is a pinned development dependency of the project, installed by the same
+environment sync as the code, never an image pulled or a binary expected on the host. A gate therefore behaves
+identically on a fresh clone, in the hook and in continuous integration, and a tool version moves only through the
+lockfile in a reviewable commit. A tool that could not be installed that way would need its alternatives weighed in the
+open and written down here, or the absence of any alternative stated, before it joined a gate; a test fails the build
+when a gate runs a tool the project does not declare.
+
+Markdown has one formatter and one linter with disjoint jobs. The formatter owns every layout decision — line width,
+list markers, emphasis style — and the linter owns only what a formatter cannot see: a code fence with no language, an
+image with no description, a link whose target is missing, a duplicate heading. The linter's line-length rule is
+therefore switched off, because two tools disagreeing about width would make one of them always fail. The linter is
+rumdl rather than the reference markdownlint implementation because it installs through the same package manager as
+everything else instead of needing a Node runtime or a container, and it covers the same rules plus more; the cost is a
+younger project still labelled beta, offset by pinning one exact version. Its fixer runs before the formatter, so the
+formatter has the last word on layout. The changelog is left out of both tools because release tooling generates it.
+
 ## Consequences
 
 Because the git hook is an ordinary versioned file, any future change to what runs on commit is itself a reviewable diff
@@ -103,9 +119,9 @@ that same root, never a new dot-directory at the repository's own top level to r
   workflows read and that uv enforces everywhere it runs), the `build` extra that lets semantic-release install uv, the
   `Dockerfile`'s uv image tag and digest, and the two README setup steps that state it. A drifted copy in the first
   three fails loudly, but all five still move together
-- **Six gates run without a reduced-output flag.** `dprint`, `sqruff`, `basedpyright`, `shfmt`, `actionlint` and
-  `lint-imports` print their full default output, because no flag cutting it was confirmed for the pinned versions
-  (`lint-imports` 2.13 lacks `--no-logo`, which later documentation lists). Check each tool's changelog on every bump
+- **Five gates run without a reduced-output flag.** `dprint`, `sqruff`, `basedpyright`, `shfmt` and `lint-imports` print
+  their full default output, because no flag cutting it was confirmed for the pinned versions (`lint-imports` 2.13 lacks
+  `--no-logo`, which later documentation lists). Check each tool's changelog on every bump
 - **No test proves that a gate's tool still sees a terminal.** The tests run a real process through the runner and prove
   that its output reaches the terminal untouched and under its header, but the capture they use is not a terminal, so
   nothing proves the tool keeps the colors and layout it only emits to one
