@@ -24,7 +24,6 @@ COMPOSE_FILES = (
 )
 WORKFLOW_FILES = (
     ".github/workflows/publish-image.yml",
-    ".github/workflows/release.yml",
     ".github/workflows/test.yml",
 )
 _LOCK_CHECK = Gate("lock-check", ("uv", "lock", "--check", "--quiet"))

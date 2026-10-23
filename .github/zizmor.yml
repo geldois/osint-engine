@@ -4,4 +4,3 @@ rules:
   self-repository:
     ignore:
       - publish-image.yml
-      - release.yml

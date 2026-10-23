@@ -92,8 +92,7 @@ same package manager as everything else instead of needing a Node runtime or a c
 more, and reflows paragraphs to the configured width with the exact output dprint used to produce; the cost is a younger
 project still labelled beta, offset by pinning one exact version. tombi replaced dprint's TOML plugin because its linter
 and formatter agree on table order, which the plugin never checked, and its schema for the project manifest ships inside
-the tool, so linting needs no network. Generated files, the changelog and the lockfile, are left out of the tools that
-would rewrite them.
+the tool, so linting needs no network. The generated lockfile is left out of the tools that would rewrite it.
 
 The project manifest is also validated against the packaging standard's own schema, including license expressions and
 trove classifiers, which a TOML linter cannot know.
@@ -152,10 +151,9 @@ that same root, never a new dot-directory at the repository's own top level to r
   permission-comment audit while comments are banned and the self-repository-syntax audit for the two workflows that
   call `test.yml`, because the pinned workflow linter rejects that syntax. Re-enable the second as soon as a pinned
   release of the linter accepts it
-- **The uv version lives in five places**, all exactly `0.11.21`: `required-version` in `[tool.uv]` (the one the
-  workflows read and that uv enforces everywhere it runs), the `build` extra that lets semantic-release install uv, the
-  `Dockerfile`'s uv image tag and digest, and the two README setup steps that state it. A drifted copy in the first
-  three fails loudly, but all five still move together
+- **The uv version lives in four places**, all exactly `0.11.21`: `required-version` in `[tool.uv]` (the one the
+  workflows read and that uv enforces everywhere it runs), the `Dockerfile`'s uv image tag and digest, and the two
+  README setup steps that state it. A drifted copy in the first two fails loudly, but all four still move together
 - **Ten gates run without a reduced-output flag.** `dprint`, `sqruff`, `basedpyright`, `shfmt`, `lint-imports`,
   `yamllint`, `check-jsonschema`, `validate-pyproject`, `actionlint` and `zizmor` (which only turns its progress off)
   print their full default output, because no flag cutting it was confirmed for the pinned versions (`lint-imports` 2.13

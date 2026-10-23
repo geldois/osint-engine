@@ -40,9 +40,6 @@ Repository = "https://github.com/geldois/osint-engine"
 [project.scripts]
 osint-engine = "osint_engine.interface.cli.typer.typer_app:main"
 
-[project.optional-dependencies]
-build = ["uv==0.11.21"]
-
 [dependency-groups]
 dev = [
   "actionlint-py==1.7.12.25",
@@ -57,7 +54,6 @@ dev = [
   "pytest-asyncio>=1.4",
   "pytest-cov>=7.1.0",
   "pytest-language-server>=0.23",
-  "python-semantic-release>=10.5",
   "ruff>=0.15",
   "rumdl==0.3.0",
   "shellcheck-py==0.11.0.1",
@@ -157,7 +153,7 @@ convention = "google"
 
 [tool.rumdl]
 line-length = 120
-exclude = ["CHANGELOG.md", ".venv", ".cache", "build"]
+exclude = [".venv", ".cache", "build"]
 cache-dir = ".cache/rumdl"
 
 [tool.rumdl.MD003]
@@ -175,26 +171,6 @@ style = "asterisk"
 
 [tool.rumdl.MD050]
 style = "asterisk"
-
-[tool.semantic_release]
-version_toml = ["pyproject.toml:project.version"]
-commit_parser = "conventional"
-tag_format = "v{version}"
-build_command = """
-    python -m pip install -e '.[build]'
-    uv lock --upgrade-package "$PACKAGE_NAME"
-    git add uv.lock
-"""
-
-[tool.semantic_release.branches.main]
-match = "main"
-prerelease = false
-
-[tool.semantic_release.commit_parser_options]
-minor_tags = ["feat"]
-patch_tags = ["fix", "perf", "refactor"]
-parse_squash_commits = true
-ignore_merge_commits = true
 
 [tool.tombi.files]
 exclude = ["uv.lock"]
