@@ -34,21 +34,21 @@ dependencies = [
   "uvicorn>=0.48",
 ]
 
-[project.optional-dependencies]
-build = ["uv==0.11.21"]
+[project.urls]
+Repository = "https://github.com/geldois/osint-engine"
 
 [project.scripts]
 osint-engine = "osint_engine.interface.cli.typer.typer_app:main"
 
-[project.urls]
-Repository = "https://github.com/geldois/osint-engine"
+[project.optional-dependencies]
+build = ["uv==0.11.21"]
 
 [dependency-groups]
 dev = [
   "asyncpg-stubs>=0.31.3",
   "basedpyright>=1.39",
   "cosmic-ray==8.4.6",
-  "dprint-py==0.55.2.0",
+  "dprint-py==0.64.3.0",
   "hypothesis>=6.156.1",
   "import-linter==2.13",
   "pytest>=9.0",
@@ -63,10 +63,8 @@ dev = [
   "sqlc==1.31.1.post1",
   "sqruff==0.39.0",
   "testcontainers[postgres]>=4.14.2",
+  "tombi==1.9.1",
 ]
-
-[tool.uv]
-required-version = "==0.11.21"
 
 [build-system]
 requires = ["hatchling"]
@@ -81,23 +79,6 @@ failOnWarnings = true
 pythonPlatform = "All"
 reportMissingTypeStubs = "none"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/osint_engine"]
-
-[tool.pytest.ini_options]
-pythonpath = ["src", "tests", "."]
-addopts = "-m 'not real_api_snapshot'"
-asyncio_mode = "strict"
-asyncio_default_fixture_loop_scope = "session"
-filterwarnings = ["error"]
-cache_dir = ".cache/pytest"
-markers = [
-  "real_api_snapshot: needs a live external API plus PORTAL_TRANSPARENCIA_API_KEY; periodic-manual only, run via 'scripts fixtures verify'",
-]
-
-[tool.pytest-language-server]
-exclude = ["build/**", "dist/**", ".tox/**", ".cache/**"]
-
 [tool.coverage.run]
 branch = true
 source = ["src"]
@@ -106,6 +87,9 @@ data_file = ".cache/coverage/.coverage"
 [tool.coverage.report]
 fail_under = 97
 show_missing = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/osint_engine"]
 
 [tool.importlinter]
 root_package = "osint_engine"
@@ -119,6 +103,20 @@ layers = [
   "osint_engine.domain",
 ]
 ignore_imports = ["osint_engine.config.** -> osint_engine.infrastructure.**"]
+
+[tool.pytest.ini_options]
+addopts = "-m 'not real_api_snapshot'"
+cache_dir = ".cache/pytest"
+filterwarnings = ["error"]
+markers = [
+  "real_api_snapshot: needs a live external API plus PORTAL_TRANSPARENCIA_API_KEY; periodic-manual only, run via 'scripts fixtures verify'",
+]
+pythonpath = ["src", "tests", "."]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "session"
+
+[tool.pytest-language-server]
+exclude = ["build/**", "dist/**", ".tox/**", ".cache/**"]
 
 [tool.ruff]
 line-length = 88
@@ -153,9 +151,25 @@ ignore = [
 convention = "google"
 
 [tool.rumdl]
-disable = ["MD013"]
+line-length = 120
 exclude = ["CHANGELOG.md", ".venv", ".cache", "build"]
 cache-dir = ".cache/rumdl"
+
+[tool.rumdl.MD003]
+style = "atx"
+
+[tool.rumdl.MD004]
+style = "dash"
+
+[tool.rumdl.MD013]
+reflow = true
+reflow-mode = "normalize"
+
+[tool.rumdl.MD049]
+style = "asterisk"
+
+[tool.rumdl.MD050]
+style = "asterisk"
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
@@ -176,3 +190,13 @@ minor_tags = ["feat"]
 patch_tags = ["fix", "perf", "refactor"]
 parse_squash_commits = true
 ignore_merge_commits = true
+
+[tool.tombi.files]
+exclude = ["uv.lock"]
+
+[tool.tombi.format.rules]
+indent-width = 2
+line-width = 120
+
+[tool.uv]
+required-version = "==0.11.21"

@@ -2,11 +2,11 @@
 
 This is the project's own developer-facing tooling — the quality gate runner and one-off maintenance commands — kept
 entirely separate from the product itself so none of it ships in the deployed application. One command runs every check
-the project owns: the ban on comments, formatting, linting, import direction, static typing, shell and Markdown linting,
-and the full automated test suite with coverage. A second command applies every safe automatic fixer to the whole repo.
-A completely separate, periodic command deliberately introduces small mutations into the codebase and confirms the test
-suite actually catches them, as a check on the tests' own effectiveness rather than just their pass/fail status — this
-one is never run as part of an ordinary commit, only on demand.
+the project owns: the ban on comments, formatting, linting, import direction, static typing, shell, Markdown and TOML
+linting, and the full automated test suite with coverage. A second command applies every safe automatic fixer to the
+whole repo. A completely separate, periodic command deliberately introduces small mutations into the codebase and
+confirms the test suite actually catches them, as a check on the tests' own effectiveness rather than just their
+pass/fail status — this one is never run as part of an ordinary commit, only on demand.
 
 Every commit is validated in full, automatically, by the git hook, and continuous integration runs the very same
 command. The release and image-publishing workflows call that same workflow first and do nothing unless it passes, so
@@ -81,14 +81,20 @@ lockfile in a reviewable commit. A tool that could not be installed that way wou
 open and written down here, or the absence of any alternative stated, before it joined a gate; a test fails the build
 when a gate runs a tool the project does not declare.
 
-Markdown has one formatter and one linter with disjoint jobs. The formatter owns every layout decision — line width,
-list markers, emphasis style — and the linter owns only what a formatter cannot see: a code fence with no language, an
-image with no description, a link whose target is missing, a duplicate heading. The linter's line-length rule is
-therefore switched off, because two tools disagreeing about width would make one of them always fail. The linter is
-rumdl rather than the reference markdownlint implementation because it installs through the same package manager as
-everything else instead of needing a Node runtime or a container, and it covers the same rules plus more; the cost is a
-younger project still labelled beta, offset by pinning one exact version. Its fixer runs before the formatter, so the
-formatter has the last word on layout. The changelog is left out of both tools because release tooling generates it.
+Each file type has exactly one owner that both lints and formats it, so lint and fix share one parser and one
+configuration: Markdown belongs to rumdl, TOML to tombi, and JSON and YAML to dprint, which stays only for the types no
+native tool formats. rumdl was picked over the reference markdownlint implementation because it installs through the
+same package manager as everything else instead of needing a Node runtime or a container, covers the same rules plus
+more, and reflows paragraphs to the configured width with the exact output dprint used to produce; the cost is a younger
+project still labelled beta, offset by pinning one exact version. tombi replaced dprint's TOML plugin because its linter
+and formatter agree on table order, which the plugin never checked, and its schema for the project manifest ships inside
+the tool, so linting needs no network. Generated files, the changelog and the lockfile, are left out of the tools that
+would rewrite them.
+
+Every value a tool enforces, such as line width, indentation and line endings, is written once, in that tool's own
+configuration. The editor-neutral configuration file only mirrors them for editors that cannot read the tools, and a
+test fails when any mirrored value differs from its owner, when the mirror carries a section matching no tracked file,
+or when an editor-specific directory is committed.
 
 ## Consequences
 

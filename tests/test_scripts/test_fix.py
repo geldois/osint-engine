@@ -37,14 +37,16 @@ def test_every_fixer_runs_through_the_project_environment(
     assert all(command[:_TOOL_INDEX] == list(_UV_RUN) for command in commands)
 
 
-def test_the_markdown_linter_fixes_before_the_formatter_lays_out(
+def test_each_document_type_is_formatted_by_its_own_tool(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     commands = _recorded_commands(monkeypatch)
 
     fix.run_fix()
 
-    tools = [command[_TOOL_INDEX] for command in commands]
-    assert tools.index("rumdl") < tools.index("dprint")
-    rumdl = commands[tools.index("rumdl")]
-    assert "--fix" in rumdl
+    formatters = {
+        command[_TOOL_INDEX]: command[_TOOL_INDEX + 1] for command in commands
+    }
+    assert formatters["rumdl"] == "fmt"
+    assert formatters["tombi"] == "format"
+    assert formatters["dprint"] == "fmt"

@@ -31,6 +31,14 @@ _GATES: tuple[Gate, ...] = (
     Gate("basedpyright", (*_UV_RUN, "basedpyright")),
     Gate("dprint", (*_UV_RUN, "dprint", "check")),
     Gate("rumdl", (*_UV_RUN, "rumdl", "check", "--quiet", ".")),
+    Gate(
+        "tombi-format",
+        (*_UV_RUN, "tombi", "format", "--check", "--offline", "--quiet"),
+    ),
+    Gate(
+        "tombi-lint",
+        (*_UV_RUN, "tombi", "lint", "--offline", "--error-on-warnings", "--quiet"),
+    ),
     Gate("sqruff", (*_UV_RUN, "sqruff", "lint", "migrations", "src")),
     Gate("shellcheck", (*_UV_RUN, "shellcheck", "--format=gcc", *SHELL_FILES)),
     Gate("shfmt", (*_UV_RUN, "shfmt", "-d", *SHELL_FILES)),
