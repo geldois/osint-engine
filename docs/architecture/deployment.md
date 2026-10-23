@@ -41,14 +41,15 @@ single caller can exhaust for everyone. Trusting that header is safe only becaus
 through the proxy; exposing the application directly would let a caller forge its address and dodge those limits, which
 makes this the first thing to revisit if that ever changes.
 
-The image is built per architecture and pushed by digest, then a second job joins the digests into one multi-arch
-manifest tagged both with the branch and with the commit SHA. The SHA tag is what the deploy pulls, so the running
-container is always the exact commit the verification gate passed, never whatever a moving tag points at when the host
-happens to pull. The host's own checkout, which supplies the compose files, is reset to exactly that commit on every
-deploy, with no reconciliation: the files can never be ahead of, behind or different from the repository, and any local
-edit to a tracked file on the host is discarded. Untracked files, such as the generated environment file, are left
-untouched. The host also runs an intrusion-banning service for SSH, since it is exposed to the internet and nobody
-watches its logs.
+The image is built for a single architecture, that of the host, and tagged both with the branch and with the commit SHA.
+Publishing a second architecture would need a build per architecture joined into one manifest, a cost with no consumer:
+nothing runs the image except that one host. Moving to a host of another architecture means building for it first. The
+SHA tag is what the deploy pulls, so the running container is always the exact commit the verification gate passed,
+never whatever a moving tag points at when the host happens to pull. The host's own checkout, which supplies the compose
+files, is reset to exactly that commit on every deploy, with no reconciliation: the files can never be ahead of, behind
+or different from the repository, and any local edit to a tracked file on the host is discarded. Untracked files, such
+as the generated environment file, are left untouched. The host also runs an intrusion-banning service for SSH, since it
+is exposed to the internet and nobody watches its logs.
 
 ## Consequences
 

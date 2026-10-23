@@ -537,13 +537,13 @@ then `sudo systemctl restart docker` and re-run the pulls.
 ## Deploy
 
 `.github/workflows/publish-image.yml` runs on every push to `main` and on manual dispatch. It first calls `test.yml`,
-the very same gate as the commit hook, on that exact commit; only if it passes does it build both architectures, merge
-them into one multi-arch manifest on ghcr.io tagged with the branch and with the commit SHA, then deploy over SSH to the
-host `cloud-init.sh` provisions, pulling the image by SHA so production runs exactly the commit that was verified. No
-release is cut: the image tag is the commit SHA and the history of conventional commits is the change log. The last step
-of the deploy job probes `https://${{ vars.API_DOMAIN }}/health` from the runner rather than from the host, so the check
-still reports a host that is itself the broken half — the probe therefore reaches Caddy by the name CI believes in,
-which Caddy only answers if the host serves that same name.
+the very same gate as the commit hook, on that exact commit; only if it passes does it build one `linux/amd64` image
+(the architecture of the host, an Oracle Cloud AMD shape) on ghcr.io tagged with the branch and with the commit SHA,
+then deploy over SSH to the host `cloud-init.sh` provisions, pulling the image by SHA so production runs exactly the
+commit that was verified. No release is cut: the image tag is the commit SHA and the history of conventional commits is
+the change log. The last step of the deploy job probes `https://${{ vars.API_DOMAIN }}/health` from the runner rather
+than from the host, so the check still reports a host that is itself the broken half — the probe therefore reaches Caddy
+by the name CI believes in, which Caddy only answers if the host serves that same name.
 
 The two commands the deploy job runs on the host live in `deploy/` as shell files, so they are checked like any other
 script, and every value reaches them through the environment of the job rather than by text substitution. Every workflow
