@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 _PACKAGE_OF_TOOL = {
+    "actionlint": "actionlint-py",
     "basedpyright": "basedpyright",
     "check-jsonschema": "check-jsonschema",
     "dprint": "dprint-py",
@@ -25,6 +26,7 @@ _PACKAGE_OF_TOOL = {
     "sqruff": "sqruff",
     "tombi": "tombi",
     "yamllint": "yamllint",
+    "zizmor": "zizmor",
 }
 _TOOL_INDEX = len(_UV_RUN)
 _WIDTH = 120
@@ -76,17 +78,19 @@ def test_every_gate_tool_is_a_declared_dev_dependency() -> None:
         assert _PACKAGE_OF_TOOL[tool] in declared, tool
 
 
-def test_the_document_tools_are_pinned_to_one_exact_version() -> None:
+def test_the_document_and_workflow_tools_are_pinned_to_one_exact_version() -> None:
     exact = {
         spec.split("==", maxsplit=1)[0] for spec in _dev_dependencies() if "==" in spec
     }
 
     assert {
+        "actionlint-py",
         "check-jsonschema",
         "dprint-py",
         "rumdl",
         "tombi",
         "yamllint",
+        "zizmor",
     } <= exact
 
 

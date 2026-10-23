@@ -100,6 +100,17 @@ and values a YAML 1.1 parser would read as booleans, with every layout rule swit
 dprint. Compose files and workflows are additionally validated against their published schemas, which ship inside the
 validator, so the check needs no network and catches a misspelt key or a missing required field.
 
+Workflows are held to one contract rather than reviewed by eye, because the gate can only read them, never run them. The
+workflow linter checks syntax, expressions, runner labels and the shell inside every step, using the pinned shell linter
+that the project already installs, so a step is judged by the same tool version as the committed scripts. The security
+analyser runs offline, at its strictest persona that still avoids false positives, so the hook needs no token; the
+audits that need the hosting API are left to a continuous-integration step that has one. Two of its audits are set aside
+on purpose: the one demanding an explanatory comment on every permission, because the repository bans comments in every
+file, and the one asking for the new in-repository call syntax, because the pinned workflow linter rejects it today.
+Both settings live in the analyser's own configuration and are revisited when the linter learns the syntax. The
+host-side commands of the deploy job are committed shell files executed through the action's script path, which puts
+them under the shell linter and formatter and keeps every value out of text substitution.
+
 Every value a tool enforces, such as line width, indentation and line endings, is written once, in that tool's own
 configuration. The editor-neutral configuration file only mirrors them for editors that cannot read the tools, and a
 test fails when any mirrored value differs from its owner, when the mirror carries a section matching no tracked file,
@@ -130,6 +141,14 @@ that same root, never a new dot-directory at the repository's own top level to r
 
 ## Open problems
 
+- **The workflow analyser's online audits run nowhere.** The gate in `scripts/check.py` runs it offline, so audits that
+  ask the hosting API about impostor commits, vulnerable actions and ref confusion are never executed. A step in
+  `.github/workflows/test.yml` with a read-only token, running the analyser online, closes it; add it when pinned action
+  versions need that cross-check
+- **Two analyser audits are disabled or ignored for stated reasons that can lapse.** `.github/zizmor.yml` sets aside the
+  permission-comment audit while comments are banned and the self-repository-syntax audit for the two workflows that
+  call `test.yml`, because the pinned workflow linter rejects that syntax. Re-enable the second as soon as a pinned
+  release of the linter accepts it
 - **The uv version lives in five places**, all exactly `0.11.21`: `required-version` in `[tool.uv]` (the one the
   workflows read and that uv enforces everywhere it runs), the `build` extra that lets semantic-release install uv, the
   `Dockerfile`'s uv image tag and digest, and the two README setup steps that state it. A drifted copy in the first

@@ -359,8 +359,8 @@ already done (e.g. `GET /cpf/{cpf}` repeated by the same user without `force=tru
 - **File reading:** openpyxl (`.xlsx`), stdlib `csv` (`.csv`)
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
-- **Tooling:** uv, Ruff, basedpyright (strict), import-linter, dprint, rumdl, tombi, yamllint, check-jsonschema, sqruff,
-  shellcheck, shfmt, sqlc, cosmic-ray, python-semantic-release; mise only for `migrate`
+- **Tooling:** uv, Ruff, basedpyright (strict), import-linter, dprint, rumdl, tombi, yamllint, check-jsonschema,
+  actionlint, zizmor, sqruff, shellcheck, shfmt, sqlc, cosmic-ray, python-semantic-release; mise only for `migrate`
 - **Testing:** pytest, pytest-asyncio, testcontainers, hypothesis (property-based tests, see
   `docs/architecture/tests.md`)
 
@@ -546,6 +546,13 @@ hand, is the semantic-release job and likewise waits for the same gate. Its last
 that is itself the broken half — the probe therefore reaches Caddy by the name CI believes in, which Caddy only answers
 if the host serves that same name.
 
+The two commands the deploy job runs on the host live in `deploy/` as shell files, so they are checked like any other
+script, and every value reaches them through the environment of the job rather than by text substitution. Every workflow
+starts from no permissions, grants each job only what it uses, never persists the checkout credential, passes the called
+workflow its secrets by name, and is linted by actionlint and zizmor on every commit. `actionlint` is installed by
+`uv sync`, whose build downloads and checks its binary from github.com; on NixOS that needs `SSL_CERT_FILE` pointing at
+the system CA bundle.
+
 `vars.API_DOMAIN` (repository Settings, Secrets and variables, Actions, Variables) must mirror the `API_DOMAIN` line
 `cloud-init.sh` writes into the host's `.env`. It is repository-side state that no push updates, so migrating a domain
 edits both; the workflow compares the two and fails before restarting any container when they disagree.
@@ -559,7 +566,8 @@ project owns.
   repo. It is never part of the commit: run it before committing, and the commit finds nothing left to complain about.
 - `check` runs every gate on the working tree, after syncing the environment: lockfile, comment ban, Ruff format and
   lint, import-linter, basedpyright (warnings fail), dprint, rumdl, tombi, yamllint, check-jsonschema (compose files and
-  workflows against their published schemas), sqruff, shellcheck, shfmt and the full pytest suite with coverage
+  workflows against their published schemas), actionlint (syntax, expressions and the shell inside every step), zizmor
+  (workflow security, pedantic persona, offline), sqruff, shellcheck, shfmt and the full pytest suite with coverage
   (warnings fail). `.githooks/pre-commit` and CI both run exactly this, and the hook first refuses a commit when
   anything is unstaged or untracked, so what the gate tested is exactly what is committed. A partial commit therefore
   needs the rest stashed, and the hook prints the exact commands. Each gate prints a header line and then its tool's own

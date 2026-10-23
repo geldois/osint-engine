@@ -13,6 +13,8 @@ _UV_RUN = ("uv", "run", "--no-sync")
 SHELL_FILES = (
     ".githooks/pre-commit",
     "cloud-init.sh",
+    "deploy/roll-out.sh",
+    "deploy/verify-api-domain.sh",
     "docker-entrypoint.sh",
 )
 COMPOSE_FILES = (
@@ -68,6 +70,19 @@ _GATES: tuple[Gate, ...] = (
             "--builtin-schema",
             "vendor.github-workflows",
             *WORKFLOW_FILES,
+        ),
+    ),
+    Gate("actionlint", (*_UV_RUN, "actionlint")),
+    Gate(
+        "zizmor",
+        (
+            *_UV_RUN,
+            "zizmor",
+            "--persona",
+            "pedantic",
+            "--offline",
+            "--no-progress",
+            ".github",
         ),
     ),
     Gate("sqruff", (*_UV_RUN, "sqruff", "lint", "migrations", "src")),

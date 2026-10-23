@@ -1,0 +1,7 @@
+rules:
+  undocumented-permissions:
+    disable: true
+  self-repository:
+    ignore:
+      - publish-image.yml
+      - release.yml

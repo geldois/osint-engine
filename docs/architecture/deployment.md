@@ -75,6 +75,12 @@ that is only ever the container, and needs revisiting the day another install pa
 
 ## Open problems
 
+- **The deploy secrets are repository secrets, not environment secrets.** `.github/workflows/publish-image.yml` reads
+  the host address and the SSH key in a job tied to no GitHub environment, so any workflow in the repository can read
+  them and no required reviewer can gate the deploy. The workflow analyser flags this only at its auditor persona.
+  Create an environment named for production, move the three secrets into it, set the deploy job's environment to it
+  and, if wanted, add a required reviewer; do it before a second contributor or a second workflow can touch the
+  repository
 - **`main` has no branch protection or ruleset.** Without them, anything can still reach `main` without having passed
   the gate. In the GitHub web UI: repository Settings, Rules, Rulesets, New branch ruleset, target `main`; enable
   "Require status checks to pass" and add the check `test` (it must have run once on a pushed branch to appear), keep

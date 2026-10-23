@@ -3,15 +3,20 @@ name: Release
 "on":
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   verify:
+    name: Verify
     uses: ./.github/workflows/test.yml
-    secrets: inherit
+    permissions:
+      contents: read
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   release:
+    name: Release
     needs: verify
     runs-on: ubuntu-24.04
     concurrency:
@@ -26,9 +31,12 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ github.ref_name }}
+          persist-credentials: false
 
       - name: Force branch to workflow sha
-        run: git reset --hard ${{ github.sha }}
+        env:
+          SHA: ${{ github.sha }}
+        run: git reset --hard "${SHA}"
 
       - name: Install uv
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0

@@ -9,10 +9,13 @@ PYPROJECT = ROOT / "pyproject.toml"
 BIN = Path(sys.executable).parent
 
 
-def run(command: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+def run(
+    command: list[str], *, cwd: Path, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         command,
         cwd=cwd,
+        env=env,
         check=False,
         capture_output=True,
         text=True,

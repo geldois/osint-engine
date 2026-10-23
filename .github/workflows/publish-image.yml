@@ -5,9 +5,7 @@ name: Publish image
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  packages: write
+permissions: {}
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
@@ -18,10 +16,16 @@ concurrency:
 
 jobs:
   verify:
+    name: Verify
     uses: ./.github/workflows/test.yml
-    secrets: inherit
+    permissions:
+      contents: read
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   build:
+    name: Build ${{ matrix.platform }}
     needs: verify
     strategy:
       fail-fast: false
@@ -32,17 +36,25 @@ jobs:
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Compute platform pair
         env:
           PLATFORM: ${{ matrix.platform }}
         run: echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> "$GITHUB_ENV"
 
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -57,12 +69,14 @@ jobs:
           outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
+          touch "/tmp/digests/${DIGEST#sha256:}"
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: Upload digest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
@@ -70,18 +84,24 @@ jobs:
           retention-days: 1
 
   merge:
+    name: Merge manifest
     needs: build
     runs-on: ubuntu-24.04
+    permissions:
+      packages: write
     steps:
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - name: Download digests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: /tmp/digests
           pattern: digests-*
           merge-multiple: true
 
-      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
-      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -89,20 +109,32 @@ jobs:
 
       - name: Create and push the multi-arch manifest
         working-directory: /tmp/digests
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
         run: |
           digests=()
           for f in *; do
             digests+=("${IMAGE}@sha256:$f")
           done
           docker buildx imagetools create \
-            -t "${IMAGE}:${{ github.ref_name }}" \
-            -t "${IMAGE}:${{ github.sha }}" \
+            -t "${IMAGE}:${REF_NAME}" \
+            -t "${IMAGE}:${SHA}" \
             "${digests[@]}"
 
   deploy:
+    name: Deploy
     needs: merge
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          sparse-checkout: deploy
+
       - name: Verify vars.API_DOMAIN matches the deployed .env
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
@@ -112,29 +144,22 @@ jobs:
           username: ubuntu
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           envs: EXPECTED_API_DOMAIN
-          script: |
-            set -e
-            cd /opt/osint-engine
-            declared=$(grep -m1 '^API_DOMAIN=' .env | cut -d= -f2-)
-            if [ "$declared" != "$EXPECTED_API_DOMAIN" ]; then
-              echo "::error::vars.API_DOMAIN is '${EXPECTED_API_DOMAIN}' but /opt/osint-engine/.env declares '${declared}'; the health check would probe a domain Caddy does not serve"
-              exit 1
-            fi
+          script_path: deploy/verify-api-domain.sh
 
-      - uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+      - name: Roll out the image
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
+        env:
+          SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ubuntu
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            set -e
-            cd /opt/osint-engine
-            git fetch --quiet origin
-            git reset --hard ${{ github.sha }}
-            IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml -f compose.prod.yml pull
-            IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.yml -f compose.prod.yml up -d
+          envs: SHA
+          script_path: deploy/roll-out.sh
 
       - name: Wait for health check
+        env:
+          API_DOMAIN: ${{ vars.API_DOMAIN }}
         run: |
           for _ in $(seq 1 24); do
             if curl -fsS "https://${API_DOMAIN}/health"; then
@@ -144,5 +169,3 @@ jobs:
           done
           echo "::error::/health never returned 200 after ~120s"
           exit 1
-        env:
-          API_DOMAIN: ${{ vars.API_DOMAIN }}
