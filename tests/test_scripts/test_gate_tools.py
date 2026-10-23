@@ -25,6 +25,7 @@ _PACKAGE_OF_TOOL = {
     "shfmt": "shfmt-py",
     "sqruff": "sqruff",
     "tombi": "tombi",
+    "validate-pyproject": "validate-pyproject",
     "yamllint": "yamllint",
     "zizmor": "zizmor",
 }
@@ -80,7 +81,9 @@ def test_every_gate_tool_is_a_declared_dev_dependency() -> None:
 
 def test_the_document_and_workflow_tools_are_pinned_to_one_exact_version() -> None:
     exact = {
-        spec.split("==", maxsplit=1)[0] for spec in _dev_dependencies() if "==" in spec
+        re.split(r"[\[=]", spec, maxsplit=1)[0]
+        for spec in _dev_dependencies()
+        if "==" in spec
     }
 
     assert {
@@ -89,6 +92,7 @@ def test_the_document_and_workflow_tools_are_pinned_to_one_exact_version() -> No
         "dprint-py",
         "rumdl",
         "tombi",
+        "validate-pyproject",
         "yamllint",
         "zizmor",
     } <= exact

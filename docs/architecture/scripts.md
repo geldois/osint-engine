@@ -95,6 +95,9 @@ and formatter agree on table order, which the plugin never checked, and its sche
 the tool, so linting needs no network. Generated files, the changelog and the lockfile, are left out of the tools that
 would rewrite them.
 
+The project manifest is also validated against the packaging standard's own schema, including license expressions and
+trove classifiers, which a TOML linter cannot know.
+
 YAML has two checks beyond its formatter. A linter keeps only the rules a formatter cannot see, such as duplicate keys
 and values a YAML 1.1 parser would read as booleans, with every layout rule switched off so that it never disagrees with
 dprint. Compose files and workflows are additionally validated against their published schemas, which ship inside the
