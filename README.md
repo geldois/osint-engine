@@ -350,12 +350,13 @@ already done (e.g. `GET /cpf/{cpf}` repeated by the same user without `force=tru
 - **Runtime:** Python 3.14 (the image, CI and `.python-version`; the package supports ≥3.12), FastAPI, Uvicorn
 - **CLI:** Typer (`osint-engine serve` / `osint-engine migrate up|down`)
 - **Auth:** PyJWT (HS256 access tokens), argon2-cffi (Argon2id password hashing)
-- **Persistence:** PostgreSQL via asyncpg + aiosql (user accounts, external credentials), golang-migrate (schema
-  migrations), in-memory snapshot store (graph and consumption data)
+- **Persistence:** PostgreSQL via asyncpg (hand-written queries, sqlc-generated row models for the external
+  credentials), golang-migrate (schema migrations), in-memory snapshot store (graph and consumption data)
 - **Encryption:** cryptography (Fernet, application-layer encryption of stored API keys)
 - **Rate limiting:** fastapi-throttle (in-memory)
 - **HTTP client:** httpx2 (async)
-- **File reading:** openpyxl (`.xlsx`), stdlib `csv` (`.csv`)
+- **File reading:** openpyxl (`.xlsx`), stdlib `csv` (`.csv`), python-multipart (form and file uploads)
+- **Configuration:** python-dotenv (`.env` loading)
 - **Serialisation:** Pydantic v2 (discriminated unions for node and edge schemas)
 - **Observability:** structlog (JSON in production, console in debug)
 - **Tooling:** uv, Ruff, basedpyright (strict), import-linter, dprint, rumdl, tombi, validate-pyproject, yamllint,
@@ -557,9 +558,10 @@ each job only what it uses, never persists the checkout credential, caps every j
 actionlint and zizmor on every commit. `actionlint` is installed by `uv sync`, whose build downloads and checks its
 binary from github.com; on NixOS that needs `SSL_CERT_FILE` pointing at the system CA bundle.
 
-`vars.API_DOMAIN` (repository Settings, Secrets and variables, Actions, Variables) must mirror the `API_DOMAIN` line
-`deploy/cloud-init.sh` writes into the host's `.env`. It is repository-side state that no push updates, so migrating a
-domain edits both; the workflow compares the two and fails before restarting any container when they disagree.
+`vars.API_DOMAIN` (the production environment's variables: Settings, Environments, production) must mirror the
+`API_DOMAIN` line `deploy/cloud-init.sh` writes into the host's `.env`. It is repository-side state that no push
+updates, so migrating a domain edits both; the workflow compares the two and fails before restarting any container when
+they disagree.
 
 ## Quality gates
 

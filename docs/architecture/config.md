@@ -24,10 +24,11 @@ given dependency happens to have alternatives today — the moment one caller is
 "there's nothing to inject," every future caller with the same argument has precedent to do the same, and the one wiring
 graph stops being complete.
 
-The one edge out of this layer the architecture-direction check would otherwise flag — this layer reaching into
-infrastructure to wire a concrete implementation — is exempted by name rather than by pattern. A composition root has to
-import the concrete implementations it assembles; that single, explicit exception keeps the real interface-to-
-infrastructure direction enforced everywhere else in the codebase.
+The architecture-direction check places this layer above infrastructure, so its one edge into infrastructure — wiring a
+concrete implementation — is allowed by that order, with no exception written anywhere. A composition root has to import
+the concrete implementations it assembles; a second rule keeps the interface from importing infrastructure directly and
+lets it reach it only through this layer, so the real interface-to-infrastructure direction stays enforced everywhere
+else in the codebase.
 
 ## Consequences
 
@@ -39,7 +40,7 @@ Having already routed one stateless, single-implementation capability through th
 one that looks just as harmless: it goes through wiring too, keeping the same one-place guarantee rather than
 accumulating quiet, case-by-case exceptions that each seemed small on their own.
 
-The one named exemption in the architecture-direction check covers exactly this layer's own edge into infrastructure — a
-future concrete implementation this layer wires in still has to be imported directly from here, and stays exempted by
-the same rule, but nothing else in the codebase inherits that exemption; a similar-looking edge opened anywhere else
-still fails the check.
+What allows this layer's edge into infrastructure is its place in the layer order, not an exception — a future concrete
+implementation this layer wires in is imported directly from here and stays allowed by the same order, but nothing else
+in the codebase inherits it: the interface still cannot reach infrastructure except through this layer, and a
+similar-looking edge opened anywhere else still fails the check.

@@ -6,16 +6,16 @@ the project owns: the ban on comments, formatting, linting, import direction, st
 linting, and the full automated test suite with coverage. A second command applies every safe automatic fixer to the
 whole repo. A completely separate, periodic command deliberately introduces small mutations into the codebase and
 confirms the test suite actually catches them, as a check on the tests' own effectiveness rather than just their
-pass/fail status — this one is never run as part of an ordinary commit, only on demand.
+pass/fail status — this one is never run as part of an ordinary commit, only by the weekly periodic workflow or by hand.
 
 Every commit is validated in full, automatically, by the git hook, and continuous integration runs the very same
-command. The release and image-publishing workflows call that same workflow first and do nothing unless it passes, so
-nothing is published or deployed without every check having passed on the exact commit being shipped. A warning from any
-tool counts as a failure, and so does a missing required tool, which fails its check outright rather than being silently
-skipped. Each gate prints a header line and then its tool's own output, written straight to the terminal as the tool
-runs and never captured, so it keeps the tool's own formatting and appears the moment the gate finishes; a closing
-verdict line ends the run. There is no progress display and no separate report file to dig through. Each tool runs with
-the least verbose output flags confirmed for its pinned version.
+command. The image-build and deploy jobs of the same workflow need its test job, which runs that same command, and do
+nothing unless it passes, so nothing is published or deployed without every check having passed on the exact commit
+being shipped. A warning from any tool counts as a failure, and so does a missing required tool, which fails its check
+outright rather than being silently skipped. Each gate prints a header line and then its tool's own output, written
+straight to the terminal as the tool runs and never captured, so it keeps the tool's own formatting and appears the
+moment the gate finishes; a closing verdict line ends the run. There is no progress display and no separate report file
+to dig through. Each tool runs with the least verbose output flags confirmed for its pinned version.
 
 ## Decisions
 
@@ -49,14 +49,14 @@ annotations the SQL query loader requires. A comment marker only counts when it 
 and length expansions are never mistaken for one.
 
 The uv version is pinned exactly in the project manifest, read by the workflows and enforced by uv itself wherever it
-runs, so a stale install fails loudly instead of drifting; the container image's tag and the release helper's pin are
-the two other copies and are edited together. The runner syncs the environment once and then runs every tool without
-re-syncing, so no gate can change the environment under another. Every linter, formatter and type-checker is a pinned
-development dependency installed with that environment, so the only prerequisites of the gate are the package manager
-and the container runtime the test suite already needs. Within the fixer, whatever can rewrite logic or structure always
-runs before whatever only reformats: a fixer that introduces new code (an import rewrite, a lint autofix) can leave text
-that doesn't match the project's own formatting, and nothing further in the sequence would normalize it if the formatter
-had already had its turn.
+runs, so a stale install fails loudly instead of drifting; the container image's tag is the one other copy, pinned to
+that key by a test. The runner syncs the environment once and then runs every tool without re-syncing, so no gate can
+change the environment under another. Every linter, formatter and type-checker is a pinned development dependency
+installed with that environment, so the only prerequisites of the gate are the package manager and the container runtime
+the test suite already needs. Within the fixer, whatever can rewrite logic or structure always runs before whatever only
+reformats: a fixer that introduces new code (an import rewrite, a lint autofix) can leave text that doesn't match the
+project's own formatting, and nothing further in the sequence would normalize it if the formatter had already had its
+turn.
 
 The mutation-testing tool was switched once already: the original choice achieves its speed by copying mutated code into
 place and re-importing it, which broke under this project's own combination of test-collection plugins and strict async
@@ -68,15 +68,15 @@ survivor count, and a layer added later enters the run by gaining a configuratio
 those two. The run happens in a throwaway checkout of the last commit, so editing the working tree during a run of hours
 cannot race the tool that rewrites source files, and the list of surviving mutants, the part a person acts on, is saved
 outside that checkout before it is deleted, next to a one-line score. The gate is a floor on the share of scored mutants
-the tests kill, the same direction as the coverage floor, and each layer has its own in the project configuration,
-because two layers do not share a rate; the command takes no floor argument, since an argument could lower the bar it
-exists to hold. The score is computed by the project rather than read from the tool's own rate command, which reports
-zero survivors for a session that ran nothing, counts a crashed worker as a kill and never fails on a floor of one
-hundred. A session that did not finish, a worker that errored and a session with nothing scored all fail whatever the
-floor; mutants that produced invalid code leave the denominator; a score a full point over the floor says to raise it,
-so the floor only ratchets up. A layer with no floor yet is measured and reported without gating, which is how the first
-run sets it. The tool's parallel HTTP distributor was tried and abandoned: it fails on startup under this project's
-Python version.
+the tests kill, the same direction as the coverage floor, and each layer takes its own from the project configuration
+once one is set, none yet, because two layers do not share a rate; the command takes no floor argument, since an
+argument could lower the bar it exists to hold. The score is computed by the project rather than read from the tool's
+own rate command, which reports zero survivors for a session that ran nothing, counts a crashed worker as a kill and
+never fails on a floor of one hundred. A session that did not finish, a worker that errored and a session with nothing
+scored all fail whatever the floor; mutants that produced invalid code leave the denominator; a score a full point over
+the floor says to raise it, so the floor only ratchets up. A layer with no floor yet is measured and reported without
+gating, which is how the first run sets it. The tool's parallel HTTP distributor was tried and abandoned: it fails on
+startup under this project's Python version.
 
 The container-registry login in continuous integration depends on a secret a forked repository's pull request never
 receives, and is skipped rather than failed in that one case — the tests relying on it then fail on their own instead,
@@ -123,10 +123,10 @@ Workflows are held to one contract rather than reviewed by eye, because the gate
 workflow linter checks syntax, expressions, runner labels and the shell inside every step, using the pinned shell linter
 that the project already installs, so a step is judged by the same tool version as the committed scripts. The security
 analyser runs offline, at its strictest persona that still avoids false positives, so the hook needs no token; the
-audits that need the hosting API are left to a continuous-integration step that has one. One of its audits is set aside
-on purpose, in the analyser's own configuration: the one demanding an explanatory comment on every permission, because
-the repository bans comments in every file. The host-side commands of the deploy job are committed shell files executed
-through the action's script path, which puts them under the shell linter and formatter and keeps every value out of text
+audits that need the hosting API are not run today (see Open problems). One of its audits is set aside on purpose, in
+the analyser's own configuration: the one demanding an explanatory comment on every permission, because the repository
+bans comments in every file. The host-side commands of the deploy job are committed shell files executed through the
+action's script path, which puts them under the shell linter and formatter and keeps every value out of text
 substitution.
 
 The set of files a gate or a tool touches is discovered, never listed by hand. The shell, compose and workflow files

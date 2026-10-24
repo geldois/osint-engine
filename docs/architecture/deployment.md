@@ -26,8 +26,8 @@ configured at all; leaving the default in place fails every migration on first b
 
 The published container image's tag is left unset by provisioning on purpose: cloud-init stops once the host has Docker,
 the cloned repository and a generated environment file. The first pipeline run supplies the tag inline and brings the
-stack up; the one-time repository secrets and variable the pipeline needs are the manual part, done in the same session,
-not something a provisioning script should do unattended.
+stack up; the one-time secrets and variable the pipeline needs, held by the production environment, are the manual part,
+done in the same session, not something a provisioning script should do unattended.
 
 The application is never exposed directly: a reverse proxy container owns ports 80 and 443, obtains and renews the
 certificate for the configured domain by itself, and forwards to the application on the compose-internal network only.
@@ -57,7 +57,9 @@ already have passed on the exact commit before the branch can move there. No pul
 writer pushes a working branch, waits for its check and fast-forwards the default branch, which the repository's git
 configuration already forbids doing any other way; requiring one would block that flow without adding a reviewer. The
 check is matched by its exact name, so renaming the job in the workflow means renaming it in the ruleset first, or every
-push to the default branch is refused until the ruleset is edited.
+push to the default branch is refused until the ruleset is edited. The check does not require the branch to be up to
+date with the default branch, and the repository's default workflow token permission is read-only, which the workflows
+narrow further per job.
 
 What only the deploy job may read lives in a GitHub environment named for production, whose deployment branches are
 limited to the default branch: the host address, the SSH key and the domain variable. A workflow running on any other
@@ -67,9 +69,9 @@ a pull rate limit. The key of the providers' live check lives in a second enviro
 
 ## Consequences
 
-Because the Docker version string is built from the release codename at provisioning time, re-running this same script
-against a newer Ubuntu release picks up whatever version that repository publishes for that codename automatically —
-nothing here pins a single Docker version across every possible host release.
+The Docker version string pins one release and takes only its operating-system suffix from the host's release and
+codename, so re-running this same script against a newer Ubuntu release installs that same Docker release if the
+repository still publishes it for that codename, and fails otherwise until the pin is bumped by hand.
 
 Leaving automatic reboot disabled means a pending kernel update stays pending indefinitely until someone reboots the
 host by hand; nothing here ever revisits that decision on its own, so an operator has to actually check for and apply
@@ -79,7 +81,7 @@ Since the internal database connection has TLS explicitly disabled, that connect
 compose-internal, never exposed beyond this host's own private network — extending this setup to a database reachable
 from outside this host needs TLS revisited first, not inherited from this configuration as-is.
 
-The manual steps this script deliberately leaves — setting the pipeline's repository secrets and variable for the new
+The manual steps this script deliberately leaves — setting the production environment's secrets and variable for the new
 host, and triggering the first run — are a standing prerequisite for every future provisioning of a new host from this
 same script, not a one-time bootstrapping quirk: whoever runs it again still has to complete them themselves.
 
