@@ -67,6 +67,23 @@ def _get(data: object, *keys: str) -> object:
     return data
 
 
+def test_the_dockerfile_uv_image_is_the_required_version() -> None:
+    required = _get(_pyproject(), "tool", "uv", "required-version")
+    dockerfile = (ROOT / "docker" / "Dockerfile").read_text(encoding="utf-8")
+
+    match = re.search(r"ghcr\.io/astral-sh/uv:([0-9.]+)@sha256:", dockerfile)
+
+    assert match is not None
+    assert required == f"=={match.group(1)}"
+
+
+def test_the_environment_file_puts_the_project_tools_first() -> None:
+    lines = (ROOT / ".envrc").read_text(encoding="utf-8").splitlines()
+
+    assert lines == ["PATH_add .venv/bin"]
+    assert ".envrc" in _tracked()
+
+
 def test_every_editorconfig_section_matches_a_tracked_file() -> None:
     names = {Path(path).name for path in _tracked()}
 

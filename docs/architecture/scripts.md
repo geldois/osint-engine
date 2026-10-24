@@ -122,7 +122,16 @@ list to edit and no test needed to notice a forgotten entry; the comment ban inv
 file, excluding a short closed set. What is generated, cached or vendored is already declared once in the ignore file,
 and the formatters, the Markdown linter and the YAML linter read it instead of repeating it; the only exclusions left in
 a tool's own configuration are tracked files that tool must not rewrite, the recorded API responses and the lockfile.
-Which package installs each gate's executable is read from the environment's own metadata, not from a table.
+
+The uv version has one owner, the required-version key of the project configuration: uv refuses to run on any other
+version, the workflows install whatever that key names, and the README's setup steps point at the key instead of
+repeating the number. The container image's uv tag and digest cannot read it, so a test compares the tag with the key
+and a drift fails the commit instead of the first image build; the digest moves with the tag by hand.
+
+Tools resolve to the pinned ones through the committed environment file for direnv, which puts the virtual environment's
+executables first on the path. Without it a version manager's shim of the same tool can win in an editor or a shell, and
+a shim with no version set makes that tool fail on start; the gates never depend on it, since they run every tool
+through uv. Which package installs each gate's executable is read from the environment's own metadata, not from a table.
 
 Every value a tool enforces, such as line width, indentation and line endings, is written once, in that tool's own
 configuration. The editor-neutral configuration file only mirrors them for editors that cannot read the tools, and a
@@ -162,9 +171,6 @@ that same root, never a new dot-directory at the repository's own top level to r
   permission-comment audit while comments are banned and the self-repository-syntax audit for the two workflows that
   call `test.yml`, because the pinned workflow linter rejects that syntax. Re-enable the second as soon as a pinned
   release of the linter accepts it
-- **The uv version lives in four places**, all exactly `0.11.21`: `required-version` in `[tool.uv]` (the one the
-  workflows read and that uv enforces everywhere it runs), the `Dockerfile`'s uv image tag and digest, and the two
-  README setup steps that state it. A drifted copy in the first two fails loudly, but all four still move together
 - **Ten gates run without a reduced-output flag.** `dprint`, `sqruff`, `basedpyright`, `shfmt`, `lint-imports`,
   `yamllint`, `check-jsonschema`, `validate-pyproject`, `actionlint` and `zizmor` (which only turns its progress off)
   print their full default output, because no flag cutting it was confirmed for the pinned versions (`lint-imports` 2.13

@@ -422,7 +422,8 @@ cd osint-engine
 ### Linux
 
 1. Install [Docker Engine](https://docs.docker.com/engine/install/) and start the daemon.
-2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (the project requires exactly `0.11.21`).
+2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/); `required-version` in `pyproject.toml` makes
+   it refuse any other version and name the one it needs.
 3. Install the dependencies and activate the versioned git config:
 
 ```bash
@@ -435,7 +436,8 @@ cp .env.example .env  # then set SECRET_KEY, DATABASE_URL and EXTERNAL_CREDENTIA
 
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend enabled.
 2. Install [Git for Windows](https://gitforwindows.org) — the git hook is an `sh` script it provides.
-3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (the project requires exactly `0.11.21`).
+3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/); `required-version` in `pyproject.toml` makes
+   it refuse any other version and name the one it needs.
 4. Install the dependencies and activate the versioned git config:
 
 ```powershell
@@ -449,9 +451,13 @@ copy .env.example .env  # then set SECRET_KEY, DATABASE_URL and EXTERNAL_CREDENT
 > `pre-commit` hook. The only prerequisites of the quality gates are `uv` and Docker: every linter, formatter and
 > type-checker is a pinned dev dependency installed by `uv sync`. The one thing `uv sync` does not install is dprint's
 > own formatter plugins (JSON and YAML): `dprint.json` pins each to an exact version, and dprint fetches it from the npm
-> registry on the first run and caches it, so a fresh machine needs registry access once. If `uv` isn't found, the hook
-> says so (or bypass once with `git commit --no-verify`). No editor or Claude Code is required: the gates run from the
-> git hook and CI, identically for every contributor, and there is no `pre-push` — pushing is never blocked.
+> registry on the first run and caches it, so a fresh machine needs registry access once. An editor or shell that finds
+> a tool of the same name from a version manager's shim before the project's own (a shim with no version set makes an
+> editor's dprint server fail on start) is fixed by `direnv allow`: the committed `.envrc` puts `.venv/bin` first on the
+> `PATH`, so every tool resolves to the pinned one; direnv is optional and the gates never depend on it. If `uv` isn't
+> found, the hook says so (or bypass once with `git commit --no-verify`). No editor or Claude Code is required: the
+> gates run from the git hook and CI, identically for every contributor, and there is no `pre-push` — pushing is never
+> blocked.
 
 ### Configuration
 
