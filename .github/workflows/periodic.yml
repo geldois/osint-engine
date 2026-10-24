@@ -1,0 +1,77 @@
+name: Periodic
+
+"on":
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: periodic
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    name: Contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: contract
+    permissions:
+      contents: read
+    env:
+      PORTAL_TRANSPARENCIA_API_KEY: ${{ secrets.PORTAL_TRANSPARENCIA_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Verify the providers' live response shapes
+        run: uv run python -m scripts fixtures verify
+
+  mutation:
+    name: Mutation (${{ matrix.layer }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        layer: [application, domain]
+    env:
+      LAYER: ${{ matrix.layer }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Mutate the layer
+        run: uv run python -m scripts mutation "$LAYER"
+
+      - name: Upload the surviving mutants
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: survivors-${{ matrix.layer }}
+          path: .cache/mutation/${{ matrix.layer }}-survivors.txt
+          if-no-files-found: ignore
+          retention-days: 30

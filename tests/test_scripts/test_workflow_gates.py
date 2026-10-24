@@ -8,6 +8,7 @@ import pytest
 from test_scripts.tools import BIN, ROOT, run, write
 
 from scripts.check import SHELL_FILES
+from scripts.mutation import layers
 
 if TYPE_CHECKING:
     import subprocess
@@ -72,18 +73,54 @@ def test_every_deploy_script_is_a_gated_shell_file() -> None:
     assert found
 
 
-def _ci_jobs() -> dict[str, str]:
-    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-    parts = re.split(r"^  (\w+):\n", text.split("\njobs:\n", 1)[1], flags=re.MULTILINE)
+def _workflow(name: str) -> str:
+    return (ROOT / ".github" / "workflows" / name).read_text(encoding="utf-8")
+
+
+def _jobs(name: str) -> dict[str, str]:
+    parts = re.split(
+        r"^  (\w+):\n", _workflow(name).split("\njobs:\n", 1)[1], flags=re.MULTILINE
+    )
 
     return dict(zip(parts[1::2], parts[2::2], strict=True))
 
 
-def test_every_ci_job_is_capped_by_a_timeout() -> None:
-    jobs = _ci_jobs()
+def _ci_jobs() -> dict[str, str]:
+    return _jobs("ci.yml")
 
-    assert jobs
-    assert all("    timeout-minutes:" in body for body in jobs.values())
+
+def test_every_job_of_every_workflow_is_capped_by_a_timeout() -> None:
+    names = sorted(path.name for path in (ROOT / ".github" / "workflows").glob("*.yml"))
+
+    assert {"ci.yml", "periodic.yml"} <= set(names)
+    for name in names:
+        jobs = _jobs(name)
+        assert jobs, name
+        assert all("    timeout-minutes:" in body for body in jobs.values()), name
+
+
+def test_the_periodic_workflow_has_no_trigger_but_the_clock_and_a_manual_run() -> None:
+    triggers = _workflow("periodic.yml").split("\npermissions:", 1)[0]
+
+    assert "  schedule:\n" in triggers
+    assert "  workflow_dispatch:\n" in triggers
+    assert "push" not in triggers
+    assert "pull_request" not in triggers
+
+
+def test_the_contract_job_reads_its_key_from_its_own_environment() -> None:
+    contract = _jobs("periodic.yml")["contract"]
+
+    assert "    environment: contract\n" in contract
+    assert "secrets.PORTAL_TRANSPARENCIA_API_KEY" in contract
+
+
+def test_the_mutation_matrix_is_every_mutated_layer() -> None:
+    mutation = _jobs("periodic.yml")["mutation"]
+    match = re.search(r"layer: \[([^\]]*)\]", mutation)
+
+    assert match is not None
+    assert {layer.strip() for layer in match.group(1).split(",")} == set(layers())
 
 
 def test_only_the_main_branch_builds_and_deploys() -> None:

@@ -100,7 +100,6 @@ layers = [
   "domain",
 ]
 exhaustive = true
-ignore_imports = ["osint_engine.infrastructure.services.pyjwt_service -> osint_engine.config.settings"]
 
 [[tool.importlinter.contracts]]
 name = "Interface never reaches infrastructure directly"

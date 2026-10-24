@@ -519,8 +519,8 @@ uv run pytest --cov --cov-branch
 
 `tests/**/responses/` (golden HTTP fixtures for the BrasilAPI/Portal da Transparência provider tests) is untracked, not
 needed for the run above — the tests that consume it are hand-crafted, not fixture-backed. A separate, periodic-manual
-check (never part of `pytest`/CI) regenerates those fixtures and re-verifies the real API's response shape against the
-mapper:
+check (never part of `pytest` or the commit pipeline; the weekly `periodic.yml` workflow runs it) regenerates those
+fixtures and re-verifies the real API's response shape against the mapper:
 
 ```bash
 uv run python -m scripts fixtures verify
@@ -542,15 +542,17 @@ then `sudo systemctl restart docker` and re-run the pulls.
 
 ## Deploy
 
-`.github/workflows/ci.yml` is the only workflow. Its `test` job runs the very same gate as the commit hook on every push
-to any branch and every pull request; on `main` alone, whether by push or by manual dispatch, and only if that job
-passes on that exact commit, it builds one `linux/amd64` image (the architecture of the host, an Oracle Cloud AMD shape)
-on ghcr.io tagged with the branch and with the commit SHA, then deploy over SSH to the host `deploy/cloud-init.sh`
-provisions, pulling the image by SHA so production runs exactly the commit that was verified. No release is cut: the
-image tag is the commit SHA and the history of conventional commits is the change log. The last step of the deploy job
-probes `https://${{ vars.API_DOMAIN }}/health` from the runner rather than from the host, so the check still reports a
-host that is itself the broken half — the probe therefore reaches Caddy by the name CI believes in, which Caddy only
-answers if the host serves that same name.
+There are two workflows. `.github/workflows/periodic.yml` runs every Monday and on manual dispatch, never on a push: a
+`contract` job that re-verifies the providers' live response shapes with the key held by its own `contract` environment,
+and one `mutation` job per mutated layer. `.github/workflows/ci.yml` is the pipeline. Its `test` job runs the very same
+gate as the commit hook on every push to any branch and every pull request; on `main` alone, whether by push or by
+manual dispatch, and only if that job passes on that exact commit, it builds one `linux/amd64` image (the architecture
+of the host, an Oracle Cloud AMD shape) on ghcr.io tagged with the branch and with the commit SHA, then deploy over SSH
+to the host `deploy/cloud-init.sh` provisions, pulling the image by SHA so production runs exactly the commit that was
+verified. No release is cut: the image tag is the commit SHA and the history of conventional commits is the change log.
+The last step of the deploy job probes `https://${{ vars.API_DOMAIN }}/health` from the runner rather than from the
+host, so the check still reports a host that is itself the broken half — the probe therefore reaches Caddy by the name
+CI believes in, which Caddy only answers if the host serves that same name.
 
 `docker/` holds what builds the image (the Dockerfile, its ignore file and the entrypoint); `deploy/` holds what runs on
 the host (the production compose overlay, the Caddyfile, the provisioning script and the two commands the deploy job

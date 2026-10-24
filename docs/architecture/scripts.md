@@ -187,7 +187,3 @@ that same root, never a new dot-directory at the repository's own top level to r
 - **No test proves that a gate's tool still sees a terminal.** The tests run a real process through the runner and prove
   that its output reaches the terminal untouched and under its header, but the capture they use is not a terminal, so
   nothing proves the tool keeps the colors and layout it only emits to one
-- **One import breaks the layer order and is excused by name.** The JWT service in infrastructure names the settings
-  type of the configuration package, which sits above infrastructure, only to annotate a parameter; the layers contract
-  carries one exception for that single import. Pass the plain values the service needs, or move the type below
-  infrastructure, and drop the exception

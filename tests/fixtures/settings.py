@@ -40,7 +40,10 @@ def make_recording_password_hasher(events: list[str]) -> MakeRecordingPasswordHa
 @pytest.fixture(scope="session")
 def pyjwt_service(settings: Settings) -> PyJWTService:
 
-    return PyJWTService(settings=settings)
+    return PyJWTService(
+        access_token_expire_minutes=settings.access_token_expire_minutes,
+        secret_key=settings.secret_key,
+    )
 
 
 @pytest.fixture(scope="session")

@@ -153,7 +153,10 @@ def build_container(  # noqa: PLR0913
         pep_fetcher=PortalTransparenciaPEPFetcher(http_client=http_client),
     )
 
-    pyjwt_service = PyJWTService(settings=settings)
+    pyjwt_service = PyJWTService(
+        access_token_expire_minutes=settings.access_token_expire_minutes,
+        secret_key=settings.secret_key,
+    )
     services = Services(
         jwt_service=pyjwt_service,
         kipflow_rate_limiter=kipflow_rate_limiter,

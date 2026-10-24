@@ -27,10 +27,11 @@ encryption defect — which one already had, going undetected under a fake until
 A free provider's mapper is additionally checked against one real, live API response per source, on top of the
 hand-crafted cases that already cover field mapping, null handling and graph shape — a stand-in built from a developer's
 own understanding of the response can't catch that understanding drifting from what the source actually sends. That
-check moved out of the ordinary suite and into the same periodic-manual footing already used for mutation testing:
-running it on every commit means a source going temporarily empty or a hardcoded test id's own record aging out —
-neither a defect in this codebase — fails CI for a change that never touched the provider at all, which happened twice
-in one session. The hand-crafted cases stay in the ordinary suite; only the live-snapshot check moved.
+check moved out of the ordinary suite and into the same weekly workflow that runs mutation testing, with the key held by
+an environment of its own, readable by no other job: running it on every commit means a source going temporarily empty
+or a hardcoded test id's own record aging out — neither a defect in this codebase — fails CI for a change that never
+touched the provider at all, which happened twice in one session. The hand-crafted cases stay in the ordinary suite;
+only the live-snapshot check moved.
 
 Detecting a container runtime for the real-database layer is deliberately strict, not permissive: the client this layer
 speaks to understands only the Docker API socket, never a CLI shim, so an installed alternative runtime exposed only
