@@ -90,12 +90,24 @@ root_package = "osint_engine"
 [[tool.importlinter.contracts]]
 name = "Clean Architecture layers"
 type = "layers"
+containers = ["osint_engine"]
 layers = [
-  "osint_engine.interface | osint_engine.infrastructure",
-  "osint_engine.application",
-  "osint_engine.domain",
+  "__main__",
+  "interface",
+  "config | observability",
+  "infrastructure",
+  "application",
+  "domain",
 ]
-ignore_imports = ["osint_engine.config.** -> osint_engine.infrastructure.**"]
+exhaustive = true
+ignore_imports = ["osint_engine.infrastructure.services.pyjwt_service -> osint_engine.config.settings"]
+
+[[tool.importlinter.contracts]]
+name = "Interface never reaches infrastructure directly"
+type = "forbidden"
+source_modules = ["osint_engine.interface"]
+forbidden_modules = ["osint_engine.infrastructure"]
+allow_indirect_imports = true
 
 [tool.pytest.ini_options]
 addopts = "-m 'not real_api_snapshot'"

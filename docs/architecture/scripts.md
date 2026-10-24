@@ -137,6 +137,12 @@ configuration. The editor-neutral configuration file only mirrors them for edito
 test fails when any mirrored value differs from its owner, when the mirror carries a section matching no tracked file,
 or when an editor-specific directory is committed.
 
+The import contract places every package of the source tree in one order, top to bottom: the entry module, the
+interface, the configuration and observability packages as independent siblings, infrastructure, application and domain,
+and a package missing from that order breaks the contract, so a new one cannot appear unplaced. A second contract keeps
+the interface from importing infrastructure directly while still allowing it through configuration, which is where the
+two are wired together.
+
 ## Consequences
 
 Because the git hook is an ordinary versioned file, any future change to what runs on commit is itself a reviewable diff
@@ -173,3 +179,7 @@ that same root, never a new dot-directory at the repository's own top level to r
 - **No test proves that a gate's tool still sees a terminal.** The tests run a real process through the runner and prove
   that its output reaches the terminal untouched and under its header, but the capture they use is not a terminal, so
   nothing proves the tool keeps the colors and layout it only emits to one
+- **One import breaks the layer order and is excused by name.** The JWT service in infrastructure names the settings
+  type of the configuration package, which sits above infrastructure, only to annotate a parameter; the layers contract
+  carries one exception for that single import. Pass the plain values the service needs, or move the type below
+  infrastructure, and drop the exception
