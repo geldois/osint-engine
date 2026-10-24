@@ -23,10 +23,10 @@ def sync(workdir: Path) -> None:
 def detached_worktree(commit: str) -> Generator[Path]:
     tmp = Path(tempfile.mkdtemp(prefix="oe-history-"))
     worktree = tmp / "tree"
+    subprocess.run(["git", "worktree", "prune"], check=True)
     subprocess.run(
-        ["git", "worktree", "add", "--detach", str(worktree), commit],
+        ["git", "worktree", "add", "--quiet", "--detach", str(worktree), commit],
         check=True,
-        capture_output=True,
     )
     try:
         yield worktree

@@ -64,10 +64,12 @@ not adding another skip somewhere else.
 - **`FindPossiblyMatches` is never tested with a pair seen from both sides.** Its tests always pass a graph with a
   single node, so a graph holding both people of a pair, and the two scores it can compute for it, are never exercised.
   Write the case once the symmetric score is decided
-- **The mutation gate has never run.** `scripts mutation --max-survival` defaults to `100.0`, so it can never fail, no
-  workflow runs it, and `cosmic-ray.toml` has never been exercised against the current test layout, so expect a first
-  run to need adjustments. Run it once, set the ceiling to the measured baseline, then add a scheduled weekly and manual
-  CI job; until the ceiling is real, a scheduled job would be a false green
+- **The mutation gate has never completed a run, and its ceilings are placeholders.** Both layers' survival ceilings in
+  the project configuration are `100`, so the command can never fail, and no workflow runs it. A four-minute sample on
+  one machine ran about 4.6 seconds per mutant over roughly 4,980 mutants, which is over six hours sequentially, longer
+  than one CI job may run, and survivors cost the most, so the figure falls as they are killed. Run each layer as its
+  own job, set each ceiling to its measured survival rounded up, then add the scheduled weekly and manual workflow;
+  until the ceilings are real, a scheduled job would be a false green
 - **No test proves the unit of work holds no pooled PostgreSQL connection while a password is hashed or verified.** The
   `AuthenticateUser` and `RegisterUser` tests run on the in-memory pool fake, whose acquire and release are trivial, and
   today `HybridUoW` and the PostgreSQL repositories never hold a connection across the unit of work (each query takes

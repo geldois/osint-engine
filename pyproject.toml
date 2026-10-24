@@ -178,6 +178,10 @@ style = "asterisk"
 [tool.rumdl.MD050]
 style = "asterisk"
 
+[tool.scripts.mutation-ceiling]
+application = 100
+domain = 100
+
 [tool.tombi.files]
 exclude = ["uv.lock"]
 

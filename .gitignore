@@ -33,6 +33,8 @@ htmlcov/
 .tox/
 .nox/
 .cache
+.grimp_cache
+.import_linter_cache
 .coverage
 .coverage.*
 coverage.xml

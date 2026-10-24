@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Annotated
+
 import typer
 
 from scripts import fixtures
@@ -12,8 +14,6 @@ from scripts.sqlc import run_sqlc_generate
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 fixtures_app = typer.Typer(no_args_is_help=True, add_completion=False)
 app.add_typer(fixtures_app, name="fixtures")
-
-_DEFAULT_MAX_SURVIVAL = 100.0
 
 
 @app.command(help="Run every gate on the working tree, tests included.")
@@ -31,9 +31,11 @@ def comments() -> None:
     raise typer.Exit(run_comments())
 
 
-@app.command(help="Run the cosmic-ray mutation gate (periodic; never a hook).")
-def mutation(*, max_survival: float = _DEFAULT_MAX_SURVIVAL) -> None:
-    raise typer.Exit(run_mutation(max_survival=max_survival))
+@app.command(
+    help="Run the cosmic-ray mutation gate on every layer or one (never a hook)."
+)
+def mutation(layer: Annotated[str | None, typer.Argument()] = None) -> None:
+    raise typer.Exit(run_mutation(layer=layer))
 
 
 @app.command(

@@ -61,8 +61,16 @@ had already had its turn.
 The mutation-testing tool was switched once already: the original choice achieves its speed by copying mutated code into
 place and re-importing it, which broke under this project's own combination of test-collection plugins and strict async
 test configuration; the replacement isolates every mutant in its own subprocess instead, trading raw speed for actually
-working reliably here. Its own test command runs only the fast unit layer, no database container, since a mutant only an
-end-to-end test would catch is an acceptable survivor for a check aimed at the pure domain/application logic.
+working reliably here. Only the domain and the application are mutated, each with its own small configuration file named
+after the layer and with only that layer's own unit tests as its test command, no database container: a mutant outside
+those two layers could never be caught by tests that never run it, so mutating the whole package only inflated the
+survivor count, and a layer added later enters the run by gaining a configuration file, which a test pins to exactly
+those two. The run happens in a throwaway checkout of the last commit, so editing the working tree during a run of hours
+cannot race the tool that rewrites source files, and the list of surviving mutants, the part a person acts on, is saved
+outside that checkout before it is deleted. Each layer has its own survival ceiling in the project configuration,
+because two layers do not share a survival rate; the command takes no ceiling argument, since an argument could lower
+the bar it exists to hold, and a layer without a ceiling fails loudly instead of defaulting. The tool's parallel HTTP
+distributor was tried and abandoned: it fails on startup under this project's Python version.
 
 The container-registry login in continuous integration depends on a secret a forked repository's pull request never
 receives, and is skipped rather than failed in that one case — the tests relying on it then fail on their own instead,
@@ -70,8 +78,8 @@ rather than the job failing on a secret it was never going to have.
 
 Every tool's own cache or working-data directory is redirected under one gitignored root, rather than left at each
 tool's own default location — the repository root otherwise accumulates one dot-directory per tool, none of them meant
-for a person to ever open. The exceptions are the project's own environment and the mutation run's session database,
-neither of which is a third-party tool's cache in the same sense.
+for a person to ever open. The exception is the project's own environment, which is not a third-party tool's cache in
+the same sense; the mutation run's session databases and survivor lists live under that same root.
 
 Every linter, formatter and fixer a gate calls is a pinned development dependency of the project, installed by the same
 environment sync as the code, never an image pulled or a binary expected on the host. A gate therefore behaves
