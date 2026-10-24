@@ -129,6 +129,10 @@ bans comments in every file. The host-side commands of the deploy job are commit
 action's script path, which puts them under the shell linter and formatter and keeps every value out of text
 substitution.
 
+Every check gate whose tool keeps a cache reads none, and a test pins that: a cache keyed on a file's content can show
+green on a machine where a cold run fails, as happened once when a new top-level directory changed which imports counted
+as first-party. The fixers keep their caches under the one cache root, since only a check has to match a cold run.
+
 The set of files a gate or a tool touches is discovered, never listed by hand. The shell, compose and workflow files
 come from the version control's own list of tracked files, so a new file enters its gate the moment it is added, with no
 list to edit and no test needed to notice a forgotten entry; the comment ban inverts the default and scans every tracked

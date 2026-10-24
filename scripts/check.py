@@ -35,13 +35,10 @@ _GATES: tuple[Gate, ...] = (
             ".",
         ),
     ),
-    Gate(
-        "import-linter",
-        (*_UV_RUN, "lint-imports", "--cache-dir", ".cache/import-linter"),
-    ),
+    Gate("import-linter", (*_UV_RUN, "lint-imports", "--no-cache")),
     Gate("basedpyright", (*_UV_RUN, "basedpyright")),
     Gate("dprint", (*_UV_RUN, "dprint", "check")),
-    Gate("rumdl", (*_UV_RUN, "rumdl", "check", "--quiet", ".")),
+    Gate("rumdl", (*_UV_RUN, "rumdl", "check", "--no-cache", "--quiet", ".")),
     Gate(
         "tombi-format",
         (*_UV_RUN, "tombi", "format", "--check", "--offline", "--quiet"),

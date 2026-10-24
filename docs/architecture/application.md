@@ -53,11 +53,6 @@ the time, but it recorded when the workflow got around to it rather than the ins
 workflow's own tests to freeze the clock just to assert a timestamp. Moving the responsibility to the component that
 performs the fetch fixed both problems and left the workflow pure orchestration again.
 
-A transactional boundary spanning two different kinds of storage at once (an in-memory snapshot plus a real external
-database) does not currently guarantee both sides succeed or fail together. This is accepted for now because no current
-workflow writes to both kinds of storage in the same unit of work; the moment one does, this gap needs a real fix rather
-than remaining a known, accepted edge case.
-
 Whichever component discovers an entity now always persists it individually as well as inside the graph it arrived in,
 so anything else can look it up on its own afterward. Persisting every entity unconditionally on every merge was tried
 first and rejected: an entity whose content hadn't changed still got re-stamped with the new fetch time, which made the
@@ -92,35 +87,33 @@ arrived from ingestion or a different provider carries no information about whet
 itself is treated as either outcome that actually reached the provider (a result, or a confirmed empty), never a request
 that failed before it got there or was itself blocked by this same lock.
 
-The check reads the append-only consumption log (`EntityRecord`, `consumption/entity_record.py`), never the node storage
-a successful fetch also writes to — deliberately, after the first version of this lock (checking node revisions instead)
-shipped a real defect: every workflow's "no content beyond the bare identifier" stub carries identical content
-regardless of which route produced it, so two different routes' stub writes collapse to the exact same content-addressed
-storage slot, and the second one's provider tag silently overwrites the first's — the very loss this lock exists to
-prevent, reintroduced by checking a store that deduplicates by content for an unrelated, legitimate reason. The
-consumption log has no such deduplication — each attempt is its own event, keyed by nothing but its own identity — so a
-provider tag written there can never be overwritten by a different route's write. The guard's own write of the blocked
-attempt goes to that same log, for the same reason.
+The check reads the append-only consumption log, never the node storage a successful fetch also writes to —
+deliberately, after the first version of this lock (checking node revisions instead) shipped a real defect: every
+workflow's "no content beyond the bare identifier" stub carries identical content regardless of which route produced it,
+so two different routes' stub writes collapse to the exact same content-addressed storage slot, and the second one's
+provider tag silently overwrites the first's — the very loss this lock exists to prevent, reintroduced by checking a
+store that deduplicates by content for an unrelated, legitimate reason. The consumption log has no such deduplication —
+each attempt is its own event, keyed by nothing but its own identity — so a provider tag written there can never be
+overwritten by a different route's write. The guard's own write of the blocked attempt goes to that same log, for the
+same reason.
 
-The check-and-record shape above lives in one shared function (`consumption/guard_reuse_lock.py`) that every expansion
-workflow calls, rather than each repeating the same log-lookup-then-compare block inline — a second, inline copy of this
-exact block had already appeared once (the CPF batch estimate use case), the concrete signal that the duplication was
-real, not hypothetical. The shared function never raises what it finds; it returns the error for the caller to raise
-once its own `uow_factory()` block has closed, so the blocked-attempt record the function just wrote survives the commit
-instead of being rolled back by an inline raise — the same defect this file's own decisions already record fixing once
-for the CPF root route, now structural for every route through the shared function rather than a convention each one has
-to remember separately.
+The check-and-record shape above lives in one shared function that every expansion workflow calls, rather than each
+repeating the same log-lookup-then-compare block inline — a second, inline copy of this exact block had already appeared
+once (the CPF batch estimate use case), the concrete signal that the duplication was real, not hypothetical. The shared
+function never raises what it finds; it returns the error for the caller to raise once its own transactional block has
+closed, so the blocked-attempt record the function just wrote survives the commit instead of being rolled back by an
+inline raise — the same defect this file's own decisions already record fixing once for the CPF root route, now
+structural for every route through the shared function rather than a convention each one has to remember separately.
 
 Knowing which provider string belongs to which workflow, and whether that route is billable, is itself a registration a
-workflow makes about itself, not a fact the guard infers: `UseCaseRegistry` (`contracts/use_case.py`) holds a declared
-`(provider, billable)` pair per use case class, and the guard looks a workflow up in it by class identity on every call,
-before touching storage. A route whose class was never registered raises immediately (`UnregisteredUseCaseError`) the
-first time it reaches the guard — never a silent no-op, and never a class of bug that waits for a human to notice a
-missing test. The registry's shape mirrors `EdgeSchemaRegistry` (`interface/http/schemas/edge_schema.py`), this
-codebase's existing precedent for the same kind of self-registering, fail-loud-on-miss catalogue; it could not live at
-that same interface layer, though, since the guard it backs needs the transactional `UoW` a fetcher-layer component
-never receives, so it sits in `contracts/use_case.py` instead, next to the base classes every workflow already inherits
-from.
+workflow makes about itself, not a fact the guard infers: a registry holds a declared provider and billable flag per use
+case class, and the guard looks a workflow up in it by class identity on every call, before touching storage. A route
+whose class was never registered raises a dedicated error immediately, the first time it reaches the guard — never a
+silent no-op, and never a class of bug that waits for a human to notice a missing test. The registry's shape mirrors the
+interface layer's edge-schema registry, this codebase's existing precedent for the same kind of self-registering,
+fail-loud-on-miss catalogue; it could not live at that same interface layer, though, since the guard it backs needs the
+transactional boundary a fetcher-layer component never receives, so it sits among the contracts, next to the base
+classes every workflow already inherits from.
 
 Ingestion's recognition criteria were split from one fixed combination into individually addressable pieces once a
 concrete gap showed up: a document appearing as bare digits with no punctuation and no textual label next to it —
@@ -171,11 +164,11 @@ login therefore no longer leaves through the boundary as an error, which is harm
 ## Consequences
 
 A provider guard scoped per provider rather than per identifier means a workflow reaching a new external source still
-declares its own `(provider, billable)` pair in `UseCaseRegistry` before its first call — registration doesn't
-generalize to a source nobody named yet, by design, since a shared guard function still needs to know which stored
-revisions belong to which route. What does now generalize is the failure mode for skipping that step: a workflow that
-never registers raises `UnregisteredUseCaseError` the moment it reaches the guard, rather than quietly shipping with no
-reuse protection until someone notices the gap by hand.
+declares its own provider and billable flag in the registry before its first call — registration doesn't generalize to a
+source nobody named yet, by design, since a shared guard function still needs to know which stored revisions belong to
+which route. What does now generalize is the failure mode for skipping that step: a workflow that never registers raises
+a dedicated error the moment it reaches the guard, rather than quietly shipping with no reuse protection until someone
+notices the gap by hand.
 
 Because the merge policy's default now keeps every incoming revision exactly as it arrived, any future workflow that
 genuinely wants a single synthesized view has to explicitly reach for the older reconciling policy — it stays available,

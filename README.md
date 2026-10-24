@@ -1,7 +1,7 @@
 # OSINT Engine
 
 [![CI](https://github.com/geldois/osint-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/geldois/osint-engine/actions)
-[![Python](https://img.shields.io/badge/python-%E2%89%A53.12-blue)](https://www.python.org)
+[![Python](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fgeldois%2Fosint-engine%2Fmain%2Fpyproject.toml&query=%24.project.requires-python&label=python&color=blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Entity relationship graph engine that expands identifiers into a fully traceable network of connections sourced
@@ -347,7 +347,8 @@ already done (e.g. `GET /cpf/{cpf}` repeated by the same user without `force=tru
 
 ## Stack
 
-- **Runtime:** Python 3.14 (the image, CI and `.python-version`; the package supports ≥3.12), FastAPI, Uvicorn
+- **Runtime:** Python (the version in `.python-version`, which the image and CI follow; the package's minimum is
+  `requires-python` in `pyproject.toml`), FastAPI, Uvicorn
 - **CLI:** Typer (`osint-engine serve` / `osint-engine migrate up|down`)
 - **Auth:** PyJWT (HS256 access tokens), argon2-cffi (Argon2id password hashing)
 - **Persistence:** PostgreSQL via asyncpg (hand-written queries, sqlc-generated row models for the external
@@ -526,9 +527,10 @@ Requires a real, working `PORTAL_TRANSPARENCIA_API_KEY` in `.env` — request on
 <https://api.portaldatransparencia.gov.br/>.
 
 The tests under `tests/test_src/test_infrastructure/test_persistence/test_pg/`, and the registration test in the auth
-router tests, spin up a real Postgres via `testcontainers`, pulling the `postgres:18` and `testcontainers/ryuk:0.8.1`
-images from Docker Hub on first run (cached locally afterward). If pulls hang or time out, your DNS resolver may not be
-resolving Docker Hub reliably — point the Docker daemon at a known-good resolver in `/etc/docker/daemon.json`:
+router tests, spin up a real Postgres via `testcontainers`, pulling the image the PostgreSQL fixture names and the
+library's own cleanup image from Docker Hub on first run (cached locally afterward). If pulls hang or time out, your DNS
+resolver may not be resolving Docker Hub reliably — point the Docker daemon at a known-good resolver in
+`/etc/docker/daemon.json`:
 
 ```json
 { "dns": ["1.1.1.1", "8.8.8.8"] }

@@ -6,7 +6,7 @@ plugins:
       sha256: fbedae96b5ecae2380a70fb5b925fd4bff58a6cfb1f3140375d098fbab7b3a3c
 sql:
   - schema: "migrations"
-    queries: "src/osint_engine/infrastructure/persistence/pg/queries/external_credentials.sql"
+    queries: "src/osint_engine/infrastructure/persistence/pg/queries"
     engine: postgresql
     codegen:
       - out: src/osint_engine/infrastructure/persistence/pg/generated

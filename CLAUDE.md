@@ -29,9 +29,11 @@ one you verified. The investigation happens at the moment of each doc write, in 
 the sentence describes right then, never from an earlier reading in the turn, because the tree changes under you. That
 holds for a new Open problems entry as much as for any other claim: confirm the problem still exists immediately before
 writing it down. The commit carries code and docs together. What is left to fix lives only in the `## Open problems`
-section of the owning `docs/architecture/*.md`; that section alone may name files and symbols, the rest of the docs
-never does, and a fact lives in one document only: a limit accepted by design is a Consequence, never also an open
-problem. Docs are written in natural language, never citing a function, class or type name.
+section of the owning `docs/architecture/*.md`; that section alone may name files and symbols, the rest of
+`docs/architecture/` never does, and a fact lives in one document only: a limit accepted by design is a Consequence,
+never also an open problem. Those documents are written in natural language, never citing a function, class or type
+name. The README names only what a person touches, such as commands, files, endpoints, response schemas and variables,
+and points at the owner of any value a config or a fixture already holds, never repeating it.
 
 Anything that needs fixing is tracked, always, and never left to be rediscovered: any bug, accidental behaviour (what
 nobody chose), missing test coverage or lost intent found anywhere in the code, off the main flow or not, at any moment

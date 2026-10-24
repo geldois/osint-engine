@@ -28,9 +28,8 @@ from leaving a stored provider key behind with no owner for a later signup to in
 implementation at all: the in-memory copy that once existed was deleted rather than kept as a second source of truth.
 Both are reached through hand-written, inspectable queries rather than any query-building abstraction, because staying
 close to the raw query was itself a deliberate goal, not an accident of the smallest-effort path. A single transactional
-boundary bridges the two storage kinds transparently to anything above it, at the cost that a failure partway through a
-write touching both kinds can leave one side applied and the other rolled back — accepted today because nothing yet
-writes to both kinds in the same transaction.
+boundary bridges the two storage kinds transparently to anything above it; where it falls short of atomic across both is
+recorded in the application layer's open problems.
 
 Password hashing uses the current OWASP-recommended, memory-hard algorithm, deliberately slow so that guessing many
 candidate passwords stays expensive for an attacker; verification always runs the same check whether or not the account
