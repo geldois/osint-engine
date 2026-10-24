@@ -51,6 +51,14 @@ or different from the repository, and any local edit to a tracked file on the ho
 as the generated environment file, are left untouched. The host also runs an intrusion-banning service for SSH, since it
 is exposed to the internet and nobody watches its logs.
 
+The default branch is guarded by a branch ruleset with no bypass actor, so no administrator is exempt: it cannot be
+deleted or force-pushed, merge commits cannot be pushed to it, and the continuous-integration check named `Test` must
+already have passed on the exact commit before the branch can move there. No pull request is required, because the only
+writer pushes a working branch, waits for its check and fast-forwards the default branch, which the repository's git
+configuration already forbids doing any other way; requiring one would block that flow without adding a reviewer. The
+check is matched by its exact name, so renaming the job in the workflow means renaming it in the ruleset first, or every
+push to the default branch is refused until the ruleset is edited.
+
 ## Consequences
 
 Because the Docker version string is built from the release codename at provisioning time, re-running this same script
