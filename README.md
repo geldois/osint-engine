@@ -453,11 +453,12 @@ copy .env.example .env  # then set SECRET_KEY, DATABASE_URL and EXTERNAL_CREDENT
 > own formatter plugins (JSON and YAML): `dprint.json` pins each to an exact version, and dprint fetches it from the npm
 > registry on the first run and caches it, so a fresh machine needs registry access once. An editor or shell that finds
 > a tool of the same name from a version manager's shim before the project's own (a shim with no version set makes an
-> editor's dprint server fail on start) is fixed by `direnv allow`: the committed `.envrc` puts `.venv/bin` first on the
-> `PATH`, so every tool resolves to the pinned one; direnv is optional and the gates never depend on it. If `uv` isn't
-> found, the hook says so (or bypass once with `git commit --no-verify`). No editor or Claude Code is required: the
-> gates run from the git hook and CI, identically for every contributor, and there is no `pre-push` — pushing is never
-> blocked.
+> editor's dprint server fail on start) is fixed with [direnv](https://direnv.net): install it, run `direnv allow` once
+> in the repository, and the committed `.envrc` puts `.venv/bin` first on the `PATH`, so every tool resolves to the
+> pinned one. Editors that load direnv (Zed does by default) need nothing more; a shell needs direnv's hook for its own
+> prompt. direnv is optional and the gates never depend on it. If `uv` isn't found, the hook says so (or bypass once
+> with `git commit --no-verify`). No editor or Claude Code is required: the gates run from the git hook and CI,
+> identically for every contributor, and there is no `pre-push` — pushing is never blocked.
 
 ### Configuration
 
