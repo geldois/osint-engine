@@ -83,7 +83,7 @@ that is only ever the container, and needs revisiting the day another install pa
   add a required reviewer; do it before a second contributor or a second workflow can touch the repository
 - **`main` has no branch protection or ruleset.** Without them, anything can still reach `main` without having passed
   the gate. In the GitHub web UI: repository Settings, Rules, Rulesets, New branch ruleset, target `main`; enable
-  "Require status checks to pass" and add the check `test` (it must have run once on a pushed branch to appear), keep
+  "Require status checks to pass" and add the check `Test` (it must have run once on a pushed branch to appear), keep
   "Require linear history", "Block force pushes" and "Restrict deletions", and leave bypass empty so admins are bound
   too
 - **The deploy is one VM running `deploy/compose.prod.yml`, with no orchestrator.** A crashed container only comes back
