@@ -130,7 +130,7 @@ def test_an_identifier_that_aged_out_falls_back_to_the_first_listed_record(
 
     assert (tmp_path / "x.json").read_text() == '{\n  "id": 7\n}'
     assert "first listed record" in message
-    assert client.calls[1] == ("https://example.org/api/x/", {"pagina": "1"})
+    assert client.calls[1] == ("https://example.org/api/x", {"pagina": "1"})
 
 
 def test_an_aged_out_identifier_and_an_empty_listing_skips_the_fixture(

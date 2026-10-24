@@ -122,7 +122,8 @@ def _refresh_by_identifier(
     if response.text.strip():
         return _write(content=response.json(), out_dir=out_dir, filename=filename)
 
-    listed = client.get(base, headers=headers, params={"pagina": "1"})
+    listing = URL(str(base).rstrip("/"))
+    listed = client.get(listing, headers=headers, params={"pagina": "1"})
     listed.raise_for_status()
     records = listed.json()
     if isinstance(records, list) and records:
