@@ -67,10 +67,16 @@ those two layers could never be caught by tests that never run it, so mutating t
 survivor count, and a layer added later enters the run by gaining a configuration file, which a test pins to exactly
 those two. The run happens in a throwaway checkout of the last commit, so editing the working tree during a run of hours
 cannot race the tool that rewrites source files, and the list of surviving mutants, the part a person acts on, is saved
-outside that checkout before it is deleted. Each layer has its own survival ceiling in the project configuration,
-because two layers do not share a survival rate; the command takes no ceiling argument, since an argument could lower
-the bar it exists to hold, and a layer without a ceiling fails loudly instead of defaulting. The tool's parallel HTTP
-distributor was tried and abandoned: it fails on startup under this project's Python version.
+outside that checkout before it is deleted, next to a one-line score. The gate is a floor on the share of scored mutants
+the tests kill, the same direction as the coverage floor, and each layer has its own in the project configuration,
+because two layers do not share a rate; the command takes no floor argument, since an argument could lower the bar it
+exists to hold. The score is computed by the project rather than read from the tool's own rate command, which reports
+zero survivors for a session that ran nothing, counts a crashed worker as a kill and never fails on a floor of one
+hundred. A session that did not finish, a worker that errored and a session with nothing scored all fail whatever the
+floor; mutants that produced invalid code leave the denominator; a score a full point over the floor says to raise it,
+so the floor only ratchets up. A layer with no floor yet is measured and reported without gating, which is how the first
+run sets it. The tool's parallel HTTP distributor was tried and abandoned: it fails on startup under this project's
+Python version.
 
 The container-registry login in continuous integration depends on a secret a forked repository's pull request never
 receives, and is skipped rather than failed in that one case — the tests relying on it then fail on their own instead,

@@ -67,11 +67,11 @@ jobs:
       - name: Mutate the layer
         run: uv run python -m scripts mutation "$LAYER"
 
-      - name: Upload the surviving mutants
+      - name: Upload the score and the surviving mutants
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: survivors-${{ matrix.layer }}
-          path: .cache/mutation/${{ matrix.layer }}-survivors.txt
+          name: mutation-${{ matrix.layer }}
+          path: .cache/mutation/${{ matrix.layer }}-*.txt
           if-no-files-found: ignore
           retention-days: 30
