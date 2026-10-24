@@ -5,7 +5,7 @@ import re
 import subprocess
 from os import getenv
 from pathlib import Path
-from typing import Protocol
+from typing import Protocol, cast
 
 from dotenv import load_dotenv
 from httpx2 import URL, Client, Timeout
@@ -19,6 +19,18 @@ class _FixtureResponse(Protocol):
     def text(self) -> str: ...
 
     def json(self) -> object: ...
+
+    def raise_for_status(self) -> object: ...
+
+
+class _Getter(Protocol):
+    def get(
+        self,
+        url: URL,
+        *,
+        headers: dict[str, str],
+        params: dict[str, str] | None = None,
+    ) -> _FixtureResponse: ...
 
 
 SOURCES_DIR = Path("tests/test_src/test_infrastructure/test_providers")
@@ -94,6 +106,36 @@ def _write_or_skip(
     return _write(content=response.json(), out_dir=out_dir, filename=filename)
 
 
+def _refresh_by_identifier(
+    client: _Getter,
+    *,
+    base: URL,
+    identifier: str,
+    headers: dict[str, str],
+    destination: Path,
+) -> str:
+    url = base.join(url=_digits_only(identifier))
+    response = client.get(url, headers=headers)
+    response.raise_for_status()
+    out_dir, filename = destination.parent, destination.name
+
+    if response.text.strip():
+        return _write(content=response.json(), out_dir=out_dir, filename=filename)
+
+    listed = client.get(base, headers=headers, params={"pagina": "1"})
+    listed.raise_for_status()
+    records = listed.json()
+    if isinstance(records, list) and records:
+        first = cast("list[object]", records)[0]
+        saved = _write(content=first, out_dir=out_dir, filename=filename)
+
+        return f"{saved}, taken from the first listed record: {url} answered empty"
+
+    return _write_or_skip(
+        response=response, out_dir=out_dir, filename=filename, url=url
+    )
+
+
 def _write(*, content: object, out_dir: Path, filename: str) -> str:
     (out_dir / filename).write_text(json.dumps(content, ensure_ascii=False, indent=2))
 
@@ -116,17 +158,13 @@ def main() -> None:
                 base = api.BASE_URL.join(url=endpoint)
 
                 for filename, identifier in cases:
-                    url = base.join(url=_digits_only(identifier))
-
-                    response = client.get(url, headers=api.headers())
-                    response.raise_for_status()
-
                     print(
-                        _write_or_skip(
-                            response=response,
-                            out_dir=out_dir,
-                            filename=filename,
-                            url=url,
+                        _refresh_by_identifier(
+                            client,
+                            base=base,
+                            identifier=identifier,
+                            headers=api.headers(),
+                            destination=out_dir / filename,
                         )
                     )
 

@@ -31,7 +31,9 @@ check moved out of the ordinary suite and into the same weekly workflow that run
 an environment of its own, readable by no other job: running it on every commit means a source going temporarily empty
 or a hardcoded test id's own record aging out — neither a defect in this codebase — fails CI for a change that never
 touched the provider at all, which happened twice in one session. The hand-crafted cases stay in the ordinary suite;
-only the live-snapshot check moved.
+only the live-snapshot check moved. Because the recorded responses are untracked, a fresh checkout has none to fall back
+on, so a record id that answers empty would leave its test without a file; the refresh therefore takes the first record
+of that endpoint's own listing instead, and only when that is empty too does it leave the fixture alone.
 
 Detecting a container runtime for the real-database layer is deliberately strict, not permissive: the client this layer
 speaks to understands only the Docker API socket, never a CLI shim, so an installed alternative runtime exposed only
