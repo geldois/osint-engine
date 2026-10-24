@@ -154,7 +154,7 @@ def test_pragma_word_inside_ordinary_comment_is_still_flagged() -> None:
         "migrations/001.sql",
         ".githooks/pre-commit",
         "pyproject.toml",
-        "Dockerfile",
+        "docker/Dockerfile",
         ".env.example",
         ".gitattributes",
         ".sqruff",

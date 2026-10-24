@@ -117,7 +117,7 @@ asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "session"
 
 [tool.pytest-language-server]
-exclude = ["build/**", "dist/**", ".tox/**", ".cache/**"]
+exclude = ["dist/**", ".tox/**", ".cache/**"]
 
 [tool.ruff]
 line-length = 88

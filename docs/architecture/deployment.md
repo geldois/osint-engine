@@ -87,13 +87,13 @@ that is only ever the container, and needs revisiting the day another install pa
   "Require status checks to pass" and add the check `test` (it must have run once on a pushed branch to appear), keep
   "Require linear history", "Block force pushes" and "Restrict deletions", and leave bypass empty so admins are bound
   too
-- **The deploy is one VM running `compose.prod.yml`, with no orchestrator.** A crashed container only comes back through
-  `restart`, there is no rolling update, no second replica and no fixed network addressing, and the in-memory snapshot
-  (`MemStorage`) would make a second replica diverge from the first anyway. Move to Kubernetes (services, probes,
-  network policies, a stable address for the ingress) when the persistence problem in the infrastructure document is
-  closed and a second replica or a second host is wanted; until then compose is the proportionate choice
-- **`FORWARDED_ALLOW_IPS: "*"` in `compose.prod.yml` trusts every peer, because the compose network has no fixed subnet
-  and the Caddy address is not stable.** The per-IP limits (login, registration) key on `request.client.host`, so a
-  published port in place of `expose` would let a direct caller forge the header past every bucket. Declare a network
+- **The deploy is one VM running `deploy/compose.prod.yml`, with no orchestrator.** A crashed container only comes back
+  through `restart`, there is no rolling update, no second replica and no fixed network addressing, and the in-memory
+  snapshot (`MemStorage`) would make a second replica diverge from the first anyway. Move to Kubernetes (services,
+  probes, network policies, a stable address for the ingress) when the persistence problem in the infrastructure
+  document is closed and a second replica or a second host is wanted; until then compose is the proportionate choice
+- **`FORWARDED_ALLOW_IPS: "*"` in `deploy/compose.prod.yml` trusts every peer, because the compose network has no fixed
+  subnet and the Caddy address is not stable.** The per-IP limits (login, registration) key on `request.client.host`, so
+  a published port in place of `expose` would let a direct caller forge the header past every bucket. Declare a network
   with a fixed subnet and trust only that CIDR when a service other than Caddy that can reach `app` joins the network or
   the `expose` line is touched

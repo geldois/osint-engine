@@ -5,13 +5,13 @@ import subprocess
 from scripts._isolation import detached_worktree, sync
 
 _CONFIG = "cosmic-ray.toml"
-_SESSION = "build/mutation/session.sqlite"
+_SESSION = ".cache/mutation/session.sqlite"
 
 
 def run_mutation(*, max_survival: float) -> int:
     with detached_worktree("HEAD") as worktree:
         sync(worktree)
-        (worktree / "build" / "mutation").mkdir(parents=True, exist_ok=True)
+        (worktree / ".cache" / "mutation").mkdir(parents=True, exist_ok=True)
 
         steps: tuple[tuple[str, ...], ...] = (
             ("cosmic-ray", "init", _CONFIG, _SESSION),

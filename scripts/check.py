@@ -12,7 +12,7 @@ from scripts._report import Gate, GateOutcome, print_header, print_verdict
 _UV_RUN = ("uv", "run", "--no-sync")
 
 SHELL_FILES = tracked("*.sh", ".githooks/*")
-COMPOSE_FILES = tracked(":(glob)compose*.y*ml", ":(glob)docker-compose*.y*ml")
+COMPOSE_FILES = tracked(":(glob)**/compose*.y*ml", ":(glob)**/docker-compose*.y*ml")
 WORKFLOW_FILES = tracked(":(glob).github/workflows/*.y*ml")
 _LOCK_CHECK = Gate("lock-check", ("uv", "lock", "--check", "--quiet"))
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))

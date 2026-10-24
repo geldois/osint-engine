@@ -11,11 +11,8 @@ tests/
 docs/
 .github/
 .claude/
-build/
-CHANGELOG.md
 .editorconfig
 .gitignore
-.dockerignore
 .mcp.json
 .mise.toml
 dprint.json

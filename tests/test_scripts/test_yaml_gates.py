@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from typing import TYPE_CHECKING
 
 from test_scripts.tools import BIN, ROOT, run, write
@@ -36,13 +37,15 @@ def _schema(builtin: str, target: Path) -> tuple[int, str]:
 
 
 def test_the_compose_files_the_gate_checks_are_every_compose_file() -> None:
-    found = sorted(
-        path.name
-        for pattern in ("compose*.y*ml", "docker-compose*.y*ml")
-        for path in ROOT.glob(pattern)
-    )
+    listed = subprocess.run(
+        ["git", "ls-files", "--", "*compose*.y*ml"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.split()
 
-    assert sorted(COMPOSE_FILES) == found
+    assert sorted(COMPOSE_FILES) == sorted(listed)
 
 
 def test_the_workflow_files_the_gate_checks_are_every_workflow() -> None:
