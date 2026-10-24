@@ -18,10 +18,22 @@ _LOCK_CHECK = Gate("lock-check", ("uv", "lock", "--check", "--quiet"))
 _ENV_SYNC = Gate("env-sync", ("uv", "sync", "--quiet"))
 _GATES: tuple[Gate, ...] = (
     Gate("comments", (*_UV_RUN, "python", "-m", "scripts", "comments")),
-    Gate("ruff-format", (*_UV_RUN, "ruff", "format", "--check", "--quiet", ".")),
+    Gate(
+        "ruff-format",
+        (*_UV_RUN, "ruff", "format", "--check", "--no-cache", "--quiet", "."),
+    ),
     Gate(
         "ruff-check",
-        (*_UV_RUN, "ruff", "check", "--output-format", "concise", "--quiet", "."),
+        (
+            *_UV_RUN,
+            "ruff",
+            "check",
+            "--no-cache",
+            "--output-format",
+            "concise",
+            "--quiet",
+            ".",
+        ),
     ),
     Gate(
         "import-linter",

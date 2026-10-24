@@ -78,6 +78,13 @@ def test_every_gate_tool_is_a_declared_dev_dependency() -> None:
         assert owner in declared, tool
 
 
+def test_the_ruff_gates_never_read_the_cache() -> None:
+    ruff_gates = [gate for gate in _GATES if gate.name.startswith("ruff-")]
+
+    assert len(ruff_gates) == 2
+    assert all("--no-cache" in gate.command for gate in ruff_gates)
+
+
 def test_the_markdown_and_toml_linters_are_gates() -> None:
     tools = _gate_tools()
 
