@@ -59,6 +59,12 @@ configuration already forbids doing any other way; requiring one would block tha
 check is matched by its exact name, so renaming the job in the workflow means renaming it in the ruleset first, or every
 push to the default branch is refused until the ruleset is edited.
 
+What only the deploy job may read lives in a GitHub environment named for production, whose deployment branches are
+limited to the default branch: the host address, the SSH key and the domain variable. A workflow running on any other
+branch cannot read them, so reaching the host takes landing code on the default branch through the ruleset above. The
+Docker Hub login stays at repository level because the test job, which runs on every branch, needs it and it only lifts
+a pull rate limit. The key of the providers' live check lives in a second environment of its own for the same reason.
+
 ## Consequences
 
 Because the Docker version string is built from the release codename at provisioning time, re-running this same script
@@ -84,11 +90,6 @@ that is only ever the container, and needs revisiting the day another install pa
 
 ## Open problems
 
-- **The deploy secrets are repository secrets, not environment secrets.** The deploy job in `.github/workflows/ci.yml`
-  already names the `production` environment, but the host address and the SSH key still live at repository level, so
-  any workflow in the repository can read them, and a branch other than `main` could ship a workflow that does. In the
-  web UI, move the two deploy secrets into that environment, restrict its deployment branches to `main` and, if wanted,
-  add a required reviewer; do it before a second contributor or a second workflow can touch the repository
 - **The deploy is one VM running `deploy/compose.prod.yml`, with no orchestrator.** A crashed container only comes back
   through `restart`, there is no rolling update, no second replica and no fixed network addressing, and the in-memory
   snapshot (`MemStorage`) would make a second replica diverge from the first anyway. Move to Kubernetes (services,
