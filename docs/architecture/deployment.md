@@ -81,11 +81,6 @@ that is only ever the container, and needs revisiting the day another install pa
   any workflow in the repository can read them, and a branch other than `main` could ship a workflow that does. In the
   web UI, move the two deploy secrets into that environment, restrict its deployment branches to `main` and, if wanted,
   add a required reviewer; do it before a second contributor or a second workflow can touch the repository
-- **`main` has no branch protection or ruleset.** Without them, anything can still reach `main` without having passed
-  the gate. In the GitHub web UI: repository Settings, Rules, Rulesets, New branch ruleset, target `main`; enable
-  "Require status checks to pass" and add the check `Test` (it must have run once on a pushed branch to appear), keep
-  "Require linear history", "Block force pushes" and "Restrict deletions", and leave bypass empty so admins are bound
-  too
 - **The deploy is one VM running `deploy/compose.prod.yml`, with no orchestrator.** A crashed container only comes back
   through `restart`, there is no rolling update, no second replica and no fixed network addressing, and the in-memory
   snapshot (`MemStorage`) would make a second replica diverge from the first anyway. Move to Kubernetes (services,
