@@ -434,17 +434,12 @@ cp .env.example .env  # then set SECRET_KEY, DATABASE_URL and EXTERNAL_CREDENTIA
 
 ### Windows
 
-1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with the WSL2 backend enabled.
-2. Install [Git for Windows](https://gitforwindows.org) — the git hook is an `sh` script it provides.
-3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/); `required-version` in `pyproject.toml` makes
-   it refuse any other version and name the one it needs.
-4. Install the dependencies and activate the versioned git config:
-
-```powershell
-uv sync
-git config --local include.path ../.gitconfig
-copy .env.example .env  # then set SECRET_KEY, DATABASE_URL and EXTERNAL_CREDENTIAL_ENCRYPTION_KEY
-```
+Only through WSL2: install a Linux distribution under WSL2, enable
+[Docker Desktop](https://www.docker.com/products/docker-desktop/)'s WSL integration for it, clone the repository inside
+the distribution's own filesystem and follow the Linux steps there. Native Windows (PowerShell with a Windows Python and
+uv) is not supported: the PostgreSQL tests look for the Docker socket at its Linux path and the gate tests look for each
+tool in a `bin` directory, so both fail there. The continuous integration runs on Ubuntu only, so no Windows route has
+been run by anyone; the WSL2 one is expected to behave as Linux.
 
 > `.gitconfig` points `core.hooksPath` at the versioned `.githooks/` and forbids merge commits (`merge.ff = only`), so
 > the hooks are whatever is committed — nothing is generated into `.git/` — and every commit is born through the
