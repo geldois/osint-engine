@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import TYPE_CHECKING
 
 import pytest
@@ -23,22 +24,6 @@ _CLEAN = (
     " # v7.0.0\n"
     "        with:\n          persist-credentials: false\n"
 )
-_CALLEE = (
-    'name: Callee\n"on":\n  workflow_call:\n    secrets:\n      TOKEN:\n'
-    "        required: false\npermissions: {}\n"
-    "jobs:\n  work:\n    name: Work\n    runs-on: ubuntu-24.04\n"
-    "    steps:\n      - name: Say\n        run: echo ok\n"
-)
-_CALLER = (
-    'name: Caller\n"on": push\npermissions: {}\n'
-    "concurrency:\n  group: caller\n  cancel-in-progress: true\n"
-    "jobs:\n  call:\n    name: Call\n    uses: ./.github/workflows/callee.yml\n"
-)
-_INHERIT = "    secrets: inherit\n"
-
-
-def _passing(secret: str) -> str:
-    return f"    secrets:\n      {secret}: " + "${{ secrets.TOKEN }}\n"
 
 
 def _repository(tmp_path: Path, **workflows: str) -> Path:
@@ -87,33 +72,35 @@ def test_every_deploy_script_is_a_gated_shell_file() -> None:
     assert found
 
 
-def test_actionlint_accepts_a_workflow_that_calls_another_with_a_declared_secret(
-    tmp_path: Path,
-) -> None:
-    repository = _repository(
-        tmp_path,
-        callee=_CALLEE,
-        caller=_CALLER + _passing("TOKEN"),
-    )
+def _ci_jobs() -> dict[str, str]:
+    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    parts = re.split(r"^  (\w+):\n", text.split("\njobs:\n", 1)[1], flags=re.MULTILINE)
 
-    result = _actionlint(repository)
-
-    assert result.returncode == 0, _findings(result)
+    return dict(zip(parts[1::2], parts[2::2], strict=True))
 
 
-def test_actionlint_rejects_a_secret_the_called_workflow_does_not_declare(
-    tmp_path: Path,
-) -> None:
-    repository = _repository(
-        tmp_path,
-        callee=_CALLEE,
-        caller=_CALLER + _passing("OTHER"),
-    )
+def test_every_ci_job_is_capped_by_a_timeout() -> None:
+    jobs = _ci_jobs()
 
-    result = _actionlint(repository)
+    assert jobs
+    assert all("    timeout-minutes:" in body for body in jobs.values())
 
-    assert result.returncode == 1
-    assert "OTHER" in _findings(result)
+
+def test_only_the_main_branch_builds_and_deploys() -> None:
+    jobs = _ci_jobs()
+    gate = "    if: github.ref == 'refs/heads/main'\n"
+
+    assert gate not in jobs["test"]
+    assert gate in jobs["build"]
+    assert gate in jobs["deploy"]
+
+
+def test_the_deploy_chain_waits_for_the_gate() -> None:
+    jobs = _ci_jobs()
+
+    assert "    needs: test\n" in jobs["build"]
+    assert "    needs: build\n" in jobs["deploy"]
+    assert "    environment: production\n" in jobs["deploy"]
 
 
 def test_actionlint_checks_run_scripts_with_the_pinned_shellcheck(
@@ -161,12 +148,3 @@ def test_zizmor_rejects_each_hardened_workflow_when_it_is_weakened(
     result = _zizmor(weakened)
     assert result.returncode != 0
     assert audit in _findings(result)
-
-
-def test_zizmor_rejects_secrets_inherit(tmp_path: Path) -> None:
-    repository = _repository(tmp_path, callee=_CALLEE, caller=_CALLER + _INHERIT)
-
-    result = _zizmor(repository)
-
-    assert result.returncode != 0
-    assert "secrets-inherit" in _findings(result)

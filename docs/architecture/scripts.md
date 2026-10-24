@@ -109,12 +109,11 @@ Workflows are held to one contract rather than reviewed by eye, because the gate
 workflow linter checks syntax, expressions, runner labels and the shell inside every step, using the pinned shell linter
 that the project already installs, so a step is judged by the same tool version as the committed scripts. The security
 analyser runs offline, at its strictest persona that still avoids false positives, so the hook needs no token; the
-audits that need the hosting API are left to a continuous-integration step that has one. Two of its audits are set aside
-on purpose: the one demanding an explanatory comment on every permission, because the repository bans comments in every
-file, and the one asking for the new in-repository call syntax, because the pinned workflow linter rejects it today.
-Both settings live in the analyser's own configuration and are revisited when the linter learns the syntax. The
-host-side commands of the deploy job are committed shell files executed through the action's script path, which puts
-them under the shell linter and formatter and keeps every value out of text substitution.
+audits that need the hosting API are left to a continuous-integration step that has one. One of its audits is set aside
+on purpose, in the analyser's own configuration: the one demanding an explanatory comment on every permission, because
+the repository bans comments in every file. The host-side commands of the deploy job are committed shell files executed
+through the action's script path, which puts them under the shell linter and formatter and keeps every value out of text
+substitution.
 
 The set of files a gate or a tool touches is discovered, never listed by hand. The shell, compose and workflow files
 come from the version control's own list of tracked files, so a new file enters its gate the moment it is added, with no
@@ -165,12 +164,8 @@ that same root, never a new dot-directory at the repository's own top level to r
 
 - **The workflow analyser's online audits run nowhere.** The gate in `scripts/check.py` runs it offline, so audits that
   ask the hosting API about impostor commits, vulnerable actions and ref confusion are never executed. A step in
-  `.github/workflows/test.yml` with a read-only token, running the analyser online, closes it; add it when pinned action
+  `.github/workflows/ci.yml` with a read-only token, running the analyser online, closes it; add it when pinned action
   versions need that cross-check
-- **Two analyser audits are disabled or ignored for stated reasons that can lapse.** `.github/zizmor.yml` sets aside the
-  permission-comment audit while comments are banned and the self-repository-syntax audit for the two workflows that
-  call `test.yml`, because the pinned workflow linter rejects that syntax. Re-enable the second as soon as a pinned
-  release of the linter accepts it
 - **Ten gates run without a reduced-output flag.** `dprint`, `sqruff`, `basedpyright`, `shfmt`, `lint-imports`,
   `yamllint`, `check-jsonschema`, `validate-pyproject`, `actionlint` and `zizmor` (which only turns its progress off)
   print their full default output, because no flag cutting it was confirmed for the pinned versions (`lint-imports` 2.13

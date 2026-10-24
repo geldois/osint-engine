@@ -1,8 +1,9 @@
-name: Publish image
+name: CI
 
 "on":
   push:
-    branches: [main]
+    branches: ["**"]
+  pull_request:
   workflow_dispatch:
 
 permissions: {}
@@ -11,23 +12,61 @@ env:
   IMAGE: ghcr.io/${{ github.repository }}
 
 concurrency:
-  group: publish-image
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  verify:
-    name: Verify
-    uses: ./.github/workflows/test.yml
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     permissions:
       contents: read
-    secrets:
+    env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Log in to Docker Hub
+        if: ${{ env.DOCKERHUB_USERNAME != '' }}
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull testcontainers images
+        run: |
+          docker pull postgres:18
+          docker pull testcontainers/ryuk:0.8.1
+
+      - name: Quality gates
+        run: uv run python -m scripts check
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-report
+          path: .cache/coverage/coverage.xml
+          retention-days: 14
 
   build:
-    name: Build and push
-    needs: verify
+    name: Build image
+    needs: test
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
@@ -58,7 +97,10 @@ jobs:
   deploy:
     name: Deploy
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: production
     permissions:
       contents: read
     steps:

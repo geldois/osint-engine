@@ -1,6 +1,6 @@
 # OSINT Engine
 
-[![CI](https://github.com/geldois/osint-engine/actions/workflows/publish-image.yml/badge.svg)](https://github.com/geldois/osint-engine/actions)
+[![CI](https://github.com/geldois/osint-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/geldois/osint-engine/actions)
 [![Release](https://img.shields.io/github/v/release/geldois/osint-engine)](https://github.com/geldois/osint-engine/releases)
 [![Python](https://img.shields.io/badge/python-%E2%89%A53.12-blue)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -542,22 +542,23 @@ then `sudo systemctl restart docker` and re-run the pulls.
 
 ## Deploy
 
-`.github/workflows/publish-image.yml` runs on every push to `main` and on manual dispatch. It first calls `test.yml`,
-the very same gate as the commit hook, on that exact commit; only if it passes does it build one `linux/amd64` image
-(the architecture of the host, an Oracle Cloud AMD shape) on ghcr.io tagged with the branch and with the commit SHA,
-then deploy over SSH to the host `deploy/cloud-init.sh` provisions, pulling the image by SHA so production runs exactly
-the commit that was verified. No release is cut: the image tag is the commit SHA and the history of conventional commits
-is the change log. The last step of the deploy job probes `https://${{ vars.API_DOMAIN }}/health` from the runner rather
-than from the host, so the check still reports a host that is itself the broken half — the probe therefore reaches Caddy
-by the name CI believes in, which Caddy only answers if the host serves that same name.
+`.github/workflows/ci.yml` is the only workflow. Its `test` job runs the very same gate as the commit hook on every push
+to any branch and every pull request; on `main` alone, whether by push or by manual dispatch, and only if that job
+passes on that exact commit, it builds one `linux/amd64` image (the architecture of the host, an Oracle Cloud AMD shape)
+on ghcr.io tagged with the branch and with the commit SHA, then deploy over SSH to the host `deploy/cloud-init.sh`
+provisions, pulling the image by SHA so production runs exactly the commit that was verified. No release is cut: the
+image tag is the commit SHA and the history of conventional commits is the change log. The last step of the deploy job
+probes `https://${{ vars.API_DOMAIN }}/health` from the runner rather than from the host, so the check still reports a
+host that is itself the broken half — the probe therefore reaches Caddy by the name CI believes in, which Caddy only
+answers if the host serves that same name.
 
 `docker/` holds what builds the image (the Dockerfile, its ignore file and the entrypoint); `deploy/` holds what runs on
 the host (the production compose overlay, the Caddyfile, the provisioning script and the two commands the deploy job
 runs). Those two commands are shell files, so they are checked like any other script, and every value reaches them
 through the environment of the job rather than by text substitution. Every workflow starts from no permissions, grants
-each job only what it uses, never persists the checkout credential, passes the called workflow its secrets by name, and
-is linted by actionlint and zizmor on every commit. `actionlint` is installed by `uv sync`, whose build downloads and
-checks its binary from github.com; on NixOS that needs `SSL_CERT_FILE` pointing at the system CA bundle.
+each job only what it uses, never persists the checkout credential, caps every job with a timeout, and is linted by
+actionlint and zizmor on every commit. `actionlint` is installed by `uv sync`, whose build downloads and checks its
+binary from github.com; on NixOS that needs `SSL_CERT_FILE` pointing at the system CA bundle.
 
 `vars.API_DOMAIN` (repository Settings, Secrets and variables, Actions, Variables) must mirror the `API_DOMAIN` line
 `deploy/cloud-init.sh` writes into the host's `.env`. It is repository-side state that no push updates, so migrating a
