@@ -148,6 +148,9 @@ ignore = [
 "tests/**/*.py" = ["PLR0913", "PLR0917", "PLR2004", "S101", "S105", "S106", "S603", "S607", "SLF001"]
 "scripts/**/*.py" = ["S603", "S607", "T201"]
 
+[tool.ruff.lint.isort]
+known-third-party = ["docker"]
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
@@ -177,6 +180,14 @@ exclude = ["uv.lock"]
 [tool.tombi.format.rules]
 indent-width = 2
 line-width = 120
+
+[tool.tombi.lint.rules]
+dotted-keys-out-of-order = "error"
+key-empty = "error"
+tables-out-of-order = "error"
+
+[tool.tombi.schema.lint.rules]
+deprecated = "error"
 
 [tool.uv]
 required-version = "==0.11.21"

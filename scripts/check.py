@@ -36,7 +36,7 @@ _GATES: tuple[Gate, ...] = (
     ),
     Gate(
         "tombi-lint",
-        (*_UV_RUN, "tombi", "lint", "--offline", "--error-on-warnings", "--quiet"),
+        (*_UV_RUN, "tombi", "lint", "--offline", "--quiet"),
     ),
     Gate("validate-pyproject", (*_UV_RUN, "validate-pyproject", "pyproject.toml")),
     Gate("yamllint", (*_UV_RUN, "yamllint", "--strict", ".")),

@@ -131,7 +131,9 @@ def test_the_toml_formatter_rewrites_what_the_check_rejects(tmp_path: Path) -> N
 def test_the_toml_linter_fails_on_tables_out_of_order(tmp_path: Path) -> None:
     target = write(tmp_path, "probe.toml", "[a]\nx = 1\n\n[b]\ny = 1\n\n[a.c]\nz = 1\n")
 
-    result = _tombi("lint", "--error-on-warnings", target=target)
+    result = run(
+        [str(BIN / "tombi"), "lint", "--offline", str(target)], cwd=PYPROJECT.parent
+    )
 
     assert result.returncode == 1
     assert "out-of-order" in result.stderr + result.stdout

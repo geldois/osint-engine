@@ -93,7 +93,9 @@ same package manager as everything else instead of needing a Node runtime or a c
 more, and reflows paragraphs to the configured width with the exact output dprint used to produce; the cost is a younger
 project still labelled beta, offset by pinning one exact version. tombi replaced dprint's TOML plugin because its linter
 and formatter agree on table order, which the plugin never checked, and its schema for the project manifest ships inside
-the tool, so linting needs no network. The generated lockfile is left out of the tools that would rewrite it.
+the tool, so linting needs no network; the sub-schemas of the other tools' tables do not ship, so offline it leaves
+those tables unchecked and warns, which is why every lint rule is set to an error in its own configuration instead of
+failing on warnings. The generated lockfile is left out of the tools that would rewrite it.
 
 The project manifest is also validated against the packaging standard's own schema, including license expressions and
 trove classifiers, which a TOML linter cannot know.
