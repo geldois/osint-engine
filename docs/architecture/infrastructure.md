@@ -67,8 +67,7 @@ the caller's behalf, and the batch pre-flight reads the queue's current deficit 
 for anything. The buckets start full rather than dripping from empty: the burst capacity mirrors the provider's own
 published limits and keeps small demo batches fast, at the accepted cost that the first requests of a fresh process may
 front-load a window up to its burst allowance while the long-run rate stays at or under the documented average. The
-state lives in one process only — a restart loses the queue, but never paid work, because each expansion commits the
-moment it completes and re-submitting a batch costs nothing twice.
+state lives in one process only — a restart loses the queue.
 
 The durable, database-backed storage stays close to raw hand-written queries by explicit choice, favoring inspectability
 and a learning goal over the convenience of an abstraction that writes the queries automatically; schema changes are
@@ -91,9 +90,8 @@ not a redesign of anything above this layer — the layers above never see which
 migration's own risk stays contained entirely to this one.
 
 Because the pacing state lives in one process with no persistence of its own, restarting the process resets every
-credential's own window back to full — a caller loses no paid work, since each completed expansion already committed,
-but also loses whatever wait a batch estimate had already promised, so an estimate given just before a restart can
-undercount the true wait afterward.
+credential's own window back to full, so a batch estimate given just before a restart can undercount the true wait
+afterward.
 
 Queries stay hand-written next to plain migration files, and a code generator turns them into the committed record
 models, validating each query against the migrations while it does — but only when someone runs it by hand, because it
@@ -105,11 +103,23 @@ underneath rather than a specific, documented one, until someone reproduces it a
 
 ## Open problems
 
-- **All graph and consumption-log data lives in a plain in-memory snapshot** (`MemStorage` behind `HybridUoW`). Every
-  restart loses it, and the `fastapi-throttle` limiter and the KipFlow pacing queue are in memory too, so the service is
-  a single process by construction. Only accounts and external credentials survive, because they sit in PostgreSQL. When
-  the real adapter lands, `GraphRepository.list_all_revisions()` (a full scan today, with `ListGraphCatalog` as its only
-  caller) is the one method to replace with an aggregated projection. Do it before any data that must outlive a deploy
+- **All graph data lives in a plain in-memory snapshot** (`MemStorage` behind `HybridUoW`). Every restart loses it, and
+  the `fastapi-throttle` limiter and the KipFlow pacing queue are in memory too, so the service is a single process by
+  construction. Only accounts and external credentials survive, because they sit in PostgreSQL. When the real adapter
+  lands, `GraphRepository.list_all_revisions()` (a full scan today, with `ListGraphCatalog` as its only caller) is the
+  one method to replace with an aggregated projection. Do it before any data that must outlive a deploy
+- **A restart makes every earlier paid expansion look new, so the reuse lock lets the same CPF be billed again.** The
+  lock reads the consumption log (`guard_reuse_lock.py`, through `entity_records`), which `HybridUoW` keeps in the
+  in-memory snapshot, so after a restart a repeated call without `force` finds no earlier attempt and reaches KipFlow.
+  Every deploy therefore unlocks every paid route for every account. Persist the consumption log in PostgreSQL behind
+  the existing repository contract, ahead of the graph storage and before any real paid use
+- **Concurrent units of work overwrite each other's consumption-log entries, so a batch can lose records without any
+  restart.** `MemStorageSnapshot.commit_to_storage` (`mem_storage.py`) clears the live log and refills it from the copy
+  taken when that unit of work opened, and `ExpandByCPFBatch` runs up to five expansions at once, so expansions opened
+  from the same base replace one another's records and only the last commit keeps its own. A CPF whose record was lost
+  looks new to the reuse lock and is billed again on a re-submit, which breaks the single-writer assumption the
+  replace-on-commit rule relies on. Append the snapshot's new entries instead of replacing the list, or serialise the
+  expansions, and pin it with a test that commits two overlapping units of work
 - **Every `MemGraphRepository` read rebuilds each graph one entity lookup at a time.** A stored graph holds only a
   reference per node and edge, so `find`, `get` and every `list_*` rehydrate through the node and edge repositories'
   batch reads, which in memory are a sequential `find` per reference; `list_all_revisions` therefore rebuilds every

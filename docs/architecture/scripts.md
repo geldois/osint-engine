@@ -45,8 +45,8 @@ could silently corrupt a file, but a violation now fails the commit: every track
 except generated code and the few kinds that have no comment syntax or are the point of the file (JSON, Markdown, the
 lockfile, the licence and the interpreter version file), so a new kind of file is covered the day it is added, with a
 closed allowlist for linter-suppression pragmas, shell directives, shebangs, pinned-action version tags and the
-annotations the SQL query loader requires. A comment marker only counts when it starts a word, so shell argument-count
-and length expansions are never mistaken for one.
+annotations sqlc requires. A comment marker only counts when it starts a word, so shell argument-count and length
+expansions are never mistaken for one.
 
 The uv version is pinned exactly in the project manifest, read by the workflows and enforced by uv itself wherever it
 runs, so a stale install fails loudly instead of drifting; the container image's tag is the one other copy, pinned to

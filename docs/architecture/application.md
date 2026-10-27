@@ -36,15 +36,16 @@ can end up recorded under two identities with no shared identifier to resolve th
 digits is the only signal left in that situation, so it stays explicitly probabilistic and advisory rather than folded
 into the identifier-based resolution everything else relies on.
 
-A separate append-only log now records every attempt a caller makes to expand a CPF, regardless of outcome — blocked by
-the reuse lock, no external credential on file, the provider returning nothing, or a genuine successful expansion. This
-does not replace the reuse lock's own reasoning that revision history is enough to decide *whether to pay again*; it
-answers a different question the revision history structurally cannot: a full audit trail of every attempt, including
-the ones the lock stopped before they ever reached the provider. An entity's own revisions are deliberately deduplicated
-by content — searching for the same person twice with identical results collapses to one revision, which is correct for
-"what do we currently know," but wrong for "how many times was this looked up." The log's own entries are never
-deduplicated by content for exactly that reason; each is stamped with a non-deterministic identity of its own, unlike
-every other record in this system, because it represents an event, not a piece of content that can recur.
+A separate append-only log now records every attempt a caller makes to expand an identifier, on any provider, regardless
+of outcome — blocked by the reuse lock, no external credential on file, the provider returning nothing, or a genuine
+successful expansion. This does not replace the reuse lock's own reasoning that revision history is enough to decide
+*whether to pay again*; it answers a different question the revision history structurally cannot: a full audit trail of
+every attempt, including the ones the lock stopped before they ever reached the provider. An entity's own revisions are
+deliberately deduplicated by content — searching for the same person twice with identical results collapses to one
+revision, which is correct for "what do we currently know," but wrong for "how many times was this looked up." The log's
+own entries are never deduplicated by content for exactly that reason; each is stamped with a non-deterministic identity
+of its own, unlike every other record in this system, because it represents an event, not a piece of content that can
+recur.
 
 ## Decisions
 
@@ -81,11 +82,11 @@ history-navigation work, not this layer's.
 
 Every expansion workflow guards against repeating the exact same fetch by checking, before it ever calls out, whether a
 successful attempt for that identifier already exists from that same provider — a caller who repeats the same expansion
-without asking to pays nothing extra on a paid route and spares the upstream a redundant call on a free one, and only an
-explicit override flag bypasses the check. The lock is scoped per provider, not per identifier, because an attempt that
-arrived from ingestion or a different provider carries no information about whether this one has ever run; "already ran"
-itself is treated as either outcome that actually reached the provider (a result, or a confirmed empty), never a request
-that failed before it got there or was itself blocked by this same lock.
+without asking to, within the life of the process, pays nothing extra on a paid route and spares the upstream a
+redundant call on a free one, and only an explicit override flag bypasses the check. The lock is scoped per provider,
+not per identifier, because an attempt that arrived from ingestion or a different provider carries no information about
+whether this one has ever run; "already ran" itself is treated as either outcome that actually reached the provider (a
+result, or a confirmed empty), never a request that failed before it got there or was itself blocked by this same lock.
 
 The check reads the append-only consumption log, never the node storage a successful fetch also writes to —
 deliberately, after the first version of this lock (checking node revisions instead) shipped a real defect: every
@@ -195,10 +196,10 @@ specifically.
   same entity and is only linked, never merged, which makes the first-seen format permanent. Cosmetic: identity
   resolution is unaffected. Fixing it means giving `_resolve_node` a path to update an existing entity's field from a
   new deterministic match, which the design deliberately does not do for anything
-- **Per-user consumption filtering reads every record first** (`list_entity_record_catalog.py`,
-  `list_entity_records_by_cpf.py`, `guard_reuse_lock.py`). Each call loads every account's records from the in-memory
-  log and keeps the caller's, so cost grows with total users, not the caller's own history. Replace with a repository
-  query by username when the log leaves memory
+- **Per-user consumption filtering reads more records than the caller's own** (`list_entity_record_catalog.py`,
+  `list_entity_records_by_cpf.py`, `guard_reuse_lock.py`). The catalog loads every account's records from the in-memory
+  log and keeps the caller's, so its cost grows with total users; the other two read every account's records for one
+  entity and filter by username afterwards. Replace with a repository query by username when the log leaves memory
 - **`FindPossiblyMatches` can compute two different confidences for one pair and keeps an arbitrary one.** The score is
   the overlap divided by the length of the document of the node being iterated, and the pair's edge `id` is the same
   whichever side starts. When the graph holds both people, each side scores the pair against its own length, the edge
@@ -206,12 +207,16 @@ specifically.
   hold both sides is unconfirmed; make the score symmetric, or keep the higher one on purpose
 - **Accounts have no password reset, no deletion and no email or other proof of ownership**
   (`application/use_cases/authentication/register_user.py`). A forgotten password locks the account and its saved keys
-  for good, and open signup is bounded only by the 10-per-15-minutes IP limit and argon2's cost. Add an invite code (an
-  environment value checked at registration) first if signup abuse shows up; a reset flow needs an email channel the
-  project does not have
+  for good; a reset flow needs an email channel the project does not have
 - **Every single-identifier expansion calls its external fetcher inside the unit-of-work boundary**
   (`application/use_cases/expansion/`, for example `expand_by_cpf.py`). The call holds the HTTP round trip and, for
   KipFlow routes, the wait on the credential's pacing window. Harmless while the boundary is an in-memory snapshot; once
   graphs sit behind a PostgreSQL transaction, that transaction and its pooled connection stay open for the whole fetch
   and the whole wait. Read the reuse lock in one boundary, fetch outside any, and open a second only to write, before
   graph storage moves to PostgreSQL and together with the atomicity gap above
+- **The consumption log names the provider differently on two paths, and every route handler repeats its own label.**
+  `UseCaseRegistry.register` in `application/use_cases/expansion/` labels the CPF expansion `kipflow`, but `get_cpf.py`
+  records its invalid attempts as `cpf`, so the CPF route shows under two provider names in `GET /consumption`; the CNPJ
+  route writes `brasilapi` in both `expand_by_cnpj.py` and `get_cnpj.py`, so swapping that source edits two layers.
+  Every `get_*.py` handler that calls `record_invalid_attempt` passes a literal; read the label from the registry in one
+  place

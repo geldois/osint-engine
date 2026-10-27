@@ -123,9 +123,10 @@ Transparência-backed route below — free, but it needs the caller's own saved 
 
 Every graph-expansion route above, and every one of `/cnep`, `/ceis`, `/ceaf`, `/cepim`, `/peps`, `/legal-process`,
 carries the same `?force=false` reuse lock, tracked per user: a repeated expansion of the same identifier on the same
-route by the same user returns `409` instead of calling the provider again, unless `force=true` is passed — including a
-repeat after a `204`, since an empty result is still a definitive answer from the provider. Returns `204` (empty body)
-when the provider has no record for the identifier.
+route by the same user returns `409` instead of calling the provider again, unless `force=true` is passed, until the
+next restart, because the log the lock reads is held in memory — including a repeat after a `204`, since an empty result
+is still a definitive answer from the provider. Returns `204` (empty body) when the provider has no record for the
+identifier.
 
 ```http
 POST /cpf/batch
@@ -194,18 +195,19 @@ GET /consumption
 Authorization: Bearer <token>
 ```
 
-Every CPF-expansion attempt ever recorded, regardless of outcome (`already_fetched`, `empty`, `expanded`, `failed`) —
-including one the reuse lock blocked before it ever reached the paid provider. Ordered by `requested_at` descending
-(newest first). Only the caller's own entries are returned, since an entry names which CPF a caller looked up and when.
+Every expansion attempt ever recorded, on any provider, regardless of outcome (`already_fetched`, `empty`, `expanded`,
+`failed`, `invalid`) — including one the reuse lock blocked before it ever reached the paid provider. Ordered by
+`requested_at` descending (newest first). Only the caller's own entries are returned, since an entry names which CPF a
+caller looked up and when.
 
 ```http
 GET /consumption/{cpf}
 Authorization: Bearer <token>
 ```
 
-Same shape, scoped to one CPF, ordered by `requested_at` ascending. Each entry carries `entity_id` (always present),
-`entity_ref` (`id`/`content_id`, present only for `already_fetched`/`expanded`), `outcome`, `provider`, `requested_at`
-and `username`. `200 []` for a CPF never attempted.
+Same shape, scoped to one CPF, ordered by `requested_at` ascending. Each entry carries `entity_id` (null only for
+`invalid`), `entity_ref` (`id`/`content_id`, present only for `already_fetched`/`expanded`), `outcome`, `provider`,
+`requested_at` and `username`. `200 []` for a CPF never attempted.
 
 ### Text ingestion
 
@@ -332,7 +334,7 @@ router share a single bucket per user: the three `/credentials` routes, `/graphs
 with its by-CPF route, and the three `/text-ingestion` routes. The two batch routes share their own `cpf_batch` bucket
 instead of the single-CPF one: one batch request drives up to 50 paid provider calls, so the HTTP quota and the outbound
 quota must not share a counter. Outbound KipFlow traffic is additionally paced client-side against KipFlow's own
-documented per-API-key limits — a 5/s burst, a 100/min average and a 1000/hour volume — by an in-memory queue keyed per
+documented per-API-key limits (a burst, a per-minute average and a per-hour volume) by an in-memory queue keyed per
 credential: a fetch that would cross any window waits its turn in FIFO order instead of dropping or overrunning, and
 `POST /cpf/batch/estimate` surfaces how long that wait would be before the caller pays for anything. The health
 endpoints are unthrottled.

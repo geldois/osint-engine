@@ -111,3 +111,17 @@ describe something other than what the caller actually received.
   routes (`/cnep`, `/ceis`, `/cepim`, `/ceaf`, `/peps`) the aggregate can exceed it, so the limiter protects this server
   but not the user's upstream key, and Portal may `429` first under load. Each account now spends its own bucket against
   its own Portal key; replace with a combined per-user cross-route Portal bucket under 90/min if real traffic trips it
+- **Signup tells whoever asks which usernames exist.** `POST /auth/register` answers `409` for a taken username
+  (`register_user.py`) and is limited to 10 per 15 minutes per client IP, so a caller with many addresses enumerates
+  accounts without ever filling a bucket; login already spends the same hashing time for an unknown user so that timing
+  leaks nothing, which leaves this answer as the remaining oracle. Close open signup, or answer identically and confirm
+  out of band, before an account name is sensitive
+- **The login limit counts only per client IP.** `POST /auth/token` allows 5 per 10 minutes per address
+  (`build_auth_token_rate_limit` in `rate_limit.py`) and nothing counts failures against the targeted username, so many
+  addresses can try passwords on one account while no bucket fills and the hashing cost is the only brake. Add a second
+  bucket keyed by the username under attack, accepting that it lets an attacker lock a victim out for a while, before
+  real accounts exist
+- **The rate limiter never evicts idle keys.** `fastapi-throttle` keeps one timestamp list per key in a dictionary of
+  the process and drops a key only when that same key returns after its window emptied (`limiter.py`), so every address
+  or username ever seen stays in memory and a flood from many addresses grows it without bound. Swap it for a store with
+  expiry when the service runs more than one process or faces the open internet

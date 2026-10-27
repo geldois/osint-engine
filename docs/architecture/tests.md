@@ -67,12 +67,11 @@ not adding another skip somewhere else.
 - **`FindPossiblyMatches` is never tested with a pair seen from both sides.** Its tests always pass a graph with a
   single node, so a graph holding both people of a pair, and the two scores it can compute for it, are never exercised.
   Write the case once the symmetric score is decided
-- **The mutation gate has never completed a run, and no layer has a floor.** With no floor in the project configuration
-  the command only measures and never fails on the score, and the weekly workflow runs it that way. A four-minute sample
-  on one machine ran about 4.6 seconds per mutant over roughly 4,980 mutants, which is over six hours sequentially; each
-  layer runs as its own job, so each needs about half. Run the workflow once by hand, read each layer's score and
-  survivor list from its artifact, set each floor a little under the measured share, then kill the survivors and raise
-  the floors; until a floor exists, a green run says nothing about the tests
+- **The mutation gate completes weekly, but no layer has a floor.** With no floor in the project configuration the
+  command only measures and never fails on the score. The run of 2026-10-26 killed about 64% of the mutants in the
+  domain layer and about 63% in the application layer, leaving roughly 900 survivors in each, and each layer's job took
+  about two hours. Set each floor a little under the measured share, then write the tests that kill the survivors,
+  application first, and raise the floors; until a floor exists, a green run says nothing about the tests
 - **No test proves the unit of work holds no pooled PostgreSQL connection while a password is hashed or verified.** The
   `AuthenticateUser` and `RegisterUser` tests run on the in-memory pool fake, whose acquire and release are trivial, and
   today `HybridUoW` and the PostgreSQL repositories never hold a connection across the unit of work (each query takes
